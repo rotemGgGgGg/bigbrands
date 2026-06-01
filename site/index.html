@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BIG BRANDS — Computing for Business</title>
+  <meta name="description" content="ביג בראנדס — מחשבים, ניידים, סלולר, אוזניות ופתרונות מחשוב לעסק ולבית במחירים מצוינים." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">דלג לתוכן הראשי</a>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="container">
+      <a class="logo" href="index.html" aria-label="BIG BRANDS — Computing for Business">
+        <img src="assets/logo.png" alt="BIG BRANDS" class="logo-img" />
+      </a>
+
+      <form class="search" role="search" onsubmit="return false;">
+        <div class="dd" id="catDropdown">
+          <button type="button" class="dd-toggle" id="catToggle" aria-haspopup="listbox" aria-expanded="false">
+            <span id="catLabel">הכל</span>
+            <svg class="dd-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <ul class="dd-menu" id="catMenu" role="listbox" tabindex="-1"></ul>
+        </div>
+        <input type="search" placeholder="חפש מוצרים…" aria-label="חיפוש מוצרים" />
+        <button class="go" aria-label="חפש">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        </button>
+      </form>
+
+      <div class="actions">
+        <button class="icon-btn" id="themeToggle" aria-label="מצב כהה/בהיר" title="מצב כהה/בהיר">
+          <svg class="i-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+        </button>
+        <button class="icon-btn" aria-label="חשבון">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        </button>
+        <button class="icon-btn" aria-label="עגלה" id="cartBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.4 12.2a1.5 1.5 0 0 0 1.5 1.2h8.5a1.5 1.5 0 0 0 1.5-1.2L22 7H6"/></svg>
+          <span class="count" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Category nav -->
+  <nav class="nav">
+    <div class="container">
+      <div class="all">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        כל המוצרים
+      </div>
+      <ul id="navList"></ul>
+      <a class="whatsapp" href="https://wa.me/972000000000" target="_blank" rel="noopener" aria-label="WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2Zm5.3 14.2c-.2.6-1.2 1.1-1.7 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.1.2-.3.3-.1.6.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.7c.2-.2.3-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <main class="container" id="main">
+
+    <!-- Intro -->
+    <p class="intro reveal">
+      <b>Big Brands</b> — מותגים גדולים במחירים מעולים.
+    </p>
+
+    <!-- Hero carousel -->
+    <section class="hero reveal">
+      <div class="carousel" id="carousel">
+        <div class="slides" id="slides"></div>
+        <button class="car-btn prev" id="heroPrev" aria-label="הקודם">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <button class="car-btn next" id="heroNext" aria-label="הבא">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 6-6 6 6 6"/></svg>
+        </button>
+        <div class="dots" id="heroDots"></div>
+      </div>
+    </section>
+
+    <!-- Trust badges -->
+    <section class="trust-strip reveal" aria-label="יתרונות השירות">
+      <div class="trust-item">
+        <span class="trust-ico" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h13v13H1z"/><path d="M14 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="17.5" cy="18.5" r="2"/></svg>
+        </span>
+        <div class="trust-txt"><b>משלוח חינם</b><span>בקנייה מעל ₪500</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ico" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <div class="trust-txt"><b>אחריות יבואן רשמי</b><span>על כל המוצרים</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ico" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-7.5-4.5L3 21l1.6-1.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+        </span>
+        <div class="trust-txt"><b>תמיכה אנושית</b><span>א'–ה' 08:00–18:00</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ico" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <div class="trust-txt"><b>תשלום מאובטח</b><span>SSL מוצפן</span></div>
+      </div>
+    </section>
+
+    <!-- Featured 3 -->
+    <section class="section">
+      <div class="featured-grid reveal" id="featuredGrid" data-stagger></div>
+    </section>
+
+    <!-- Big Brands — pressable brand tiles -->
+    <section class="section">
+      <div class="section-bar reveal">המותגים הגדולים — The <span>Big Brands</span></div>
+      <div class="brand-tiles reveal" id="brandTiles" data-stagger></div>
+    </section>
+
+    <!-- Partners -->
+    <section class="section">
+      <div class="section-bar reveal">גאים לשרת ולעבוד עם העסקים המובילים בישראל</div>
+      <div class="partners-grid reveal" id="partnersGrid" data-stagger></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h4>מידע להזמנה</h4>
+          <ul>
+            <li><a href="#">מעקב הזמנה</a></li>
+            <li><a href="#">החשבונות שלי</a></li>
+            <li><a href="#">תשלום פתוח</a></li>
+            <li><a href="#">שירות לקוחות</a></li>
+            <li><a href="#">תיקון הרכלה</a></li>
+            <li><a href="#">תיקון מבצע אביב</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>מידע חשוב</h4>
+          <ul>
+            <li><a href="#">תקנון האתר ותנאי שימוש</a></li>
+            <li><a href="#">מדיניות פרטיות</a></li>
+            <li><a href="#">מדיניות משלוחים</a></li>
+            <li><a href="#">מדיניות ביטולים והחזרות</a></li>
+            <li><a href="#">הצהרת נגישות</a></li>
+            <li><a href="#">פירוט אחריות וביטוח</a></li>
+            <li><a href="#">שאלות נפוצות</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>פרטי החברה</h4>
+          <p class="company-line"><b>ביג בראנדס בע"מ</b></p>
+          <p class="company-line">ח.פ. <span class="placeholder">[למילוי]</span></p>
+          <p class="company-line">כתובת: <span class="placeholder">[למילוי — לדוגמה: ראשון לציון]</span>, מדינת ישראל</p>
+          <p class="company-line">טלפון: 03-6005007</p>
+          <p class="company-line">שעות פעילות: א'–ה' 08:00–18:00 | ו' 08:00–13:00</p>
+          <p class="company-line">דוא"ל: info@bigbrands.co.il</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal disclaimers (Hebrew) -->
+    <div class="legal">
+      <div class="container">
+        <p>
+          כל המחירים באתר כוללים מע"מ אלא אם צוין אחרת, ונכונים למועד פרסומם בלבד. ייתכנו טעויות סופר,
+          אי-התאמות במפרט, בתיאור, בתמונות או במחיר. התמונות להמחשה בלבד. החברה שומרת לעצמה את הזכות
+          לעדכן מחירים, מפרטים וזמינות מלאי בכל עת וללא הודעה מוקדמת, ואינה מתחייבת להמשך מכירת מוצר כלשהו.
+        </p>
+        <p>
+          המכירה והשירות כפופים לתקנון האתר, למדיניות הפרטיות ולמדיניות הביטולים וההחזרות בהתאם לחוק
+          הגנת הצרכן, התשמ"א-1981 ולתקנותיו. אחריות היצרן/היבואן חלה בהתאם לתנאי האחריות הנלווים לכל מוצר.
+          אין באמור באתר משום ייעוץ או התחייבות, והשימוש באתר ובמידע שבו הוא באחריות המשתמש בלבד.
+        </p>
+        <p>
+          האתר עושה מאמץ להנגיש את שירותיו לאנשים עם מוגבלות בהתאם לתקנות שוויון זכויות לאנשים עם
+          מוגבלות (התאמות נגישות לשירות), התשע"ג-2013. נתקלתם בקושי? צרו קשר ונשמח לסייע.
+        </p>
+        <div class="bottom">
+          <span>© <span id="year"></span> ביג בראנדס בע"מ — כל הזכויות שמורות.</span>
+          <span>הצהרת נגישות · תקנון · מדיניות פרטיות</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <a class="fab" href="https://wa.me/972000000000" target="_blank" rel="noopener" aria-label="צ'אט WhatsApp">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2Zm5.3 14.2c-.2.6-1.2 1.1-1.7 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.1.2-.3.3-.1.6.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.7c.2-.2.3-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+  </a>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

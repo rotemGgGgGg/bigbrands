@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ניהול מוצרים (זמני) — BIG BRANDS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+    .admin-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .admin-head h1 { color: var(--navy); margin: 0; font-size: 26px; }
+    [data-theme="dark"] .admin-head h1 { color: #fff; }
+    .note {
+      background: color-mix(in srgb, var(--blue) 10%, var(--surface));
+      border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line));
+      border-radius: var(--r-sm); padding: 12px 16px; font-size: 13.5px;
+      color: var(--text-soft); margin: 14px 0 24px;
+    }
+    .panel {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r); box-shadow: var(--e1); padding: 22px;
+      margin-bottom: 24px;
+    }
+    .panel h2 { margin: 0 0 16px; font-size: 18px; color: var(--navy); }
+    [data-theme="dark"] .panel h2 { color: #cdd8ef; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 13px; font-weight: 600; color: var(--text-soft); }
+    .field input, .field select {
+      border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px;
+      background: var(--surface-2); color: var(--text); font: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 16%, transparent);
+    }
+    .btn {
+      border: 0; border-radius: var(--r-sm); padding: 12px 22px; min-height: 44px; font-weight: 700;
+      font-size: 14px; cursor: pointer; transition: transform .15s var(--spring), filter .2s, box-shadow .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0) scale(.98); }
+    .btn-primary { background: var(--grad-accent); color: #fff; box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 34%, transparent); }
+    .btn-primary:hover { filter: brightness(1.06); }
+    .btn-ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: right; padding: 12px 10px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+    th { color: var(--text-soft); font-weight: 700; }
+    td .mini { display: flex; gap: 6px; }
+    td .mini button {
+      border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+      border-radius: 8px; padding: 6px 10px; font-size: 12.5px; cursor: pointer;
+    }
+    td .mini button.del { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+    .topnav { display: flex; gap: 12px; align-items: center; }
+    .topnav a { color: var(--blue); font-weight: 700; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <h1>ניהול מוצרים</h1>
+      <div class="topnav">
+        <a href="index.html">← חזרה לאתר</a>
+        <button class="btn btn-ghost" id="themeToggle">מצב כהה/בהיר</button>
+      </div>
+    </div>
+
+    <div class="note">
+      פאנל זמני ופשוט להעלאת מוצרים. הנתונים נשמרים בדפדפן הזה בלבד (localStorage).
+      זהו רכיב להחלפה — בהמשך נחבר את הפאנל המותאם אישית שלך, והאתר עצמו יישאר זהה.
+    </div>
+
+    <div class="panel">
+      <h2 id="formTitle">הוספת מוצר חדש</h2>
+      <form id="productForm">
+        <input type="hidden" id="f-id" />
+        <div class="form-grid">
+          <div class="field full">
+            <label for="f-name">שם המוצר</label>
+            <input id="f-name" required placeholder="לדוגמה: Dell 16 Plus DB16250" />
+          </div>
+          <div class="field">
+            <label for="f-brand">מותג</label>
+            <input id="f-brand" list="brandList" placeholder="HP / Dell / Apple / Lenovo / ASUS" />
+            <datalist id="brandList"></datalist>
+          </div>
+          <div class="field">
+            <label for="f-category">קטגוריה</label>
+            <select id="f-category"></select>
+          </div>
+          <div class="field">
+            <label for="f-price">מחיר (₪)</label>
+            <input id="f-price" type="number" min="0" step="1" required placeholder="4990" />
+          </div>
+          <div class="field">
+            <label for="f-badge">תווית (אופציונלי)</label>
+            <input id="f-badge" placeholder="מבצע / נייד חדש" />
+          </div>
+          <div class="field full">
+            <label for="f-specs">מפרט קצר</label>
+            <input id="f-specs" placeholder="Core Ultra 7 | 16G | 1T SSD | מסך 16″" />
+          </div>
+          <div class="field full">
+            <label for="f-image">קישור לתמונה (אופציונלי — אם ריק תוצג תמונת ברירת מחדל)</label>
+            <input id="f-image" type="url" placeholder="https://…" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="saveBtn">שמירת מוצר</button>
+          <button type="button" class="btn btn-ghost" id="cancelBtn" style="display:none">ביטול עריכה</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
+        <h2 style="margin:0">מוצרים קיימים (<span id="count">0</span>)</h2>
+        <button class="btn btn-ghost" id="resetBtn">אפס לנתוני ברירת מחדל</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>שם</th><th>מותג</th><th>קטגוריה</th><th>מחיר</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
