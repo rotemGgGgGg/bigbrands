@@ -3,7 +3,8 @@
 
 $ErrorActionPreference = 'Stop'
 $root = Join-Path $PSScriptRoot 'site'
-$prefix = 'http://localhost:3000/'
+$port = if ($env:PORT) { $env:PORT } else { '3000' }
+$prefix = "http://localhost:$port/"
 
 $mime = @{
   '.html' = 'text/html; charset=utf-8'
