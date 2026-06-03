@@ -243,22 +243,23 @@ button { font-family: inherit; cursor: pointer; }
 .nav .whatsapp:hover { transform: scale(1.1); }
 
 /* ---- Intro ---- */
-.intro { text-align: center; padding: var(--s9) var(--s5) var(--s5); max-width: 840px; margin-inline: auto; }
+.intro { text-align: center; padding: var(--s9) var(--s5) var(--s5); max-width: 900px; margin-inline: auto; }
 .intro-title {
-  font-family: "Rubik", "Heebo", sans-serif; font-size: var(--fs-display);
-  font-weight: 800; color: var(--navy); line-height: 1.04; letter-spacing: -.035em;
-  text-wrap: balance; max-width: 16ch; margin-inline: auto;
+  font-family: "Rubik", "Heebo", sans-serif; font-size: clamp(30px, 4.6vw, 56px);
+  font-weight: 800; color: var(--red); line-height: 1.1; letter-spacing: -.025em;
+  text-wrap: balance; max-width: 20ch; margin-inline: auto;
 }
-[data-theme="dark"] .intro-title { color: #f2f6ff; }
 .intro-title b { font-weight: 800; color: var(--red); }
 .intro-sub {
-  margin: var(--s5) auto 0; max-width: 52ch;
-  font-size: clamp(16px, 1.7vw, 20px); font-weight: 500; color: var(--text-soft); line-height: 1.55;
+  margin: var(--s4) auto 0; max-width: 44ch;
+  font-size: clamp(18px, 2vw, 26px); font-weight: 600; color: var(--navy); line-height: 1.4;
+  letter-spacing: -.01em; text-wrap: balance;
 }
+[data-theme="dark"] .intro-sub { color: #dce6fb; }
 
 /* ---- Hero carousel ---- */
-.hero { padding: var(--s4) 0 var(--s2); }
-.carousel { position: relative; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--e4); }
+.hero { padding: var(--s4) 0 var(--s2); display: flex; align-items: center; gap: var(--s4); }
+.carousel { flex: 1 1 auto; min-width: 0; position: relative; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--e4); }
 .slides { position: relative; }
 .slide {
   position: absolute; inset: 0; opacity: 0; transform: scale(1.05); pointer-events: none;
@@ -298,17 +299,17 @@ button { font-family: inherit; cursor: pointer; }
 [data-theme="dark"] .slide.banner { background: #0c1426; }
 .slide.banner .banner-img { width: 100%; height: auto; display: block; }
 
-/* carousel controls */
+/* carousel controls — sit outside the banner card */
 .car-btn {
-  position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 48px;
-  border-radius: 50%; border: 0; background: color-mix(in srgb, var(--surface) 90%, transparent);
-  color: var(--navy); display: grid; place-items: center; z-index: 5; box-shadow: var(--e2);
-  transition: background .2s, transform .2s var(--spring);
+  flex: none; width: 50px; height: 50px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface); color: var(--navy);
+  display: grid; place-items: center; box-shadow: var(--e2);
+  transition: background .2s, transform .2s var(--spring), border-color .2s, color .2s;
 }
-.car-btn:hover { background: var(--surface); transform: translateY(-50%) scale(1.1); }
-.car-btn.prev { inset-inline-end: var(--s4); }
-.car-btn.next { inset-inline-start: var(--s4); }
-[data-theme="dark"] .car-btn { color: #fff; }
+.car-btn:hover { background: var(--navy); color: #fff; border-color: var(--navy); transform: scale(1.1); }
+.car-btn:active { transform: scale(.94); }
+[data-theme="dark"] .car-btn { color: #fff; background: var(--surface-2); border-color: var(--line); }
+[data-theme="dark"] .car-btn:hover { background: var(--blue); border-color: var(--blue); }
 .dots { position: absolute; bottom: var(--s4); inset-inline: 0; display: flex; gap: var(--s2); justify-content: center; z-index: 5; }
 .dots button { width: 9px; height: 9px; border-radius: 50%; border: 0; background: rgba(10,31,68,.28); transition: all .35s var(--spring); }
 .dots button.active { width: 28px; border-radius: 5px; background: var(--grad-accent); }
@@ -520,6 +521,10 @@ button { font-family: inherit; cursor: pointer; }
   .partners-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; }
   .trust-strip { grid-template-columns: repeat(2, 1fr); gap: var(--s5) var(--s4); }
+}
+@media (max-width: 560px) {
+  .car-btn { display: none; }
+  .hero { gap: 0; }
 }
 @media (max-width: 420px) {
   .product-grid { grid-template-columns: 1fr; }

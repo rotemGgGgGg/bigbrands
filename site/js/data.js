@@ -32,17 +32,15 @@ window.SITE_DATA = {
      assets/banners/dell-latitude.jpg and set image to that path. */
   heroSlides: [
     {
-      image: "assets/banners/dell-latitude.jpg", // your Dell banner — drop the file here
-      fallbackImage: "assets/banners/asus-expertbook.png", // shown until the Dell file exists
-      alt: "באנר ראשי",
+      image: "assets/banners/dell-latitude.png", // Dell Latitude 5420 banner
+      fallbackImage: "assets/banners/asus-expertbook.png",
+      alt: "DELL Latitude 5420 — הבחירה המקצועית לעסקים",
       link: "products.html?brand=Dell",
     },
     {
-      eyebrow: "Apple · MacBook Air M3",
-      title: "קל. מהיר. אלגנטי.",
-      subtitle: "הביצועים של שבב M3, במשקל נוצה",
-      cta: "גלו עכשיו",
-      accent: "#111418",
+      image: "assets/banners/apple-macbook.png", // Apple MacBook Air M3 banner
+      fallbackImage: "assets/banners/asus-expertbook.png",
+      alt: "Apple MacBook Air M3 — הבחירה המקצועית לעסקים",
       link: "products.html?brand=Apple",
     },
     {
