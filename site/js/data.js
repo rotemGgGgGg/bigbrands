@@ -161,7 +161,9 @@ function _toProduct(it, category) {
     mpn: it.mpn || it.code || "",
     bundle: it.bundle || "",
     badge: it.hot ? "מומלץ" : (it.status === "new" ? "חדש" : ""),
-    image: "",
+    // A photo at assets/products/{id}.jpg is used if present; otherwise the
+    // onerror handler falls back to the clean category graphic.
+    image: "assets/products/" + it.id + ".jpg",
   };
 }
 
