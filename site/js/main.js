@@ -41,31 +41,8 @@
     return `<img src="assets/brands/${slug}.png" alt="${escapeHtml(name)}" data-brand="${escapeHtml(name)}" onerror="window.__brandFallback(this)" />`;
   }
 
-  /* ---------- clean category-aware product graphic (no image files needed) ---------- */
-  function deviceSVG(accent, category) {
-    accent = accent || "#1f7ae0";
-    const gid = "scr-" + Math.random().toString(36).slice(2, 8);
-    const grad = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${accent}"/><stop offset="1" stop-color="#0a1f44"/></linearGradient></defs>`;
-    if (/אוזני|headphone|אודיו|audio/i.test(category || "")) {
-      return `<svg class="device" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אוזניות">${grad}
-        <path d="M54 106V92a66 66 0 0 1 132 0v14" fill="none" stroke="url(#${gid})" stroke-width="13" stroke-linecap="round"/>
-        <rect x="38" y="100" width="36" height="56" rx="15" fill="#1b2330"/>
-        <rect x="45" y="107" width="22" height="42" rx="11" fill="url(#${gid})"/>
-        <rect x="166" y="100" width="36" height="56" rx="15" fill="#1b2330"/>
-        <rect x="173" y="107" width="22" height="42" rx="11" fill="url(#${gid})"/>
-      </svg>`;
-    }
-    return `<svg class="device" viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="מחשב נייד">${grad}
-      <rect x="50" y="18" width="140" height="90" rx="9" fill="#1b2330"/>
-      <rect x="57" y="25" width="126" height="76" rx="5" fill="url(#${gid})"/>
-      <rect x="66" y="38" width="48" height="7" rx="3.5" fill="rgba(255,255,255,.9)"/>
-      <rect x="66" y="52" width="78" height="6" rx="3" fill="rgba(255,255,255,.55)"/>
-      <rect x="66" y="64" width="60" height="6" rx="3" fill="rgba(255,255,255,.38)"/>
-      <path d="M32 108h176l12 20a5 5 0 0 1-5 7H25a5 5 0 0 1-5-7z" fill="#cfd6e2"/>
-      <rect x="98" y="114" width="44" height="6" rx="3" fill="#9aa6bd"/>
-    </svg>`;
-  }
+  /* ---------- clean category-aware product graphic (shared engine) ---------- */
+  function deviceSVG(accent, category) { return window.deviceGraphic(accent, category); }
   window.__productFallback = function (img) {
     const span = document.createElement("span");
     span.innerHTML = deviceSVG(img.getAttribute("data-accent") || "#1f7ae0", img.getAttribute("data-cat") || "");

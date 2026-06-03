@@ -399,6 +399,11 @@ button { font-family: inherit; cursor: pointer; }
 }
 .p-card .pname { font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; min-height: 56px; color: var(--text); }
 .p-card .pspecs { font-size: var(--fs-xs); color: var(--text-soft); margin: var(--s1) 0 var(--s3); min-height: 36px; }
+.p-card .pbundle { font-size: var(--fs-xs); color: var(--green, #16a34a); background: color-mix(in srgb, #16a34a 10%, var(--surface)); border-radius: var(--r-sm); padding: 6px 10px; margin: 0 0 var(--s2); line-height: 1.4; }
+.p-card .pstock { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 700; margin-bottom: var(--s3); }
+.p-card .pstock.in  { color: #16a34a; }
+.p-card .pstock.low { color: #ca8a04; }
+.p-card .pstock.req { color: var(--text-faint); }
 .p-card .prow { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
 .p-card .pprice { color: var(--red); font-weight: 800; font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
 .p-card .add {
