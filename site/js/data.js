@@ -223,6 +223,9 @@ window.SITE_DATA = {
     { tag: "הנמכר ביותר", productId: "d3" },
     { tag: "מומלץ לעסקים", productId: "l1" },
     { tag: "חדש בקטלוג", productId: "g1" },
+    { tag: "השדרוג המשתלם", productId: "l5" },
+    { tag: "אחסון בזק", productId: "c6" },
+    { tag: "לחובבי גיימינג", productId: "gpu2" },
   ],
 
   // Brand logos row

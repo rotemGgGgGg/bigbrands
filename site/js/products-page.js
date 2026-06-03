@@ -76,7 +76,7 @@
       <article class="p-card" data-id="${p.id}">
         ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
         ${media(p)}
-        <div class="pname">${esc(p.name)}</div>
+        <a class="pname" href="product.html?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>
         <div class="pspecs">${esc(p.specs || "")}</div>
         ${p.bundle ? `<div class="pbundle">📦 ${esc(p.bundle)}</div>` : ""}
         ${availability(p)}
@@ -111,7 +111,10 @@
       e.preventDefault(); cart++;
       const el = $("#cartCount"); el.textContent = cart;
       el.animate([{ transform: "scale(1)" }, { transform: "scale(1.5)" }, { transform: "scale(1)" }], { duration: 300 });
+      return;
     }
+    const card = e.target.closest(".p-card");
+    if (card && card.dataset.id) location.href = "product.html?id=" + encodeURIComponent(card.dataset.id);
   });
 
   function initReveal() {

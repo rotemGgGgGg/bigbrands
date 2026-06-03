@@ -159,7 +159,7 @@
         const p = Store.getProduct(f.productId) || Store.getProducts()[0];
         if (!p) return "";
         return `
-        <a class="feat-card" href="products.html?brand=${encodeURIComponent(p.brand)}" data-id="${p.id}">
+        <a class="feat-card" href="product.html?id=${encodeURIComponent(p.id)}" data-id="${p.id}">
           <div class="tag">${escapeHtml(f.tag)}</div>
           <div class="media">${productMedia(p)}</div>
           <div class="pname">${escapeHtml(p.name)}</div>
