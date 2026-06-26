@@ -19,6 +19,9 @@ $mime = @{
   '.gif'  = 'image/gif'
   '.ico'  = 'image/x-icon'
   '.txt'  = 'text/plain; charset=utf-8'
+  '.glb'  = 'model/gltf-binary'
+  '.gltf' = 'model/gltf+json'
+  '.webp' = 'image/webp'
 }
 
 $listener = New-Object System.Net.HttpListener
