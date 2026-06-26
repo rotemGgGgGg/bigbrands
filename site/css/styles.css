@@ -486,6 +486,18 @@ button { font-family: inherit; cursor: pointer; }
   display: grid; place-items: center; min-height: 380px;
 }
 .pdp-media .device { width: 100%; max-height: 420px; object-fit: contain; transition: transform .2s var(--ease); transform-style: preserve-3d; }
+.pdp-media.is-3d { padding: 0; overflow: hidden; }
+.pdp-mv { width: 100%; height: 440px; --poster-color: transparent; background: transparent; border-radius: var(--r-lg); cursor: grab; }
+.pdp-mv:active { cursor: grabbing; }
+.pdp-mv .mv-poster { width: 100%; height: 100%; display: grid; place-items: center; }
+.pdp-mv .mv-poster .device { max-height: 360px; }
+.mv-badge {
+  position: absolute; inset-block-end: var(--s4); inset-inline-start: 50%; transform: translateX(50%);
+  display: inline-flex; align-items: center; gap: var(--s2); pointer-events: none;
+  background: color-mix(in srgb, var(--navy) 88%, transparent); color: #fff;
+  font-size: var(--fs-xs); font-weight: 600; padding: 7px 14px; border-radius: var(--r-pill);
+  box-shadow: var(--e2); backdrop-filter: blur(4px); z-index: 3;
+}
 
 .pdp-info { padding-top: var(--s2); }
 .pdp-meta { font-family: "Rubik", sans-serif; font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: var(--s3); }

@@ -271,6 +271,9 @@ window.SITE_DATA = {
   products: _PRODUCTS,
 };
 
+/* ── Products that have an interactive 3D model at assets/models/{id}.glb ── */
+window.MODELS_3D = [];
+
 /* ── Category-aware product graphic (shared by all pages) ──────────
    Returns clean SVG markup tinted with the brand accent. */
 window.deviceGraphic = function (accent, category) {

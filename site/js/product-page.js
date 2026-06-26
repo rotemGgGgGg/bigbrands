@@ -24,6 +24,23 @@
       return `<img class="device${big ? " big" : ""}" src="${esc(p.image)}" alt="${esc(p.name)}" ${big ? "" : 'loading="lazy"'} data-accent="${brandColor(p.brand)}" data-cat="${esc(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
     return deviceSVG(brandColor(p.brand), p.category);
   }
+  function has3D(p) { return (window.MODELS_3D || []).indexOf(p.id) !== -1; }
+  function pdpMedia(p) {
+    if (has3D(p)) {
+      return `
+        <model-viewer class="pdp-mv" src="assets/models/${encodeURIComponent(p.id)}.glb"
+          alt="${esc(p.name)}" camera-controls auto-rotate auto-rotate-delay="600"
+          rotation-per-second="22deg" interaction-prompt="auto" touch-action="pan-y"
+          shadow-intensity="1" shadow-softness="0.9" exposure="1.05" camera-orbit="-25deg 75deg auto">
+          <div class="mv-poster" slot="poster">${media(p, true)}</div>
+        </model-viewer>
+        <span class="mv-badge">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+          360° · גררו לסיבוב
+        </span>`;
+    }
+    return media(p, true);
+  }
   function availability(p) {
     if (p.status === "stock") return `<span class="pstock in">● ${esc(p.stock || "במלאי")}</span>`;
     if (p.status === "limited") return `<span class="pstock low">● מלאי מוגבל</span>`;
@@ -89,7 +106,7 @@
       </nav>
 
       <div class="pdp-grid">
-        <div class="pdp-media reveal in">${media(p, true)}</div>
+        <div class="pdp-media reveal in${has3D(p) ? " is-3d" : ""}">${pdpMedia(p)}</div>
 
         <div class="pdp-info reveal in">
           <div class="pdp-meta">${esc(meta)}</div>
