@@ -272,7 +272,7 @@ window.SITE_DATA = {
 };
 
 /* ── Products that have an interactive 3D model at assets/models/{id}.glb ── */
-window.MODELS_3D = ["l2"]; // ThinkPad T14s Gen 2 — interactive 3D (placeholder model, CC-BY "Laptop" by Poly/Google)
+window.MODELS_3D = []; // add a product id here once its real assets/models/{id}.glb exists
 
 /* ── Category-aware product graphic (shared by all pages) ──────────
    Returns clean SVG markup tinted with the brand accent. */
