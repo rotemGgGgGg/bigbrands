@@ -404,6 +404,8 @@ button { font-family: inherit; cursor: pointer; }
 .p-card .pstock.in  { color: #16a34a; }
 .p-card .pstock.low { color: #ca8a04; }
 .p-card .pstock.req { color: var(--text-faint); }
+.pwas { color: var(--text-faint); font-weight: 600; font-size: .78em; text-decoration: line-through; margin-inline-start: 6px; }
+.pdp-was { font-size: var(--fs-md); margin-inline-start: var(--s2); }
 .p-card .prow { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
 .p-card .pprice { color: #d9024c; font-weight: 800; font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
 .p-card .add {

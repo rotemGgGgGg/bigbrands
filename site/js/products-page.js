@@ -81,7 +81,7 @@
         ${p.bundle ? `<div class="pbundle">📦 ${esc(p.bundle)}</div>` : ""}
         ${availability(p)}
         <div class="prow">
-          <span class="pprice">${ils(p.price)}</span>
+          <span class="pprice">${ils(p.price)}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</span>
           <button class="add" aria-label="הוסף לעגלה" title="הוסף לעגלה">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>

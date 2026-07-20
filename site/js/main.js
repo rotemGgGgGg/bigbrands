@@ -163,7 +163,7 @@
           <div class="tag">${escapeHtml(f.tag)}</div>
           <div class="media">${productMedia(p)}</div>
           <div class="pname">${escapeHtml(p.name)}</div>
-          <div class="pprice">${ils(p.price)}</div>
+          <div class="pprice">${ils(p.price)}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</div>
         </a>`;
       })
       .join("");

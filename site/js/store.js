@@ -10,7 +10,7 @@
 */
 
 window.Store = (function () {
-  const KEY = "bigbrands.products.v2";
+  const KEY = "bigbrands.products.v3";
 
   function seed() {
     return JSON.parse(JSON.stringify(window.SITE_DATA.products));
