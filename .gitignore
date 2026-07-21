@@ -1,3 +1,10 @@
 _BACKUP_site_pre-redesign_2026-06-01/
 
 .claude/worktrees/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
