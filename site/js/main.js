@@ -15,6 +15,7 @@
 
   /* ---------- brand helpers ---------- */
   const BRAND_SLUG = { HP: "hp", Dell: "dell", Apple: "apple", Lenovo: "lenovo", ASUS: "asus", Sony: "sony" };
+  const BRAND_EXT  = { ASUS: "svg" }; // per-brand logo file extension (default: png)
   function brandColor(brand) {
     return ({
       HP: "#0096d6", Dell: "#007db8", Apple: "#1d1d1f",
@@ -38,7 +39,8 @@
   };
   function brandLogoImg(name) {
     const slug = BRAND_SLUG[name] || name.toLowerCase();
-    return `<img src="assets/brands/${slug}.png" alt="${escapeHtml(name)}" data-brand="${escapeHtml(name)}" onerror="window.__brandFallback(this)" />`;
+    const ext = BRAND_EXT[name] || "png";
+    return `<img src="assets/brands/${slug}.${ext}" alt="${escapeHtml(name)}" data-brand="${escapeHtml(name)}" onerror="window.__brandFallback(this)" />`;
   }
 
   /* ---------- clean category-aware product graphic (shared engine) ---------- */
@@ -50,7 +52,7 @@
   };
   function productMedia(p) {
     if (p.image) {
-      return `<img class="device" src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy"
+      return `<img class="device" decoding="async" src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy"
         data-accent="${brandColor(p.brand)}" data-cat="${escapeHtml(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
     }
     return deviceSVG(brandColor(p.brand), p.category);
@@ -163,7 +165,7 @@
           <div class="tag">${escapeHtml(f.tag)}</div>
           <div class="media">${productMedia(p)}</div>
           <div class="pname">${escapeHtml(p.name)}</div>
-          <div class="pprice">${ils(p.price)}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</div>
+          <div class="pprice">${p.price ? ils(p.price) : "לבירור מחיר"}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</div>
         </a>`;
       })
       .join("");

@@ -5,7 +5,7 @@
    ============================================================ */
 (function () {
   "use strict";
-  const WA_PHONE = "972000000000"; // TODO: real WhatsApp number
+  const WA_PHONE = "972508808076"; // TODO: real WhatsApp number
   const ils = (n) => "₪ " + Number(n).toLocaleString("he-IL");
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const products = () => (window.Store ? Store.getProducts() : (window.SITE_DATA ? SITE_DATA.products : []));

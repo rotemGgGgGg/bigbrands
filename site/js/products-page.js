@@ -26,13 +26,34 @@
   };
   function media(p) {
     if (p.image)
-      return `<img class="device" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" data-accent="${brandColor(p.brand)}" data-cat="${esc(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
+      return `<img class="device" decoding="async" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" data-accent="${brandColor(p.brand)}" data-cat="${esc(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
     return deviceSVG(brandColor(p.brand), p.category);
   }
 
   function params() {
     const u = new URLSearchParams(location.search);
-    return { brand: u.get("brand"), category: u.get("category") };
+    return { brand: u.get("brand"), category: u.get("category"), series: u.get("series") };
+  }
+
+  const SERIES_LABELS = {
+    X: "ThinkPad X · אולטרה-קלים",
+    T: "ThinkPad T · עסקיים",
+    L: "ThinkPad L · חסכוניים",
+    P: "ThinkPad P · תחנות עבודה",
+    ThinkCentre: "ThinkCentre · נייחים",
+  };
+  function renderSeriesFilter(brand, list, activeSeries) {
+    const el = $("#seriesFilter");
+    if (!el) return;
+    if (brand !== "Lenovo") { el.hidden = true; el.innerHTML = ""; return; }
+    const seriesFound = [...new Set(list.map((p) => p.series).filter(Boolean))];
+    if (!seriesFound.length) { el.hidden = true; return; }
+    el.hidden = false;
+    const chip = (val, label, active) =>
+      `<a class="series-chip${active ? " active" : ""}" href="products.html?brand=Lenovo${val ? "&series=" + encodeURIComponent(val) : ""}">${esc(label)}</a>`;
+    el.innerHTML =
+      chip("", "כל הסדרות", !activeSeries) +
+      seriesFound.map((s) => chip(s, SERIES_LABELS[s] || s, activeSeries === s)).join("");
   }
 
   function renderNav() {
@@ -58,12 +79,20 @@
   }
 
   function render() {
-    const { brand, category } = params();
+    const { brand, category, series } = params();
     let list = Store.getProducts();
     let title = "כל המוצרים";
 
     if (brand) { list = list.filter((p) => p.brand === brand); title = "מוצרי " + brand; }
     else if (category) { list = list.filter((p) => p.category === category); title = category; }
+
+    // Lenovo sub-filter by series
+    const brandList = list.slice();
+    renderSeriesFilter(brand, brandList, series);
+    if (brand === "Lenovo" && series) {
+      list = list.filter((p) => p.series === series);
+      title += " · " + (SERIES_LABELS[series] || series).split(" · ")[0];
+    }
 
     $("#pageTitle").textContent = title;
     document.title = title + " — BIG BRANDS";
@@ -81,7 +110,7 @@
         ${p.bundle ? `<div class="pbundle">📦 ${esc(p.bundle)}</div>` : ""}
         ${availability(p)}
         <div class="prow">
-          <span class="pprice">${ils(p.price)}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</span>
+          <span class="pprice">${p.price ? ils(p.price) : "לבירור מחיר"}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</span>
           <button class="add" aria-label="הוסף לעגלה" title="הוסף לעגלה">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           </button>

@@ -8,7 +8,7 @@
     String(s).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const WA_PHONE = "972000000000"; // TODO: real WhatsApp number
+  const WA_PHONE = "972508808076"; // TODO: real WhatsApp number
 
   function brandColor(b) {
     return ({ HP: "#0096d6", Dell: "#007db8", Apple: "#1d1d1f", Lenovo: "#e2231a", ASUS: "#00539b", Sony: "#111418" })[b] || "#1f7ae0";
@@ -21,7 +21,7 @@
   };
   function media(p, big) {
     if (p.image)
-      return `<img class="device${big ? " big" : ""}" src="${esc(p.image)}" alt="${esc(p.name)}" ${big ? "" : 'loading="lazy"'} data-accent="${brandColor(p.brand)}" data-cat="${esc(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
+      return `<img class="device${big ? " big" : ""}" decoding="async" src="${esc(p.image)}" alt="${esc(p.name)}" ${big ? "" : 'loading="lazy"'} data-accent="${brandColor(p.brand)}" data-cat="${esc(p.category || "")}" style="object-fit:contain" onerror="window.__productFallback(this)"/>`;
     return deviceSVG(brandColor(p.brand), p.category);
   }
   function has3D(p) { return (window.MODELS_3D || []).indexOf(p.id) !== -1; }
@@ -111,14 +111,15 @@
         <div class="pdp-info reveal in">
           <div class="pdp-meta">${esc(meta)}</div>
           <h1 class="pdp-name">${esc(p.name)}</h1>
+          ${p.desc ? `<p class="pdp-desc">${esc(p.desc)}</p>` : ""}
           <div class="pdp-availrow">${availability(p)}<a class="pdp-brandlink" href="products.html?brand=${encodeURIComponent(p.brand)}">עוד ממותג ${esc(p.brand)}</a></div>
 
           ${p.bundle ? `<div class="pbundle pdp-bundle">📦 ${esc(p.bundle)}</div>` : ""}
 
           <div class="pdp-pricebox">
-            <span class="pdp-price">${ils(p.price)}</span>
+            <span class="pdp-price">${p.price ? ils(p.price) : "לבירור מחיר"}</span>
             ${p.wasPrice ? `<s class="pwas pdp-was">${ils(p.wasPrice)}</s>` : ""}
-            <span class="pdp-vat">המחיר אינו כולל מע"מ</span>
+            ${p.price ? `<span class="pdp-vat">המחיר אינו כולל מע"מ</span>` : ""}
           </div>
 
           <div class="pdp-cta">
