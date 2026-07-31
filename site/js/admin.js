@@ -4,7 +4,7 @@
 (function () {
   "use strict";
   const $ = (s) => document.querySelector(s);
-  const ils = (n) => "₪ " + Number(n).toLocaleString("he-IL");
+  const ils = (n) => Number(n).toLocaleString("he-IL") + " ₪";
   const esc = (s) =>
     String(s).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

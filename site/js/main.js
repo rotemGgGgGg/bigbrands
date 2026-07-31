@@ -6,7 +6,7 @@
   "use strict";
 
   const $ = (sel, root = document) => root.querySelector(sel);
-  const ils = (n) => "₪ " + Number(n).toLocaleString("he-IL");
+  const ils = (n) => Number(n).toLocaleString("he-IL") + " ₪";
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) =>
