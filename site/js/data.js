@@ -59,8 +59,8 @@ const _PRODUCTS = [
     specs:`14" FHD IPS | Intel Core דור 11 | 16GB DDR4 (חריץ פנוי) | 256GB NVMe | Thunderbolt 4 | WiFi 6 | Win11 Pro`,
     image:_IMG+"1775662389261_9mjb9jirrf.avif" },
   { id:"u12", brand:"HP", name:"HP EliteDesk 800 G6 SFF (i5 דור 10)", category:"יד שנייה", status:"stock", price:1880, wasPrice:2490, badge:"מבצע חם",
-    desc:`מחשב נייח עסקי מחודש של HP מסדרת EliteDesk 800 G6 — מעבד i5 דור 10 חזק, 16GB RAM ו-SSD NVMe מהיר. שקט, קומפקטי ואמין, אידיאלי למשרד ולעבודה מהבית. במחיר מבצע חד-פעמי — משתלם במיוחד לרכישה עכשיו.`,
-    specs:`מחשב נייח SFF | Intel Core i5-10500 | 16GB DDR4 | 256GB NVMe SSD | Intel UHD Graphics | Windows 11 Pro | אחריות ביג ברנדס 12 חודשים`,
+    desc:`מחשב נייח עסקי מחודש של HP מסדרת EliteDesk 800 G6 — מעבד i5 דור 10 חזק, 16GB RAM ו-SSD NVMe מהיר. שקט, קומפקטי ואמין, אידיאלי למשרד ולעבודה מהבית. במחיר מבצע חד-פעמי — משתלם במיוחד לרכישה עכשיו. המחיר כולל מע"מ.`,
+    specs:`מחשב נייח SFF | Intel Core i5-10500 | 16GB DDR4 | 256GB NVMe SSD | Intel UHD Graphics | Windows 11 Pro | אחריות ביג ברנדס 12 חודשים | המחיר כולל מע"מ`,
     image:"assets/products/u12.png" },
 
   /* ── מחשבים חדשים ── */
