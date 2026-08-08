@@ -119,7 +119,7 @@
           <div class="pdp-pricebox">
             <span class="pdp-price">${p.price ? ils(p.price) : "לבירור מחיר"}</span>
             ${p.wasPrice ? `<s class="pwas pdp-was">${ils(p.wasPrice)}</s>` : ""}
-            ${p.price ? `<span class="pdp-vat">המחיר אינו כולל מע"מ</span>` : ""}
+            ${p.price ? `<span class="pdp-vat">המחיר כולל מע"מ</span>` : ""}
           </div>
 
           <div class="pdp-cta">
