@@ -221,18 +221,7 @@
       .join("");
   }
 
-  /* ---------- cart ---------- */
-  let cart = 0;
-  document.addEventListener("click", (e) => {
-    if (e.target.closest(".add")) {
-      e.preventDefault();
-      cart++;
-      const el = $("#cartCount");
-      el.textContent = cart;
-      el.animate([{ transform: "scale(1)" }, { transform: "scale(1.5)" }, { transform: "scale(1)" }],
-        { duration: 300, easing: "ease" });
-    }
-  });
+  /* cart handled by cart.js */
 
   /* ---------- tilt hover (makes media feel touchable) ---------- */
   function initTilt() {

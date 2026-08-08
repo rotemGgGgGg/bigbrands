@@ -147,22 +147,13 @@
       ${relatedCards(p)}
     `;
 
-    $("#pdpAdd").addEventListener("click", () => addToCart());
     initTilt();
     initReveal();
   }
 
-  let cart = 0;
-  function addToCart() {
-    cart++;
-    const el = $("#cartCount");
-    el.textContent = cart;
-    el.animate([{ transform: "scale(1)" }, { transform: "scale(1.5)" }, { transform: "scale(1)" }], { duration: 300 });
-  }
-
   /* card clicks within related grid: navigate, but + button adds to cart */
   document.addEventListener("click", (e) => {
-    if (e.target.closest(".add")) { e.preventDefault(); addToCart(); return; }
+    if (e.target.closest(".add")) return;
     const card = e.target.closest(".p-card");
     if (card && card.dataset.id) location.href = "product.html?id=" + encodeURIComponent(card.dataset.id);
   });

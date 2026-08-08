@@ -41,7 +41,7 @@ const _PRODUCTS = [
   { id:"u7", brand:"Dell", name:"Dell Latitude 5430 (Core i7)", category:"יד שנייה", status:"stock", price:2299, badge:"",
     desc:`מחשב נייד עסקי מוביל של Dell עם מעבד i7 דור 11 ומקלדת עברית מלאה — הבחירה המקצועית לעסקים ולעבודה יומיומית תובענית.`,
     specs:`14" FHD (1920x1200) | Intel i7 דור 11 | 16GB DDR4 | 256GB NVMe | Iris Xe | Thunderbolt 4 | מקלדת עברית`,
-    image:"assets/products/u7.png" },
+    image:"assets/products/u7.webp" },
   { id:"u8", brand:"Lenovo", series:"X", name:"Lenovo ThinkPad X13 Gen 2 (FHD+)", category:"יד שנייה", status:"stock", price:1650, badge:"",
     desc:`מחשב נייד קומפקטי ואיכותי מסדרת ThinkPad X — מסך גבוה במיוחד וקורא טביעת אצבע לאבטחה נוחה.`,
     specs:`IPS FHD (1920x1200) | 1.27 ק"ג | SSD NVMe | WiFi 6 | Thunderbolt 4 | קורא טביעת אצבע`,
