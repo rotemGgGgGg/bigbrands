@@ -113,7 +113,10 @@
 
   function recommend(it) {
     let list = products().slice().filter((p) => p.price > 0);
-    if (it.type && it.type !== "computer") list = list.filter((p) => ptype(p) === it.type);
+    // If no explicit type: exclude accessories (nobody comes here to buy a 25₪ cable when asking for "משהו זול").
+    // Accessories only appear when the user explicitly asked for one.
+    if (!it.type) list = list.filter((p) => ptype(p) !== "accessory");
+    else if (it.type !== "computer") list = list.filter((p) => ptype(p) === it.type);
     if (it.type === "computer") list = list.filter((p) => ptype(p) === "laptop" || ptype(p) === "desktop");
     if (it.cond === "used") list = list.filter((p) => p.category === "יד שנייה");
     if (it.cond === "new") list = list.filter((p) => p.category === "מחשבים חדשים");
