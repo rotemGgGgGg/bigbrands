@@ -134,7 +134,7 @@
   }
 
   /* ---------- UI ---------- */
-  let root, body, awaiting = null, greeted = false;
+  let root, body, awaiting = null, pending = null, greeted = false;
   const logo = "assets/logo.png";
 
   function build() {
@@ -264,6 +264,14 @@
 
     const it = parse(t);
 
+    // carry forward the previous pending shopping context (budget/pricePref/urgent)
+    if (pending) {
+      if (!it.budget && pending.budget) it.budget = pending.budget;
+      if (!it.pricePref && pending.pricePref) it.pricePref = pending.pricePref;
+      if (!it.urgent && pending.urgent) it.urgent = pending.urgent;
+      pending = null;
+    }
+
     if (/^עוד אפשרויות/.test(t) && window.__cbotMore && window.__cbotMore.length) {
       botSay(() => { botBubble(`בכיף, עוד כמה:`); window.__cbotMore.slice(0, 3).forEach(productCard); window.__cbotMore = window.__cbotMore.slice(3); chips(window.__cbotMore.length ? ["עוד אפשרויות ➕", "דבר עם נציג 💬"] : ["דבר עם נציג 💬"]); });
       return;
@@ -275,9 +283,12 @@
     if (it.greet) { botSay(() => { botBubble(`היי! 😊 מה אתם מחפשים היום?`); chips(["מחשב לעסק 💼", "יד שנייה ♻️", "המלצה לפי תקציב 💰"]); }); return; }
     if (it.thanks) { botSay(() => botBubble(`שמחתי לעזור! 🙌 יש עוד משהו שאפשר לעזור בו?`)); return; }
 
-    // any product-ish intent → recommend
-    const hasIntent = it.budget || it.type || it.use || it.cond || it.brand || it.specs || it.pricePref || it.urgent || it.want;
-    if (hasIntent) {
+    // A "solid" intent has a concrete product hook: type / use / brand / specs / cond
+    const solid = it.type || it.use || it.cond || it.brand || it.specs;
+    // A "shopping" hint is money/urgency/want — not enough on its own to guess a product.
+    const shopping = it.budget || it.pricePref || it.urgent || it.want;
+
+    if (solid) {
       const bits = [];
       if (it.pricePref === "low") bits.push("הכי משתלם");
       if (it.pricePref === "high") bits.push("הפרימיום שלנו");
@@ -297,16 +308,28 @@
       else if (it.type === "computer") bits.push("מחשב");
       if (it.brand) bits.push(it.brand);
       if (it.budget) bits.push("עד " + ils(it.budget));
-      const intro = bits.length
-        ? `הבנתי — ${bits.join(" · ")}. הנה מה שיש לי בשבילכם:`
-        : `בכיף, הנה כמה המלצות מעולות מהמלאי:`;
-      resultsFor(it, intro);
+      resultsFor(it, `הבנתי — ${bits.join(" · ")}. הנה מה שיש לי:`);
       return;
     }
 
-    // fallback — try to still help
+    // Shopping-ish but no product type — ask a targeted clarifying question.
+    if (shopping) {
+      pending = { budget: it.budget, pricePref: it.pricePref, urgent: it.urgent };
+      const lead = it.budget
+        ? `סבבה, תקציב של עד ${ils(it.budget)} — מה בדיוק אתם מחפשים?`
+        : it.pricePref === "low"
+        ? `אני איתכם על "משתלם" 💸 — איזה סוג מוצר: מחשב נייד, מחשב נייח, או מסך?`
+        : `כדי לצמצם — איזה סוג מוצר מעניין אתכם?`;
+      botSay(() => {
+        botBubble(lead);
+        chips(["מחשב נייד 💻", "מחשב נייח 🖥️", "מסך 🖼️", "באנדל מלא 📦", "יד שנייה ♻️"]);
+      });
+      return;
+    }
+
+    // Total fallback
     botSay(() => {
-      botBubble(`לא הצלחתי לפענח בדיוק את הבקשה 🤔 אבל בואו ננסה אחרת — מה מתאים לכם?`);
+      botBubble(`לא הצלחתי לפענח 🤔 מה תרצו לעשות?`);
       chips(["הכי זול שיש 💸", "מחשב לעסק 💼", "מחשב נייד 💻", "מחשב נייח 🖥️", "יד שנייה ♻️", "המלצה לפי תקציב 💰", "דבר עם נציג 💬"]);
     });
   }
