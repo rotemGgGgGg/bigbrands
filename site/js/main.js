@@ -15,7 +15,7 @@
 
   /* ---------- brand helpers ---------- */
   const BRAND_SLUG = { HP: "hp", Dell: "dell", Apple: "apple", Lenovo: "lenovo", ASUS: "asus", Sony: "sony" };
-  const BRAND_EXT  = { ASUS: "svg" }; // per-brand logo file extension (default: png)
+  const BRAND_EXT  = {}; // per-brand logo file extension (default: png)
   function brandColor(brand) {
     return ({
       HP: "#0096d6", Dell: "#007db8", Apple: "#1d1d1f",
