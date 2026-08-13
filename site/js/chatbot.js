@@ -19,50 +19,102 @@
     return "laptop";
   }
 
+  /* ---------- normalization ---------- */
+  // collapse stretched letters (חייייבב → חיב), strip niqqud + punctuation, lowercase
+  function normalize(t) {
+    let s = String(t || "").toLowerCase();
+    s = s.replace(/[֑-ׇ]/g, "");           // niqqud/te'amim
+    s = s.replace(/["'׳״`.!?,:;()\[\]{}\-–—]/g, " "); // punctuation
+    s = s.replace(/([֐-׿a-z])\1{1,}/g, "$1"); // collapse repeats: אאא→א, לוווו→לו
+    s = s.replace(/\s+/g, " ").trim();
+    return " " + s + " ";
+  }
+
   /* ---------- intent parsing ---------- */
   function parse(t) {
-    const s = " " + t.toLowerCase().replace(/[,]/g, "") + " ";
+    const s = normalize(t);
     const it = { raw: t };
-    const bud = t.replace(/,/g, "").match(/(?:עד|תקציב|מקסימום|בסביבות|במסגרת|לא יותר מ)\D{0,4}(\d{3,6})/) || t.replace(/,/g, "").match(/(\d{3,6})\s*(?:₪|שקל|שח)/) || (t.replace(/,/g,"").match(/^\s*(\d{3,6})\s*$/));
-    if (bud) it.budget = parseInt(bud[1]);
-    if (/עסק|משרד|עבוד|חברה|ארגון/.test(s)) it.use = "business";
-    else if (/גיימינג|גיימ|משחק|gaming/.test(s)) it.use = "gaming";
-    else if (/סטודנט|לימוד|בית ספר|אוניברסיט/.test(s)) it.use = "student";
-    else if (/בית|ביתי|גלישה|נטפליקס|יומיום/.test(s)) it.use = "home";
-    else if (/עריכ|וידאו|גרפי|render|כבד|תובעני|פוטושופ/.test(s)) it.use = "heavy";
-    if (/נייד|לפטופ|laptop|מחברת/.test(s)) it.type = "laptop";
-    else if (/נייח|דסקטופ|מגדל|desktop|tiny|מיני/.test(s)) it.type = "desktop";
-    else if (/מסך|מוניטור|monitor|צג/.test(s)) it.type = "monitor";
-    else if (/מקלדת|עכבר|כבל|מטען|אופיס|office|אביזר/.test(s)) it.type = "accessory";
-    else if (/באנדל|חביל|מארז|bundle/.test(s)) it.type = "bundle";
-    if (/יד ?שני|מחודש|משומש|רפרביש|refurb/.test(s)) it.cond = "used";
-    else if (/חדש לגמרי|חדשים|new/.test(s)) it.cond = "new";
-    if (/לנובו|lenovo|thinkpad|thinkcentre/.test(s)) it.brand = "Lenovo";
-    else if (/\bhp\b|elitedesk|probook|היו?לט/.test(s)) it.brand = "HP";
-    else if (/דל|dell|latitude/.test(s)) it.brand = "Dell";
+
+    // budget — many forms: "עד 1500", "בסביבות 2000", "1500 שח", "1500ש", "1.5k", or just a bare number
+    const rawNum = t.replace(/,/g, "");
+    let bud =
+      rawNum.match(/(?:עד|תקציב|מקסימום|מקס|בסביבות|במסגרת|לא יותר מ|לא יותר|בערך|כ ?)\D{0,4}(\d{3,6})/) ||
+      rawNum.match(/(\d{3,6})\s*(?:₪|שקל|שח|ש["׳]|ש)/) ||
+      rawNum.match(/(\d(?:\.\d)?)\s*(?:k|קי|K)\b/i) ||
+      rawNum.match(/^\s*(\d{3,6})\s*$/);
+    if (bud) {
+      let n = parseFloat(bud[1]);
+      if (/k|קי|K/i.test(bud[0]) && n < 20) n = Math.round(n * 1000);
+      it.budget = Math.round(n);
+    }
+
+    // cheap / expensive / best (works without any budget number)
+    if (/זול|הכי זול|הכי משתלם|הזול|משתלם|בזול|במחיר טוב|במחיר נמוך|לא יקר|בזול/.test(s)) it.pricePref = "low";
+    else if (/יקר|פרימיום|הכי טוב|הטוב ביותר|טופ|top|הכי חזק|החזק|premium/.test(s)) it.pricePref = "high";
+
+    // urgency / availability
+    if (/דחוף|מיד|עכשיו|מהר|בזריז|בזרז|בזירז|היום|במלאי|יש במלאי|לקנות עכשיו|חייב עכשיו|אני חיב/.test(s)) it.urgent = true;
+
+    // upgrade / need something
+    if (/צריך|צריכה|רוצה|מחפש|מחפשת|מעונין|מעונינת|יש לכם|יש לך|מה יש|מה אתם ממליצים|תמליץ|תמליצי|המלץ|המליצו|חיב|חיבת/.test(s)) it.want = true;
+
+    // use-case
+    if (/עסק|משרד|עבוד|חברה|ארגון|אקסל|וורד|זום|אאוטלוק/.test(s)) it.use = "business";
+    else if (/גיימינג|גיימ|משחק|gaming|פורטנייט|fortnite|cs|קאונטר|לול|lol|fifa/.test(s)) it.use = "gaming";
+    else if (/סטודנט|לימוד|בית ספר|אוניברסיט|קמפוס/.test(s)) it.use = "student";
+    else if (/בית|ביתי|גלישה|נטפליקס|יוטיוב|יומיום|לילדים|לילד|לילדה|לאמא|לאבא|לסבתא|לסבא/.test(s)) it.use = "home";
+    else if (/עריכ|וידאו|גרפי|render|רנדר|כבד|תובעני|פוטושופ|פרימייר|premiere|פיתוח|dev|coding|קוד|תלת מימד|3d/.test(s)) it.use = "heavy";
+
+    // product type — includes many colloquial variants
+    if (/נייד|לפטופ|laptop|מחברת|מקבוק|macbook|מאקבוק/.test(s)) it.type = "laptop";
+    else if (/נייח|דסקטופ|מגדל|desktop|tiny|מיני|מיקרו|micro|טאואר|tower/.test(s)) it.type = "desktop";
+    else if (/\bמסך\b|מוניטור|monitor|צג|תצוגה/.test(s)) it.type = "monitor";
+    else if (/מקלדת|עכבר|כבל|מטען|אופיס|office|אביזר|אזניות|אוזני|רמקול|מיקרופון|מדפסת|סורק/.test(s)) it.type = "accessory";
+    else if (/באנדל|חביל|חבילה|מארז|bundle|קומפלט|קומפלה/.test(s)) it.type = "bundle";
+    else if (/\bמחשב\b|מחשוב|pc/.test(s)) it.type = "computer"; // generic — laptop OR desktop
+
+    // condition
+    if (/יד ?שני|מחודש|משומש|רפרביש|refurb|יד2|יד ב/.test(s)) it.cond = "used";
+    else if (/חדש לגמרי|חדשים|חדש|new|באריזה|מוגדר/.test(s)) it.cond = "new";
+
+    // brand
+    if (/לנובו|lenovo|thinkpad|thinkcentre|קפדן/.test(s)) it.brand = "Lenovo";
+    else if (/\bhp\b|elitedesk|probook|היו?לט|אצ ?פי/.test(s)) it.brand = "HP";
+    else if (/\bdell\b|דל|latitude|optiplex|לטיטיוד|אופטיפלקס/.test(s)) it.brand = "Dell";
+    else if (/apple|אפל|mac|מק|macbook|imac/.test(s)) it.brand = "Apple";
+    else if (/asus|אסוס/.test(s)) it.brand = "ASUS";
+
+    // specs
     const specs = [];
     if (/32 ?gb|32 ?ג/.test(s)) specs.push("32GB");
     else if (/16 ?gb|16 ?ג/.test(s)) specs.push("16GB");
-    if (/i7|איי? ?7/.test(s)) specs.push("i7");
+    else if (/8 ?gb|8 ?ג/.test(s)) specs.push("8GB");
+    if (/i7|איי? ?7|קור ?7|core ?7/.test(s)) specs.push("i7");
+    else if (/i5|איי? ?5|קור ?5|core ?5/.test(s)) specs.push("i5");
     if (/512/.test(s)) specs.push("512GB");
-    if (/1 ?tb|1 ?טרה/.test(s)) specs.push("1TB");
+    else if (/256/.test(s)) specs.push("256GB");
+    if (/1 ?tb|1 ?טרה|טרה/.test(s)) specs.push("1TB");
     if (specs.length) it.specs = specs;
 
     // FAQ intents
-    if (/משלוח|מתי מגיע|זמן אספק|שילוח/.test(s)) it.faq = "shipping";
-    else if (/אחריות|warranty|תיקון|קלקל/.test(s)) it.faq = "warranty";
-    else if (/תשלום|אשראי|קרדיט|פייבוקס|ביט|תשלומים|payment/.test(s)) it.faq = "payment";
-    else if (/החזר|ביטול|לא מרוצה|return|refund/.test(s)) it.faq = "returns";
-    else if (/מה זה יד|למה יד שני|מחודש זה|refurb\?/.test(s)) it.faq = "refurb";
-    else if (/נציג|אנוש|טלפון|וואטסאפ|whatsapp|לדבר עם|צור קשר/.test(s)) it.faq = "contact";
-    if (/^(שלום|היי|הי|הלו|אהלן|בוקר טוב|ערב טוב|hello|hey|hi)\b/.test(t.trim().toLowerCase())) it.greet = true;
-    if (/תודה|thanks|יופי|מעולה|סבבה/.test(s)) it.thanks = true;
+    if (/משלוח|מתי מגיע|זמן אספק|שילוח|איך שולחים|לוקח זמן/.test(s)) it.faq = "shipping";
+    else if (/אחריות|warranty|תיקון|קלקל|מתקלק|נשבר|שבור|יש בעיה|תקוע/.test(s)) it.faq = "warranty";
+    else if (/תשלום|אשראי|קרדיט|פייבוקס|ביט|תשלומים|payment|לשלם|במזומן/.test(s)) it.faq = "payment";
+    else if (/החזר|ביטול|לא מרוצה|return|refund|להחזיר/.test(s)) it.faq = "returns";
+    else if (/מה זה יד|למה יד שני|מחודש זה|refurb\?|מה זה מחודש|יד שני?ה זה/.test(s)) it.faq = "refurb";
+    else if (/נציג|אנוש|טלפון|וואטסאפ|whatsapp|לדבר עם|צור קשר|מוקד|שרות|שירות/.test(s)) it.faq = "contact";
+
+    // greetings / thanks
+    if (/^(שלום|הי|הלו|אהלן|אהלה|בוקר טוב|ערב טוב|יו|hello|hey|hi|sup)\b/.test(s.trim())) it.greet = true;
+    if (/תודה|thanks|יופי|מעולה|סבבה|וואלה|אחלה/.test(s)) it.thanks = true;
+
     return it;
   }
 
   function recommend(it) {
-    let list = products().slice();
-    if (it.type) list = list.filter((p) => it.type === "used" ? true : ptype(p) === it.type);
+    let list = products().slice().filter((p) => p.price > 0);
+    if (it.type && it.type !== "computer") list = list.filter((p) => ptype(p) === it.type);
+    if (it.type === "computer") list = list.filter((p) => ptype(p) === "laptop" || ptype(p) === "desktop");
     if (it.cond === "used") list = list.filter((p) => p.category === "יד שנייה");
     if (it.cond === "new") list = list.filter((p) => p.category === "מחשבים חדשים");
     if (it.brand) list = list.filter((p) => p.brand === it.brand);
@@ -71,7 +123,10 @@
     if (it.use === "business" || it.use === "student" || it.use === "home")
       list = list.filter((p) => ptype(p) === "laptop" || ptype(p) === "desktop");
     if (it.use === "heavy") list = list.filter((p) => /i7|32GB|16GB/i.test(p.specs || ""));
-    list.sort((a, b) => a.price - b.price);
+    if (it.urgent) list = list.filter((p) => p.status === "stock" || !p.status);
+    // sort: pricePref wins, else default cheap→expensive
+    if (it.pricePref === "high") list.sort((a, b) => b.price - a.price);
+    else list.sort((a, b) => a.price - b.price);
     return list;
   }
 
@@ -218,22 +273,38 @@
     if (it.thanks) { botSay(() => botBubble(`שמחתי לעזור! 🙌 יש עוד משהו שאפשר לעזור בו?`)); return; }
 
     // any product-ish intent → recommend
-    if (it.budget || it.type || it.use || it.cond || it.brand || it.specs) {
+    const hasIntent = it.budget || it.type || it.use || it.cond || it.brand || it.specs || it.pricePref || it.urgent || it.want;
+    if (hasIntent) {
       const bits = [];
+      if (it.pricePref === "low") bits.push("הכי משתלם");
+      if (it.pricePref === "high") bits.push("הפרימיום שלנו");
+      if (it.urgent) bits.push("מוכן במלאי");
       if (it.cond === "used") bits.push("יד שנייה");
+      if (it.cond === "new") bits.push("חדש");
       if (it.use === "business") bits.push("לעסק");
       if (it.use === "gaming") bits.push("לגיימינג");
-      if (it.type === "monitor") bits.push("מסך");
+      if (it.use === "student") bits.push("לסטודנטים");
+      if (it.use === "home") bits.push("לבית");
+      if (it.use === "heavy") bits.push("לעבודה כבדה");
+      if (it.type === "laptop") bits.push("מחשב נייד");
+      else if (it.type === "desktop") bits.push("מחשב נייח");
+      else if (it.type === "monitor") bits.push("מסך");
+      else if (it.type === "accessory") bits.push("אביזרים");
+      else if (it.type === "bundle") bits.push("באנדל");
+      else if (it.type === "computer") bits.push("מחשב");
       if (it.brand) bits.push(it.brand);
       if (it.budget) bits.push("עד " + ils(it.budget));
-      resultsFor(it, bits.length ? `חיפשתם ${bits.join(" · ")} — הנה ההמלצות שלי:` : null);
+      const intro = bits.length
+        ? `הבנתי — ${bits.join(" · ")}. הנה מה שיש לי בשבילכם:`
+        : `בכיף, הנה כמה המלצות מעולות מהמלאי:`;
+      resultsFor(it, intro);
       return;
     }
 
-    // fallback
+    // fallback — try to still help
     botSay(() => {
-      botBubble(`לא בטוח שהבנתי במדויק 🤔 אפשר לנסות אחת מאלה, או לכתוב תקציב וסוג מוצר:`);
-      chips(["מחשב לעסק 💼", "יד שנייה ♻️", "המלצה לפי תקציב 💰", "משלוח ואחריות 🚚", "דבר עם נציג 💬"]);
+      botBubble(`לא הצלחתי לפענח בדיוק את הבקשה 🤔 אבל בואו ננסה אחרת — מה מתאים לכם?`);
+      chips(["הכי זול שיש 💸", "מחשב לעסק 💼", "מחשב נייד 💻", "מחשב נייח 🖥️", "יד שנייה ♻️", "המלצה לפי תקציב 💰", "דבר עם נציג 💬"]);
     });
   }
 
