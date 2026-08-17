@@ -412,6 +412,11 @@ button { font-family: inherit; cursor: pointer; }
 .p-card .pstock.low { color: #ca8a04; }
 .p-card .pstock.req { color: var(--text-faint); }
 .pwas { color: var(--text-faint); font-weight: 600; font-size: .78em; text-decoration: line-through; margin-inline-start: 6px; }
+.pcond { display: inline-block; font-size: 11px; font-weight: 700; font-family: "Heebo", sans-serif; padding: 2px 8px; border-radius: 20px; margin-bottom: var(--s2); letter-spacing: .03em; }
+.pcond--used { background: #f1f5f9; color: #64748b; }
+.pcond--new  { background: #dcfce7; color: #16a34a; }
+[data-theme="dark"] .pcond--used { background: rgba(255,255,255,.08); color: #94a3b8; }
+[data-theme="dark"] .pcond--new  { background: rgba(22,163,74,.18); color: #4ade80; }
 .pdp-was { font-size: var(--fs-md); margin-inline-start: var(--s2); }
 .p-card .prow { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
 .p-card .pprice { color: #d9024c; font-weight: 800; font-size: var(--fs-lg); font-variant-numeric: tabular-nums; font-family: "Space Grotesk", "Rubik", sans-serif; }

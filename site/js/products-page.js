@@ -101,11 +101,18 @@
     if (!list.length) { $("#grid").innerHTML = ""; $("#empty").hidden = false; return; }
     $("#empty").hidden = true;
 
+    const condLabel = (p) => {
+      if (p.category === "יד שנייה") return `<span class="pcond pcond--used">מחודש</span>`;
+      if (p.category === "מחשבים חדשים") return `<span class="pcond pcond--new">חדש</span>`;
+      return "";
+    };
+
     $("#grid").innerHTML = list.map((p) => `
       <article class="p-card" data-id="${p.id}">
         ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
         ${media(p)}
         <a class="pname" href="product.html?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>
+        ${condLabel(p)}
         <div class="pspecs">${esc(p.specs || "")}</div>
         ${p.bundle ? `<div class="pbundle">📦 ${esc(p.bundle)}</div>` : ""}
         ${availability(p)}

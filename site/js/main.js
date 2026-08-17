@@ -165,6 +165,7 @@
           <div class="tag">${escapeHtml(f.tag)}</div>
           <div class="media">${productMedia(p)}</div>
           <div class="pname">${escapeHtml(p.name)}</div>
+          ${p.category === "יד שנייה" ? `<span class="pcond pcond--used">מחודש</span>` : p.category === "מחשבים חדשים" ? `<span class="pcond pcond--new">חדש</span>` : ""}
           <div class="pprice">${p.price ? ils(p.price) : "לבירור מחיר"}${p.wasPrice ? ` <s class="pwas">${ils(p.wasPrice)}</s>` : ""}</div>
         </a>`;
       })
