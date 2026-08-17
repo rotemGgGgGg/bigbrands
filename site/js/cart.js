@@ -7,7 +7,7 @@
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
   const save = (c) => localStorage.setItem(KEY, JSON.stringify(c));
 
-  const catalog = () => (window.Store?.products?.() || window._PRODUCTS || []);
+  const catalog = () => (window.Store?.getProducts?.() || window.SITE_DATA?.products || []);
   const find = (id) => catalog().find((p) => p.id === id);
 
   const totalQty = (c) => Object.values(c).reduce((a, b) => a + b, 0);
@@ -53,7 +53,16 @@
     });
   }
 
-  function open() { ensureDrawer(); render(); document.body.classList.add("bb-cart-lock"); $(".bb-cart-scrim").classList.add("open"); $(".bb-cart").classList.add("open"); }
+  function open() {
+    ensureDrawer(); render();
+    document.body.classList.add("bb-cart-lock");
+    const scrim = $(".bb-cart-scrim"), drawer = $(".bb-cart");
+    // If the drawer was just inserted, its closed transform hasn't painted yet.
+    // Wait two frames so the browser commits translateX(-101%) before we animate to 0.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      scrim.classList.add("open"); drawer.classList.add("open");
+    }));
+  }
   function close() { document.body.classList.remove("bb-cart-lock"); $(".bb-cart-scrim")?.classList.remove("open"); $(".bb-cart")?.classList.remove("open"); }
 
   function render() {
@@ -124,4 +133,7 @@
   }, true);
 
   window.addEventListener("DOMContentLoaded", updateBadge);
+
+  /* debug handle — window.__cart.add("u3"); window.__cart.state() */
+  window.__cart = { add, setQty, clearCart, load, catalog, find, totalQty, totalPrice, open, close, state: load };
 })();

@@ -792,8 +792,8 @@ button { font-family: inherit; cursor: pointer; }
 /* ---- Cart drawer ---- */
 .bb-cart-scrim{position:fixed;inset:0;background:rgba(10,15,25,0);z-index:1000;pointer-events:none;transition:background .2s ease}
 .bb-cart-scrim.open{background:rgba(10,15,25,.55);pointer-events:auto;backdrop-filter:blur(4px)}
-.bb-cart{position:fixed;top:0;bottom:0;inset-inline-start:0;width:min(420px,92vw);background:var(--panel,#fff);color:var(--text,#0b1220);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 20px 60px rgba(0,0,0,.35);z-index:1001}
-html[dir="rtl"] .bb-cart{transform:translateX(-100%)}
+/* physical left/right — NOT inset-inline (which flips under dir=rtl and stranded the drawer mid-screen) */
+.bb-cart{position:fixed;top:0;bottom:0;left:0;right:auto;width:min(420px,92vw);background:var(--panel,#fff);color:var(--text,#0b1220);display:flex;flex-direction:column;transform:translateX(-101%);transition:transform .36s cubic-bezier(.22,.61,.36,1);box-shadow:0 24px 70px rgba(0,0,0,.4);z-index:1001;will-change:transform}
 .bb-cart.open{transform:translateX(0)}
 .bb-cart-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border,#e5e7eb)}
 .bb-cart-head h3{margin:0;font-size:20px;font-weight:800}
@@ -828,3 +828,12 @@ body.bb-cart-lock{overflow:hidden}
 [data-theme="dark"] .bb-cart-img{background:#111827;border-color:#1f2937}
 [data-theme="dark"] .bb-qty-btn{background:#111827;border-color:#1f2937;color:#e5e7eb}
 [data-theme="dark"] .bb-cart-foot{background:#0f172a}
+
+/* ---- Scroll reveal (reveal.js) ---- */
+.rv-w{display:inline-block;opacity:0;transform:translateY(.6em);filter:blur(6px);transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1),filter .5s ease;transition-delay:calc(var(--rw,0) * 60ms);will-change:opacity,transform}
+.rv-split.rv-in .rv-w{opacity:1;transform:none;filter:none}
+.rv-up{opacity:0;transform:translateY(26px);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+.rv-up.rv-in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  .rv-w,.rv-up{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
+}
