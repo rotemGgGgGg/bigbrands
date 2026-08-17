@@ -22,7 +22,7 @@ const _PRODUCTS = [
     desc:`מחשב נייד קומפקטי (13 אינץ') וקל במיוחד מסדרת ThinkPad X — מושלם לניידות מלאה, לעבודה בדרכים ולסטודנטים.`,
     specs:`13.3" IPS | Intel Core דור 11 | 16GB RAM | 256GB SSD | ~1.24 ק"ג | USB-C`,
     image:_IMG+"1777018645588_x8a6jds05if.png" },
-  { id:"u3", brand:"Lenovo", series:"T", name:"Lenovo ThinkPad T14 Gen 1", category:"יד שנייה", status:"stock", price:1299, badge:"",
+  { id:"u3", brand:"Lenovo", series:"T", name:"Lenovo ThinkPad T14 Gen 1", category:"יד שנייה", status:"stock", price:1399, badge:"",
     desc:`מחשב נייד עסקי איכותי מחודש של Lenovo — ביצועים יציבים ואמינים לעבודה שגרתית במחיר משתלם במיוחד.`,
     specs:`14" FHD IPS | Intel Core דור 10 | 16GB RAM | 256GB SSD | Thunderbolt 3 | Win11 Pro`,
     image:_IMG+"1777018513469_vlq03kow2r.jpg" },
