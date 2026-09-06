@@ -94,7 +94,7 @@ const _PRODUCTS = [
     desc:`חבילה מלאה להקמת עמדת עבודה — מחשב, מסך, מקלדת ועכבר יחד במחיר משתלם במיוחד, מוכן להפעלה מהיום הראשון.`,
     specs:`HP EliteDesk 800 G2 Mini + מסך MAG 24" + מקלדת ועכבר אלחוטיים Logitech MK270`,
     image:_IMG+"1775925449384_rao3c5o6cr.png" },
-  { id:"b2", brand:"Lenovo", name:"באנדל לבית ולמשרד — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:999, wasPrice:1135, badge:"חיסכון 12%",
+  { id:"b2", brand:"Lenovo", name:"באנדל לבית ולמשרד — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:1120, wasPrice:1135, badge:"חיסכון 12%",
     desc:`כל מה שצריך להקמת עמדת עבודה בבית או במשרד — במחיר של מחשב אחד. פתרון חסכוני ומעולה למשרד.`,
     specs:`לנובו ThinkCentre M93p + מסך MAG 24" + מקלדת ועכבר אלחוטיים Logitech MK270`,
     image:_IMG+"1775924579444_5ls1wq3uw2g.png" },
