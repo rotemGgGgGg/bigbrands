@@ -154,7 +154,7 @@ window.SITE_DATA = {
     { tag: "מומלץ לעסקים", productId: "u7" },
     { tag: "במבצע", productId: "u3" },
     { tag: "חדש בחנות", productId: "n3" },
-    { tag: "באנדל משתלם", productId: "b1" },
+    { tag: "באנדל משתלם", productId: "b2" },
     { tag: "למשרד הקומפקטי", productId: "u10" },
   ],
 
