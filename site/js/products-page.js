@@ -112,7 +112,6 @@
         ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
         ${media(p)}
         <a class="pname" href="product.html?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>
-        ${condLabel(p)}
         <div class="pspecs">${esc(p.specs || "")}</div>
         ${p.bundle ? `<div class="pbundle">📦 ${esc(p.bundle)}</div>` : ""}
         ${availability(p)}
