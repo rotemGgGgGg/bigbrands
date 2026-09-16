@@ -276,9 +276,37 @@
     onScroll();
   }
 
+  /* ---------- search ---------- */
+  function initSearch() {
+    const form = document.querySelector(".search");
+    if (!form) return;
+    const input = form.querySelector("input[type='search']");
+    const btn = form.querySelector(".go");
+
+    const handleSearch = () => {
+      const query = input.value.trim();
+      if (query) {
+        location.href = "products.html?search=" + encodeURIComponent(query);
+      }
+    };
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleSearch();
+    });
+
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearch();
+      }
+    });
+  }
+
   function boot() {
     renderNav();
     initDropdown();
+    initSearch();
     renderHero();
     renderFeatured();
     renderBrandTiles();

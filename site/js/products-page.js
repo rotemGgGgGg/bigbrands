@@ -32,7 +32,7 @@
 
   function params() {
     const u = new URLSearchParams(location.search);
-    return { brand: u.get("brand"), category: u.get("category"), series: u.get("series") };
+    return { brand: u.get("brand"), category: u.get("category"), series: u.get("series"), search: u.get("search") };
   }
 
   const SERIES_LABELS = {
@@ -79,12 +79,21 @@
   }
 
   function render() {
-    const { brand, category, series } = params();
+    const { brand, category, series, search } = params();
     let list = Store.getProducts();
     let title = "כל המוצרים";
 
-    if (brand) { list = list.filter((p) => p.brand === brand); title = "מוצרי " + brand; }
-    else if (category) { list = list.filter((p) => p.category === category); title = category; }
+    if (search) {
+      const query = search.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(query));
+      title = "תוצאות חיפוש: " + esc(search);
+    } else if (brand) {
+      list = list.filter((p) => p.brand === brand);
+      title = "מוצרי " + brand;
+    } else if (category) {
+      list = list.filter((p) => p.category === category);
+      title = category;
+    }
 
     // Lenovo sub-filter by series
     const brandList = list.slice();
