@@ -88,6 +88,10 @@ const _PRODUCTS = [
     desc:`מחשב נייד מקצועי של Apple עם שבב M5 Pro החדש — ביצועים יוצאי דופן לעריכת וידאו, יצירה ופיתוח, בעיצוב אלגנטי.`,
     specs:`14" | Apple M5 Pro 15-Core CPU | 16-Core GPU | 24GB RAM | 1TB SSD | macOS | צבע: Space Black`,
     image:"assets/products/n4.png" },
+  { id:"n5", brand:"HP", name:"HP ProBook 440 G11 (Core Ultra 7)", category:"מחשבים חדשים", status:"stock", price:3990, badge:"חדש",
+    desc:`מחשב נייד עסקי של HP עם מעבד Intel Core Ultra 7 החדש ישר — מהיר, חסכוני בחשמל וחזק לעבודה יומיומית ולמשימות מקצועיות. כולל Windows 11 Pro מקורי.`,
+    specs:`14" WUXGA (1920x1200) | Intel Core Ultra 7 255U | 16GB DDR5 RAM | 512GB NVMe SSD | Intel Graphics | Windows 11 Pro | אחריות יבואן 4 שנים`,
+    image:"" },
 
   /* ── באנדלים ── */
   { id:"b1", brand:"HP", name:"באנדל מקצועי HP — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:1075, wasPrice:1265, badge:"חיסכון 15%",
