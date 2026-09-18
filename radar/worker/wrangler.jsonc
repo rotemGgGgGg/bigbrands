@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "radar",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "radar",
+      // Filled in by `wrangler d1 create radar`.
+      "database_id": "REPLACE_ME"
+    }
+  ],
+  "vars": {
+    "MIN_WALLETS": "3",
+    "WINDOW_MINUTES": "10",
+    "MIN_SOL_BUY": "0.05",
+    "MIN_SCORE_TO_ALERT": "50",
+    "RE_ALERT_MINUTES": "60",
+    "RE_ALERT_WALLET_DELTA": "2"
+  },
+  "triggers": {
+    // Housekeeping: drop buys older than a day.
+    "crons": ["17 * * * *"]
+  }
+}

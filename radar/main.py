@@ -12,6 +12,7 @@ import time
 
 import config
 import confluence
+import followup
 import notify
 import solana
 import store as store_mod
@@ -157,6 +158,10 @@ def main() -> int:
         store.close()
         return 0
 
+    # Background thread: snapshot each alerted token's price at +15m/+1h/+24h
+    # so thresholds can be tuned on outcomes rather than on memory.
+    followup_stop = followup.start()
+
     if config.SKIP_STALE_DAYS:
         stale = store.stale_addresses(time.time() - config.SKIP_STALE_DAYS * 86400)
         active = [w for w in wallet_list if w["address"] not in stale]
@@ -198,6 +203,7 @@ def main() -> int:
             last_prune = now
 
     check_and_alert(store, names)
+    followup_stop.set()
     store.close()
     return 0
 
