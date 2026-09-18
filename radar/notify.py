@@ -7,26 +7,44 @@ import requests
 import config
 
 
+def _band(score: int) -> str:
+    """Plain-language reading of the score, so the number is not on its own."""
+    if score >= 80:
+        return "\U0001F534 STRONG"
+    if score >= 65:
+        return "\U0001F7E0 NOTABLE"
+    return "\U0001F7E1 WEAK"
+
+
 def format_alert(event: dict, wallet_names: dict) -> str:
     mint = event["mint"]
-    names = [wallet_names.get(w, w[:4] + "…" + w[-4:]) for w in event["wallets"]]
+    names = [wallet_names.get(w, w[:4] + "\u2026" + w[-4:]) for w in event["wallets"]]
     span = int(event["span_sec"])
     age = int(event["mint_age_sec"] / 60)
-    when = datetime.datetime.now().strftime("%H:%M:%S")
+    age_text = "just now" if age < 1 else f"{age} min ago"
 
     lines = [
-        f"<b>SIGNAL {event['score']}/100</b>  ·  {when}",
+        f"{_band(event['score'])}  \u00b7  {event['score']}/100",
+        "",
+        f"<b>{event['wallet_count']} wallets from your list bought the SAME token</b>",
+        f"within {span} seconds of each other.",
+        "",
+        "<b>Who bought:</b>",
+    ]
+    lines += [f"  \u2022 {html.escape(n)}" for n in names]
+    lines += [
+        "",
+        f"<b>How much:</b> {event['total_sol']} SOL over {event['buy_count']} buys",
+        f"<b>Token first seen:</b> {age_text}",
+        "",
         f"<code>{html.escape(mint)}</code>",
         "",
-        f"<b>{event['wallet_count']} tracked wallets</b> bought within {span}s",
-        "· " + html.escape(", ".join(names)),
+        f'\U0001F4C8 <a href="https://dexscreener.com/solana/{mint}">Chart</a>  \u00b7  '
+        f'\U0001F9FE <a href="https://axiom.trade/t/{mint}">Axiom</a>  \u00b7  '
+        f'\U0001F50D <a href="https://solscan.io/token/{mint}">Solscan</a>',
         "",
-        f"Buys: {event['buy_count']}  |  Total: {event['total_sol']} SOL",
-        f"First seen by radar: {age}m ago",
-        "",
-        f'<a href="https://dexscreener.com/solana/{mint}">DexScreener</a> · '
-        f'<a href="https://axiom.trade/t/{mint}">Axiom</a> · '
-        f'<a href="https://solscan.io/token/{mint}">Solscan</a>',
+        "<i>This is not a buy signal. It means several wallets you follow "
+        "moved on the same thing at the same time \u2014 go look.</i>",
     ]
     return "\n".join(lines)
 
