@@ -1,0 +1,805 @@
+//@version=6
+// ============================================================================
+//  NY 08:00-08:15 ZONE  -  BREAK & RETEST / MOMENTUM / SESSION LIQUIDITY
+//  Implementation of "Trading-Strategie - Specification V1.0"
+//
+//  RUN THIS ON THE 1-MINUTE CHART. Higher timeframes are requested with
+//  lookahead_off so nothing repaints. On any other chart timeframe the entry
+//  logic is no longer the spec's logic - the script warns you on the chart.
+//
+//  Two deliberately separated layers (spec section 19):
+//    LAYER A  STRATEGY      -> is there a valid signal? (entry / SL / TP)
+//    LAYER B  RISK MANAGER  -> how many contracts may that signal use?
+//
+//  Every rule the spec leaves subjective (1M confirmation, "aggressive"
+//  momentum, daily bias, barcode / no-trade) is implemented as a switchable
+//  numeric proxy and marked [PROXY] in the inputs. Disable them one at a time
+//  to see what each assumption is actually contributing.
+// ============================================================================
+
+strategy(
+     title                   = "NY 0800-0815 Zone - Break & Retest V1.0",
+     shorttitle              = "NY Zone V1",
+     overlay                 = true,
+     initial_capital         = 50000,
+     currency                = currency.USD,
+     default_qty_type        = strategy.fixed,
+     default_qty_value       = 1,
+     pyramiding              = 0,
+     calc_on_every_tick      = false,
+     process_orders_on_close = true,
+     commission_type         = strategy.commission.cash_per_contract,
+     commission_value        = 2.50,
+     slippage                = 1,
+     max_boxes_count         = 100,
+     max_lines_count         = 500,
+     max_labels_count        = 500)
+
+// ============================================================================
+//  0. CONSTANTS / CHART GUARD
+// ============================================================================
+const string TZ = "America/New_York"
+
+bool tfOk = timeframe.isminutes and timeframe.multiplier == 1
+
+var label warnLbl = na
+if barstate.islast and not tfOk
+    label.delete(warnLbl)
+    warnLbl := label.new(bar_index, high,
+         "WRONG TIMEFRAME\nRun on the 1-minute chart.\nEntry logic is 1M based (spec section 3).",
+         style = label.style_label_down, color = color.red, textcolor = color.white, size = size.large)
+
+// ============================================================================
+//  1. INPUTS
+// ============================================================================
+string G_SESS = "1 | Sessions & trading window"
+string G_ZONE = "2 | 08:00-08:15 zone"
+string G_BRK  = "3 | Break (spec 5 / 8)"
+string G_CONF = "4 | 1M confirmation  [PROXY]"
+string G_LIQ  = "5 | Session liquidity setup (spec 9)"
+string G_BIAS = "6 | Daily bias  [PROXY]"
+string G_FILT = "7 | No-trade filters  [PROXY]"
+string G_SL   = "8 | Stop loss (spec 14)"
+string G_TP   = "9 | Take profit (spec 15)"
+string G_RISK = "10 | RISK MANAGER (spec 19)"
+string G_VIS  = "11 | Visuals"
+
+// --- sessions -------------------------------------------------------------
+sessZone   = input.session("0800-0815", "08:00-08:15 zone candle", group = G_SESS, tooltip = "New York time. The full range of this 15M candle becomes the zone.")
+sessTrade  = input.session("0815-1200", "Entry window (no new entries outside)", group = G_SESS)
+flatHour   = input.int(15, "Force flat at (ET hour)", minval = 0, maxval = 23, group = G_SESS)
+flatMinute = input.int(55, "Force flat at (ET minute)", minval = 0, maxval = 59, group = G_SESS)
+sessAsia   = input.session("2000-0000", "Asia session", group = G_SESS)
+sessLondon = input.session("0200-0500", "London session", group = G_SESS)
+sessNY     = input.session("0700-1000", "New York session", group = G_SESS)
+
+// --- zone -----------------------------------------------------------------
+zoneMinPts = input.float(3.0,  "Min zone width (points)", minval = 0, step = 0.25, group = G_ZONE, tooltip = "Too tight = barcode / chop (spec 17).")
+zoneMaxPts = input.float(60.0, "Max zone width (points, 0 = off)", minval = 0, step = 0.25, group = G_ZONE, tooltip = "Too wide = the SL distance makes any RR impossible.")
+
+// --- break ----------------------------------------------------------------
+tfBreak      = input.timeframe("5", "Break timeframe", group = G_BRK, tooltip = "Spec 3: the break of the zone is judged on 5M closes.")
+useMomSetup  = input.bool(true, "Enable momentum-break / disrespect setup (spec 8)", group = G_BRK)
+atrLen       = input.int(14, "ATR length (momentum reference)", minval = 2, group = G_BRK)
+momBodyAtr   = input.float(1.6, "[PROXY] 'aggressive': body >= x * ATR", minval = 0.1, step = 0.1, group = G_BRK)
+momBodyRatio = input.float(0.60, "[PROXY] 'aggressive': body / range >=", minval = 0.1, maxval = 1.0, step = 0.05, group = G_BRK)
+invalOn1M    = input.bool(false, "Also invalidate on a 1M close beyond the opposite zone edge", group = G_BRK, tooltip = "Off = only a break-timeframe close invalidates the retest (spec 5 examples).")
+
+// --- confirmation ---------------------------------------------------------
+confMinBars  = input.int(1, "Min 1M candles to observe after the retest", minval = 0, maxval = 10, group = G_CONF)
+confMaxBars  = input.int(6, "Max 1M candles to wait for confirmation", minval = 1, maxval = 60, group = G_CONF)
+confMinScore = input.int(2, "Min confluence score to confirm", minval = 1, maxval = 9, group = G_CONF, tooltip = "Spec 6 names no single mandatory confirmation candle, so confirmation is a weighted score of the items it does list.")
+wFvg1M       = input.int(1, "Weight: 1M FVG in trade direction", minval = 0, maxval = 3, group = G_CONF)
+wFvg5M       = input.int(1, "Weight: break-TF FVG in trade direction", minval = 0, maxval = 3, group = G_CONF)
+wMom1M       = input.int(1, "Weight: 1M momentum candle", minval = 0, maxval = 3, group = G_CONF)
+wEq          = input.int(1, "Weight: close back beyond equilibrium of the retrace", minval = 0, maxval = 3, group = G_CONF)
+wFvgEq       = input.int(1, "Weight: FVG sits near equilibrium (spec 13)", minval = 0, maxval = 3, group = G_CONF)
+eqTolPts     = input.float(4.0, "FVG-near-equilibrium tolerance (points)", minval = 0, step = 0.25, group = G_CONF)
+reclaimWait  = input.int(1, "Extra 1M candles to wait after the reclaim (spec 7)", minval = 0, maxval = 5, group = G_CONF)
+
+// --- liquidity setup ------------------------------------------------------
+useLiqSetup = input.bool(true, "Enable unswept session-liquidity setup (spec 9)", group = G_LIQ)
+liqMaxBars  = input.int(10, "Max 1M candles to confirm after the liquidity break", minval = 1, group = G_LIQ)
+liqUsePrevD = input.bool(true, "Include previous daily high / low", group = G_LIQ)
+
+// --- daily bias -----------------------------------------------------------
+biasMode   = input.string("Prev Day Close vs Prev Day Mid", "Daily bias model  [PROXY]",
+     options = ["Off", "Prev Day Close vs Prev Day Mid", "Prev Day Close vs Prior Close", "Daily EMA", "Prev Day Sweep & Reclaim"],
+     group = G_BIAS, tooltip = "Spec 16 explicitly leaves this undefined. Whatever you pick here owns a large part of the backtest result.")
+biasEmaLen = input.int(20, "Daily EMA length", minval = 2, group = G_BIAS)
+biasStrict = input.bool(true, "Only trade in the bias direction", group = G_BIAS)
+
+// --- no-trade filters -----------------------------------------------------
+useChopFilt  = input.bool(true, "[PROXY] 'barcode' filter: ATR(fast) / ATR(slow)", group = G_FILT)
+chopFast     = input.int(14,  "ATR fast", minval = 2, group = G_FILT)
+chopSlow     = input.int(100, "ATR slow", minval = 10, group = G_FILT)
+chopMinRatio = input.float(0.85, "Min ATR ratio required to allow a trade", minval = 0.1, step = 0.05, group = G_FILT)
+maxTrades    = input.int(2, "Max trades per day (spec 18)", minval = 1, maxval = 10, group = G_FILT)
+oneSetupOnly = input.bool(false, "Only one zone setup per day (no re-arm after invalidation)", group = G_FILT)
+
+// --- stop loss ------------------------------------------------------------
+slMode      = input.string("FVG, else swing", "SL method (spec 14)", options = ["FVG, else swing", "Swing only", "Fixed points"], group = G_SL)
+slBufferPts = input.float(1.5, "Buffer (points)", minval = 0, step = 0.25, group = G_SL, tooltip = "Spec 14: roughly 1-2 points.")
+slSwingLook = input.int(20, "Swing lookback (1M bars)", minval = 3, group = G_SL)
+slFixedPts  = input.float(12.0, "Fixed SL (points)", minval = 0.25, step = 0.25, group = G_SL)
+slMaxPts    = input.float(40.0, "Max allowed SL distance (points, 0 = off)", minval = 0, step = 0.5, group = G_SL)
+slFvgMaxPts = input.float(25.0, "Ignore an FVG further than (points) from entry", minval = 0, step = 0.5, group = G_SL)
+
+// --- take profit ----------------------------------------------------------
+tpMode       = input.string("Liquidity, else RR", "TP method (spec 15)", options = ["Liquidity, else RR", "Liquidity only", "Fixed RR"], group = G_TP)
+tpMinRR      = input.float(1.0, "Min RR to accept a liquidity target", minval = 0.1, step = 0.1, group = G_TP, tooltip = "Spec 15: the liquidity target beats a rigid RR, but below this the trade is skipped entirely.")
+tpFallbackRR = input.float(2.0, "Fallback RR", minval = 0.1, step = 0.1, group = G_TP)
+tpUseSwing   = input.bool(true, "Include swing highs / lows as liquidity targets", group = G_TP)
+swingLen     = input.int(10, "Swing pivot length", minval = 2, group = G_TP)
+
+// --- risk manager ---------------------------------------------------------
+riskModel    = input.string("Percent of equity", "Sizing model", options = ["Fixed contracts", "Percent of equity", "Fixed risk cash"], group = G_RISK)
+riskFixedQty = input.int(1, "Fixed contracts", minval = 1, group = G_RISK)
+riskPct      = input.float(0.5, "Risk per trade (% of equity)", minval = 0.01, step = 0.05, group = G_RISK)
+riskCash     = input.float(250, "Risk per trade (cash)", minval = 1, step = 25, group = G_RISK)
+pointValIn   = input.float(0.0, "Point value override (0 = symbol default)", minval = 0, step = 1, group = G_RISK, tooltip = "ES = 50 USD per point, NQ = 20 USD per point.")
+maxQty       = input.int(10, "Max contracts", minval = 1, group = G_RISK)
+minQty       = input.int(1, "Min contracts (below this the signal is skipped)", minval = 1, group = G_RISK)
+
+// --- visuals --------------------------------------------------------------
+showZone   = input.bool(true, "Draw zone box", group = G_VIS)
+showLiq    = input.bool(true, "Draw liquidity levels", group = G_VIS)
+showStates = input.bool(true, "Label break / retest / confirm / reclaim", group = G_VIS)
+showDash   = input.bool(true, "Show dashboard", group = G_VIS)
+
+// ============================================================================
+//  2. TIME / DAY HOUSEKEEPING
+// ============================================================================
+int  nyHour = hour(time, TZ)
+int  nyMin  = minute(time, TZ)
+int  nyDay  = dayofmonth(time, TZ)
+bool newDay = nyDay != nz(nyDay[1], nyDay)
+
+bool inTradeWin = not na(time(timeframe.period, sessTrade, TZ))
+bool forceFlat  = nyHour > flatHour or (nyHour == flatHour and nyMin >= flatMinute)
+
+// ============================================================================
+//  3. HIGHER TIMEFRAME DATA (non-repainting: only closed bars are requested)
+// ============================================================================
+[bO, bH, bL, bC, bT, bATR] = request.security(syminfo.tickerid, tfBreak,
+     [open[1], high[1], low[1], close[1], time[1], ta.atr(atrLen)[1]], lookahead = barmerge.lookahead_off)
+bool newBrkBar = not na(bT) and bT != nz(bT[1], bT)
+
+[dH1, dL1, dC1, dC2, dEma] = request.security(syminfo.tickerid, "D",
+     [high[1], low[1], close[1], close[2], ta.ema(close, biasEmaLen)[1]], lookahead = barmerge.lookahead_off)
+
+float atr1M = ta.atr(atrLen)
+
+// globally evaluated structure references (ta.* must run on every bar)
+float swingLowN  = ta.lowest(low,  slSwingLook)
+float swingHighN = ta.highest(high, slSwingLook)
+float atrF = ta.atr(chopFast)
+float atrS = ta.atr(chopSlow)
+float ph   = ta.pivothigh(high, swingLen, swingLen)
+float pl   = ta.pivotlow(low,   swingLen, swingLen)
+
+// ============================================================================
+//  4. SESSION HIGH / LOW TRACKING + SWEEP STATE (spec 2 / 10 / 11)
+// ============================================================================
+f_sessUpdate(simple string sess, float curHi, float curLo, bool wasIn) =>
+    bool  isIn  = not na(time(timeframe.period, sess, TZ))
+    bool  start = isIn and not wasIn
+    float hi = start ? high : isIn ? math.max(nz(curHi, high), high) : curHi
+    float lo = start ? low  : isIn ? math.min(nz(curLo, low),  low)  : curLo
+    [hi, lo, isIn]
+
+var float asiaH = na
+var float asiaL = na
+var bool  inAsia = false
+var float lonH = na
+var float lonL = na
+var bool  inLon = false
+var float nyH = na
+var float nyL = na
+var bool  inNY = false
+
+[aHi, aLo, aIn] = f_sessUpdate(sessAsia, asiaH, asiaL, inAsia)
+asiaH  := aHi
+asiaL  := aLo
+inAsia := aIn
+
+[lHi, lLo, lIn] = f_sessUpdate(sessLondon, lonH, lonL, inLon)
+lonH  := lHi
+lonL  := lLo
+inLon := lIn
+
+[nHi, nLo, nIn] = f_sessUpdate(sessNY, nyH, nyL, inNY)
+nyH  := nHi
+nyL  := nLo
+inNY := nIn
+
+// current day high / low (spec 11)
+var float dayH = na
+var float dayL = na
+if newDay
+    dayH := high
+    dayL := low
+else
+    dayH := math.max(nz(dayH, high), high)
+    dayL := math.min(nz(dayL, low),  low)
+
+// swing structure (spec 11, also the reference for equilibrium)
+var float lastSwingH = na
+var float lastSwingL = na
+if not na(ph)
+    lastSwingH := ph
+if not na(pl)
+    lastSwingL := pl
+
+// a level is only "live" once its session has finished
+bool asiaDone = not inAsia and not na(asiaH)
+bool lonDone  = not inLon  and not na(lonH)
+bool nyDone   = not inNY   and not na(nyH)
+
+// spec 10: a wick touch already counts as swept
+var bool sweptAsiaH = false
+var bool sweptAsiaL = false
+var bool sweptLonH  = false
+var bool sweptLonL  = false
+var bool sweptNyH   = false
+var bool sweptNyL   = false
+var bool sweptPdH   = false
+var bool sweptPdL   = false
+
+if newDay
+    sweptAsiaH := false
+    sweptAsiaL := false
+    sweptLonH  := false
+    sweptLonL  := false
+    sweptNyH   := false
+    sweptNyL   := false
+    sweptPdH   := false
+    sweptPdL   := false
+
+
+if asiaDone and high >= asiaH
+    sweptAsiaH := true
+if asiaDone and low <= asiaL
+    sweptAsiaL := true
+if lonDone and high >= lonH
+    sweptLonH := true
+if lonDone and low <= lonL
+    sweptLonL := true
+if nyDone and high >= nyH
+    sweptNyH := true
+if nyDone and low <= nyL
+    sweptNyL := true
+if not na(dH1) and high >= dH1
+    sweptPdH := true
+if not na(dL1) and low <= dL1
+    sweptPdL := true
+
+// The liquidity setup needs "was still unswept BEFORE the break candle started".
+// Looking back one break-timeframe candle (in chart bars) gives exactly that, so
+// the wick of the breaking candle itself does not disqualify its own level.
+int brkOffs = math.max(1, int(timeframe.in_seconds(tfBreak) / math.max(1, timeframe.in_seconds(timeframe.period)))) + 1
+bool preAsiaH = nz(sweptAsiaH[brkOffs], false)
+bool preAsiaL = nz(sweptAsiaL[brkOffs], false)
+bool preLonH  = nz(sweptLonH[brkOffs], false)
+bool preLonL  = nz(sweptLonL[brkOffs], false)
+bool prePdH   = nz(sweptPdH[brkOffs], false)
+bool prePdL   = nz(sweptPdL[brkOffs], false)
+
+// ---- liquidity target selection -----------------------------------------
+f_nearestAbove(float ref) =>
+    array<float> a = array.new_float()
+    if asiaDone and not na(asiaH) and asiaH > ref and not sweptAsiaH
+        a.push(asiaH)
+    if lonDone and not na(lonH) and lonH > ref and not sweptLonH
+        a.push(lonH)
+    if nyDone and not na(nyH) and nyH > ref and not sweptNyH
+        a.push(nyH)
+    if liqUsePrevD and not na(dH1) and dH1 > ref and not sweptPdH
+        a.push(dH1)
+    if tpUseSwing and not na(lastSwingH) and lastSwingH > ref
+        a.push(lastSwingH)
+    a.size() > 0 ? a.min() : na
+
+f_nearestBelow(float ref) =>
+    array<float> a = array.new_float()
+    if asiaDone and not na(asiaL) and asiaL < ref and not sweptAsiaL
+        a.push(asiaL)
+    if lonDone and not na(lonL) and lonL < ref and not sweptLonL
+        a.push(lonL)
+    if nyDone and not na(nyL) and nyL < ref and not sweptNyL
+        a.push(nyL)
+    if liqUsePrevD and not na(dL1) and dL1 < ref and not sweptPdL
+        a.push(dL1)
+    if tpUseSwing and not na(lastSwingL) and lastSwingL < ref
+        a.push(lastSwingL)
+    a.size() > 0 ? a.max() : na
+
+// ============================================================================
+//  5. FVG DETECTION (spec 12) - 1M on the chart, 5M via the break timeframe
+// ============================================================================
+bool  fvgBull1M    = low > high[2] and close > open
+bool  fvgBear1M    = high < low[2] and close < open
+float fvgBull1MBot = fvgBull1M ? high[2] : na
+float fvgBull1MTop = fvgBull1M ? low     : na
+float fvgBear1MTop = fvgBear1M ? low[2]  : na
+float fvgBear1MBot = fvgBear1M ? high    : na
+
+[bH3, bL3, bH1, bL1] = request.security(syminfo.tickerid, tfBreak,
+     [high[3], low[3], high[1], low[1]], lookahead = barmerge.lookahead_off)
+bool fvgBull5M = newBrkBar and not na(bH3) and bL1 > bH3
+bool fvgBear5M = newBrkBar and not na(bL3) and bH1 < bL3
+
+// most recent FVGs, used for SL placement (spec 14)
+var float lastBullFvgBot = na
+var float lastBearFvgTop = na
+if fvgBull1M
+    lastBullFvgBot := high[2]
+if fvgBear1M
+    lastBearFvgTop := low[2]
+if fvgBull5M
+    lastBullFvgBot := bH3
+if fvgBear5M
+    lastBearFvgTop := bL3
+
+// ============================================================================
+//  6. DAILY BIAS (spec 16)  [PROXY]
+// ============================================================================
+int bias = switch biasMode
+    "Off"                            => 0
+    "Prev Day Close vs Prev Day Mid" => na(dC1) ? 0 : dC1 > (dH1 + dL1) / 2 ? 1 : dC1 < (dH1 + dL1) / 2 ? -1 : 0
+    "Prev Day Close vs Prior Close"  => na(dC1) or na(dC2) ? 0 : dC1 > dC2 ? 1 : dC1 < dC2 ? -1 : 0
+    "Daily EMA"                      => na(dEma) ? 0 : close > dEma ? 1 : close < dEma ? -1 : 0
+    "Prev Day Sweep & Reclaim"       => na(dL1) or na(dH1) ? 0 : (dayL < dL1 and close > dL1) ? 1 : (dayH > dH1 and close < dH1) ? -1 : 0
+    => 0
+
+f_biasOk(int d) => not biasStrict or bias == 0 or bias == d
+
+// ============================================================================
+//  7. NO-TRADE FILTERS (spec 17)  [PROXY]
+// ============================================================================
+bool chopOk = not useChopFilt or (not na(atrS) and atrS > 0 and atrF / atrS >= chopMinRatio)
+
+// ============================================================================
+//  8. THE 08:00-08:15 ZONE (spec 4)
+// ============================================================================
+var float zH = na
+var float zL = na
+var float zO = na
+var float zC = na
+var bool  zoneReady  = false
+var int   zoneEndBar = na
+var box   zoneBox    = na
+
+bool inZoneWin = not na(time(timeframe.period, sessZone, TZ))
+bool zoneStart = inZoneWin and not inZoneWin[1]
+bool zoneEnd   = not inZoneWin and inZoneWin[1]
+
+if newDay
+    zoneReady := false
+    zH := na
+    zL := na
+    zO := na
+    zC := na
+
+if zoneStart
+    zO := open
+    zH := high
+    zL := low
+    zC := close
+else if inZoneWin
+    zH := math.max(zH, high)
+    zL := math.min(zL, low)
+    zC := close
+
+if zoneEnd
+    zoneReady  := true
+    zoneEndBar := bar_index
+    if showZone and not na(zH)
+        zoneBox := box.new(bar_index - 15, zH, bar_index + 400, zL,
+             border_color = color.new(color.orange, 20), bgcolor = color.new(color.orange, 88), border_width = 1)
+
+float zoneWidth  = na(zH) or na(zL) ? na : zH - zL
+bool  zoneSizeOk = not na(zoneWidth) and zoneWidth >= zoneMinPts and (zoneMaxPts <= 0 or zoneWidth <= zoneMaxPts)
+
+// ============================================================================
+//  9. MOMENTUM PROXIES (spec 8)  [PROXY]
+// ============================================================================
+float bBody = math.abs(bC - bO)
+float bRng  = bH - bL
+bool  bMom  = not na(bATR) and bATR > 0 and bRng > 0 and bBody >= momBodyAtr * bATR and bBody / bRng >= momBodyRatio
+
+float body1M = math.abs(close - open)
+float rng1M  = high - low
+bool  momUp1M = not na(atr1M) and atr1M > 0 and rng1M > 0 and close > open and body1M >= momBodyAtr * atr1M and body1M / rng1M >= momBodyRatio
+bool  momDn1M = not na(atr1M) and atr1M > 0 and rng1M > 0 and close < open and body1M >= momBodyAtr * atr1M and body1M / rng1M >= momBodyRatio
+
+// ============================================================================
+//  10. SETUP STATE MACHINE (spec 5 - 8)
+//      0 idle | 1 broken | 2 retest active | 3 confirmed | 4 reclaimed
+// ============================================================================
+var int   st          = 0
+var int   dirState    = 0      // +1 long, -1 short
+var int   breakBar    = na
+var float breakExt    = na     // extreme reached after the break (equilibrium leg)
+var float retestExt   = na     // deepest retracement point (SL fallback / equilibrium)
+var int   retestBar   = na
+var int   reclaimBar  = na
+var int   tradesToday = 0
+var bool  zoneUsed    = false
+var bool  momMode     = false  // this setup came from the spec-8 momentum break
+
+if newDay
+    st          := 0
+    dirState    := 0
+    tradesToday := 0
+    zoneUsed    := false
+    momMode     := false
+    breakExt    := na
+    retestExt   := na
+
+// ---------------------------------------------------------------------------
+//  10a. BREAK (spec 5 step 1 / spec 8) - body close beyond the zone, not a wick
+// ---------------------------------------------------------------------------
+bool canArm = zoneReady and zoneSizeOk and st == 0 and (not zoneUsed or not oneSetupOnly) and tradesToday < maxTrades and not na(zoneEndBar) and bar_index > zoneEndBar
+
+bool brkUp = newBrkBar and canArm and not na(zH) and bC > zH
+bool brkDn = newBrkBar and canArm and not na(zL) and bC < zL
+
+// spec 8: full disrespect = the candle starts on the other side and closes through
+bool disUp = brkUp and useMomSetup and bO < zL and bMom
+bool disDn = brkDn and useMomSetup and bO > zH and bMom
+
+if brkUp or brkDn
+    st       := 1
+    dirState := brkUp ? 1 : -1
+    momMode  := disUp or disDn
+    breakBar := bar_index
+    breakExt := brkUp ? high : low
+    zoneUsed := true
+    if showStates
+        label.new(bar_index, brkUp ? low : high, momMode ? "MOM BRK" : "BRK",
+             style = brkUp ? label.style_label_up : label.style_label_down,
+             color = color.new(momMode ? color.fuchsia : color.blue, 30), textcolor = color.white, size = size.tiny)
+
+if st >= 1 and dirState == 1
+    breakExt := math.max(nz(breakExt, high), high)
+if st >= 1 and dirState == -1
+    breakExt := math.min(nz(breakExt, low), low)
+
+// ---------------------------------------------------------------------------
+//  10b. RETEST (spec 5 step 2)
+//  The wick may run deep into the zone and the body may close inside it,
+//  but a close beyond the OPPOSITE edge kills the setup.
+// ---------------------------------------------------------------------------
+bool invalUp = st >= 1 and dirState ==  1 and ((newBrkBar and bC < zL) or (invalOn1M and close < zL))
+bool invalDn = st >= 1 and dirState == -1 and ((newBrkBar and bC > zH) or (invalOn1M and close > zH))
+
+if invalUp or invalDn
+    if showStates
+        label.new(bar_index, close, "X", style = label.style_xcross, color = color.red, textcolor = color.white, size = size.tiny)
+    st        := 0
+    dirState  := 0
+    momMode   := false
+    breakExt  := na
+    retestExt := na
+
+// a momentum / disrespect break skips the retest requirement entirely (spec 8)
+if st == 1 and momMode
+    st        := 2
+    retestBar := bar_index
+    retestExt := dirState == 1 ? low : high
+
+bool retestUp = st == 1 and dirState ==  1 and low  <= zH
+bool retestDn = st == 1 and dirState == -1 and high >= zL
+
+if retestUp or retestDn
+    st        := 2
+    retestBar := bar_index
+    retestExt := dirState == 1 ? low : high
+    if showStates
+        label.new(bar_index, dirState == 1 ? low : high, "RT",
+             style = dirState == 1 ? label.style_label_up : label.style_label_down,
+             color = color.new(color.teal, 30), textcolor = color.white, size = size.tiny)
+
+if st >= 2 and dirState == 1
+    retestExt := math.min(nz(retestExt, low), low)
+if st >= 2 and dirState == -1
+    retestExt := math.max(nz(retestExt, high), high)
+
+// ---------------------------------------------------------------------------
+//  10c. 1M CONFIRMATION (spec 6 + 12 + 13)  [PROXY - scored, not binary]
+// ---------------------------------------------------------------------------
+float eqLevel = na(breakExt) or na(retestExt) ? na : (breakExt + retestExt) / 2
+
+f_confScore(int d, float eq) =>
+    int s = 0
+    if d == 1
+        s += fvgBull1M ? wFvg1M : 0
+        s += fvgBull5M ? wFvg5M : 0
+        s += momUp1M   ? wMom1M : 0
+        s += not na(eq) and close > eq ? wEq : 0
+        s += fvgBull1M and not na(eq) and math.abs((fvgBull1MBot + fvgBull1MTop) / 2 - eq) <= eqTolPts ? wFvgEq : 0
+    else if d == -1
+        s += fvgBear1M ? wFvg1M : 0
+        s += fvgBear5M ? wFvg5M : 0
+        s += momDn1M   ? wMom1M : 0
+        s += not na(eq) and close < eq ? wEq : 0
+        s += fvgBear1M and not na(eq) and math.abs((fvgBear1MTop + fvgBear1MBot) / 2 - eq) <= eqTolPts ? wFvgEq : 0
+    s
+
+int confScore       = f_confScore(dirState, eqLevel)
+int barsSinceRetest = st >= 2 and not na(retestBar) ? bar_index - retestBar : na
+
+if st == 2 and not na(barsSinceRetest)
+    if barsSinceRetest > confMaxBars
+        st        := 0
+        dirState  := 0
+        momMode   := false
+        breakExt  := na
+        retestExt := na
+    else if barsSinceRetest >= confMinBars and confScore >= confMinScore
+        st := 3
+        if showStates
+            label.new(bar_index, dirState == 1 ? low : high, "CONF " + str.tostring(confScore),
+                 style = dirState == 1 ? label.style_label_up : label.style_label_down,
+                 color = color.new(color.green, 30), textcolor = color.white, size = size.tiny)
+
+// ---------------------------------------------------------------------------
+//  10d. RECLAIM OF THE ZONE + THE NEXT 1M CANDLE (spec 7)
+// ---------------------------------------------------------------------------
+bool reclaimUp = st == 3 and dirState ==  1 and close > zH
+bool reclaimDn = st == 3 and dirState == -1 and close < zL
+
+if reclaimUp or reclaimDn
+    st         := 4
+    reclaimBar := bar_index
+    if showStates
+        label.new(bar_index, dirState == 1 ? low : high, "RCL",
+             style = dirState == 1 ? label.style_label_up : label.style_label_down,
+             color = color.new(color.orange, 30), textcolor = color.white, size = size.tiny)
+
+// the confirming candle AFTER the reclaim decides the entry
+bool zoneLong  = st == 4 and dirState ==  1 and not na(reclaimBar) and bar_index - reclaimBar >= reclaimWait and close > zH and close > open
+bool zoneShort = st == 4 and dirState == -1 and not na(reclaimBar) and bar_index - reclaimBar >= reclaimWait and close < zL and close < open
+
+// price falls back through the whole zone while waiting -> setup dead
+if st == 4 and dirState == 1 and close < zL
+    st        := 0
+    dirState  := 0
+    momMode   := false
+    retestExt := na
+if st == 4 and dirState == -1 and close > zH
+    st        := 0
+    dirState  := 0
+    momMode   := false
+    retestExt := na
+
+// ============================================================================
+//  11. SESSION-LIQUIDITY SETUP (spec 9)
+//      unswept level -> break through it -> no reaction -> confirmation -> trade
+// ============================================================================
+var int   liqSt  = 0
+var int   liqDir = 0
+var float liqLvl = na
+var int   liqBar = na
+
+if newDay
+    liqSt  := 0
+    liqDir := 0
+    liqLvl := na
+
+if liqSt == 0 and useLiqSetup and inTradeWin and tradesToday < maxTrades and newBrkBar
+    float armLvl = na
+    int   armDir = 0
+    if asiaDone and not preAsiaL and not na(asiaL) and bC < asiaL
+        armLvl := asiaL
+        armDir := -1
+    else if lonDone and not preLonL and not na(lonL) and bC < lonL
+        armLvl := lonL
+        armDir := -1
+    else if liqUsePrevD and not prePdL and not na(dL1) and bC < dL1
+        armLvl := dL1
+        armDir := -1
+    else if asiaDone and not preAsiaH and not na(asiaH) and bC > asiaH
+        armLvl := asiaH
+        armDir := 1
+    else if lonDone and not preLonH and not na(lonH) and bC > lonH
+        armLvl := lonH
+        armDir := 1
+    else if liqUsePrevD and not prePdH and not na(dH1) and bC > dH1
+        armLvl := dH1
+        armDir := 1
+    if armDir != 0
+        liqSt  := 1
+        liqDir := armDir
+        liqLvl := armLvl
+        liqBar := bar_index
+
+int liqScore = f_confScore(liqDir, float(na))
+
+// "no sufficient reaction" = price has not closed back on the original side
+bool liqReaction = liqSt == 1 and ((liqDir == -1 and close > liqLvl) or (liqDir == 1 and close < liqLvl))
+if liqSt == 1 and (liqReaction or bar_index - liqBar > liqMaxBars)
+    liqSt  := 0
+    liqDir := 0
+    liqLvl := na
+
+bool liqLong  = liqSt == 1 and liqDir ==  1 and liqScore >= confMinScore and close > liqLvl
+bool liqShort = liqSt == 1 and liqDir == -1 and liqScore >= confMinScore and close < liqLvl
+
+// ============================================================================
+//  12. SL / TP CONSTRUCTION (spec 14 / 15)
+// ============================================================================
+f_stopLong(float entry, float structLow) =>
+    float sl = na
+    if slMode == "Fixed points"
+        sl := entry - slFixedPts
+    else
+        bool fvgOk = slMode == "FVG, else swing" and not na(lastBullFvgBot) and lastBullFvgBot < entry and (entry - lastBullFvgBot) <= slFvgMaxPts
+        sl := (fvgOk ? lastBullFvgBot : structLow) - slBufferPts
+    sl
+
+f_stopShort(float entry, float structHigh) =>
+    float sl = na
+    if slMode == "Fixed points"
+        sl := entry + slFixedPts
+    else
+        bool fvgOk = slMode == "FVG, else swing" and not na(lastBearFvgTop) and lastBearFvgTop > entry and (lastBearFvgTop - entry) <= slFvgMaxPts
+        sl := (fvgOk ? lastBearFvgTop : structHigh) + slBufferPts
+    sl
+
+f_targetLong(float entry, float sl, float liq) =>
+    float risk = entry - sl
+    float tp = na
+    if tpMode == "Fixed RR"
+        tp := entry + risk * tpFallbackRR
+    else
+        bool liqOk = not na(liq) and risk > 0 and (liq - entry) / risk >= tpMinRR
+        tp := liqOk ? liq : tpMode == "Liquidity, else RR" ? entry + risk * tpFallbackRR : na
+    tp
+
+f_targetShort(float entry, float sl, float liq) =>
+    float risk = sl - entry
+    float tp = na
+    if tpMode == "Fixed RR"
+        tp := entry - risk * tpFallbackRR
+    else
+        bool liqOk = not na(liq) and risk > 0 and (entry - liq) / risk >= tpMinRR
+        tp := liqOk ? liq : tpMode == "Liquidity, else RR" ? entry - risk * tpFallbackRR : na
+    tp
+
+// ============================================================================
+//  13. LAYER B - RISK MANAGER (spec 19, deliberately separate from the setup)
+//      in:  entry price, stop price.      out: number of contracts.
+// ============================================================================
+float pointValue = pointValIn > 0 ? pointValIn : syminfo.pointvalue
+
+f_positionSize(float entry, float sl) =>
+    float riskPts = math.abs(entry - sl)
+    int   qty = 0
+    if riskPts > 0 and pointValue > 0
+        float riskPerContract = riskPts * pointValue
+        float budget = switch riskModel
+            "Fixed contracts"   => riskPerContract * riskFixedQty
+            "Percent of equity" => strategy.equity * riskPct / 100.0
+            "Fixed risk cash"   => riskCash
+            => riskCash
+        qty := int(math.floor(budget / riskPerContract))
+    qty := qty > maxQty ? maxQty : qty
+    qty := qty < minQty ? 0 : qty
+    qty
+
+// ============================================================================
+//  14. ORDER EXECUTION
+// ============================================================================
+bool flat     = strategy.position_size == 0
+bool globalOk = tfOk and flat and tradesToday < maxTrades and inTradeWin and not forceFlat and chopOk and barstate.isconfirmed
+
+bool goLong  = globalOk and (zoneLong  or liqLong)  and f_biasOk(1)
+bool goShort = globalOk and (zoneShort or liqShort) and f_biasOk(-1)
+
+var float lastEntry = na
+var float lastSL    = na
+var float lastTP    = na
+var int   lastQty   = 0
+
+if goLong
+    float entry     = close
+    float structLow = math.min(nz(retestExt, low), swingLowN)
+    float sl        = f_stopLong(entry, structLow)
+    float tp        = f_targetLong(entry, sl, f_nearestAbove(entry))
+    bool  slOk      = not na(sl) and sl < entry and (slMaxPts <= 0 or entry - sl <= slMaxPts)
+    int   qty       = slOk and not na(tp) ? f_positionSize(entry, sl) : 0
+    if slOk and not na(tp) and qty > 0
+        strategy.entry("L", strategy.long, qty = qty, comment = liqLong ? "LIQ" : momMode ? "MOM" : "B&R")
+        strategy.exit("L-X", "L", stop = sl, limit = tp, comment_loss = "SL", comment_profit = "TP")
+        tradesToday += 1
+        lastEntry := entry
+        lastSL    := sl
+        lastTP    := tp
+        lastQty   := qty
+        alert("LONG " + syminfo.ticker + " @ " + str.tostring(entry, format.mintick) + "  SL " + str.tostring(sl, format.mintick) + "  TP " + str.tostring(tp, format.mintick) + "  qty " + str.tostring(qty), alert.freq_once_per_bar_close)
+    st        := 0
+    dirState  := 0
+    momMode   := false
+    retestExt := na
+    liqSt     := 0
+    liqDir    := 0
+    liqLvl    := na
+
+if goShort
+    float entry      = close
+    float structHigh = math.max(nz(retestExt, high), swingHighN)
+    float sl         = f_stopShort(entry, structHigh)
+    float tp         = f_targetShort(entry, sl, f_nearestBelow(entry))
+    bool  slOk       = not na(sl) and sl > entry and (slMaxPts <= 0 or sl - entry <= slMaxPts)
+    int   qty        = slOk and not na(tp) ? f_positionSize(entry, sl) : 0
+    if slOk and not na(tp) and qty > 0
+        strategy.entry("S", strategy.short, qty = qty, comment = liqShort ? "LIQ" : momMode ? "MOM" : "B&R")
+        strategy.exit("S-X", "S", stop = sl, limit = tp, comment_loss = "SL", comment_profit = "TP")
+        tradesToday += 1
+        lastEntry := entry
+        lastSL    := sl
+        lastTP    := tp
+        lastQty   := qty
+        alert("SHORT " + syminfo.ticker + " @ " + str.tostring(entry, format.mintick) + "  SL " + str.tostring(sl, format.mintick) + "  TP " + str.tostring(tp, format.mintick) + "  qty " + str.tostring(qty), alert.freq_once_per_bar_close)
+    st        := 0
+    dirState  := 0
+    momMode   := false
+    retestExt := na
+    liqSt     := 0
+    liqDir    := 0
+    liqLvl    := na
+
+// spec 15: the whole position leaves at TP, no partials. End of day flat:
+if forceFlat and strategy.position_size != 0
+    strategy.close_all(comment = "EOD")
+
+// ============================================================================
+//  15. VISUALS
+// ============================================================================
+plot(showZone and zoneReady ? zH : na, "Zone high", color = color.new(color.orange, 0), style = plot.style_linebr, linewidth = 2)
+plot(showZone and zoneReady ? zL : na, "Zone low",  color = color.new(color.orange, 0), style = plot.style_linebr, linewidth = 2)
+plot(showZone and zoneReady ? (zH + zL) / 2 : na, "Zone 50%", color = color.new(color.orange, 60), style = plot.style_linebr)
+plot(showZone and zoneReady ? zO : na, "Zone open",  color = color.new(color.orange, 75), style = plot.style_linebr)
+plot(showZone and zoneReady ? zC : na, "Zone close", color = color.new(color.orange, 75), style = plot.style_linebr)
+
+plot(showLiq and asiaDone ? asiaH : na, "Asia high", color = color.new(sweptAsiaH ? color.gray : color.yellow, 0), style = plot.style_linebr)
+plot(showLiq and asiaDone ? asiaL : na, "Asia low",  color = color.new(sweptAsiaL ? color.gray : color.yellow, 0), style = plot.style_linebr)
+plot(showLiq and lonDone  ? lonH  : na, "London high", color = color.new(sweptLonH ? color.gray : color.aqua, 0), style = plot.style_linebr)
+plot(showLiq and lonDone  ? lonL  : na, "London low",  color = color.new(sweptLonL ? color.gray : color.aqua, 0), style = plot.style_linebr)
+plot(showLiq and liqUsePrevD ? dH1 : na, "Prev day high", color = color.new(sweptPdH ? color.gray : color.purple, 0), style = plot.style_linebr)
+plot(showLiq and liqUsePrevD ? dL1 : na, "Prev day low",  color = color.new(sweptPdL ? color.gray : color.purple, 0), style = plot.style_linebr)
+plot(showZone and st >= 2 ? eqLevel : na, "Equilibrium", color = color.new(color.silver, 20), style = plot.style_linebr)
+
+bgcolor(inTradeWin and not chopOk ? color.new(color.red, 92) : na, title = "No-trade filter active")
+
+var table dash = table.new(position.top_right, 2, 10, border_width = 1)
+if showDash and barstate.islast
+    string stTxt = switch st
+        0 => "idle"
+        1 => "broken"
+        2 => "retest"
+        3 => "confirmed"
+        4 => "reclaimed"
+        => "?"
+    table.cell(dash, 0, 0, "NY Zone V1", bgcolor = color.new(color.blue, 30), text_color = color.white)
+    table.cell(dash, 1, 0, tfOk ? "1M ok" : "WRONG TF", bgcolor = color.new(tfOk ? color.green : color.red, 30), text_color = color.white)
+    table.cell(dash, 0, 1, "Zone")
+    table.cell(dash, 1, 1, na(zH) ? "-" : str.tostring(zL, format.mintick) + " / " + str.tostring(zH, format.mintick))
+    table.cell(dash, 0, 2, "Zone width")
+    table.cell(dash, 1, 2, na(zoneWidth) ? "-" : str.tostring(zoneWidth, "#.##") + (zoneSizeOk ? " ok" : " FILTERED"))
+    table.cell(dash, 0, 3, "State")
+    table.cell(dash, 1, 3, stTxt + (dirState == 1 ? " long" : dirState == -1 ? " short" : "") + (momMode ? " (mom)" : ""))
+    table.cell(dash, 0, 4, "Confluence")
+    table.cell(dash, 1, 4, str.tostring(confScore) + " / " + str.tostring(confMinScore))
+    table.cell(dash, 0, 5, "Daily bias")
+    table.cell(dash, 1, 5, bias == 1 ? "bullish" : bias == -1 ? "bearish" : "neutral")
+    table.cell(dash, 0, 6, "ATR ratio")
+    table.cell(dash, 1, 6, na(atrS) or atrS == 0 ? "-" : str.tostring(atrF / atrS, "#.##") + (chopOk ? "" : "  CHOP"))
+    table.cell(dash, 0, 7, "Trades today")
+    table.cell(dash, 1, 7, str.tostring(tradesToday) + " / " + str.tostring(maxTrades))
+    table.cell(dash, 0, 8, "Liquidity setup")
+    table.cell(dash, 1, 8, liqSt == 0 ? "-" : (liqDir == 1 ? "long @ " : "short @ ") + str.tostring(liqLvl, format.mintick))
+    table.cell(dash, 0, 9, "Last trade E/SL/TP")
+    table.cell(dash, 1, 9, na(lastEntry) ? "-" : str.tostring(lastEntry, format.mintick) + " / " + str.tostring(lastSL, format.mintick) + " / " + str.tostring(lastTP, format.mintick) + "  x" + str.tostring(lastQty))
