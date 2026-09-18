@@ -127,12 +127,13 @@ class Store:
         ).fetchone()
         return dict(row) if row else None
 
-    def record_alert(self, mint: str, score: int, wallet_count: int, payload: dict) -> None:
-        self.conn.execute(
+    def record_alert(self, mint: str, score: int, wallet_count: int, payload: dict) -> int:
+        cur = self.conn.execute(
             "INSERT INTO alerts (mint, ts, score, wallet_count, payload) VALUES (?, ?, ?, ?, ?)",
             (mint, time.time(), score, wallet_count, json.dumps(payload, ensure_ascii=False)),
         )
         self.conn.commit()
+        return cur.lastrowid
 
     def close(self) -> None:
         self.conn.close()

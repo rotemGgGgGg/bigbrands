@@ -9,6 +9,7 @@ import time
 import requests
 
 SNAPSHOT_OFFSETS = [(15, "15m"), (60, "1h"), (24 * 60, "24h")]
+T0_LABEL = "0m"
 DEXSCREENER = "https://api.dexscreener.com/latest/dex/tokens/{}"
 
 SCHEMA = """
@@ -100,3 +101,18 @@ def start() -> threading.Event:
     )
     thread.start()
     return stop_event
+
+
+def snapshot_now(store, alert_id: int, mint: str) -> dict:
+    """Record the price at alert time. Without it no later move is measurable."""
+    store.conn.executescript(SCHEMA)
+    snap = fetch_snapshot(mint)
+    store.conn.execute(
+        "INSERT OR REPLACE INTO outcomes "
+        "(alert_id, mint, label, ts, price_usd, mcap_usd, liq_usd) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (alert_id, mint, T0_LABEL, time.time(), snap.get("price_usd"),
+         snap.get("mcap_usd"), snap.get("liq_usd")),
+    )
+    store.conn.commit()
+    return snap

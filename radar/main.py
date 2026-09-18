@@ -122,7 +122,12 @@ def check_and_alert(store, names) -> None:
             continue
         text = notify.format_alert(event, names)
         delivered = notify.send(text)
-        store.record_alert(event["mint"], event["score"], event["wallet_count"], event)
+        alert_id = store.record_alert(
+            event["mint"], event["score"], event["wallet_count"], event
+        )
+        snap = followup.snapshot_now(store, alert_id, event["mint"])
+        if snap.get("mcap_usd"):
+            log(f"  entry mcap ${snap['mcap_usd']:,.0f}")
         log(
             f"ALERT {event['score']}/100 {event['mint'][:8]}… "
             f"({event['wallet_count']} wallets)" + ("" if delivered else " [stdout]")
