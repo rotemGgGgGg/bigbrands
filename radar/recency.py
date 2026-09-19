@@ -58,17 +58,25 @@ def main():
     parser.add_argument("--days", type=float, default=7.0)
     parser.add_argument("--min-positions", type=int, default=15)
     parser.add_argument("--min-deployed", type=float, default=20.0)
+    parser.add_argument("--all", action="store_true",
+                        help="include wallets regardless of profit (for the wide feed)")
+    parser.add_argument("--pages", type=int, default=3,
+                        help="pages of 100 transactions to walk back; 1 is enough to answer "
+                             "'did this wallet trade recently'")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--out", default="recency.json")
     args = parser.parse_args()
 
     ranking = json.loads(open(args.ranking).read())
-    candidates = [
-        r for r in ranking
-        if r.get("positions", 0) >= args.min_positions
-        and r.get("net_sol", 0) > 0
-        and r.get("sol_deployed", 0) >= args.min_deployed
-    ]
+    if args.all:
+        candidates = list(ranking)
+    else:
+        candidates = [
+            r for r in ranking
+            if r.get("positions", 0) >= args.min_positions
+            and r.get("net_sol", 0) > 0
+            and r.get("sol_deployed", 0) >= args.min_deployed
+        ]
     print(f"{len(candidates)} profitable candidates; counting last {args.days:g} days of activity…")
 
     limiter = solana.RateLimiter(config.RPC_RPS)
@@ -76,7 +84,7 @@ def main():
 
     def measure(row):
         row = dict(row)
-        row["recent_txs"] = recent_count(row["address"], limiter, cutoff)
+        row["recent_txs"] = recent_count(row["address"], limiter, cutoff, args.pages)
         row["recent_per_day"] = round(row["recent_txs"] / args.days, 2)
         return row
 
