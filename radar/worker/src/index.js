@@ -10,9 +10,14 @@
  * version late, and late is the same as useless here.
  */
 import { extractBuys } from "./detect.js";
-import { TRACKED } from "./wallets.js";
+import { TRACKED, FEED } from "./wallets.js";
 
+// Two audiences. TRACKED are the wallets that earned a place by their own
+// results and go to the quiet channel; FEED is the wide set, where volume is
+// the point and the reader goes looking rather than being interrupted.
 const TRACKED_SET = new Set(Object.keys(TRACKED));
+const FEED_SET = new Set(Object.keys(FEED));
+const WATCHED = new Set([...TRACKED_SET, ...FEED_SET]);
 
 function html(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -71,15 +76,17 @@ function formatAlert(buy, name) {
   ].join("\n");
 }
 
-async function sendTelegram(env, text) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return false;
+async function sendTelegram(env, text, channel = "signal") {
+  const token = channel === "feed" ? env.TELEGRAM_FEED_TOKEN : env.TELEGRAM_BOT_TOKEN;
+  const chat = channel === "feed" ? env.TELEGRAM_FEED_CHAT : env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return false;
   const resp = await fetch(
-    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+    `https://api.telegram.org/bot${token}/sendMessage`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: env.TELEGRAM_CHAT_ID,
+        chat_id: chat,
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
@@ -114,19 +121,23 @@ async function handleWebhook(request, env) {
   let alerted = 0;
 
   for (const tx of transactions) {
-    for (const buy of extractBuys(tx, TRACKED_SET, minSol)) {
+    for (const buy of extractBuys(tx, WATCHED, minSol)) {
+      const isSignal = TRACKED_SET.has(buy.wallet);
+      const channel = isSignal ? "signal" : "feed";
       // One alert per wallet+mint per window; a wallet adding to the same
       // position is not news.
       const key = `alerted:${buy.wallet}:${buy.mint}`;
       if (await env.STATE.get(key)) continue;
       await env.STATE.put(key, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
 
-      const name = TRACKED[buy.wallet] || buy.wallet.slice(0, 6);
-      const delivered = await sendTelegram(env, formatAlert(buy, name));
+      const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
+      const delivered = await sendTelegram(env, formatAlert(buy, name), channel);
 
       // Escalation: keep a short-lived roster of who has bought this mint, and
       // send a second message when another wallet joins. Polling made this
       // arrive a minute late before; pushed, it lands within seconds.
+      if (!isSignal) continue;
+
       const rosterKey = `buyers:${buy.mint}`;
       const roster = JSON.parse((await env.STATE.get(rosterKey)) || "[]");
       roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now() });
@@ -165,13 +176,16 @@ export default {
     if (url.pathname === "/alerts") return listAlerts(env);
     if (url.pathname === "/test") {
       const ok = await sendTelegram(env, "🟢 <b>Radar is live.</b>\nThis is a connection test.");
-      return Response.json({ telegram: ok });
+      const feedOk = await sendTelegram(
+        env, "\u{1F4E1} <b>Radar feed is live.</b>\nThis is a connection test.", "feed");
+      return Response.json({ signal: ok, feed: feedOk });
     }
     const seen = Number((await env.STATE.get("stat:seen")) || "0");
     const last = Number((await env.STATE.get("stat:last")) || "0");
     return Response.json({
       status: "ok",
       tracking: TRACKED_SET.size,
+      feed: FEED_SET.size,
       transactions_received: seen,
       last_received: last ? new Date(last).toISOString() : null,
     });

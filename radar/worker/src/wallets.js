@@ -1,5 +1,5 @@
-// Generated from radar/data/shortlist.json — wallets that passed ranking on
-// realised profit, human trading pace and non-launcher status.
+// Generated from radar/data/shortlist.json and data/feed.json.
+// TRACKED earned their place on measured results; FEED is the wide set.
 export const TRACKED = {
   "WniwuJMPtfvrJVzJ9rHJ29oKopTS9MvxvoaofM26uhs": "😀 absol",
   "2BSwyjCDsxVEXf7DNaqt8ySoaodfuufEpFTxifFHSrsV": "🥚 quantum",
@@ -30,3 +30,5 @@ export const TRACKED = {
   "9ha3rJRznYVzNkoJ5xyov3ZBjthrC8e8WNdjn48FQyDd": "🐉 Dragon",
   "Ghffv35rVtBRJ7HqMt4YPRfggaQYe1LXuNGcwchTeAXq": "🎅 Santy"
 };
+
+export const FEED = {};
