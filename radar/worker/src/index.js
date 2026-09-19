@@ -76,7 +76,8 @@ function formatAlert(buy, name) {
   ].join("\n");
 }
 
-async function sendTelegram(env, text, channel = "signal") {
+async function sendTelegram(env, text, channel = "signal", drill = false) {
+  if (drill) text = "\u{1F9EA} <b>TEST — not a real event</b>\n\n" + text;
   const token = channel === "feed" ? env.TELEGRAM_FEED_TOKEN : env.TELEGRAM_BOT_TOKEN;
   const chat = channel === "feed" ? env.TELEGRAM_FEED_CHAT : env.TELEGRAM_CHAT_ID;
   if (!token || !chat) return false;
@@ -132,6 +133,7 @@ async function handleWebhook(request, env) {
     return new Response("forbidden", { status: 403 });
   }
 
+  const isDrill = url.searchParams.get("drill") === "1";
   let payload;
   try {
     payload = await request.json();
@@ -154,7 +156,7 @@ async function handleWebhook(request, env) {
 
       if (isSignal && (await claim(env, `buy:${buy.wallet}:${buy.mint}`))) {
         // A selected wallet earned its place, so its own buy is worth saying.
-        await sendTelegram(env, formatAlert(buy, name), "signal");
+        await sendTelegram(env, formatAlert(buy, name), "signal", isDrill);
         await logAlert(env, "single", buy.mint, 1, null, { wallet: name, sol: buy.sol_spent });
         alerted += 1;
       }
@@ -164,8 +166,8 @@ async function handleWebhook(request, env) {
       const buyers = await buyersOf(env, buy.mint, windowMs);
       if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
         const text = formatCluster(buyers, buy.mint);
-        await sendTelegram(env, text, "feed");
-        if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal");
+        await sendTelegram(env, text, "feed", isDrill);
+        if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal", isDrill);
         await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
                        buyers.map((b) => b.name));
         alerted += 1;
