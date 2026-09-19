@@ -6,3 +6,4 @@ __pycache__/
 ranking.json
 data/wallets_todo.json
 ranking_*.json
+recency.json
