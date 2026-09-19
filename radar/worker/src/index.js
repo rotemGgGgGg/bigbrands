@@ -18,6 +18,42 @@ function html(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** Score for a group of wallets landing on the same mint.
+ *
+ * Breadth and speed only. The previous scoring mixed in size and novelty with
+ * weights nobody had checked, and its top-scoring alert fell 91%; these two
+ * inputs are at least directly observable. Treat the number as a label for how
+ * unusual the cluster is, not as a forecast.
+ */
+function scoreCluster(buyers) {
+  const span = (Math.max(...buyers.map((b) => b.ts)) - Math.min(...buyers.map((b) => b.ts))) / 1000;
+  const breadth = Math.min(1, (buyers.length - 1) / 4);
+  const speed = Math.min(1, Math.max(0, 1 - span / 600));
+  return { score: Math.round(100 * (0.65 * breadth + 0.35 * speed)), span: Math.round(span) };
+}
+
+function formatCluster(buyers, mint) {
+  const { score, span } = scoreCluster(buyers);
+  const sol = buyers.reduce((sum, b) => sum + b.sol, 0).toFixed(2);
+  const band = score >= 75 ? "\u{1F534} STRONG" : score >= 50 ? "\u{1F7E0} NOTABLE" : "\u{1F7E1} EARLY";
+  return [
+    `${band}  \u00b7  ${score}/100`,
+    "",
+    `<b>${buyers.length} wallets you follow bought the SAME token</b>`,
+    `within ${span} seconds of each other.`,
+    "",
+    "<b>Who bought:</b>",
+    ...buyers.map((b) => `  \u2022 ${html(b.name)} — ${b.sol} SOL`),
+    "",
+    `<b>Total:</b> ${sol} SOL`,
+    "",
+    `<code>${html(mint)}</code>`,
+    "",
+    `\u{1F4C8} <a href="https://dexscreener.com/solana/${mint}">Chart</a>  \u00b7  ` +
+      `\u{1F9FE} <a href="https://axiom.trade/t/${mint}">Axiom</a>`,
+  ].join("\n");
+}
+
 function formatAlert(buy, name) {
   const mint = buy.mint;
   return [
@@ -68,6 +104,11 @@ async function handleWebhook(request, env) {
   }
   const transactions = Array.isArray(payload) ? payload : [payload];
 
+  // Counter so silence can be told apart from a broken pipe.
+  const seen = Number((await env.STATE.get("stat:seen")) || "0") + transactions.length;
+  await env.STATE.put("stat:seen", String(seen));
+  await env.STATE.put("stat:last", String(Date.now()));
+
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
   const reAlertMs = Number(env.RE_ALERT_MINUTES || "60") * 60_000;
   let alerted = 0;
@@ -82,6 +123,17 @@ async function handleWebhook(request, env) {
 
       const name = TRACKED[buy.wallet] || buy.wallet.slice(0, 6);
       const delivered = await sendTelegram(env, formatAlert(buy, name));
+
+      // Escalation: keep a short-lived roster of who has bought this mint, and
+      // send a second message when another wallet joins. Polling made this
+      // arrive a minute late before; pushed, it lands within seconds.
+      const rosterKey = `buyers:${buy.mint}`;
+      const roster = JSON.parse((await env.STATE.get(rosterKey)) || "[]");
+      roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now() });
+      await env.STATE.put(rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
+      if (roster.length >= 2) {
+        await sendTelegram(env, formatCluster(roster, buy.mint));
+      }
       await env.STATE.put(
         `alert:${Date.now()}:${buy.mint.slice(0, 8)}`,
         JSON.stringify({ ...buy, name, delivered, ts: Date.now() }),
@@ -115,6 +167,13 @@ export default {
       const ok = await sendTelegram(env, "🟢 <b>Radar is live.</b>\nThis is a connection test.");
       return Response.json({ telegram: ok });
     }
-    return Response.json({ status: "ok", tracking: TRACKED_SET.size });
+    const seen = Number((await env.STATE.get("stat:seen")) || "0");
+    const last = Number((await env.STATE.get("stat:last")) || "0");
+    return Response.json({
+      status: "ok",
+      tracking: TRACKED_SET.size,
+      transactions_received: seen,
+      last_received: last ? new Date(last).toISOString() : null,
+    });
   },
 };
