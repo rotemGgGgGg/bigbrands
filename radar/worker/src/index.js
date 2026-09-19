@@ -96,6 +96,24 @@ async function sendTelegram(env, text, channel = "signal") {
   return resp.ok;
 }
 
+async function put(env, key, value, options) {
+  try {
+    await env.STATE.put(key, value, options);
+    return true;
+  } catch (err) {
+    console.log(`kv put failed for ${key}: ${err.message}`);
+    return false;
+  }
+}
+
+async function get(env, key) {
+  try {
+    return await env.STATE.get(key);
+  } catch {
+    return null;
+  }
+}
+
 async function handleWebhook(request, env) {
   // The webhook URL is effectively the credential, so it carries a secret.
   const url = new URL(request.url);
@@ -111,11 +129,6 @@ async function handleWebhook(request, env) {
   }
   const transactions = Array.isArray(payload) ? payload : [payload];
 
-  // Counter so silence can be told apart from a broken pipe.
-  const seen = Number((await env.STATE.get("stat:seen")) || "0") + transactions.length;
-  await env.STATE.put("stat:seen", String(seen));
-  await env.STATE.put("stat:last", String(Date.now()));
-
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
   const reAlertMs = Number(env.RE_ALERT_MINUTES || "60") * 60_000;
   let alerted = 0;
@@ -128,17 +141,17 @@ async function handleWebhook(request, env) {
       // Every buy joins a short-lived roster for its mint. The roster is what
       // makes a cluster visible; the individual buy usually is not news.
       const rosterKey = `buyers:${buy.mint}`;
-      const roster = JSON.parse((await env.STATE.get(rosterKey)) || "[]");
+      const roster = JSON.parse((await get(env, rosterKey)) || "[]");
       if (!roster.some((b) => b.wallet === buy.wallet)) {
         roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now(), isSignal });
-        await env.STATE.put(rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
+        await put(env, rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
       }
 
       if (isSignal) {
         // A selected wallet earned its place, so its own buy is worth saying.
         const seenKey = `alerted:${buy.wallet}:${buy.mint}`;
-        if (!(await env.STATE.get(seenKey))) {
-          await env.STATE.put(seenKey, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
+        if (!(await get(env, seenKey))) {
+          await put(env, seenKey, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
           await sendTelegram(env, formatAlert(buy, name), "signal");
           alerted += 1;
         }
@@ -149,12 +162,13 @@ async function handleWebhook(request, env) {
       const minCluster = Number(env.MIN_FEED_WALLETS || "3");
       if (roster.length >= minCluster) {
         const clusterKey = `cluster:${buy.mint}:${roster.length}`;
-        if (!(await env.STATE.get(clusterKey))) {
-          await env.STATE.put(clusterKey, "1", { expirationTtl: 1800 });
+        if (!(await get(env, clusterKey))) {
+          await put(env, clusterKey, "1", { expirationTtl: 1800 });
           const text = formatCluster(roster, buy.mint);
           await sendTelegram(env, text, "feed");
           if (roster.some((b) => b.isSignal)) await sendTelegram(env, text, "signal");
-          await env.STATE.put(
+          await put(
+            env,
             `alert:${Date.now()}:${buy.mint.slice(0, 8)}`,
             JSON.stringify({ mint: buy.mint, wallets: roster.length, ts: Date.now() }),
             { expirationTtl: 30 * 24 * 3600 },
@@ -191,14 +205,10 @@ export default {
         env, "\u{1F4E1} <b>Radar feed is live.</b>\nThis is a connection test.", "feed");
       return Response.json({ signal: ok, feed: feedOk });
     }
-    const seen = Number((await env.STATE.get("stat:seen")) || "0");
-    const last = Number((await env.STATE.get("stat:last")) || "0");
     return Response.json({
       status: "ok",
       tracking: TRACKED_SET.size,
       feed: FEED_SET.size,
-      transactions_received: seen,
-      last_received: last ? new Date(last).toISOString() : null,
     });
   },
 };
