@@ -96,22 +96,33 @@ async function sendTelegram(env, text, channel = "signal") {
   return resp.ok;
 }
 
-async function put(env, key, value, options) {
-  try {
-    await env.STATE.put(key, value, options);
-    return true;
-  } catch (err) {
-    console.log(`kv put failed for ${key}: ${err.message}`);
-    return false;
-  }
+async function recordBuy(env, buy, name, isSignal) {
+  await env.DB.prepare(
+    "INSERT OR IGNORE INTO buys (mint, wallet, name, sol, ts, is_signal) VALUES (?, ?, ?, ?, ?, ?)",
+  ).bind(buy.mint, buy.wallet, name, buy.sol_spent, Date.now(), isSignal ? 1 : 0).run();
 }
 
-async function get(env, key) {
-  try {
-    return await env.STATE.get(key);
-  } catch {
-    return null;
-  }
+async function buyersOf(env, mint, windowMs) {
+  const { results } = await env.DB.prepare(
+    "SELECT wallet, name, sol, ts, is_signal FROM buys WHERE mint = ? AND ts >= ? ORDER BY ts",
+  ).bind(mint, Date.now() - windowMs).all();
+  return (results || []).map((r) => ({
+    wallet: r.wallet, name: r.name, sol: r.sol, ts: r.ts, isSignal: r.is_signal === 1,
+  }));
+}
+
+/** Claim a message so the same one is never sent twice. */
+async function claim(env, key) {
+  const res = await env.DB.prepare(
+    "INSERT OR IGNORE INTO sent (key, ts) VALUES (?, ?)",
+  ).bind(key, Date.now()).run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
+async function logAlert(env, kind, mint, wallets, score, payload) {
+  await env.DB.prepare(
+    "INSERT INTO alerts (kind, mint, wallets, score, ts, payload) VALUES (?, ?, ?, ?, ?, ?)",
+  ).bind(kind, mint, wallets, score, Date.now(), JSON.stringify(payload)).run();
 }
 
 async function handleWebhook(request, env) {
@@ -130,7 +141,8 @@ async function handleWebhook(request, env) {
   const transactions = Array.isArray(payload) ? payload : [payload];
 
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
-  const reAlertMs = Number(env.RE_ALERT_MINUTES || "60") * 60_000;
+  const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
+  const minCluster = Number(env.MIN_FEED_WALLETS || "3");
   let alerted = 0;
 
   for (const tx of transactions) {
@@ -138,43 +150,25 @@ async function handleWebhook(request, env) {
       const isSignal = TRACKED_SET.has(buy.wallet);
       const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
 
-      // Every buy joins a short-lived roster for its mint. The roster is what
-      // makes a cluster visible; the individual buy usually is not news.
-      const rosterKey = `buyers:${buy.mint}`;
-      const roster = JSON.parse((await get(env, rosterKey)) || "[]");
-      if (!roster.some((b) => b.wallet === buy.wallet)) {
-        roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now(), isSignal });
-        await put(env, rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
-      }
+      await recordBuy(env, buy, name, isSignal);
 
-      if (isSignal) {
+      if (isSignal && (await claim(env, `buy:${buy.wallet}:${buy.mint}`))) {
         // A selected wallet earned its place, so its own buy is worth saying.
-        const seenKey = `alerted:${buy.wallet}:${buy.mint}`;
-        if (!(await get(env, seenKey))) {
-          await put(env, seenKey, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
-          await sendTelegram(env, formatAlert(buy, name), "signal");
-          alerted += 1;
-        }
+        await sendTelegram(env, formatAlert(buy, name), "signal");
+        await logAlert(env, "single", buy.mint, 1, null, { wallet: name, sol: buy.sol_spent });
+        alerted += 1;
       }
 
-      // The wide feed only speaks when several wallets converge: one buy out of
-      // three hundred wallets is noise, and sending each one buried the channel.
-      const minCluster = Number(env.MIN_FEED_WALLETS || "3");
-      if (roster.length >= minCluster) {
-        const clusterKey = `cluster:${buy.mint}:${roster.length}`;
-        if (!(await get(env, clusterKey))) {
-          await put(env, clusterKey, "1", { expirationTtl: 1800 });
-          const text = formatCluster(roster, buy.mint);
-          await sendTelegram(env, text, "feed");
-          if (roster.some((b) => b.isSignal)) await sendTelegram(env, text, "signal");
-          await put(
-            env,
-            `alert:${Date.now()}:${buy.mint.slice(0, 8)}`,
-            JSON.stringify({ mint: buy.mint, wallets: roster.length, ts: Date.now() }),
-            { expirationTtl: 30 * 24 * 3600 },
-          );
-          alerted += 1;
-        }
+      // The wide feed only speaks when wallets converge: one buy out of three
+      // hundred is noise, and sending each one buried the channel.
+      const buyers = await buyersOf(env, buy.mint, windowMs);
+      if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
+        const text = formatCluster(buyers, buy.mint);
+        await sendTelegram(env, text, "feed");
+        if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal");
+        await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
+                       buyers.map((b) => b.name));
+        alerted += 1;
       }
     }
   }
@@ -183,13 +177,10 @@ async function handleWebhook(request, env) {
 }
 
 async function listAlerts(env) {
-  const { keys } = await env.STATE.list({ prefix: "alert:", limit: 100 });
-  const rows = [];
-  for (const key of keys.reverse()) {
-    const value = await env.STATE.get(key.name);
-    if (value) rows.push(JSON.parse(value));
-  }
-  return Response.json({ count: rows.length, alerts: rows });
+  const { results } = await env.DB.prepare(
+    "SELECT kind, mint, wallets, score, ts, payload FROM alerts ORDER BY ts DESC LIMIT 100",
+  ).all();
+  return Response.json({ count: (results || []).length, alerts: results || [] });
 }
 
 export default {
@@ -205,10 +196,15 @@ export default {
         env, "\u{1F4E1} <b>Radar feed is live.</b>\nThis is a connection test.", "feed");
       return Response.json({ signal: ok, feed: feedOk });
     }
+    const counts = await env.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM buys) AS buys, (SELECT COUNT(*) FROM alerts) AS alerts",
+    ).first();
     return Response.json({
       status: "ok",
       tracking: TRACKED_SET.size,
       feed: FEED_SET.size,
+      buys_recorded: counts?.buys ?? 0,
+      alerts_sent: counts?.alerts ?? 0,
     });
   },
 };

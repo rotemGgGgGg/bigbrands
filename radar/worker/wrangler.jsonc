@@ -4,12 +4,16 @@
   "compatibility_date": "2026-09-01",
   "observability": { "enabled": true },
   "workers_dev": true,
+  "d1_databases": [
+    { "binding": "DB", "database_name": "radar", "database_id": "b4822c07-d76b-4b05-8b0f-de02678339d9" }
+  ],
   "kv_namespaces": [
     { "binding": "STATE", "id": "5d2130cfafd544ed843730ae558438c5" }
   ],
   "vars": {
     "MIN_SOL_BUY": "0.05",
     "RE_ALERT_MINUTES": "60",
-    "MIN_FEED_WALLETS": "3"
+    "MIN_FEED_WALLETS": "3",
+    "CLUSTER_WINDOW_MINUTES": "10"
   }
 }
