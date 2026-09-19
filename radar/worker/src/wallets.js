@@ -1,4 +1,4 @@
-// Generated from radar/data/shortlist.json — wallets that survived ranking on
+// Generated from radar/data/shortlist.json — wallets that passed ranking on
 // realised profit, human trading pace and non-launcher status.
 export const TRACKED = {
   "WniwuJMPtfvrJVzJ9rHJ29oKopTS9MvxvoaofM26uhs": "😀 absol",
@@ -20,5 +20,13 @@ export const TRACKED = {
   "B55PH2b2mJjQpQShcwuaNFSp4LcARJqwx14tqtyhVRc3": "👻 SR32",
   "CveDVyfDXm43sn3J1aZVuyMfyNPswMBo3vV3LT2FDX4y": "🇸🇽 color",
   "CnFqCnNnzXgcWjUrCeLKV9AG6Lv3P9cZSASGPGMBvviS": "🤩 lebobm",
-  "DtSCRKpnJLgZLJPxPgM5raqTUHvBcFeKKAoKGaSp5RRJ": "🎁 bogha"
+  "DtSCRKpnJLgZLJPxPgM5raqTUHvBcFeKKAoKGaSp5RRJ": "🎁 bogha",
+  "RFSqPtn1JfavGiUD4HJsZyYXvZsycxf31hnYfbyG6iB": "🐿️ alvin/patty",
+  "HyPnovQR6hu5wSnupAAw6avYJJdTqNwLNhjmWLhDpYrF": "😀 Rename wallet",
+  "9fR8gerfvGSycFGbK2VY1PFrPuU9jS6QM47S974yTUHC": "😀 yog",
+  "76ZUBj1JLz7arTVHSRJok5oSTEqDuVBgySFMVHtzxzZc": "⛔ crime",
+  "3LYtEmYerFPeXgu1c9Y4553oMk2qVdcxiwWzDjzMkwPx": "🐀 awkchan",
+  "kExk5MesfpNdHGGkgBBuv8QpCM16jqLbiwZuJwwbPhK": "🧸 bhronos",
+  "9ha3rJRznYVzNkoJ5xyov3ZBjthrC8e8WNdjn48FQyDd": "🐉 Dragon",
+  "Ghffv35rVtBRJ7HqMt4YPRfggaQYe1LXuNGcwchTeAXq": "🎅 Santy"
 };
