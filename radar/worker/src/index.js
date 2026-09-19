@@ -123,34 +123,45 @@ async function handleWebhook(request, env) {
   for (const tx of transactions) {
     for (const buy of extractBuys(tx, WATCHED, minSol)) {
       const isSignal = TRACKED_SET.has(buy.wallet);
-      const channel = isSignal ? "signal" : "feed";
-      // One alert per wallet+mint per window; a wallet adding to the same
-      // position is not news.
-      const key = `alerted:${buy.wallet}:${buy.mint}`;
-      if (await env.STATE.get(key)) continue;
-      await env.STATE.put(key, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
-
       const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
-      const delivered = await sendTelegram(env, formatAlert(buy, name), channel);
 
-      // Escalation: keep a short-lived roster of who has bought this mint, and
-      // send a second message when another wallet joins. Polling made this
-      // arrive a minute late before; pushed, it lands within seconds.
-      if (!isSignal) continue;
-
+      // Every buy joins a short-lived roster for its mint. The roster is what
+      // makes a cluster visible; the individual buy usually is not news.
       const rosterKey = `buyers:${buy.mint}`;
       const roster = JSON.parse((await env.STATE.get(rosterKey)) || "[]");
-      roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now() });
-      await env.STATE.put(rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
-      if (roster.length >= 2) {
-        await sendTelegram(env, formatCluster(roster, buy.mint));
+      if (!roster.some((b) => b.wallet === buy.wallet)) {
+        roster.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: Date.now(), isSignal });
+        await env.STATE.put(rosterKey, JSON.stringify(roster), { expirationTtl: 1800 });
       }
-      await env.STATE.put(
-        `alert:${Date.now()}:${buy.mint.slice(0, 8)}`,
-        JSON.stringify({ ...buy, name, delivered, ts: Date.now() }),
-        { expirationTtl: 30 * 24 * 3600 },
-      );
-      alerted += 1;
+
+      if (isSignal) {
+        // A selected wallet earned its place, so its own buy is worth saying.
+        const seenKey = `alerted:${buy.wallet}:${buy.mint}`;
+        if (!(await env.STATE.get(seenKey))) {
+          await env.STATE.put(seenKey, "1", { expirationTtl: Math.floor(reAlertMs / 1000) });
+          await sendTelegram(env, formatAlert(buy, name), "signal");
+          alerted += 1;
+        }
+      }
+
+      // The wide feed only speaks when several wallets converge: one buy out of
+      // three hundred wallets is noise, and sending each one buried the channel.
+      const minCluster = Number(env.MIN_FEED_WALLETS || "3");
+      if (roster.length >= minCluster) {
+        const clusterKey = `cluster:${buy.mint}:${roster.length}`;
+        if (!(await env.STATE.get(clusterKey))) {
+          await env.STATE.put(clusterKey, "1", { expirationTtl: 1800 });
+          const text = formatCluster(roster, buy.mint);
+          await sendTelegram(env, text, "feed");
+          if (roster.some((b) => b.isSignal)) await sendTelegram(env, text, "signal");
+          await env.STATE.put(
+            `alert:${Date.now()}:${buy.mint.slice(0, 8)}`,
+            JSON.stringify({ mint: buy.mint, wallets: roster.length, ts: Date.now() }),
+            { expirationTtl: 30 * 24 * 3600 },
+          );
+          alerted += 1;
+        }
+      }
     }
   }
 
