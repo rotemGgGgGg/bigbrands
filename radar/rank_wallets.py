@@ -15,6 +15,7 @@ import concurrent.futures
 import json
 import statistics
 import time
+from pathlib import Path
 from collections import defaultdict
 
 import requests
@@ -152,11 +153,24 @@ def main():
     parser.add_argument("--pages", type=int, default=2, help="100 transactions per page")
     parser.add_argument("--min-positions", type=int, default=5,
                         help="hide wallets with fewer closed positions than this")
+    parser.add_argument("--wallets", default="", help="path to a wallet list to rank instead of the default")
     parser.add_argument("--workers", type=int, default=8, help="parallel fetches")
     parser.add_argument("--out", default="ranking.json")
     args = parser.parse_args()
 
-    wallet_list = wallets_mod.load_wallets()
+    if args.wallets:
+        wallet_list = [
+            {
+                "address": w["trackedWalletAddress"],
+                "name": w.get("name") or w["trackedWalletAddress"][:4],
+                "emoji": w.get("emoji", ""),
+                "priority": True,
+            }
+            for w in json.loads(Path(args.wallets).read_text())
+            if w.get("trackedWalletAddress")
+        ]
+    else:
+        wallet_list = wallets_mod.load_wallets()
     if args.limit:
         wallet_list = wallet_list[: args.limit]
     limiter = solana.RateLimiter(config.RPC_RPS)

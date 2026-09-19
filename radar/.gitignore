@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 *.log
 ranking.json
+data/wallets_todo.json
+ranking_*.json
