@@ -29,23 +29,50 @@ LAMPORTS = 1_000_000_000
 QUOTE_MINTS = config.IGNORED_MINTS
 
 
-def fetch_history(address: str, limiter, pages: int = 2) -> list:
-    """Most recent transactions, parsed, newest first."""
-    out = []
-    before = None
-    for _ in range(pages):
-        params = {"api-key": config.HELIUS_API_KEY, "limit": 100}
-        if before:
-            params["before"] = before
+class FetchFailed(Exception):
+    """A page could not be retrieved, so the history is incomplete."""
+
+
+def _get_page(address: str, before, limiter, retries: int = 5):
+    """One page, retrying through rate limits rather than silently giving up."""
+    params = {"api-key": config.HELIUS_API_KEY, "limit": 100}
+    if before:
+        params["before"] = before
+    backoff = 1.0
+    for attempt in range(retries + 1):
         limiter.acquire()
         try:
             resp = requests.get(ENDPOINT.format(address), params=params, timeout=30)
         except requests.RequestException:
-            break
-        if resp.status_code != 200:
-            break
-        batch = resp.json()
-        if not isinstance(batch, list) or not batch:
+            if attempt == retries:
+                raise FetchFailed("network")
+            time.sleep(backoff)
+            backoff *= 2
+            continue
+        if resp.status_code == 200:
+            batch = resp.json()
+            return batch if isinstance(batch, list) else []
+        if resp.status_code in (429, 500, 502, 503, 504):
+            if attempt == retries:
+                raise FetchFailed(f"HTTP {resp.status_code}")
+            time.sleep(backoff)
+            backoff *= 2
+            continue
+        raise FetchFailed(f"HTTP {resp.status_code}")
+    raise FetchFailed("retries exhausted")
+
+
+def fetch_history(address: str, limiter, pages: int = 2) -> list:
+    """Most recent transactions, parsed, newest first.
+
+    Raises FetchFailed rather than returning a short history, so a wallet whose
+    data could not be read is reported instead of scoring as inactive.
+    """
+    out = []
+    before = None
+    for _ in range(pages):
+        batch = _get_page(address, before, limiter, retries=5)
+        if not batch:
             break
         out.extend(batch)
         before = batch[-1]["signature"]
@@ -135,7 +162,16 @@ def main():
     limiter = solana.RateLimiter(config.RPC_RPS)
 
     def scan(wallet):
-        history = fetch_history(wallet["address"], limiter, args.pages)
+        try:
+            history = fetch_history(wallet["address"], limiter, args.pages)
+        except FetchFailed as exc:
+            return {
+                "positions": 0,
+                "address": wallet["address"],
+                "name": f"{wallet['emoji']} {wallet['name']}".strip(),
+                "txs_seen": 0,
+                "error": str(exc),
+            }
         stats = analyse(history, wallet["address"])
         stats.update(
             {
@@ -158,6 +194,13 @@ def main():
 
     with open(args.out, "w") as handle:
         json.dump(results, handle, indent=2)
+
+    failed = [r for r in results if r.get("error")]
+    empty = [r for r in results if not r.get("error") and r["txs_seen"] == 0]
+    if failed:
+        print(f"\n!! {len(failed)} wallets could not be read "
+              f"({failed[0]['error']}) — results below exclude them")
+    print(f"{len(empty)} wallets returned no transactions at all")
 
     ranked = [r for r in results if r["positions"] >= args.min_positions]
     ranked.sort(key=lambda r: (r["median_return"], r["win_rate"]), reverse=True)
