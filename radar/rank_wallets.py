@@ -11,6 +11,7 @@ of it. Positions still open are excluded — an unsold bag is not a result.
 Run: python rank_wallets.py [--limit N] [--out ranking.json]
 """
 import argparse
+import concurrent.futures
 import json
 import statistics
 import time
@@ -124,6 +125,7 @@ def main():
     parser.add_argument("--pages", type=int, default=2, help="100 transactions per page")
     parser.add_argument("--min-positions", type=int, default=5,
                         help="hide wallets with fewer closed positions than this")
+    parser.add_argument("--workers", type=int, default=8, help="parallel fetches")
     parser.add_argument("--out", default="ranking.json")
     args = parser.parse_args()
 
@@ -132,9 +134,7 @@ def main():
         wallet_list = wallet_list[: args.limit]
     limiter = solana.RateLimiter(config.RPC_RPS)
 
-    results = []
-    started = time.time()
-    for i, wallet in enumerate(wallet_list, 1):
+    def scan(wallet):
         history = fetch_history(wallet["address"], limiter, args.pages)
         stats = analyse(history, wallet["address"])
         stats.update(
@@ -144,9 +144,17 @@ def main():
                 "txs_seen": len(history),
             }
         )
-        results.append(stats)
-        if i % 50 == 0:
-            print(f"  {i}/{len(wallet_list)} ({int(time.time() - started)}s)", flush=True)
+        return stats
+
+    # The shared limiter still caps us at the plan's request rate; the pool only
+    # hides per-request latency, which is what made the serial version crawl.
+    results = []
+    started = time.time()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for i, stats in enumerate(pool.map(scan, wallet_list), 1):
+            results.append(stats)
+            if i % 50 == 0:
+                print(f"  {i}/{len(wallet_list)} ({int(time.time() - started)}s)", flush=True)
 
     with open(args.out, "w") as handle:
         json.dump(results, handle, indent=2)
