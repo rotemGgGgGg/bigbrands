@@ -181,7 +181,12 @@ async function handleBuy(env, buy, opts = {}) {
   const buyers = await buyersOf(env, buy.mint, windowMs);
   if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
     const text = formatCluster(buyers, buy.mint);
-    await sendTelegram(env, text, "feed", opts.drill);
+    // The wide feed is for the strong clusters only; everything below the bar
+    // is still recorded, just not sent.
+    const minScore = Number(env.MIN_FEED_SCORE || "80");
+    if (scoreCluster(buyers).score >= minScore) {
+      await sendTelegram(env, text, "feed", opts.drill);
+    }
     if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal", opts.drill);
     await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
                    buyers.map((b) => b.name));

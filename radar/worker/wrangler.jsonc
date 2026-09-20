@@ -16,6 +16,7 @@
     "MIN_SOL_BUY": "0.05",
     "RE_ALERT_MINUTES": "60",
     "MIN_FEED_WALLETS": "2",
+    "MIN_FEED_SCORE": "80",
     "CLUSTER_WINDOW_MINUTES": "10"
   }
 }
