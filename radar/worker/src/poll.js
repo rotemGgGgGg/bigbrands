@@ -26,10 +26,16 @@ const IGNORED = new Set([
 
 let rpcCursor = 0;
 
-async function rpc(method, params) {
+/**
+ * A configured endpoint is tried first and the public ones only as a fallback:
+ * the public list throttles hard enough that most calls fail, which is what
+ * limited the scan to a fraction of the wallets.
+ */
+async function rpc(method, params, env) {
   let lastError;
   const start = rpcCursor++ % RPC_ENDPOINTS.length;
-  const order = RPC_ENDPOINTS.map((_, i) => RPC_ENDPOINTS[(start + i) % RPC_ENDPOINTS.length]);
+  const rotated = RPC_ENDPOINTS.map((_, i) => RPC_ENDPOINTS[(start + i) % RPC_ENDPOINTS.length]);
+  const order = env?.RPC_URL ? [env.RPC_URL, ...rotated] : rotated;
   for (const url of order) {
     try {
       const resp = await fetch(url, {
@@ -116,7 +122,7 @@ export async function pollSlice(env, wallets, sliceIndex, slices, minSol, onBuy)
     try {
       const until = await cursorFor(env, wallet);
       const params = [wallet, until ? { limit: 10, until } : { limit: 1 }];
-      sigs = await rpc("getSignaturesForAddress", params);
+      sigs = await rpc("getSignaturesForAddress", params, env);
     } catch (err) {
       console.log(`sigs failed for ${wallet}: ${err.message}`);
       continue;
@@ -141,7 +147,7 @@ export async function pollSlice(env, wallets, sliceIndex, slices, minSol, onBuy)
         tx = await rpc("getTransaction", [
           entry.signature,
           { encoding: "jsonParsed", maxSupportedTransactionVersion: 1, commitment: "confirmed" },
-        ]);
+        ], env);
       } catch {
         continue;
       }
