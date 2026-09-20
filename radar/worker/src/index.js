@@ -208,6 +208,11 @@ export default {
     const result = await pollSlice(env, wallets, slice, slices, minSol, async (buy) => {
       await handleBuy(env, buy);
     });
+    // Heartbeat: without it, a quiet scan and a scan that never ran look the
+    // same from outside.
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO sent (key, ts) VALUES ('heartbeat', ?)",
+    ).bind(Date.now()).run();
     console.log(`poll slice ${slice}/${slices}: scanned ${result.scanned}, buys ${result.found}`);
   },
 
@@ -266,10 +271,12 @@ export default {
     const counts = await env.DB.prepare(
       "SELECT (SELECT COUNT(*) FROM buys) AS buys, (SELECT COUNT(*) FROM alerts) AS alerts",
     ).first();
+    const hb = await env.DB.prepare("SELECT ts FROM sent WHERE key = 'heartbeat'").first();
     return Response.json({
       status: "ok",
       tracking: TRACKED_SET.size,
       feed: FEED_SET.size,
+      last_scan_seconds_ago: hb ? Math.round((Date.now() - hb.ts) / 1000) : null,
       buys_recorded: counts?.buys ?? 0,
       alerts_sent: counts?.alerts ?? 0,
     });
