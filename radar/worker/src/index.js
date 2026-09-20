@@ -300,6 +300,28 @@ export default {
       }
       return Response.json(out);
     }
+    if (url.pathname === "/parse" && request.method === "POST") {
+      // Returns what the extractor saw, so a miss can be explained instead of
+      // guessed at.
+      const body = await request.json();
+      const { raw, txs } = normalisePayload(body);
+      const minSol = Number(env.MIN_SOL_BUY || "0.05");
+      const report = txs.map((tx) => {
+        const keys = (tx?.transaction?.message?.accountKeys || []).map((k) =>
+          typeof k === "string" ? k : k?.pubkey);
+        const owners = keys.filter((k) => WATCHED.has(k));
+        return {
+          version: tx?.version,
+          keys: keys.length,
+          owners,
+          err: tx?.meta?.err ? String(tx.meta.err).slice(0, 60) : null,
+          preBalances: (tx?.meta?.preBalances || []).length,
+          postTokenBalances: (tx?.meta?.postTokenBalances || []).length,
+          buys: owners.flatMap((o) => extractBuysRaw(tx, o, minSol)),
+        };
+      });
+      return Response.json({ raw, txs: txs.length, report });
+    }
     if (url.pathname === "/poll") {
       // Same work the schedule does, reachable by hand so a failure is visible.
       try {
