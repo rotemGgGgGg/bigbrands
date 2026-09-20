@@ -12,6 +12,7 @@
 import { extractBuys } from "./detect.js";
 import { pollSlice, extractBuysRaw } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
+export { ClusterState } from "./cluster.js";
 
 // Two audiences. TRACKED are the wallets that earned a place by their own
 // results and go to the quiet channel; FEED is the wide set, where volume is
@@ -35,7 +36,12 @@ function scoreCluster(buyers) {
   const span = (Math.max(...buyers.map((b) => b.ts)) - Math.min(...buyers.map((b) => b.ts))) / 1000;
   const breadth = Math.min(1, (buyers.length - 1) / 4);
   const speed = Math.min(1, Math.max(0, 1 - span / 600));
-  return { score: Math.round(100 * (0.65 * breadth + 0.35 * speed)), span: Math.round(span) };
+  // Breadth and speed alone say nothing about who is buying. A cluster that
+  // includes the shortlist wallets is worth more than the same shape drawn
+  // from the wide feed, so it earns a bonus on top rather than reweighting.
+  const quality = Math.min(1, buyers.filter((b) => b.isSignal).length / 2);
+  const base = 100 * (0.65 * breadth + 0.35 * speed);
+  return { score: Math.min(100, Math.round(base + 15 * quality)), span: Math.round(span) };
 }
 
 function formatCluster(buyers, mint) {
@@ -111,14 +117,6 @@ async function buyersOf(env, mint, windowMs) {
   return (results || []).map((r) => ({
     wallet: r.wallet, name: r.name, sol: r.sol, ts: r.ts, isSignal: r.is_signal === 1,
   }));
-}
-
-/** Claim a message so the same one is never sent twice. */
-async function claim(env, key) {
-  const res = await env.DB.prepare(
-    "INSERT OR IGNORE INTO sent (key, ts) VALUES (?, ?)",
-  ).bind(key, Date.now()).run();
-  return (res.meta?.changes ?? 0) > 0;
 }
 
 async function logAlert(env, kind, mint, wallets, score, payload) {
@@ -203,48 +201,101 @@ async function listAlerts(env) {
   return Response.json({ count: (results || []).length, alerts: results || [] });
 }
 
+// Cluster detection in memory. Storage is the durable record, but its daily
+// limits can stop it, and a cluster window is only minutes wide — short enough
+// that the worker's own memory covers most of it at no quota cost.
+const recentBuys = new Map(); // mint -> [{wallet,name,sol,ts,isSignal}]
+const firedClusters = new Map(); // `${mint}:${count}` -> ts
+// Identifies which instance answered. Clusters only merge inside one instance
+// when storage is down, so this is what tells that story from outside.
+const ISOLATE = Math.random().toString(36).slice(2, 8);
+
+function rememberBuy(buy, name, isSignal, windowMs) {
+  const now = Date.now();
+  for (const [mint, rows] of recentBuys) {
+    const live = rows.filter((r) => now - r.ts < windowMs);
+    if (live.length) recentBuys.set(mint, live);
+    else recentBuys.delete(mint);
+  }
+  for (const [key, ts] of firedClusters) {
+    if (now - ts > windowMs * 3) firedClusters.delete(key);
+  }
+  const rows = recentBuys.get(buy.mint) || [];
+  if (!rows.some((r) => r.wallet === buy.wallet)) {
+    rows.push({ wallet: buy.wallet, name, sol: buy.sol_spent, ts: now, isSignal });
+    recentBuys.set(buy.mint, rows);
+  }
+  return rows;
+}
+
+function claimOnce(key) {
+  if (firedClusters.has(key)) return false;
+  firedClusters.set(key, Date.now());
+  return true;
+}
+
 /** Shared by the pushed and polled paths so both alert identically. */
 async function handleBuy(env, buy, opts = {}) {
   const isSignal = TRACKED_SET.has(buy.wallet);
   const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
-  try {
-    return await handleBuyStored(env, buy, opts, isSignal, name);
-  } catch (err) {
-    console.log(`storage unavailable (${err.message}); alerting without it`);
-    if (isSignal) {
-      await sendTelegram(env, formatAlert(buy, name), "signal", opts.drill);
-      return 1;
-    }
-    return 0;
-  }
-}
-
-async function handleBuyStored(env, buy, opts, isSignal, name) {
   const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
   const minCluster = Number(env.MIN_FEED_WALLETS || "2");
+  const minScore = Number(env.MIN_FEED_SCORE || "80");
   let sent = 0;
 
-  await recordBuy(env, buy, name, isSignal);
-
-  if (isSignal && (await claim(env, `buy:${buy.wallet}:${buy.mint}`))) {
-    await sendTelegram(env, formatAlert(buy, name), "signal", opts.drill);
-    await logAlert(env, "single", buy.mint, 1, null, { wallet: name, sol: buy.sol_spent });
-    sent += 1;
+  // The cluster object holds the one true roster. Its own memory is the
+  // fallback: worse, because buys scatter across instances, but it keeps the
+  // radar alerting rather than silent if the object cannot be reached.
+  let buyers = null;
+  let singleClaim = false;
+  let clusterClaim = false;
+  try {
+    const stub = env.CLUSTERS.get(env.CLUSTERS.idFromName("global"));
+    const resp = await stub.fetch("https://clusters/buy", {
+      method: "POST",
+      body: JSON.stringify({
+        mint: buy.mint, wallet: buy.wallet, name, sol: buy.sol_spent,
+        isSignal, windowMs, minCluster,
+      }),
+    });
+    ({ buyers, singleClaim, clusterClaim } = await resp.json());
+  } catch (err) {
+    console.log(`cluster state unavailable (${err.message}); falling back to memory`);
+    buyers = rememberBuy(buy, name, isSignal, windowMs);
+    singleClaim = isSignal && claimOnce(`single:${buy.wallet}:${buy.mint}`);
+    clusterClaim = buyers.length >= minCluster
+      && claimOnce(`cluster:${buy.mint}:${buyers.length}`);
   }
 
-  const buyers = await buyersOf(env, buy.mint, windowMs);
-  if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
+  // `sent` counts messages that actually reached a phone, not rules that
+  // matched: a claimed cluster scoring under the bar sends nothing, and
+  // reporting it as an alert is how silence gets mistaken for delivery.
+  const deliver = async (text, channel) => {
+    const ok = await sendTelegram(env, text, channel, opts.drill);
+    if (ok) sent += 1;
+    else console.log(`telegram ${channel} send failed for ${buy.mint}`);
+  };
+
+  if (singleClaim) await deliver(formatAlert(buy, name), "signal");
+
+  const { score } = scoreCluster(buyers);
+  if (clusterClaim) {
     const text = formatCluster(buyers, buy.mint);
-    // The wide feed is for the strong clusters only; everything below the bar
-    // is still recorded, just not sent.
-    const minScore = Number(env.MIN_FEED_SCORE || "80");
-    if (scoreCluster(buyers).score >= minScore) {
-      await sendTelegram(env, text, "feed", opts.drill);
+    if (score >= minScore) await deliver(text, "feed");
+    else console.log(`cluster ${buy.mint} n=${buyers.length} score=${score} below ${minScore}`);
+    if (buyers.some((b) => b.isSignal)) await deliver(text, "signal");
+  }
+
+  // The database is the durable record for later calibration, nothing more:
+  // alerting no longer depends on it, so its limits cannot silence the radar.
+  try {
+    await recordBuy(env, buy, name, isSignal);
+    if (sent) {
+      await logAlert(env, clusterClaim ? "cluster" : "single",
+                     buy.mint, buyers.length, score, { wallet: name });
     }
-    if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal", opts.drill);
-    await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
-                   buyers.map((b) => b.name));
-    sent += 1;
+  } catch (err) {
+    console.log(`storage unavailable (${err.message}); alert already sent`);
   }
   return sent;
 }
@@ -351,6 +402,7 @@ export default {
       ).bind(Date.now() - 24 * 3600 * 1000).first();
     } catch (err) {
       return Response.json({ status: "degraded", storage: err.message.slice(0, 120),
+                             isolate: ISOLATE, mints_in_memory: recentBuys.size,
                              tracking: TRACKED_SET.size, feed: FEED_SET.size });
     }
     let hb = null;
@@ -361,6 +413,8 @@ export default {
       status: "ok",
       tracking: TRACKED_SET.size,
       feed: FEED_SET.size,
+      isolate: ISOLATE,
+      mints_in_memory: recentBuys.size,
       last_scan_seconds_ago: hb ? Math.round((Date.now() - hb.ts) / 1000) : null,
       buys_24h: counts?.buys ?? 0,
     });

@@ -10,6 +10,12 @@
   "kv_namespaces": [
     { "binding": "STATE", "id": "5d2130cfafd544ed843730ae558438c5" }
   ],
+  "durable_objects": {
+    "bindings": [{ "name": "CLUSTERS", "class_name": "ClusterState" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ClusterState"] }
+  ],
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
     "POLL_SLICES": "2",
