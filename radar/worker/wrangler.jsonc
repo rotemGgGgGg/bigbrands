@@ -10,7 +10,9 @@
   "kv_namespaces": [
     { "binding": "STATE", "id": "5d2130cfafd544ed843730ae558438c5" }
   ],
+  "triggers": { "crons": ["* * * * *"] },
   "vars": {
+    "POLL_SLICES": "7",
     "MIN_SOL_BUY": "0.05",
     "RE_ALERT_MINUTES": "60",
     "MIN_FEED_WALLETS": "2",

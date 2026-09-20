@@ -10,6 +10,7 @@
  * version late, and late is the same as useless here.
  */
 import { extractBuys } from "./detect.js";
+import { pollSlice } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
 
 // Two audiences. TRACKED are the wallets that earned a place by their own
@@ -143,35 +144,11 @@ async function handleWebhook(request, env) {
   const transactions = Array.isArray(payload) ? payload : [payload];
 
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
-  const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
-  const minCluster = Number(env.MIN_FEED_WALLETS || "3");
   let alerted = 0;
 
   for (const tx of transactions) {
     for (const buy of extractBuys(tx, WATCHED, minSol)) {
-      const isSignal = TRACKED_SET.has(buy.wallet);
-      const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
-
-      await recordBuy(env, buy, name, isSignal);
-
-      if (isSignal && (await claim(env, `buy:${buy.wallet}:${buy.mint}`))) {
-        // A selected wallet earned its place, so its own buy is worth saying.
-        await sendTelegram(env, formatAlert(buy, name), "signal", isDrill);
-        await logAlert(env, "single", buy.mint, 1, null, { wallet: name, sol: buy.sol_spent });
-        alerted += 1;
-      }
-
-      // The wide feed only speaks when wallets converge: one buy out of three
-      // hundred is noise, and sending each one buried the channel.
-      const buyers = await buyersOf(env, buy.mint, windowMs);
-      if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
-        const text = formatCluster(buyers, buy.mint);
-        await sendTelegram(env, text, "feed", isDrill);
-        if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal", isDrill);
-        await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
-                       buyers.map((b) => b.name));
-        alerted += 1;
-      }
+      alerted += await handleBuy(env, buy, { drill: isDrill });
     }
   }
 
@@ -185,13 +162,96 @@ async function listAlerts(env) {
   return Response.json({ count: (results || []).length, alerts: results || [] });
 }
 
+/** Shared by the pushed and polled paths so both alert identically. */
+async function handleBuy(env, buy, opts = {}) {
+  const isSignal = TRACKED_SET.has(buy.wallet);
+  const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
+  const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
+  const minCluster = Number(env.MIN_FEED_WALLETS || "2");
+  let sent = 0;
+
+  await recordBuy(env, buy, name, isSignal);
+
+  if (isSignal && (await claim(env, `buy:${buy.wallet}:${buy.mint}`))) {
+    await sendTelegram(env, formatAlert(buy, name), "signal", opts.drill);
+    await logAlert(env, "single", buy.mint, 1, null, { wallet: name, sol: buy.sol_spent });
+    sent += 1;
+  }
+
+  const buyers = await buyersOf(env, buy.mint, windowMs);
+  if (buyers.length >= minCluster && (await claim(env, `cluster:${buy.mint}:${buyers.length}`))) {
+    const text = formatCluster(buyers, buy.mint);
+    await sendTelegram(env, text, "feed", opts.drill);
+    if (buyers.some((b) => b.isSignal)) await sendTelegram(env, text, "signal", opts.drill);
+    await logAlert(env, "cluster", buy.mint, buyers.length, scoreCluster(buyers).score,
+                   buyers.map((b) => b.name));
+    sent += 1;
+  }
+  return sent;
+}
+
 export default {
+  /**
+   * Scheduled scan. This is the path that keeps the radar alive when the
+   * pushed feed has no quota left; it covers the selected wallets only.
+   */
+  async scheduled(event, env, ctx) {
+    const minSol = Number(env.MIN_SOL_BUY || "0.05");
+    const wallets = Object.keys(TRACKED);
+    const slices = Number(env.POLL_SLICES || "2");
+    const slice = Math.floor(Date.now() / 60_000) % slices;
+    const result = await pollSlice(env, wallets, slice, slices, minSol, async (buy) => {
+      await handleBuy(env, buy);
+    });
+    console.log(`poll slice ${slice}/${slices}: scanned ${result.scanned}, buys ${result.found}`);
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/hook" && request.method === "POST") {
       return handleWebhook(request, env);
     }
     if (url.pathname === "/alerts") return listAlerts(env);
+    if (url.pathname === "/rpctest") {
+      const eps = [
+        "https://solana-rpc.publicnode.com",
+        "https://solana.drpc.org",
+        "https://endpoints.omniatech.io/v1/sol/mainnet/public",
+        "https://solana.api.onfinality.io/public",
+      ];
+      const w = Object.keys(TRACKED)[2];
+      const out = [];
+      for (const ep of eps) {
+        try {
+          const r = await fetch(ep, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: [w, { limit: 2 }] }),
+          });
+          const body = await r.text();
+          out.push({ ep, status: r.status, ok: r.status === 200 && !body.includes("error"), body: body.slice(0, 110) });
+        } catch (err) {
+          out.push({ ep, error: err.message });
+        }
+      }
+      return Response.json(out);
+    }
+    if (url.pathname === "/poll") {
+      // Same work the schedule does, reachable by hand so a failure is visible.
+      try {
+        const minSol = Number(env.MIN_SOL_BUY || "0.05");
+        const wallets = Object.keys(TRACKED);
+        const slices = Number(url.searchParams.get("slices") || env.POLL_SLICES || "2");
+        const slice = Number(url.searchParams.get("slice") || Math.floor(Date.now() / 60_000) % slices);
+        let sent = 0;
+        const result = await pollSlice(env, wallets, slice, slices, minSol, async (buy) => {
+          sent += await handleBuy(env, buy);
+        });
+        return Response.json({ ok: true, slice, slices, ...result, alerts: sent });
+      } catch (err) {
+        return Response.json({ ok: false, error: err.message, stack: String(err.stack).slice(0, 300) }, { status: 500 });
+      }
+    }
     if (url.pathname === "/test") {
       const ok = await sendTelegram(env, "🟢 <b>Radar is live.</b>\nThis is a connection test.");
       const feedOk = await sendTelegram(
