@@ -143,6 +143,23 @@ async function handleWebhook(request, env) {
   }
   const transactions = Array.isArray(payload) ? payload : [payload];
 
+  // Keep a counter and one sample so "nothing is arriving" can be told apart
+  // from "arriving in a shape we do not parse".
+  try {
+    await env.DB.prepare(
+      "INSERT INTO sent (key, ts) VALUES ('deliveries:' || ?, ?) ON CONFLICT(key) DO NOTHING",
+    ).bind(String(Date.now()), Date.now()).run();
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO sent (key, ts) VALUES ('last_payload', ?)",
+    ).bind(Date.now()).run();
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO alerts (id, kind, mint, wallets, score, ts, payload) " +
+      "VALUES ((SELECT id FROM alerts WHERE kind='sample' LIMIT 1), 'sample', 'sample', 0, 0, ?, ?)",
+    ).bind(Date.now(), JSON.stringify(transactions[0] || {}).slice(0, 4000)).run();
+  } catch (err) {
+    console.log(`diag write failed: ${err.message}`);
+  }
+
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
   let alerted = 0;
 
