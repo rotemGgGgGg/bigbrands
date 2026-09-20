@@ -181,38 +181,10 @@ async function handleWebhook(request, env) {
   }
   const { raw: isRaw, txs: transactions } = normalisePayload(payload);
 
-  // Keep a counter and one sample so "nothing is arriving" can be told apart
-  // from "arriving in a shape we do not parse".
-  try {
-    await env.DB.prepare(
-      "INSERT INTO sent (key, ts) VALUES ('deliveries:' || ?, ?) ON CONFLICT(key) DO NOTHING",
-    ).bind(String(Date.now()), Date.now()).run();
-    await env.DB.prepare(
-      "INSERT OR REPLACE INTO sent (key, ts) VALUES ('last_payload', ?)",
-    ).bind(Date.now()).run();
-    await env.DB.prepare(
-      "INSERT OR REPLACE INTO alerts (id, kind, mint, wallets, score, ts, payload) " +
-      "VALUES ((SELECT id FROM alerts WHERE kind='sample' LIMIT 1), 'sample', 'sample', 0, 0, ?, ?)",
-    ).bind(Date.now(), JSON.stringify(transactions[0] || {}).slice(0, 4000)).run();
-  } catch (err) {
-    console.log(`diag write failed: ${err.message}`);
-  }
-
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
   let alerted = 0;
 
-  let diagTxs = 0;
-  let diagHits = 0;
-  let diagOwner = null;
   for (const tx of transactions) {
-    diagTxs += 1;
-    if (isRaw) {
-      const owners = watchedOwners(tx);
-      if (owners.length) {
-        diagHits += 1;
-        diagOwner = owners[0];
-      }
-    }
     const buys = isRaw
       ? watchedOwners(tx).flatMap((owner) => extractBuysRaw(tx, owner, minSol))
       : extractBuys(tx, WATCHED, minSol);
@@ -221,13 +193,6 @@ async function handleWebhook(request, env) {
     }
   }
 
-  try {
-    await env.DB.prepare(
-      "INSERT OR REPLACE INTO alerts (id, kind, mint, wallets, score, ts, payload) " +
-      "VALUES ((SELECT id FROM alerts WHERE kind='diag' LIMIT 1), 'diag', 'diag', ?, ?, ?, ?)",
-    ).bind(diagHits, diagTxs, Date.now(),
-           JSON.stringify({ isRaw, diagTxs, diagHits, diagOwner, alerted })).run();
-  } catch {}
   return Response.json({ ok: true, transactions: transactions.length, alerted });
 }
 
@@ -242,6 +207,19 @@ async function listAlerts(env) {
 async function handleBuy(env, buy, opts = {}) {
   const isSignal = TRACKED_SET.has(buy.wallet);
   const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
+  try {
+    return await handleBuyStored(env, buy, opts, isSignal, name);
+  } catch (err) {
+    console.log(`storage unavailable (${err.message}); alerting without it`);
+    if (isSignal) {
+      await sendTelegram(env, formatAlert(buy, name), "signal", opts.drill);
+      return 1;
+    }
+    return 0;
+  }
+}
+
+async function handleBuyStored(env, buy, opts, isSignal, name) {
   const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
   const minCluster = Number(env.MIN_FEED_WALLETS || "2");
   let sent = 0;
@@ -344,17 +322,25 @@ export default {
         env, "\u{1F4E1} <b>Radar feed is live.</b>\nThis is a connection test.", "feed");
       return Response.json({ signal: ok, feed: feedOk });
     }
-    const counts = await env.DB.prepare(
-      "SELECT (SELECT COUNT(*) FROM buys) AS buys, (SELECT COUNT(*) FROM alerts) AS alerts",
-    ).first();
-    const hb = await env.DB.prepare("SELECT ts FROM sent WHERE key = 'heartbeat'").first();
+    let counts = null;
+    try {
+      counts = await env.DB.prepare(
+        "SELECT COUNT(*) AS buys FROM buys WHERE ts > ?",
+      ).bind(Date.now() - 24 * 3600 * 1000).first();
+    } catch (err) {
+      return Response.json({ status: "degraded", storage: err.message.slice(0, 120),
+                             tracking: TRACKED_SET.size, feed: FEED_SET.size });
+    }
+    let hb = null;
+    try {
+      hb = await env.DB.prepare("SELECT ts FROM sent WHERE key = 'heartbeat'").first();
+    } catch {}
     return Response.json({
       status: "ok",
       tracking: TRACKED_SET.size,
       feed: FEED_SET.size,
       last_scan_seconds_ago: hb ? Math.round((Date.now() - hb.ts) / 1000) : null,
-      buys_recorded: counts?.buys ?? 0,
-      alerts_sent: counts?.alerts ?? 0,
+      buys_24h: counts?.buys ?? 0,
     });
   },
 };
