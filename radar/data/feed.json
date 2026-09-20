@@ -307,15 +307,6 @@
   },
   {
     "positions": 0,
-    "address": "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1",
-    "name": "💦 RAYDIUM",
-    "txs_seen": 0,
-    "error": "HTTP 429",
-    "recent_txs": 100,
-    "recent_per_day": 14.29
-  },
-  {
-    "positions": 0,
     "address": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
     "name": "🏦 BINANCE",
     "txs_seen": 300,

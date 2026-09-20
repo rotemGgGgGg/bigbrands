@@ -1,6 +1,7 @@
 // Generated from radar/data/shortlist.json and radar/data/feed.json.
-// TRACKED are profitable, trading this week and human-paced, so a single
-// buy is worth an alert. FEED is the wide set, clusters only.
+// TRACKED are profitable, trading this week and human-paced. FEED is the
+// wide set, clusters only. Program addresses are excluded: they appear in
+// a large share of all transactions and never represent a trader.
 export const TRACKED = {
   "D6bTtoSgLknJ9KrgDFUtB5WpqomrNEjBJipVVRoFh2DC": "👱‍♀️ pandora",
   "8fSnLTnRViK83dDesivTsPx2wiRhwti9xoafeMGjEyLJ": "💰️ good trader 4 (500kpnl)",
@@ -45,7 +46,6 @@ export const FEED = {
   "3jN1M8gWLk2ryTGnscrcwRK1Gy4Ttzq5QizWT8uizZsT": "🎟️ Ne0n",
   "4Bq5yvgoiZDsukGERb7aM52jDmbVPCpoihbztscZ5PeM": "⚡️ shocked",
   "5PAhQiYdLBd6SVdjzBQDxUAEFyDdF5ExNPQfcscnPRj5": "🏦 MEXC",
-  "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1": "💦 RAYDIUM",
   "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9": "🏦 BINANCE",
   "7Dt5oUpxHWuKH8bCTXDLz2j3JyxA7jEmtzqCG6pnh96X": "😺 leens",
   "7VBTpiiEjkwRbRGHJFUz6o5fWuhPFtAmy8JGhNqwHNnn": "🐲 brox",

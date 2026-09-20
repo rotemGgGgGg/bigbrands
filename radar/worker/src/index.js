@@ -10,7 +10,7 @@
  * version late, and late is the same as useless here.
  */
 import { extractBuys } from "./detect.js";
-import { pollSlice } from "./poll.js";
+import { pollSlice, extractBuysRaw } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
 
 // Two audiences. TRACKED are the wallets that earned a place by their own
@@ -127,6 +127,44 @@ async function logAlert(env, kind, mint, wallets, score, payload) {
   ).bind(kind, mint, wallets, score, Date.now(), JSON.stringify(payload)).run();
 }
 
+/**
+ * Providers disagree on shape. One sends an array of enriched transactions
+ * with transfers already broken out; the block-filter template sends
+ * { block, transactions: [{ raw }] } holding plain RPC transactions. Normalise
+ * here so the rest of the worker does not care which is connected.
+ */
+function normalisePayload(payload) {
+  // The block-filter template sends blocks, and may send one or a batch of
+  // them; each block carries plain RPC transactions under `raw`. The enriched
+  // format, by contrast, is a flat array of transactions.
+  const items = Array.isArray(payload) ? payload : [payload];
+  const blocks = items.filter((i) => i && Array.isArray(i.transactions));
+  if (blocks.length) {
+    const txs = [];
+    for (const b of blocks) {
+      const blockTime = b.block?.blockTime ?? b.blockTime;
+      for (const entry of b.transactions) {
+        const tx = entry?.raw || entry;
+        if (!tx) continue;
+        txs.push(!tx.blockTime && blockTime ? { ...tx, blockTime } : tx);
+      }
+    }
+    return { raw: true, txs };
+  }
+  return { raw: false, txs: items };
+}
+
+/** Which wallets we follow appear in this transaction. */
+function watchedOwners(tx) {
+  const keys = tx?.transaction?.message?.accountKeys || [];
+  const owners = [];
+  for (const k of keys) {
+    const pubkey = typeof k === "string" ? k : k?.pubkey;
+    if (pubkey && WATCHED.has(pubkey)) owners.push(pubkey);
+  }
+  return owners;
+}
+
 async function handleWebhook(request, env) {
   // The webhook URL is effectively the credential, so it carries a secret.
   const url = new URL(request.url);
@@ -141,7 +179,7 @@ async function handleWebhook(request, env) {
   } catch {
     return new Response("bad json", { status: 400 });
   }
-  const transactions = Array.isArray(payload) ? payload : [payload];
+  const { raw: isRaw, txs: transactions } = normalisePayload(payload);
 
   // Keep a counter and one sample so "nothing is arriving" can be told apart
   // from "arriving in a shape we do not parse".
@@ -163,12 +201,33 @@ async function handleWebhook(request, env) {
   const minSol = Number(env.MIN_SOL_BUY || "0.05");
   let alerted = 0;
 
+  let diagTxs = 0;
+  let diagHits = 0;
+  let diagOwner = null;
   for (const tx of transactions) {
-    for (const buy of extractBuys(tx, WATCHED, minSol)) {
+    diagTxs += 1;
+    if (isRaw) {
+      const owners = watchedOwners(tx);
+      if (owners.length) {
+        diagHits += 1;
+        diagOwner = owners[0];
+      }
+    }
+    const buys = isRaw
+      ? watchedOwners(tx).flatMap((owner) => extractBuysRaw(tx, owner, minSol))
+      : extractBuys(tx, WATCHED, minSol);
+    for (const buy of buys) {
       alerted += await handleBuy(env, buy, { drill: isDrill });
     }
   }
 
+  try {
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO alerts (id, kind, mint, wallets, score, ts, payload) " +
+      "VALUES ((SELECT id FROM alerts WHERE kind='diag' LIMIT 1), 'diag', 'diag', ?, ?, ?, ?)",
+    ).bind(diagHits, diagTxs, Date.now(),
+           JSON.stringify({ isRaw, diagTxs, diagHits, diagOwner, alerted })).run();
+  } catch {}
   return Response.json({ ok: true, transactions: transactions.length, alerted });
 }
 
