@@ -83,8 +83,16 @@ function formatAlert(buy, name) {
   ].join("\n");
 }
 
+/**
+ * A drill must never be able to reach the phone. Labelling a test message was
+ * not enough — a test that looks like an alert IS an alert to whoever reads
+ * it — so a drill now renders the message back to its caller and stops there.
+ */
 async function sendTelegram(env, text, channel = "signal", drill = false) {
-  if (drill) text = "\u{1F9EA} <b>TEST — not a real event</b>\n\n" + text;
+  if (drill) {
+    (drill.rendered ||= []).push({ channel, text });
+    return true;
+  }
   const token = channel === "feed" ? env.TELEGRAM_FEED_TOKEN : env.TELEGRAM_BOT_TOKEN;
   const chat = channel === "feed" ? env.TELEGRAM_FEED_CHAT : env.TELEGRAM_CHAT_ID;
   if (!token || !chat) return false;
@@ -170,7 +178,7 @@ async function handleWebhook(request, env) {
     return new Response("forbidden", { status: 403 });
   }
 
-  const isDrill = url.searchParams.get("drill") === "1";
+  const drill = url.searchParams.get("drill") === "1" ? { rendered: [] } : false;
   let payload;
   try {
     payload = await request.json();
@@ -187,11 +195,16 @@ async function handleWebhook(request, env) {
       ? watchedOwners(tx).flatMap((owner) => extractBuysRaw(tx, owner, minSol))
       : extractBuys(tx, WATCHED, minSol);
     for (const buy of buys) {
-      alerted += await handleBuy(env, buy, { drill: isDrill });
+      alerted += await handleBuy(env, buy, { drill });
     }
   }
 
-  return Response.json({ ok: true, transactions: transactions.length, alerted });
+  return Response.json({
+    ok: true,
+    transactions: transactions.length,
+    alerted,
+    ...(drill ? { drill: true, sent_to_telegram: 0, would_send: drill.rendered } : {}),
+  });
 }
 
 async function listAlerts(env) {
@@ -250,7 +263,9 @@ async function handleBuy(env, buy, opts = {}) {
   let singleClaim = false;
   let clusterClaim = false;
   try {
-    const stub = env.CLUSTERS.get(env.CLUSTERS.idFromName("global"));
+    // A drill gets its own state so fake buys never join a real roster.
+    const stub = env.CLUSTERS.get(
+      env.CLUSTERS.idFromName(opts.drill ? "drill" : "global"));
     const resp = await stub.fetch("https://clusters/buy", {
       method: "POST",
       body: JSON.stringify({
@@ -288,6 +303,9 @@ async function handleBuy(env, buy, opts = {}) {
 
   // The database is the durable record for later calibration, nothing more:
   // alerting no longer depends on it, so its limits cannot silence the radar.
+  // A drill leaves no trace in it; invented buys must not reach the record
+  // the thresholds are later calibrated against.
+  if (opts.drill) return sent;
   try {
     await recordBuy(env, buy, name, isSignal);
     if (sent) {
