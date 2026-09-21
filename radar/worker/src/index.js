@@ -12,6 +12,7 @@
 import { extractBuys } from "./detect.js";
 import { marketCap } from "./marketcap.js";
 import { operators, isSprayer, oversized } from "./crazy.js";
+import { recordEntry, fillDueOutcomes } from "./outcomes.js";
 import { pollSlice, extractBuysRaw } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
 export { ClusterState } from "./cluster.js";
@@ -508,7 +509,31 @@ async function handleBuy(env, buy, opts = {}) {
   const { score } = scoreCluster(buyers);
   if (clusterClaim) {
     const text = formatCluster(buyers, buy.mint);
-    if (score >= minScore) await deliver(text, "feed");
+    if (score >= minScore) {
+      await deliver(text, "feed");
+      // The shape of the cluster is only knowable now; the price is only
+      // knowable now. Both are needed to ever say whether this was worth
+      // sending, so they are written down before the moment passes — but
+      // never for a drill, whose invented buys would be learned from as
+      // though they had happened.
+      const counts = (await walletHabits(env).catch(() => null))?.counts || new Map();
+      const span = (Math.max(...buyers.map((b) => b.ts))
+        - Math.min(...buyers.map((b) => b.ts))) / 1000;
+      const shape = {
+        people: operators(buyers).size,
+        wallets: buyers.length,
+        sol: buyers.reduce((sum, b) => sum + b.sol, 0),
+        maxSol: Math.max(...buyers.map((b) => b.sol)),
+        span: Math.round(span),
+        selective: counts.size
+          ? buyers.filter((b) => !isSprayer(b.name, counts, 60)).length : null,
+      };
+      if (!opts.drill) {
+        const write = recordEntry(env, buy.mint, shape, score).catch(
+          (err) => console.log(`outcome entry failed: ${err.message}`));
+        if (opts.ctx) opts.ctx.waitUntil(write); else await write;
+      }
+    }
     else console.log(`cluster ${buy.mint} n=${buyers.length} score=${score} below ${minScore}`);
     if (buyers.some((b) => b.isSignal)) await deliver(text, "signal");
 
@@ -552,6 +577,11 @@ export default {
     const result = await pollSlice(env, wallets, slice, slices, minSol, async (buy) => {
       await handleBuy(env, buy);
     });
+    // Outcomes are filled a few at a time, behind the scan, so learning what
+    // an alert was worth never competes with sending one.
+    ctx.waitUntil(fillDueOutcomes(env).catch(
+      (err) => console.log(`outcome fill failed: ${err.message}`)));
+
     // Heartbeat: without it, a quiet scan and a scan that never ran look the
     // same from outside.
     await env.DB.prepare(

@@ -27,6 +27,7 @@ async function fromDexScreener(mint) {
     (b.liquidity?.usd || 0) > (a.liquidity?.usd || 0) ? b : a);
   return {
     mc: best.marketCap ?? best.fdv ?? null,
+    price: Number(best.priceUsd) || null,
     listed: true,
     liquidity: best.liquidity?.usd ?? null,
     ageMinutes: best.pairCreatedAt
@@ -43,6 +44,7 @@ async function fromJupiter(mint) {
   if (!t) return { mc: null, listed: false };
   return {
     mc: t.mcap ?? t.fdv ?? null,
+    price: t.usdPrice ?? null,
     listed: true,
     liquidity: t.liquidity ?? null,
     ageMinutes: null,
