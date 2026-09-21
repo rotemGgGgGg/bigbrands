@@ -23,6 +23,13 @@
     "RE_ALERT_MINUTES": "60",
     "MIN_FEED_WALLETS": "2",
     "MIN_FEED_SCORE": "80",
-    "CLUSTER_WINDOW_MINUTES": "10"
+    "CLUSTER_WINDOW_MINUTES": "10",
+
+    // Legends 101. Every bar is deliberately extreme: a rare channel is the
+    // whole point, and one that fires daily is the feed channel renamed.
+    "LEGENDS_MIN_SCORE": "90",
+    "LEGENDS_MIN_SIGNAL": "2",
+    "LEGENDS_MIN_SOL": "3",
+    "LEGENDS_MAX_MC": "1000000"
   }
 }

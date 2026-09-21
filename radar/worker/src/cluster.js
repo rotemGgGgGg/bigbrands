@@ -29,7 +29,14 @@ export class ClusterState {
   }
 
   async fetch(request) {
-    const buy = await request.json();
+    const body = await request.json();
+
+    // A bare claim, for a decision the worker can only make after asking
+    // somewhere else — the Legends gate, which needs a market cap first.
+    if (body.claimKey) {
+      return Response.json({ granted: this.claim(body.claimKey, Date.now()) });
+    }
+    const buy = body;
     const now = Date.now();
 
     // Anything older than the window can no longer join a cluster. Claims

@@ -10,6 +10,7 @@
  * version late, and late is the same as useless here.
  */
 import { extractBuys } from "./detect.js";
+import { marketCap } from "./marketcap.js";
 import { pollSlice, extractBuysRaw } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
 export { ClusterState } from "./cluster.js";
@@ -93,8 +94,18 @@ async function sendTelegram(env, text, channel = "signal", drill = false) {
     (drill.rendered ||= []).push({ channel, text });
     return true;
   }
-  const token = channel === "feed" ? env.TELEGRAM_FEED_TOKEN : env.TELEGRAM_BOT_TOKEN;
-  const chat = channel === "feed" ? env.TELEGRAM_FEED_CHAT : env.TELEGRAM_CHAT_ID;
+  const tokens = {
+    feed: env.TELEGRAM_FEED_TOKEN,
+    legends: env.TELEGRAM_LEGENDS_TOKEN,
+    signal: env.TELEGRAM_BOT_TOKEN,
+  };
+  const chats = {
+    feed: env.TELEGRAM_FEED_CHAT,
+    legends: env.TELEGRAM_LEGENDS_CHAT,
+    signal: env.TELEGRAM_CHAT_ID,
+  };
+  const token = tokens[channel];
+  const chat = chats[channel];
   if (!token || !chat) return false;
   const resp = await fetch(
     `https://api.telegram.org/bot${token}/sendMessage`,
@@ -247,6 +258,87 @@ function claimOnce(key) {
   return true;
 }
 
+/**
+ * Legends 101.
+ *
+ * A separate, deliberately rare channel. It cannot tell you a coin will reach
+ * five million — nothing on chain can, because market cap is about what a
+ * token IS and a wallet feed only says who is buying. What it can say is that
+ * the wallets with the best records are buying the same thing, at size, at
+ * once, while it is still small enough for five million to be a real move.
+ *
+ * Every bar here is deliberately extreme. A channel that fires daily is the
+ * feed channel again under a different name.
+ */
+// A drill gets its own state so fake buys never join a real roster.
+function clusterStub(env, opts) {
+  return env.CLUSTERS.get(env.CLUSTERS.idFromName(opts.drill ? "drill" : "global"));
+}
+
+async function legendsVerdict(env, buyers, mint) {
+  const minScore = Number(env.LEGENDS_MIN_SCORE || "90");
+  const minSignal = Number(env.LEGENDS_MIN_SIGNAL || "2");
+  const minSol = Number(env.LEGENDS_MIN_SOL || "3");
+  const maxMc = Number(env.LEGENDS_MAX_MC || "1000000");
+
+  const { score } = scoreCluster(buyers);
+  const signals = buyers.filter((b) => b.isSignal).length;
+  const sol = buyers.reduce((sum, b) => sum + b.sol, 0);
+  if (score < minScore) return { pass: false, why: `score ${score} < ${minScore}` };
+  if (signals < minSignal) return { pass: false, why: `${signals} shortlist < ${minSignal}` };
+  if (sol < minSol) return { pass: false, why: `${sol.toFixed(2)} SOL < ${minSol}` };
+
+  // Only now is the round trip worth paying for.
+  const { mc, known, notIndexed, liquidity, ageMinutes, reason } = await marketCap(mint);
+  // A token too new to be indexed has the most headroom there is. A lookup
+  // that merely failed tells us nothing, and silence is the safer reading:
+  // the whole promise of this channel is that it is small and still can run.
+  if (!known) return { pass: false, why: `market cap unknown (${reason})` };
+  if (mc != null && mc > maxMc) {
+    return { pass: false, why: `mc $${Math.round(mc).toLocaleString()} over cap` };
+  }
+  return { pass: true, score, signals, sol, mc, notIndexed, liquidity, ageMinutes };
+}
+
+function formatLegend(buyers, mint, v) {
+  const headroom = v.mc ? `${(5_000_000 / v.mc).toFixed(1)}x to $5M` : "not indexed yet";
+  return [
+    "\u{1F3C6} <b>LEGENDS 101</b>",
+    "",
+    `<b>${v.signals} of your best wallets</b> bought this, with ` +
+      `${buyers.length} total \u2014 ${v.sol.toFixed(2)} SOL in.`,
+    "",
+    "<b>Who bought:</b>",
+    ...buyers.map((b) => `  ${b.isSignal ? "\u2b50" : "  "} ${html(b.name)} \u2014 ${b.sol} SOL`),
+    "",
+    v.mc ? `<b>Market cap:</b> $${Math.round(v.mc).toLocaleString()}  \u00b7  ${headroom}`
+         : "<b>Market cap:</b> not indexed yet \u2014 brand new",
+    v.liquidity ? `<b>Liquidity:</b> $${Math.round(v.liquidity).toLocaleString()}` : "",
+    v.ageMinutes != null ? `<b>Age:</b> ${v.ageMinutes} min` : "",
+    "",
+    `<code>${html(mint)}</code>`,
+    "",
+    `\u{1F4C8} <a href="https://dexscreener.com/solana/${mint}">Chart</a>  \u00b7  ` +
+      `\u{1F9FE} <a href="https://axiom.trade/t/${mint}">Axiom</a>`,
+  ].filter((line) => line !== "").join("\n");
+}
+
+/**
+ * Legends says each token once. A cluster that keeps growing re-announces
+ * itself on the other channels by design; here it would just be the same
+ * call, louder, and a channel that repeats itself is not rare.
+ */
+async function claimLegend(env, mint, opts) {
+  try {
+    const resp = await clusterStub(env, opts).fetch("https://clusters/claim", {
+      method: "POST", body: JSON.stringify({ claimKey: `legend:${mint}` }),
+    });
+    return (await resp.json()).granted;
+  } catch {
+    return claimOnce(`legend:${mint}`);
+  }
+}
+
 /** Shared by the pushed and polled paths so both alert identically. */
 async function handleBuy(env, buy, opts = {}) {
   const isSignal = TRACKED_SET.has(buy.wallet);
@@ -263,9 +355,7 @@ async function handleBuy(env, buy, opts = {}) {
   let singleClaim = false;
   let clusterClaim = false;
   try {
-    // A drill gets its own state so fake buys never join a real roster.
-    const stub = env.CLUSTERS.get(
-      env.CLUSTERS.idFromName(opts.drill ? "drill" : "global"));
+    const stub = clusterStub(env, opts);
     const resp = await stub.fetch("https://clusters/buy", {
       method: "POST",
       body: JSON.stringify({
@@ -299,6 +389,13 @@ async function handleBuy(env, buy, opts = {}) {
     if (score >= minScore) await deliver(text, "feed");
     else console.log(`cluster ${buy.mint} n=${buyers.length} score=${score} below ${minScore}`);
     if (buyers.some((b) => b.isSignal)) await deliver(text, "signal");
+
+    const verdict = await legendsVerdict(env, buyers, buy.mint);
+    if (!verdict.pass) {
+      console.log(`legends skip ${buy.mint}: ${verdict.why}`);
+    } else if (await claimLegend(env, buy.mint, opts)) {
+      await deliver(formatLegend(buyers, buy.mint, verdict), "legends");
+    }
   }
 
   // The database is the durable record for later calibration, nothing more:
