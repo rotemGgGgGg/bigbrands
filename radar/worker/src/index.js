@@ -508,7 +508,9 @@ export default {
       const ok = await sendTelegram(env, "🟢 <b>Radar is live.</b>\nThis is a connection test.");
       const feedOk = await sendTelegram(
         env, "\u{1F4E1} <b>Radar feed is live.</b>\nThis is a connection test.", "feed");
-      return Response.json({ signal: ok, feed: feedOk });
+      const legendsOk = await sendTelegram(
+        env, "\u{1F3C6} <b>Legends 101 is live.</b>\nThis is a connection test.", "legends");
+      return Response.json({ signal: ok, feed: feedOk, legends: legendsOk });
     }
     let counts = null;
     try {
