@@ -11,6 +11,7 @@
  */
 import { extractBuys } from "./detect.js";
 import { marketCap } from "./marketcap.js";
+import { operators, isSprayer, oversized } from "./crazy.js";
 import { pollSlice, extractBuysRaw } from "./poll.js";
 import { TRACKED, FEED } from "./wallets.js";
 export { ClusterState } from "./cluster.js";
@@ -330,57 +331,112 @@ function clusterStub(env, opts) {
   return env.CLUSTERS.get(env.CLUSTERS.idFromName(opts.drill ? "drill" : "global"));
 }
 
-async function legendsVerdict(env, buyers, mint) {
+/**
+ * Per-wallet habits, so "unusual" can be measured against the wallet's own
+ * normal rather than a number picked out of the air. Refreshed rarely and
+ * cached, since this only gates a channel that fires a few times a day, and
+ * a stale habit is far better than no habit at all.
+ */
+let habits = { at: 0, counts: new Map(), medians: new Map() };
+
+async function walletHabits(env) {
+  if (Date.now() - habits.at < 15 * 60_000 && habits.counts.size) return habits;
+  const since = Date.now() - 48 * 3600 * 1000;
+  const { results } = await env.DB.prepare(
+    "SELECT name, COUNT(*) n, AVG(sol) avg_sol FROM buys WHERE ts > ? GROUP BY name",
+  ).bind(since).all();
+  const counts = new Map();
+  const medians = new Map();
+  for (const r of results || []) {
+    const key = r.name.toLowerCase().replace(/[^a-z0-9]/g, "") || r.name;
+    counts.set(key, (counts.get(key) || 0) + r.n);
+    medians.set(r.name, r.avg_sol);
+  }
+  habits = { at: Date.now(), counts, medians };
+  return habits;
+}
+
+async function legendsVerdict(env, buyers, mint, opts = {}) {
   // Kill switch. This channel told its reader to buy two tokens that lost
   // them money, so it stays off until it can tell a rug from a runner.
-  if (String(env.LEGENDS_ENABLED || "true") !== "true") {
+  // A drill still evaluates: it reports back to whoever ran it and reaches
+  // no one, and a channel that cannot be exercised cannot be fixed.
+  if (!opts.drill && String(env.LEGENDS_ENABLED || "true") !== "true") {
     return { pass: false, why: "channel disabled" };
   }
-  const minScore = Number(env.LEGENDS_MIN_SCORE || "90");
-  const minSignal = Number(env.LEGENDS_MIN_SIGNAL || "2");
-  const minSol = Number(env.LEGENDS_MIN_SOL || "3");
-  const maxMc = Number(env.LEGENDS_MAX_MC || "1000000");
+  const minOps = Number(env.LEGENDS_MIN_OPERATORS || "8");
+  const minSol = Number(env.LEGENDS_MIN_SOL || "25");
+  const sprayLimit = Number(env.LEGENDS_SPRAYER_BUYS || "200");
+  const minLiquidity = Number(env.LEGENDS_MIN_LIQUIDITY || "5000");
+  const bigMultiple = Number(env.LEGENDS_OVERSIZED_MULTIPLE || "3");
 
-  const { score } = scoreCluster(buyers);
-  const signals = buyers.filter((b) => b.isSignal).length;
-  const sol = buyers.reduce((sum, b) => sum + b.sol, 0);
-  if (score < minScore) return { pass: false, why: `score ${score} < ${minScore}` };
-  if (signals < minSignal) return { pass: false, why: `${signals} shortlist < ${minSignal}` };
-  if (sol < minSol) return { pass: false, why: `${sol.toFixed(2)} SOL < ${minSol}` };
-
-  // Only now is the round trip worth paying for.
-  const { mc, known, notIndexed, liquidity, ageMinutes, reason } = await marketCap(mint);
-  // A token too new to be indexed has the most headroom there is. A lookup
-  // that merely failed is different — it could be anything — but dropping the
-  // alert over it means the rarest channel goes quiet because someone else's
-  // traffic hit a rate limit, and not missing this is the whole point. So it
-  // is sent, saying plainly that the cap could not be read.
-  if (mc != null && mc > maxMc) {
-    return { pass: false, why: `mc $${Math.round(mc).toLocaleString()} over cap` };
+  // Habits are a refinement; without them the core bars still hold.
+  let counts = new Map();
+  let medians = new Map();
+  try {
+    ({ counts, medians } = await walletHabits(env));
+  } catch (err) {
+    console.log(`habits unavailable (${err.message}); gating without them`);
   }
+
+  const serious = counts.size
+    ? buyers.filter((b) => !isSprayer(b.name, counts, sprayLimit))
+    : buyers;
+  const people = operators(serious);
+  const sol = serious.reduce((sum, b) => sum + b.sol, 0);
+
+  if (people.size < minOps) {
+    return { pass: false, why: `${people.size} people < ${minOps}` };
+  }
+  if (sol < minSol) return { pass: false, why: `${sol.toFixed(1)} SOL < ${minSol}` };
+
+  // The cap this used to have excluded the best thing it ever saw, because
+  // "crazy" is not the same as "tiny". What has to be checked instead is that
+  // the token can be sold at all: a rug reads as small and cheap right up
+  // until the liquidity is gone.
+  const { mc, known, notIndexed, liquidity, ageMinutes, reason } = await marketCap(mint);
+  if (!known && !notIndexed) {
+    return { pass: false, why: `cannot price it (${reason})` };
+  }
+  if (liquidity != null && liquidity < minLiquidity) {
+    return { pass: false, why: `liquidity $${Math.round(liquidity)} under floor` };
+  }
+  if (notIndexed || liquidity == null) {
+    return { pass: false, why: "no tradeable market found yet" };
+  }
+
+  const span = (Math.max(...serious.map((b) => b.ts))
+    - Math.min(...serious.map((b) => b.ts))) / 1000;
   return {
-    pass: true, score, signals, sol, mc, notIndexed, liquidity, ageMinutes,
-    mcUnavailable: !known, mcReason: reason,
+    pass: true,
+    people: people.size,
+    sol,
+    span: Math.round(span),
+    oversized: medians.size ? oversized(serious, medians, bigMultiple) : 0,
+    buyers: serious,
+    mc, liquidity, ageMinutes,
   };
 }
 
 function formatLegend(buyers, mint, v) {
-  const headroom = v.mc ? `${(5_000_000 / v.mc).toFixed(1)}x to $5M` : "not indexed yet";
+  const rows = v.buyers || buyers;
   return [
     "\u{1F3C6} <b>LEGENDS 101</b>",
     "",
-    `<b>${v.signals} of your best wallets</b> bought this, with ` +
-      `${buyers.length} total \u2014 ${v.sol.toFixed(2)} SOL in.`,
+    `<b>${v.people} different people</b> bought this within ` +
+      `${v.span < 60 ? `${v.span}s` : `${Math.round(v.span / 60)}m`} \u2014 ` +
+      `${v.sol.toFixed(1)} SOL total.`,
+    v.oversized ? `<b>${v.oversized}</b> of them bought far bigger than they normally do.` : "",
     "",
     "<b>Who bought:</b>",
-    ...buyers.map((b) => `  ${b.isSignal ? "\u2b50" : "  "} ${html(b.name)} \u2014 ${b.sol} SOL`),
+    ...rows.map((b) => `  ${b.isSignal ? "\u2b50" : "  "} ${html(b.name)} \u2014 ${b.sol} SOL`),
     "",
-    v.mc ? `<b>Market cap:</b> $${Math.round(v.mc).toLocaleString()}  \u00b7  ${headroom}`
-      : v.mcUnavailable
-        ? "\u26A0\uFE0F <b>Market cap could not be read</b> \u2014 check the chart before buying"
-        : "<b>Market cap:</b> not indexed yet \u2014 brand new",
+    v.mc ? `<b>Market cap:</b> $${Math.round(v.mc).toLocaleString()}` : "",
     v.liquidity ? `<b>Liquidity:</b> $${Math.round(v.liquidity).toLocaleString()}` : "",
     v.ageMinutes != null ? `<b>Age:</b> ${v.ageMinutes} min` : "",
+    "",
+    "<i>This says a lot of people moved at once. It does not say the token "
+      + "goes up, and it cannot tell you the liquidity will still be there.</i>",
     "",
     `<code>${html(mint)}</code>`,
     "",
@@ -456,7 +512,7 @@ async function handleBuy(env, buy, opts = {}) {
     else console.log(`cluster ${buy.mint} n=${buyers.length} score=${score} below ${minScore}`);
     if (buyers.some((b) => b.isSignal)) await deliver(text, "signal");
 
-    const verdict = await legendsVerdict(env, buyers, buy.mint);
+    const verdict = await legendsVerdict(env, buyers, buy.mint, opts);
     if (!verdict.pass) {
       console.log(`legends skip ${buy.mint}: ${verdict.why}`);
     } else if (await claimLegend(env, buy.mint, opts)) {

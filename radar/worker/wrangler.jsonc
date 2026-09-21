@@ -28,10 +28,11 @@
     // Legends 101. Every bar is deliberately extreme: a rare channel is the
     // whole point, and one that fires daily is the feed channel renamed.
     "LEGENDS_ENABLED": "false",
-    "LEGENDS_MIN_SCORE": "90",
-    "LEGENDS_MIN_SIGNAL": "2",
-    "LEGENDS_MIN_SOL": "3",
-    "LEGENDS_MAX_MC": "1000000",
+    "LEGENDS_MIN_OPERATORS": "8",
+    "LEGENDS_MIN_SOL": "25",
+    "LEGENDS_SPRAYER_BUYS": "200",
+    "LEGENDS_MIN_LIQUIDITY": "5000",
+    "LEGENDS_OVERSIZED_MULTIPLE": "3",
 
     // Legends is meant not to be missed, so it keeps knocking. The gap is
     // above Telegram's roughly one-a-second ceiling for a single chat.
