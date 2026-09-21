@@ -27,6 +27,7 @@
 
     // Legends 101. Every bar is deliberately extreme: a rare channel is the
     // whole point, and one that fires daily is the feed channel renamed.
+    "LEGENDS_ENABLED": "false",
     "LEGENDS_MIN_SCORE": "90",
     "LEGENDS_MIN_SIGNAL": "2",
     "LEGENDS_MIN_SOL": "3",

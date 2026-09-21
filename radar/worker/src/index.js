@@ -331,6 +331,11 @@ function clusterStub(env, opts) {
 }
 
 async function legendsVerdict(env, buyers, mint) {
+  // Kill switch. This channel told its reader to buy two tokens that lost
+  // them money, so it stays off until it can tell a rug from a runner.
+  if (String(env.LEGENDS_ENABLED || "true") !== "true") {
+    return { pass: false, why: "channel disabled" };
+  }
   const minScore = Number(env.LEGENDS_MIN_SCORE || "90");
   const minSignal = Number(env.LEGENDS_MIN_SIGNAL || "2");
   const minSol = Number(env.LEGENDS_MIN_SOL || "3");
