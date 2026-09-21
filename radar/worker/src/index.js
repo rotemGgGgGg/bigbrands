@@ -182,7 +182,7 @@ function watchedOwners(tx) {
   return owners;
 }
 
-async function handleWebhook(request, env) {
+async function handleWebhook(request, env, ctx) {
   // The webhook URL is effectively the credential, so it carries a secret.
   const url = new URL(request.url);
   if (!env.HOOK_SECRET || url.searchParams.get("s") !== env.HOOK_SECRET) {
@@ -206,7 +206,7 @@ async function handleWebhook(request, env) {
       ? watchedOwners(tx).flatMap((owner) => extractBuysRaw(tx, owner, minSol))
       : extractBuys(tx, WATCHED, minSol);
     for (const buy of buys) {
-      alerted += await handleBuy(env, buy, { drill });
+      alerted += await handleBuy(env, buy, { drill, ctx });
     }
   }
 
@@ -259,6 +259,61 @@ function claimOnce(key) {
 }
 
 /**
+ * Legends fires a handful of times a week, and the whole point is not to miss
+ * one. So it is not sent once and left to sit in a list of notifications: the
+ * alert goes out immediately, then keeps knocking.
+ *
+ * Telegram throttles a chat at roughly a message a second, so the repeats are
+ * spaced and sent after the response has already gone back — the first message
+ * must not wait behind the other fourteen.
+ *
+ * Each repeat says something different. Fifteen copies of one message is a
+ * wall the eye slides off; fifteen different ones each have to be read, and
+ * every one carries the mint, so whichever gets noticed is the one that works.
+ */
+const NAG_LINES = [
+  "\u{1F6A8} <b>Legends 101</b> — this is the rare one. Go look.",
+  "\u{23F0} Still waiting on you. Legends fires a few times a WEEK.",
+  "\u{1F440} You have not opened it yet. This is the one you asked not to miss.",
+  "\u{1F4B0} Your best wallets are already in. The clock is the whole edge here.",
+  "\u26A1 Every minute here is the difference between early and late.",
+  "\u{1F514} Legends 101. Not the feed. Not a cluster. The rare one.",
+  "\u{1F3AF} This passed every gate: score, your best wallets, size, market cap.",
+  "\u{1F6A8} Second reminder. Same token. Still small.",
+  "\u{1F4C8} If you are going to look at one alert today, it is this one.",
+  "\u23F3 Late is the same as useless here. That was the whole point.",
+  "\u{1F525} Legends 101 \u2014 last few reminders.",
+  "\u{1F6A8} Final calls. Open it or let it go on purpose, not by accident.",
+  "\u{1F4CD} Still here. Still the rare one.",
+  "\u{1F3C6} Legends 101. That is all.",
+];
+
+async function blastLegend(env, text, mint, opts) {
+  const count = Math.max(1, Number(env.LEGENDS_BLAST_COUNT || "12"));
+  const gapMs = Number(env.LEGENDS_BLAST_GAP_MS || "1200");
+
+  // The alert itself, now — nothing waits behind the reminders.
+  const first = await sendTelegram(env, text, "legends", opts.drill);
+
+  const link = `\u{1F4C8} <a href="https://dexscreener.com/solana/${mint}">Chart</a>  \u00b7  ` +
+    `\u{1F9FE} <a href="https://axiom.trade/t/${mint}">Axiom</a>`;
+  const nag = async () => {
+    for (let i = 0; i < count - 1; i += 1) {
+      await new Promise((r) => setTimeout(r, gapMs));
+      const line = NAG_LINES[i % NAG_LINES.length];
+      await sendTelegram(env,
+        `${line}\n\n<code>${html(mint)}</code>\n\n${link}`, "legends", opts.drill);
+    }
+  };
+  // waitUntil keeps the reminders running after the response is returned, so
+  // the alert is never held up by them. A drill waits instead: reminders that
+  // finish after the response are reminders a drill cannot check.
+  if (opts.ctx && !opts.drill) opts.ctx.waitUntil(nag());
+  else await nag();
+  return first;
+}
+
+/**
  * Legends 101.
  *
  * A separate, deliberately rare channel. It cannot tell you a coin will reach
@@ -291,13 +346,17 @@ async function legendsVerdict(env, buyers, mint) {
   // Only now is the round trip worth paying for.
   const { mc, known, notIndexed, liquidity, ageMinutes, reason } = await marketCap(mint);
   // A token too new to be indexed has the most headroom there is. A lookup
-  // that merely failed tells us nothing, and silence is the safer reading:
-  // the whole promise of this channel is that it is small and still can run.
-  if (!known) return { pass: false, why: `market cap unknown (${reason})` };
+  // that merely failed is different — it could be anything — but dropping the
+  // alert over it means the rarest channel goes quiet because someone else's
+  // traffic hit a rate limit, and not missing this is the whole point. So it
+  // is sent, saying plainly that the cap could not be read.
   if (mc != null && mc > maxMc) {
     return { pass: false, why: `mc $${Math.round(mc).toLocaleString()} over cap` };
   }
-  return { pass: true, score, signals, sol, mc, notIndexed, liquidity, ageMinutes };
+  return {
+    pass: true, score, signals, sol, mc, notIndexed, liquidity, ageMinutes,
+    mcUnavailable: !known, mcReason: reason,
+  };
 }
 
 function formatLegend(buyers, mint, v) {
@@ -312,7 +371,9 @@ function formatLegend(buyers, mint, v) {
     ...buyers.map((b) => `  ${b.isSignal ? "\u2b50" : "  "} ${html(b.name)} \u2014 ${b.sol} SOL`),
     "",
     v.mc ? `<b>Market cap:</b> $${Math.round(v.mc).toLocaleString()}  \u00b7  ${headroom}`
-         : "<b>Market cap:</b> not indexed yet \u2014 brand new",
+      : v.mcUnavailable
+        ? "\u26A0\uFE0F <b>Market cap could not be read</b> \u2014 check the chart before buying"
+        : "<b>Market cap:</b> not indexed yet \u2014 brand new",
     v.liquidity ? `<b>Liquidity:</b> $${Math.round(v.liquidity).toLocaleString()}` : "",
     v.ageMinutes != null ? `<b>Age:</b> ${v.ageMinutes} min` : "",
     "",
@@ -394,7 +455,9 @@ async function handleBuy(env, buy, opts = {}) {
     if (!verdict.pass) {
       console.log(`legends skip ${buy.mint}: ${verdict.why}`);
     } else if (await claimLegend(env, buy.mint, opts)) {
-      await deliver(formatLegend(buyers, buy.mint, verdict), "legends");
+      const legendText = formatLegend(buyers, buy.mint, verdict);
+      if (await blastLegend(env, legendText, buy.mint, opts)) sent += 1;
+      else console.log(`telegram legends send failed for ${buy.mint}`);
     }
   }
 
@@ -436,10 +499,10 @@ export default {
     console.log(`poll slice ${slice}/${slices}: scanned ${result.scanned}, buys ${result.found}`);
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/hook" && request.method === "POST") {
-      return handleWebhook(request, env);
+      return handleWebhook(request, env, ctx);
     }
     if (url.pathname === "/alerts") return listAlerts(env);
     if (url.pathname === "/rpctest") {

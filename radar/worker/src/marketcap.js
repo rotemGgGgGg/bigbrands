@@ -1,66 +1,80 @@
 /**
- * Market cap, from DexScreener's public API — no key, no quota to exhaust.
+ * Market cap, from two independent public APIs — neither needs a key.
  *
- * Only the Legends gate calls this, and only for buys that already cleared
- * every other bar, so the extra round trip costs nothing on the common path.
+ * One source was not enough. DexScreener rate limits by IP, and this worker
+ * shares its IPs with the rest of the platform, so a 429 arrives because of
+ * the neighbours and says nothing about the token. That turned a third
+ * party's throttle into a silent gate on the rarest channel.
  *
- * The caller must be able to tell a token that is genuinely too new to be
- * indexed from a lookup that simply failed. They look identical — no number
- * either way — but the first has every dollar of headroom and the second
- * could be anything, so they cannot be allowed to mean the same thing.
+ * So the question is asked twice, of two different providers, and the caller
+ * is told which of three things came back: a number, a confident "this token
+ * is too new to be listed anywhere", or a genuine unknown. Only the last is
+ * ambiguous, and with two providers it is rare.
  */
-const TIMEOUT_MS = 2000;
+const TIMEOUT_MS = 2500;
 const CACHE_MS = 60_000;
 const cache = new Map(); // mint -> { at, result }
 
-async function lookup(mint) {
-  const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, {
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!resp.ok) throw new Error(`http ${resp.status}`);
-  return resp.json();
+/** @returns {{mc:number|null, listed:boolean}} or throws if the source failed. */
+async function fromDexScreener(mint) {
+  const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+    { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!resp.ok) throw new Error(`dexscreener ${resp.status}`);
+  const pairs = (await resp.json())?.pairs || [];
+  if (!pairs.length) return { mc: null, listed: false };
+  // Deepest pair is the one that prices the token; the thin ones lie.
+  const best = pairs.reduce((a, b) =>
+    (b.liquidity?.usd || 0) > (a.liquidity?.usd || 0) ? b : a);
+  return {
+    mc: best.marketCap ?? best.fdv ?? null,
+    listed: true,
+    liquidity: best.liquidity?.usd ?? null,
+    ageMinutes: best.pairCreatedAt
+      ? Math.round((Date.now() - best.pairCreatedAt) / 60_000) : null,
+  };
+}
+
+async function fromJupiter(mint) {
+  const resp = await fetch(`https://lite-api.jup.ag/tokens/v2/search?query=${mint}`,
+    { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (!resp.ok) throw new Error(`jupiter ${resp.status}`);
+  const body = await resp.json();
+  const t = Array.isArray(body) ? body[0] : body;
+  if (!t) return { mc: null, listed: false };
+  return {
+    mc: t.mcap ?? t.fdv ?? null,
+    listed: true,
+    liquidity: t.liquidity ?? null,
+    ageMinutes: null,
+  };
 }
 
 export async function marketCap(mint) {
   const hit = cache.get(mint);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.result;
 
-  let data;
-  try {
-    data = await lookup(mint);
-  } catch (first) {
-    // A rate limit or a slow answer is worth one more try; a second failure
-    // is an unknown, and an unknown is not a green light.
+  const failures = [];
+  let sawUnlisted = false;
+  for (const source of [fromDexScreener, fromJupiter]) {
+    let answer;
     try {
-      data = await lookup(mint);
+      answer = await source(mint);
     } catch (err) {
-      return { mc: null, known: false, notIndexed: false, reason: `${first.message} / ${err.message}` };
+      failures.push(err.message);
+      continue;
     }
+    if (answer.mc != null) {
+      const result = { ...answer, known: true, notIndexed: false, reason: null };
+      cache.set(mint, { at: Date.now(), result });
+      return result;
+    }
+    // A clean answer with nothing in it means nobody lists this token yet.
+    sawUnlisted = true;
   }
 
-  const pairs = data?.pairs || [];
-  if (!pairs.length) {
-    const result = { mc: null, known: true, notIndexed: true, reason: "not indexed yet" };
-    cache.set(mint, { at: Date.now(), result });
-    return result;
-  }
-
-  // Deepest pair is the one that prices the token; the thin ones lie.
-  const best = pairs.reduce((a, b) =>
-    (b.liquidity?.usd || 0) > (a.liquidity?.usd || 0) ? b : a);
-
-  // For a memecoin the whole supply is circulating, so fdv is the honest
-  // number when marketCap is missing.
-  const mc = best.marketCap ?? best.fdv ?? null;
-  const result = {
-    mc,
-    known: mc != null,
-    notIndexed: false,
-    liquidity: best.liquidity?.usd ?? null,
-    ageMinutes: best.pairCreatedAt
-      ? Math.round((Date.now() - best.pairCreatedAt) / 60_000) : null,
-    reason: mc == null ? "no market cap reported" : null,
-  };
-  cache.set(mint, { at: Date.now(), result });
+  const result = sawUnlisted
+    ? { mc: null, known: true, notIndexed: true, reason: "not listed anywhere yet" }
+    : { mc: null, known: false, notIndexed: false, reason: failures.join(", ") };
+  if (sawUnlisted) cache.set(mint, { at: Date.now(), result });
   return result;
 }

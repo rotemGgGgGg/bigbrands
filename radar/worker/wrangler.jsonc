@@ -30,6 +30,11 @@
     "LEGENDS_MIN_SCORE": "90",
     "LEGENDS_MIN_SIGNAL": "2",
     "LEGENDS_MIN_SOL": "3",
-    "LEGENDS_MAX_MC": "1000000"
+    "LEGENDS_MAX_MC": "1000000",
+
+    // Legends is meant not to be missed, so it keeps knocking. The gap is
+    // above Telegram's roughly one-a-second ceiling for a single chat.
+    "LEGENDS_BLAST_COUNT": "12",
+    "LEGENDS_BLAST_GAP_MS": "1200"
   }
 }
