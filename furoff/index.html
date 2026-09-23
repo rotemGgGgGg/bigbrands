@@ -26,7 +26,7 @@
   <!-- Header -->
   <header class="header">
     <div class="wrap header-in">
-      <a href="#top" class="logo" aria-label="FurOff"><img src="assets/logo.webp" alt="FurOff" width="140" height="57" /></a>
+      <a href="#top" class="logo" aria-label="FurOff"><img src="assets/logo.webp" alt="FurOff" width="720" height="294" /></a>
       <nav class="nav" aria-label="ניווט">
         <a href="#how">איך זה עובד</a>
         <a href="#why">למה FurOff</a>
@@ -82,10 +82,11 @@
             <img id="galleryMain" src="assets/product-hero.webp" alt="FurOff" width="1322" height="1190" />
           </div>
           <div class="thumbs" role="list">
-            <button class="thumb active" data-src="assets/product-hero.webp" role="listitem" aria-label="תמונה 1"><img src="assets/product-hero.webp" alt="" /></button>
-            <button class="thumb" data-src="assets/product-box.webp" role="listitem" aria-label="תמונה 2"><img src="assets/product-box.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/product-hand.webp" role="listitem" aria-label="תמונה 3"><img src="assets/product-hand.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/ba-couch.webp" role="listitem" aria-label="תמונה 4"><img src="assets/ba-couch.webp" alt="" loading="lazy" /></button>
+            <button class="thumb active" data-src="assets/product-hero.webp" role="listitem" aria-label="המוצר"><img src="assets/product-hero.webp" alt="" /></button>
+            <button class="thumb" data-src="assets/product-box.webp" role="listitem" aria-label="עם האריזה"><img src="assets/product-box.webp" alt="" loading="lazy" /></button>
+            <button class="thumb" data-src="assets/product-detail.webp" role="listitem" aria-label="תקריב"><img src="assets/product-detail.webp" alt="" loading="lazy" /></button>
+            <button class="thumb" data-src="assets/product-hand.webp" role="listitem" aria-label="בשימוש"><img src="assets/product-hand.webp" alt="" loading="lazy" /></button>
+            <button class="thumb" data-src="assets/ba-couch.webp" role="listitem" aria-label="לפני ואחרי"><img src="assets/ba-couch.webp" alt="" loading="lazy" /></button>
           </div>
         </div>
 
@@ -116,10 +117,6 @@
               </ol>
             </details>
             <details>
-              <summary>מה בקופסה?</summary>
-              <p>[למלא: תכולת האריזה ומידות המוצר]</p>
-            </details>
-            <details>
               <summary>משלוחים</summary>
               <p data-shipping></p>
             </details>
@@ -147,17 +144,36 @@
             <p>קדימה ואחורה, בתנועות קצרות. בלי לחץ.</p>
           </article>
           <article class="step reveal">
-            <div class="ph ph-4x3" data-need="step-2.webp — השיער נאסף לתוך התא, תקריב"><span>שלב 2 — איסוף</span></div>
+            <img class="media ph-4x3" src="assets/step-2.webp" alt="התא של FurOff מלא בשיער שנאסף" width="372" height="302" loading="lazy" />
             <span class="step-n">2</span>
             <h3>השיער נאסף</h3>
             <p>הגלגלת מושכת את השיער מהבד ישר לתוך התא.</p>
           </article>
           <article class="step reveal">
-            <div class="ph ph-4x3" data-need="step-3.webp — פתיחת התא וריקון השיער לפח"><span>שלב 3 — ריקון</span></div>
+            <img class="media ph-4x3" src="assets/step-3.webp" alt="ריקון השיער מהתא לפח בלחיצה" width="297" height="302" loading="lazy" />
             <span class="step-n">3</span>
             <h3>מרוקנים וממשיכים</h3>
             <p>פותחים, זורקים, סוגרים. מוכן לפעם הבאה.</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="wrap features-in">
+        <div class="features-media reveal">
+          <img class="media" src="assets/product-detail.webp" alt="תקריב על הגלגלת והידית של FurOff" width="910" height="465" loading="lazy" />
+        </div>
+        <div class="features-copy reveal">
+          <p class="eyebrow">מה יש בפנים</p>
+          <h2>פרטים קטנים. הבדל גדול.</h2>
+          <dl class="feat-list">
+            <div><dt>בד שתופס שיער</dt><dd>סיבים מיוחדים שמושכים שיער קצר וארוך מתוך הבד.</dd></div>
+            <div><dt>תא איסוף גדול</dt><dd>אוסף הרבה שיער לפני שצריך לרוקן.</dd></div>
+            <div><dt>ריקון בלחיצה</dt><dd>כפתור אחד פותח את התא — ישר לפח.</dd></div>
+            <div><dt>ידית ארגונומית</dt><dd>נוחה ליד, עם חור תלייה לאחסון מסודר.</dd></div>
+          </dl>
         </div>
       </div>
     </section>
@@ -172,11 +188,10 @@
         <div class="surf-grid">
           <figure class="surf reveal"><img class="media ph-1x1" src="assets/surface-couch.webp" alt="FurOff על ספה אפורה" width="676" height="563" loading="lazy" /><figcaption>ספות וכורסאות</figcaption></figure>
           <figure class="surf reveal"><img class="media ph-1x1" src="assets/surface-clothes.webp" alt="FurOff על קפוצ'ון שחור" width="615" height="655" loading="lazy" /><figcaption>בגדים ומעילים</figcaption></figure>
-          <figure class="surf reveal"><div class="ph ph-1x1" data-need="surface-bed.webp — מיטה/שמיכה עם שיער"><span>מיטה</span></div><figcaption>מיטות ושמיכות</figcaption></figure>
-          <figure class="surf reveal"><div class="ph ph-1x1" data-need="surface-car.webp — מושב רכב עם שיער כלב"><span>רכב</span></div><figcaption>מושבי רכב</figcaption></figure>
-          <figure class="surf reveal"><div class="ph ph-1x1" data-need="surface-rug.webp — שטיח עם שיער"><span>שטיח</span></div><figcaption>שטיחים</figcaption></figure>
-          <figure class="surf reveal"><div class="ph ph-1x1" data-need="surface-dogbed.webp — מיטת כלב עם שיער"><span>מיטת הכלב</span></div><figcaption>המיטה של הכלב</figcaption></figure>
+          <figure class="surf reveal"><img class="media ph-1x1" src="assets/surface-car.webp" alt="FurOff על מושב רכב" width="736" height="570" loading="lazy" /><figcaption>מושבי רכב</figcaption></figure>
+          <figure class="surf reveal"><img class="media ph-1x1" src="assets/surface-dogbed.webp" alt="FurOff על מיטת כלב" width="1000" height="792" loading="lazy" /><figcaption>המיטה של הכלב</figcaption></figure>
         </div>
+        <p class="surf-more reveal">וגם שמיכות, שטיחים, כריות ומזרנים.</p>
       </div>
     </section>
 
@@ -215,7 +230,7 @@
         <div class="ugc-grid">
           <figure class="ba ba-wide reveal"><img class="media" src="assets/ba-couch.webp" alt="לפני ואחרי: ספה מלאה שיער כלב מול ספה נקייה" width="1400" height="933" loading="lazy" /><figcaption>ספה — דקה אחת של FurOff</figcaption></figure>
           <figure class="ba reveal"><img class="media" src="assets/ba-clothes.webp" alt="לפני ואחרי: קפוצ'ון שחור עם שיער מול קפוצ'ון נקי" width="1400" height="933" loading="lazy" /><figcaption>אותו קפוצ'ון. יום אחר.</figcaption></figure>
-          <figure class="ba reveal"><div class="ph ph-3x2" data-need="ba-car.webp — לפני/אחרי מושב רכב (3:2)"><span>לפני / אחרי — רכב</span></div><figcaption>מושב הרכב</figcaption></figure>
+          <figure class="ba reveal"><img class="media" src="assets/ba-car.webp" alt="לפני ואחרי: מושב רכב עם שיער כלב מול מושב נקי" width="1400" height="933" loading="lazy" /><figcaption>מושב הרכב — אחרי הטיול</figcaption></figure>
         </div>
       </div>
     </section>
@@ -228,6 +243,17 @@
           <h2>יותר זמן איתו. פחות זמן לנקות.</h2>
         </div>
         <div class="rev-grid" id="revGrid"></div>
+      </div>
+    </section>
+
+    <!-- Brand moment -->
+    <section class="cuddle">
+      <img src="assets/cuddle.webp" alt="אישה מחבקת גולדן רטריבר על ספה נקייה, FurOff לידם" width="1536" height="1024" loading="lazy" />
+      <div class="wrap cuddle-in">
+        <div class="cuddle-copy reveal">
+          <h2>הזמן שחסכתם על ניקיון —<br /><span class="grad-light">הולך אליו.</span></h2>
+          <p>פחות גלילים, פחות שאיבות, פחות "רגע, אל תעלה על הספה". יותר ערבים ביחד.</p>
+        </div>
       </div>
     </section>
 
@@ -264,7 +290,7 @@
     <!-- Final CTA -->
     <section class="final">
       <div class="wrap final-in reveal">
-        <img src="assets/logo.webp" alt="FurOff" width="360" height="147" loading="lazy" />
+        <img src="assets/logo.webp" alt="FurOff" width="720" height="294" loading="lazy" />
         <p class="final-slogan">פחות פרווה. יותר חיבוקים.</p>
         <a href="#buy" class="btn btn-lg">אני רוצה FurOff</a>
       </div>
@@ -273,9 +299,9 @@
 
   <footer class="footer">
     <div class="wrap footer-in">
-      <img src="assets/logo.webp" alt="FurOff" width="110" height="45" loading="lazy" />
+      <img src="assets/logo.webp" alt="FurOff" width="720" height="294" loading="lazy" />
       <nav aria-label="מדיניות" class="footer-links" id="policyLinks"></nav>
-      <p class="footer-contact">שירות לקוחות: <a data-email></a></p>
+      <p class="footer-contact"><a id="contactLink">צרו קשר</a></p>
       <p class="copy">© <span id="year"></span> FurOff. כל הזכויות שמורות.</p>
     </div>
   </footer>

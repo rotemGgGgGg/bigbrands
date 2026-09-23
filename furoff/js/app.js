@@ -70,13 +70,8 @@
   // Business text from config
   $$("[data-guarantee]").forEach((el) => (el.textContent = C.guaranteeDays));
   $$("[data-shipping]").forEach((el) => (el.textContent = C.shippingText));
-  $$("[data-email]").forEach((el) => { el.textContent = C.supportEmail; el.href = `mailto:${C.supportEmail}`; });
-  $("#policyLinks").innerHTML = [
-    ["refund-policy", "מדיניות החזרות"],
-    ["shipping-policy", "משלוחים"],
-    ["privacy-policy", "פרטיות"],
-    ["terms-of-service", "תנאי שימוש"],
-  ].map(([p, t]) => `<a href="https://${C.shop}/policies/${p}">${t}</a>`).join("");
+  $("#contactLink").href = `https://${C.shop}/pages/contact`;
+  $("#policyLinks").innerHTML = C.policies.map(([t, url]) => `<a href="${url}">${t}</a>`).join("");
   $("#year").textContent = new Date().getFullYear();
 
   // Sticky bar: show once the hero CTA scrolls away, hide while the buy box is on screen

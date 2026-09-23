@@ -15,10 +15,13 @@ window.FUROFF = {
   ],
   defaultBundle: 1,
 
-  // TODO(owner): confirm these before launch.
-  shippingText: "משלוח חינם עד הבית · [למלא: זמן אספקה]",
+  shippingText: "משלוח חינם עד הבית, עם מספר מעקב.",
   guaranteeDays: 30,
-  supportEmail: "[למלא: support@yourdomain]",
+
+  // Only policies that exist in Shopify (Settings → Policies). Add refund/shipping/terms once written.
+  policies: [
+    ["מדיניות פרטיות", "https://checkout.shopify.com/110886945107/policies/65945076051.html?locale=he"],
+  ],
 
   // Real reviews only. Leave empty and the section stays hidden.
   // { name: "דנה, תל אביב", dog: "גולדן רטריבר", text: "...", stars: 5, photo: "assets/..." }
