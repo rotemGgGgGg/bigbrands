@@ -18,7 +18,7 @@ window.FUROFF = {
   shippingText: "משלוח חינם עד הבית, עם מספר מעקב.",
   guaranteeDays: 30,
 
-  // Texts to paste into Shopify → Settings → Policies live in furoff/policies/.
+  // Texts to paste into Shopify → Settings → Policies live in furoff-policies/.
   policies: [
     ["מדיניות החזרות", "https://uhtscw-cx.myshopify.com/policies/refund-policy"],
     ["משלוחים", "https://uhtscw-cx.myshopify.com/policies/shipping-policy"],
