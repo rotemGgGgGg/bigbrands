@@ -16,7 +16,9 @@
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["ClusterState"] }
   ],
-  "triggers": { "crons": ["* * * * *"] },
+  // Shut down. The scan ran every minute and the webhook pushed every block;
+  // both are off, so the worker costs nothing until it is asked to work again.
+  "triggers": { "crons": [] },
   "vars": {
     "POLL_SLICES": "2",
     "MIN_SOL_BUY": "0.05",
@@ -27,6 +29,7 @@
 
     // Legends 101. Every bar is deliberately extreme: a rare channel is the
     // whole point, and one that fires daily is the feed channel renamed.
+    "RADAR_ENABLED": "false",
     "LEGENDS_ENABLED": "false",
     "LEGENDS_MIN_OPERATORS": "8",
     "LEGENDS_MIN_SOL": "25",

@@ -464,6 +464,8 @@ async function claimLegend(env, mint, opts) {
 
 /** Shared by the pushed and polled paths so both alert identically. */
 async function handleBuy(env, buy, opts = {}) {
+  // Master switch. Nothing is sent, stored or looked up while this is off.
+  if (!opts.drill && String(env.RADAR_ENABLED || "true") !== "true") return 0;
   const isSignal = TRACKED_SET.has(buy.wallet);
   const name = TRACKED[buy.wallet] || FEED[buy.wallet] || buy.wallet.slice(0, 6);
   const windowMs = Number(env.CLUSTER_WINDOW_MINUTES || "10") * 60_000;
