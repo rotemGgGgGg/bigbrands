@@ -67,6 +67,12 @@
     $("#reviews").hidden = false;
   }
 
+  // Demo video (real footage only; section stays hidden when empty)
+  if (C.videoUrl) {
+    $("#demoVideo").src = C.videoUrl;
+    $("#video").hidden = false;
+  }
+
   // Business text from config
   $$("[data-guarantee]").forEach((el) => (el.textContent = C.guaranteeDays));
   $$("[data-shipping]").forEach((el) => (el.textContent = C.shippingText));

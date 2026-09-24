@@ -15,7 +15,10 @@ window.FUROFF = {
   ],
   defaultBundle: 1,
 
-  shippingText: "משלוח חינם עד הבית, עם מספר מעקב.",
+  shippingText: "משלוח חינם עד הבית, אספקה תוך 2–3 שבועות.",
+
+  // Demo video (mp4 in assets/). Leave empty and the section stays hidden.
+  videoUrl: "",
   guaranteeDays: 30,
 
   // Texts to paste into Shopify → Settings → Policies live in furoff-policies/.
