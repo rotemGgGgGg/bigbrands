@@ -18,8 +18,8 @@ window.FUROFF = {
   shippingText: "משלוח חינם עד הבית, אספקה תוך 2–3 שבועות.",
 
   // Demo video (mp4 in assets/). Leave empty and the section stays hidden.
-  videoUrl: "",
-  videoPoster: "",
+  videoUrl: "assets/demo.mp4",
+  videoPoster: "assets/demo-poster.webp",
   guaranteeDays: 30,
 
   // Texts to paste into Shopify → Settings → Policies live in furoff-policies/.
