@@ -7,8 +7,9 @@
   let selected = C.defaultBundle ?? 0;
 
   function checkoutUrl(b) {
-    const url = `https://${C.shop}/cart/${C.variantId}:${b.qty}`;
-    return b.code ? `${url}?discount=${encodeURIComponent(b.code)}` : url;
+    const q = new URLSearchParams({ locale: "he" });
+    if (b.code) q.set("discount", b.code);
+    return `https://${C.shop}/cart/${C.variantId}:${b.qty}?${q}`;
   }
 
   // Bundles
