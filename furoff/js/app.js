@@ -49,6 +49,14 @@
     $("#stickyPrice").textContent = ils(b.price);
   }
 
+  // Meta Pixel: checkout intent (purchases are tracked by Shopify's Facebook & Instagram app)
+  const trackCheckout = () => {
+    const b = C.bundles[selected];
+    window.fbq?.("track", "InitiateCheckout", { value: b.price, currency: "ILS", num_items: b.qty, content_name: "FurOff Pet Hair Remover" });
+  };
+  $("#checkoutBtn").addEventListener("click", trackCheckout);
+  $("#stickyBtn").addEventListener("click", () => { if ($("#stickyBtn").href.includes("/cart/")) trackCheckout(); });
+
   // Gallery
   $$(".thumb[data-src]").forEach((t) => t.addEventListener("click", () => {
     $$(".thumb").forEach((x) => x.classList.remove("active"));
