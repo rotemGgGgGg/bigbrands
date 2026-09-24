@@ -70,11 +70,33 @@
 
   // Demo video (real footage only; section stays hidden when empty)
   if (C.videoUrl) {
-    $("#demoVideo").src = C.videoUrl;
+    const v = $("#demoVideo");
+    v.src = C.videoUrl;
+    if (C.videoPoster) v.poster = C.videoPoster;
     $("#video").hidden = false;
+    // Autoplay muted only while on screen; respect reduced motion
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still) v.removeAttribute("autoplay");
+    new IntersectionObserver(([e]) => { if (still) return; e.isIntersecting ? v.play().catch(() => {}) : v.pause(); }, { threshold: 0.4 }).observe(v);
+    $("#videoSound").addEventListener("click", () => {
+      v.muted = !v.muted;
+      $("#videoSound").textContent = v.muted ? "🔇" : "🔊";
+      $("#videoSound").setAttribute("aria-label", v.muted ? "הפעלת סאונד" : "השתקה");
+      if (!v.muted) v.play().catch(() => {});
+    });
   }
 
-  // Business text from config
+  // Manufacturer rating — shown only with its source label
+  if (C.supplierRating) {
+    const r = C.supplierRating;
+    $$("[data-rating]").forEach((el) => {
+      el.innerHTML = `<span class="stars" aria-hidden="true">★★★★★</span><strong>${r.stars}</strong><span>${r.label}</span><span aria-hidden="true">·</span><span>${r.sold}</span>`;
+      el.setAttribute("aria-label", `${r.stars} מתוך 5, ${r.label}, ${r.sold}`);
+      el.hidden = false;
+    });
+  }
+
+    // Business text from config
   $$("[data-guarantee]").forEach((el) => (el.textContent = C.guaranteeDays));
   $$("[data-shipping]").forEach((el) => (el.textContent = C.shippingText));
   $("#contactLink").href = `https://${C.shop}/pages/contact`;

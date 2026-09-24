@@ -49,6 +49,7 @@
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="wrap hero-in">
         <div class="hero-copy reveal">
+          <p class="rating-pill" data-rating hidden></p>
           <p class="eyebrow">מסיר שיער רב־פעמי לכלבים ולחתולים</p>
           <h1>פחות פרווה.<br /><span class="grad">יותר חיבוקים.</span></h1>
           <p class="lead">מעבירים על הספה, על הבגדים או על מושב הרכב — והפרווה נאספת לתוך המיכל. בלי מדבקות, בלי סוללות, ובלי לקנות מילויים שוב ושוב.</p>
@@ -76,6 +77,26 @@
           <picture><source media="(max-width: 900px)" srcset="assets/ba-big-m.webp" /><img class="media" src="assets/ba-big.webp" alt="לפני ואחרי: ספה כהה מלאה פרווה מול אותה ספה נקייה אחרי FurOff" width="1536" height="390" /></picture>
           <figcaption>אותה ספה. <strong>כמה העברות של FurOff.</strong></figcaption>
         </figure>
+      </div>
+    </section>
+
+    <!-- Video (shown only when config.videoUrl is set) -->
+    <section class="video" id="video" hidden>
+      <div class="wrap video-in">
+        <div class="video-frame reveal">
+          <video id="demoVideo" playsinline muted loop autoplay preload="metadata"></video>
+          <button class="video-sound" id="videoSound" type="button" aria-label="הפעלת סאונד">🔇</button>
+        </div>
+        <div class="video-copy reveal">
+          <p class="eyebrow">בפעולה</p>
+          <h2>תראו את הפרווה נעלמת.</h2>
+          <ul class="mini-benefits">
+            <li>כמה העברות — והספה נקייה</li>
+            <li>הפרווה נאספת לתוך המיכל, לא מתפזרת</li>
+            <li>מרוקנים לפח ומשתמשים שוב</li>
+          </ul>
+          <a href="#buy" class="btn btn-lg">אני רוצה את זה</a>
+        </div>
       </div>
     </section>
 
@@ -112,6 +133,7 @@
         <div class="buy-info reveal">
           <p class="eyebrow">FurOff™ Pet Hair Remover</p>
           <h2 class="buy-title">מסיר הפרווה שעובד שוב ושוב</h2>
+          <p class="rating-pill" data-rating hidden></p>
           <ul class="mini-benefits">
             <li>אוסף פרווה מספות, בגדים, רכב, שטיחים ומיטות</li>
             <li>מיכל איסוף גדול — פותחים, מרוקנים, ממשיכים</li>
@@ -205,16 +227,6 @@
       </div>
     </section>
 
-    <!-- Video (shown only when config.videoUrl is set) -->
-    <section class="video" id="video" hidden>
-      <div class="wrap">
-        <div class="sec-head reveal">
-          <p class="eyebrow">בפעולה</p>
-          <h2>10 שניות. תראו לבד.</h2>
-        </div>
-        <div class="video-frame reveal"><video id="demoVideo" playsinline muted loop controls preload="none"></video></div>
-      </div>
-    </section>
 
     <!-- Comparison -->
     <section class="compare" id="why">

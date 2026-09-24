@@ -19,6 +19,7 @@ window.FUROFF = {
 
   // Demo video (mp4 in assets/). Leave empty and the section stays hidden.
   videoUrl: "",
+  videoPoster: "",
   guaranteeDays: 30,
 
   // Texts to paste into Shopify → Settings → Policies live in furoff-policies/.
@@ -28,6 +29,9 @@ window.FUROFF = {
     ["תקנון", "https://uhtscw-cx.myshopify.com/policies/terms-of-service"],
     ["מדיניות פרטיות", "https://uhtscw-cx.myshopify.com/policies/privacy-policy"],
   ],
+
+  // Real figures from the supplier's product listing, always shown with their source.
+  supplierRating: { stars: "4.9", label: "דירוג אצל היצרן", sold: "10,000+ נמכרו" },
 
   // Real reviews only. Leave empty and the section stays hidden.
   // { name: "דנה, תל אביב", dog: "גולדן רטריבר", text: "...", stars: 5, photo: "assets/..." }
