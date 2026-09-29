@@ -34,6 +34,10 @@ class Params:
     vp_rows: int = 999
     va_pct: float = 0.70
     vp_range: str = "leg"  # leg | london | day | ny
+    vp_anchor: str = "leg"  # leg range only — profile start: leg | a1 | sweep | swing
+    vp_offset: int = 0      # bars before the anchor bar (a1 / sweep)
+    swing_k: int = 2        # pivot strength for vp_anchor="swing"
+    vp_price: str = "anchors"  # leg range only — rows span: anchors (a1..a0) | bars (high/low of the bars, like TradingView FRVP)
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
 
@@ -109,6 +113,13 @@ def va_ratio(bars, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL):
     f1, f0, d = setup["a1"], setup["a0"], setup["dir"]
     if p.vp_range == "leg":
         start, end, lo, hi = setup["start"], i, min(f1, f0), max(f1, f0)
+        if p.vp_anchor in ("a1", "sweep"):
+            base = setup["a1bar"] if p.vp_anchor == "a1" else setup["swbar"]
+            start = max(0, min(start, base - p.vp_offset))
+        elif p.vp_anchor == "swing":
+            start = min(start, swing_start(bars, setup["a1bar"], d, p.swing_k))
+        if p.vp_price == "bars":
+            lo, hi = min(bars.low[start:end + 1]), max(bars.high[start:end + 1])
     elif p.vp_range == "london":
         start, end, lo, hi = day_start, ldn_end, ldnL, ldnH
     else:
@@ -123,6 +134,19 @@ def va_ratio(bars, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL):
     vah, val = va
     rng = abs(f1 - f0)
     return (vah - f0) / rng if d == -1 else (f0 - val) / rng
+
+
+def swing_start(bars, a1bar, d, k):
+    """Last pivot before the 1.0 anchor that started the move into it:
+    a swing low before a high (short), a swing high before a low (long)."""
+    for j in range(a1bar - k, max(k, a1bar - 150) - 1, -1):
+        if j + k >= len(bars.low):
+            continue
+        if d == -1 and all(bars.low[j] < bars.low[j + o] for o in range(-k, k + 1) if o):
+            return j
+        if d == 1 and all(bars.high[j] > bars.high[j + o] for o in range(-k, k + 1) if o):
+            return j
+    return max(0, a1bar - 150)
 
 
 @dataclass
@@ -321,19 +345,19 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         if can_arm:
             cand = None
             if hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
-                cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar))
+                cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
             elif loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
-                cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar))
+                cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, swbar=loSwBar)
             elif s1FailHi and not s2DeadHi and two_bull:
-                cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=hiSinceHi, start=min(i - 1, hiSinceHiBar))
+                cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=hiSinceHi, start=min(i - 1, hiSinceHiBar), a1bar=i - 1, swbar=hiSwBar)
             elif s1FailLo and not s2DeadLo and two_bear:
-                cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=loSinceLo, start=min(i - 1, loSinceLoBar))
+                cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=loSinceLo, start=min(i - 1, loSinceLoBar), a1bar=i - 1, swbar=loSwBar)
             elif hiSw and loSw and not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
                 low_second = loSwBar > hiSwBar
                 if low_second and two_bull:
-                    cand = dict(scen=3, dir=-1, side=0, a1=hiSinceHi, a0=loSinceLo, start=min(hiSinceHiBar, loSinceLoBar))
+                    cand = dict(scen=3, dir=-1, side=0, a1=hiSinceHi, a0=loSinceLo, start=min(hiSinceHiBar, loSinceLoBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
                 elif not low_second and two_bear:
-                    cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar))
+                    cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar), a1bar=loSinceLoBar, swbar=loSwBar)
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
