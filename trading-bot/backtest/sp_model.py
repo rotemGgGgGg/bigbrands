@@ -40,6 +40,7 @@ class Params:
     vp_price: str = "anchors"  # leg range only — rows span: anchors (a1..a0) | bars (high/low of the bars, like TradingView FRVP)
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
+    a0_from_a1: bool = True  # S1: a0 = extreme since the bar of a1, not since the sweep
 
 
 def fib_price(f1, f0, d, lvl):
@@ -287,14 +288,20 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         # sweeps (§4)
         if after_six and ldn_valid:
             if hiSw:
-                if h > hiSinceHi:
+                new_hi = h > hiSinceHi
+                if new_hi:
                     hiSinceHi, hiSinceHiBar = h, i
-                if l < loSinceHi:
+                if new_hi and p.a0_from_a1:
+                    loSinceHi, loSinceHiBar = l, i  # a1 moved: restart a0 from this bar
+                elif l < loSinceHi:
                     loSinceHi, loSinceHiBar = l, i
             if loSw:
-                if l < loSinceLo:
+                new_lo = l < loSinceLo
+                if new_lo:
                     loSinceLo, loSinceLoBar = l, i
-                if h > hiSinceLo:
+                if new_lo and p.a0_from_a1:
+                    hiSinceLo, hiSinceLoBar = h, i
+                elif h > hiSinceLo:
                     hiSinceLo, hiSinceLoBar = h, i
             if not hiSw and h > ldnH:
                 hiSw, hiSwBar, hiSwInWin = True, i, in_win
