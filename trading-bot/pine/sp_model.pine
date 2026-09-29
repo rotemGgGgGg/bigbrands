@@ -3,9 +3,10 @@
 // Section numbers in comments (§) refer to that spec.
 // v2: va_ratio locks the level set on the first in-band bar; no value-area rejection.
 // Decisions the spec does not make are marked [IMPL] and listed in README.md.
+// margin 1%: the v6 default of 100% rejects every MNQ order (1 contract > $50K capital).
 strategy("SP Model — MNQ 5m", shorttitle = "SP Model", overlay = true,
      initial_capital = 50000, pyramiding = 0,
-     margin_long = 1, margin_short = 1,    // futures margin; the v6 default of 100% rejects every MNQ order
+     margin_long = 1, margin_short = 1,
      default_qty_type = strategy.fixed, default_qty_value = 1,
      commission_type = strategy.commission.cash_per_contract, commission_value = 0,
      process_orders_on_close = false, calc_on_every_tick = false,
