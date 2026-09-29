@@ -140,6 +140,7 @@ class Result:
     trades: list = field(default_factory=list)
     funnel: Counter = field(default_factory=Counter)
     events: list = field(default_factory=list)
+    setups: list = field(default_factory=list)
 
 
 def run(df: pd.DataFrame, p: Params = Params()) -> Result:
@@ -219,6 +220,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                            stop=order["stop"], tgt=order["tgt"], mfe=0.0, mae=0.0)
                 trades_today += 1
                 f["fills"] += 1
+                setup["outcome"] = "filled"
                 setup = None
                 order = None
                 ref_price = None
@@ -340,7 +342,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     log(i, f"S{cand['scen']} {'LONG' if cand['dir'] == 1 else 'SHORT'} rejected leg={leg:.2f}")
                     lastDeath = i
                 else:
-                    setup = dict(cand, init=leg, trig=i, locked=False, level=0.0, lock_va=None, lock_bar=None, live_a0=cand["a0"])
+                    setup = dict(cand, init=leg, trig=i, frozen=False, locked=False, level=0.0, lock_va=None, lock_bar=None,
+                                 live_a0=cand["a0"], va_frozen=[], va_all=[], refreezes=0, outcome=None, time=t)
+                    res.setups.append(setup)
                     order = None
                     ref_price = None
                     just_armed = True
@@ -361,7 +365,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 prev = setup["live_a0"]
                 setup["extending"] = (l < prev) if d == -1 else (h > prev)
                 setup["live_a0"] = min(prev, l) if d == -1 else max(prev, h)
-                if not setup["locked"]:
+                if setup["extending"] and setup["frozen"]:
+                    # new extreme: the retracement was false — unlock and re-anchor
+                    setup.update(frozen=False, locked=False, level=0.0, lock_va=None, lock_bar=None)
+                    setup["refreezes"] += 1
+                    f["unfrozen_new_extreme"] += 1
+                if not setup["frozen"]:
                     setup["a0"] = setup["live_a0"]
                 if abs(setup["a1"] - setup["live_a0"]) > p.leg_grow_max * setup["init"]:
                     dead, why = True, "leg grew"
@@ -372,10 +381,19 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         # place / update the limit (§9)
         if setup is not None and not dead:
             d = setup["dir"]
-            if not setup["locked"] and not setup["extending"]:
-                va = None if setup["scen"] == 3 else va_ratio(b, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL)
+            # STEP 1: freeze the anchors on the first bar that does not extend the leg
+            if not setup["frozen"] and not setup["extending"]:
+                setup["frozen"] = True
+                f[f"S{setup['scen']}_frozen"] += 1
+            # STEP 2: keep watching the value area (profile includes the retracement bars)
+            va = None if setup["scen"] == 3 else va_ratio(b, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL)
+            if va is not None:
+                setup["va_all"].append(va)
+                if setup["frozen"]:
+                    setup["va_frozen"].append(va)
+            if setup["frozen"] and not setup["locked"]:
                 lvl = choose_level(setup["scen"], va, p.va_low)
-                if lvl > 0:  # lock: the level set never changes for this setup
+                if lvl > 0:  # the level set never changes while the anchors stay frozen
                     setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i)
                     f[f"S{setup['scen']}_locked"] += 1
                     log(i, f"S{setup['scen']} locked @{lvl} va={va}")
@@ -397,6 +415,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         f["skipped_size"] += 1
 
         if dead:
+            setup["outcome"] = why
             f[f"dead_{why}"] += 1
             log(i, f"S{setup['scen']} dead: {why}")
             if count_fail:
