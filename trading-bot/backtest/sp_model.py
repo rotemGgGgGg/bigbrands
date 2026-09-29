@@ -26,7 +26,7 @@ class Params:
     max_trades: int = 1
     max_fails: int = 3
     va_low: float = 0.412
-    expiry_bars: int = 24
+    expiry_bars: int = 0  # 0 = off
     leg_grow_max: float = 0.0  # 0 = off (the cap was an invented parameter)
     use_leg_filter: bool = False
     leg_min: float = 30.0
@@ -351,7 +351,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         just_armed = False
         if can_arm:
             cand = None
-            if hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
+            if hiSw and loSw:
+                if not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
+                    low_second = loSwBar > hiSwBar
+                    if low_second and two_bull:
+                        cand = dict(scen=3, dir=-1, side=0, a1=hiSinceHi, a0=loSinceLo, start=min(hiSinceHiBar, loSinceLoBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
+                    elif not low_second and two_bear:
+                        cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar), a1bar=loSinceLoBar, swbar=loSwBar)
+            elif hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
                 cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
             elif loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
                 cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, swbar=loSwBar)
@@ -359,12 +366,6 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=hiSinceHi, start=min(i - 1, hiSinceHiBar), a1bar=i - 1, swbar=hiSwBar)
             elif s1FailLo and not s2DeadLo and two_bear:
                 cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=loSinceLo, start=min(i - 1, loSinceLoBar), a1bar=i - 1, swbar=loSwBar)
-            elif hiSw and loSw and not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
-                low_second = loSwBar > hiSwBar
-                if low_second and two_bull:
-                    cand = dict(scen=3, dir=-1, side=0, a1=hiSinceHi, a0=loSinceLo, start=min(hiSinceHiBar, loSinceLoBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
-                elif not low_second and two_bear:
-                    cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar), a1bar=loSinceLoBar, swbar=loSwBar)
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
@@ -388,7 +389,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             d = setup["dir"]
             if (h > setup["a1"]) if d == -1 else (l < setup["a1"]):
                 dead, broke, why = True, True, "1.0 broken"
-            elif i - setup["trig"] >= p.expiry_bars:
+            elif setup["locked"] and order is None and ((h >= setup["entry"]) if d == -1 else (l <= setup["entry"])):
+                dead, why = True, "entry touched, no fill"
+            elif setup["scen"] != 3 and hiSw and loSw:
+                dead, count_fail, why = True, False, "both swept -> S3"
+            elif p.expiry_bars and i - setup["trig"] >= p.expiry_bars:
                 dead, why = True, "expired"
             elif not can_place:
                 dead, count_fail, why = True, False, "14:00"
@@ -426,7 +431,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if setup["frozen"] and not setup["locked"]:
                 lvl = choose_level(setup["scen"], va, p.va_low)
                 if lvl > 0:  # the level set never changes while the anchors stay frozen
-                    setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i)
+                    setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i,
+                                 entry=tick(fib_price(setup["a1"], setup["a0"], d, lvl)))
                     setup.setdefault("lock_hist", []).append((i, lvl, va))
                     f[f"S{setup['scen']}_locked"] += 1
                     log(i, f"S{setup['scen']} locked @{lvl} va={va}")
@@ -437,7 +443,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 sP = tick(fib_price(setup["a1"], setup["a0"], d, stop_level(lvl)))
                 tP = tick(fib_price(setup["a1"], setup["a0"], d, target_level(lvl)))
                 if (c >= eP) if d == -1 else (c <= eP):
-                    f["bars_price_beyond_entry"] += 1  # a limit here would fill as market; wait [IMPL]
+                    dead, why = True, "entry touched, no fill"  # closed through the entry before an order could work
                 else:
                     rp = abs(sP - eP)
                     qty = min(math.floor(p.risk_usd / (rp * POINT_VALUE)), p.max_contracts) if rp > 0 else 0
