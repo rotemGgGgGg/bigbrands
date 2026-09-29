@@ -27,7 +27,7 @@ class Params:
     max_fails: int = 3
     va_low: float = 0.412
     expiry_bars: int = 24
-    leg_grow_max: float = 2.5
+    leg_grow_max: float = 0.0  # 0 = off (the cap was an invented parameter)
     use_leg_filter: bool = False
     leg_min: float = 30.0
     leg_max: float = 400.0
@@ -403,7 +403,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     f["unfrozen_new_extreme"] += 1
                 if not setup["frozen"]:
                     setup["a0"] = setup["live_a0"]
-                if abs(setup["a1"] - setup["live_a0"]) > p.leg_grow_max * setup["init"]:
+                if p.leg_grow_max and abs(setup["a1"] - setup["live_a0"]) > p.leg_grow_max * setup["init"]:
                     dead, why = True, "leg grew"
         if setup is not None and just_armed:
             d = setup["dir"]
@@ -415,6 +415,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             # STEP 1: freeze the anchors on the first bar that does not extend the leg
             if not setup["frozen"] and not setup["extending"]:
                 setup["frozen"] = True
+                setup.setdefault("freeze_bars", []).append(i)
                 f[f"S{setup['scen']}_frozen"] += 1
             # STEP 2: keep watching the value area (profile includes the retracement bars)
             va = None if setup["scen"] == 3 else va_ratio(b, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL)
@@ -426,6 +427,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 lvl = choose_level(setup["scen"], va, p.va_low)
                 if lvl > 0:  # the level set never changes while the anchors stay frozen
                     setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i)
+                    setup.setdefault("lock_hist", []).append((i, lvl, va))
                     f[f"S{setup['scen']}_locked"] += 1
                     log(i, f"S{setup['scen']} locked @{lvl} va={va}")
             order = None
