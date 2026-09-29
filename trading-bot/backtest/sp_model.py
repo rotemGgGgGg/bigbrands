@@ -34,6 +34,7 @@ class Params:
     vp_rows: int = 999
     va_pct: float = 0.70
     vp_range: str = "leg"  # leg | london | day | ny
+    trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
 
 
@@ -303,7 +304,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 lastDeath = i
                 if trades_today >= p.max_trades:
                     done_day = True
-            else:
+            elif p.trail_after_fill:
                 lvl = pos["level"]
                 pos["stop"] = tick(fib_price(pos["a1"], pos["a0"], d, stop_level(lvl)))
                 pos["tgt"] = tick(fib_price(pos["a1"], pos["a0"], d, target_level(lvl)))
@@ -339,7 +340,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     log(i, f"S{cand['scen']} {'LONG' if cand['dir'] == 1 else 'SHORT'} rejected leg={leg:.2f}")
                     lastDeath = i
                 else:
-                    setup = dict(cand, init=leg, trig=i, locked=False, level=0.0, lock_va=None, lock_bar=None)
+                    setup = dict(cand, init=leg, trig=i, locked=False, level=0.0, lock_va=None, lock_bar=None, live_a0=cand["a0"])
                     order = None
                     ref_price = None
                     just_armed = True
@@ -357,14 +358,21 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             elif not can_place:
                 dead, count_fail, why = True, False, "14:00"
             if not dead:
-                setup["a0"] = min(setup["a0"], l) if d == -1 else max(setup["a0"], h)
-                if abs(setup["a1"] - setup["a0"]) > p.leg_grow_max * setup["init"]:
+                prev = setup["live_a0"]
+                setup["extending"] = (l < prev) if d == -1 else (h > prev)
+                setup["live_a0"] = min(prev, l) if d == -1 else max(prev, h)
+                if not setup["locked"]:
+                    setup["a0"] = setup["live_a0"]
+                if abs(setup["a1"] - setup["live_a0"]) > p.leg_grow_max * setup["init"]:
                     dead, why = True, "leg grew"
+        if setup is not None and just_armed:
+            d = setup["dir"]
+            setup["extending"] = (l <= setup["a0"]) if d == -1 else (h >= setup["a0"])
 
         # place / update the limit (§9)
         if setup is not None and not dead:
             d = setup["dir"]
-            if not setup["locked"]:
+            if not setup["locked"] and not setup["extending"]:
                 va = None if setup["scen"] == 3 else va_ratio(b, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL)
                 lvl = choose_level(setup["scen"], va, p.va_low)
                 if lvl > 0:  # lock: the level set never changes for this setup

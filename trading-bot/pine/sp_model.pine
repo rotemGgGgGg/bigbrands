@@ -1,6 +1,7 @@
 //@version=6
 // SP MODEL — MNQ, 5-minute. Implements SP_MODEL_BOT_SPEC.md.
 // Section numbers in comments (§) refer to that spec.
+// v3: anchors freeze at lock; lock waits for the first bar that does not extend the leg.
 // v2: va_ratio locks the level set on the first in-band bar; no value-area rejection.
 // Decisions the spec does not make are marked [IMPL] and listed in README.md.
 // margin 1%: the v6 default of 100% rejects every MNQ order (1 contract > $50K capital).
@@ -49,6 +50,7 @@ showLdn    = input.bool(true, "London high / low", group = grpVis)
 showLevels = input.bool(true, "Entry / stop / target", group = grpVis)
 showLabels = input.bool(true, "Setup and trade labels", group = grpVis)
 showTable  = input.bool(true, "Stats table", group = grpVis)
+trailAfterFill = input.bool(false, "Trail stop / target after fill", group = grpOpen, tooltip = "Off: bracket stays at the prices frozen at lock.")
 
 if timeframe.period != "5"
     runtime.error("SP Model runs on the 5-minute chart only (§1).")
@@ -197,6 +199,8 @@ var bool  setupLocked = false  // level set chosen; never changes for this setup
 var float lockLevel = 0.0
 var float lockVa = na
 var int   lockBar = na
+var float liveA0 = na          // live extreme of the leg; a0 follows it only until lock
+var bool  extending = false    // did this bar make a new extreme?
 
 // Position (§14 IN_POSITION)
 var bool  inPos = false
@@ -350,7 +354,7 @@ if newFills > 0
     ordLevel := 0.0
 
 // §7: anchor_0 keeps moving after entry; stop and target follow it.
-if inPos
+if inPos and trailAfterFill
     posA0 := posDir == -1 ? math.min(posA0, low) : math.max(posA0, high)
 
 // ───────────────────────────── Closed trades → R log (§16) ─────────────────────────────
@@ -474,6 +478,8 @@ if canArm
             lockVa := na
             lockBar := na
             justArmed := true
+            liveA0 := cA0
+            extending := cDir == -1 ? low <= cA0 : high >= cA0
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(leg, "#.##"),
                      style = cDir == 1 ? label.style_label_up : label.style_label_down,
@@ -498,14 +504,19 @@ if setupScen != 0 and not inPos and not justArmed
         countFail := false
         why := "14:00"
     if not dead
-        a0 := setupDir == -1 ? math.min(a0, low) : math.max(a0, high)
-        if math.abs(a1 - a0) > legGrowMax * initRange
+        float prevLive = liveA0
+        extending := setupDir == -1 ? low < prevLive : high > prevLive
+        liveA0 := setupDir == -1 ? math.min(prevLive, low) : math.max(prevLive, high)
+        if not setupLocked
+            a0 := liveA0           // frozen from the lock on: entry, stop and target stop moving
+        if math.abs(a1 - liveA0) > legGrowMax * initRange
             dead := true
             why := "leg grew"
 
 if setupScen != 0 and not inPos and not dead
-    // Watch the profile until va_ratio lands in a band, then lock the level set.
-    if not setupLocked
+    // Lock only on a bar that did not extend the leg, and (S1/S2) with va_ratio in band.
+    // From the lock on, a0 is frozen, so entry, stop and target are fixed prices.
+    if not setupLocked and not extending
         float va = na
         if setupScen != 3
             int   pFrom = na
