@@ -1,0 +1,569 @@
+//@version=6
+// SP MODEL — MNQ, 5-minute. Implements SP_MODEL_BOT_SPEC.md.
+// Section numbers in comments (§) refer to that spec.
+// Decisions the spec does not make are marked [IMPL] and listed in README.md.
+strategy("SP Model — MNQ 5m", shorttitle = "SP Model", overlay = true,
+     initial_capital = 50000, pyramiding = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0,
+     process_orders_on_close = false, calc_on_every_tick = false,
+     max_bars_back = 500, max_labels_count = 500, max_lines_count = 500)
+
+const string TZ = "America/New_York"
+
+// ───────────────────────────── Inputs ─────────────────────────────
+grpRisk = "Risk & sizing (§12, §13)"
+riskUsd      = input.float(250.0, "Risk per trade ($)", minval = 1, group = grpRisk, tooltip = "25K: 125 · 50K: 250")
+maxContracts = input.int(20, "Max contracts (prop firm limit)", minval = 1, group = grpRisk)
+maxTrades    = input.int(1, "Max trades per day", minval = 1, group = grpRisk)
+maxFails     = input.int(3, "Max failed setups per day", minval = 1, group = grpRisk)
+useWeekly    = input.bool(true, "Weekly loss limit → days off", group = grpRisk)
+weekLimitR   = input.float(3.0, "Weekly loss limit (R)", minval = 0.1, group = grpRisk)
+daysOff      = input.int(2, "Trading days off after weekly limit", minval = 0, group = grpRisk)
+useDdCut     = input.bool(true, "Cut risk in drawdown from equity high", group = grpRisk)
+ddLimitR     = input.float(5.0, "Drawdown from high (R)", minval = 0.1, group = grpRisk)
+ddRiskMult   = input.float(0.5, "Risk multiplier while in drawdown [IMPL]", minval = 0.1, maxval = 1.0, group = grpRisk)
+
+grpOpen = "Open questions (§0)"
+vaLow      = input.float(0.412, "Q1 · Lowest va_ratio for the 0.5 entry", step = 0.001, group = grpOpen)
+expiryBars = input.int(12, "Q2 · Setup expiry (bars without fill)", minval = 1, group = grpOpen)
+legGrowMax = input.float(1.5, "Q3 · Abandon when leg grows beyond (×)", minval = 1.0, step = 0.1, group = grpOpen)
+legMinPts  = input.float(30, "Min leg at trigger (points)", group = grpOpen)
+legMaxPts  = input.float(150, "Max leg at trigger (points)", group = grpOpen)
+
+grpVp = "Volume profile (§8)"
+vpRows = input.int(999, "Rows", minval = 10, maxval = 2000, group = grpVp)
+vaPct  = input.float(70, "Value area %", minval = 10, maxval = 100, group = grpVp) / 100.0
+
+grpNews = "News days (§2)"
+useNews   = input.bool(true, "Skip news days", group = grpNews)
+newsDates = input.text_area("2024-01-05,2024-01-11,2024-01-31,2024-02-02,2024-02-13,2024-03-08,2024-03-12,2024-03-20,2024-04-05,2024-04-10,2024-05-01,2024-05-03,2024-05-15,2024-06-07,2024-06-12,2024-07-05,2024-07-11,2024-07-31,2024-08-02,2024-08-14,2024-09-06,2024-09-11,2024-09-18,2024-10-04,2024-10-10,2024-11-01,2024-11-07,2024-11-13,2024-12-06,2024-12-11,2024-12-18", "CPI / FOMC / NFP dates (yyyy-MM-dd, comma separated)", group = grpNews)
+
+grpVis = "Display"
+showLdn    = input.bool(true, "London high / low", group = grpVis)
+showLevels = input.bool(true, "Entry / stop / target", group = grpVis)
+showLabels = input.bool(true, "Setup and trade labels", group = grpVis)
+showTable  = input.bool(true, "Stats table", group = grpVis)
+
+if timeframe.period != "5"
+    runtime.error("SP Model runs on the 5-minute chart only (§1).")
+
+// ───────────────────────────── Helpers ─────────────────────────────
+// §7: 1.0 = where the move started, 0 = where it got to. dir: 1 long, -1 short.
+fibPrice(float f1, float f0, int dir, float lvl) =>
+    float rng = math.abs(f1 - f0)
+    dir == -1 ? f0 + rng * lvl : f0 - rng * lvl
+
+stopLevel(float lvl) =>
+    lvl == 0.588 ? 0.816 : 0.702
+
+targetLevel(float lvl) =>
+    lvl == 0.588 ? 0.36 : 0.267
+
+// §9: entry level from va_ratio. 0 = no trade. S3 always 0.5.
+chooseLevel(int scen, float va) =>
+    float lvl = 0.0
+    if scen == 3
+        lvl := 0.5
+    else if not na(va)
+        lvl := va > 0.588 ? 0.0 : va >= 0.5 ? 0.588 : va >= vaLow ? 0.5 : 0.0
+    lvl
+
+// §8: fixed-range volume profile over the leg, value area → fib ratio.
+// Volume is spread evenly over the rows a bar touches (difference array, O(bars + rows)).
+vaRatio(float f1, float f0, int dir, int legStart) =>
+    float lo = math.min(f1, f0)
+    float hi = math.max(f1, f0)
+    float result = na
+    if hi > lo and not na(legStart)
+        int rows = vpRows
+        float rh = (hi - lo) / rows
+        diff = array.new_float(rows + 1, 0.0)
+        int n = math.min(bar_index - legStart, 499)
+        for i = 0 to n
+            float bh = high[i]
+            float bl = low[i]
+            float bv = nz(volume[i])
+            if bh > lo and bl < hi
+                int i0 = math.max(0, math.min(rows - 1, int(math.floor((bl - lo) / rh))))
+                int i1 = math.max(0, math.min(rows - 1, int(math.floor((bh - lo) / rh))))
+                float per = bv / (i1 - i0 + 1)
+                diff.set(i0, diff.get(i0) + per)
+                diff.set(i1 + 1, diff.get(i1 + 1) - per)
+        bins = array.new_float(rows, 0.0)
+        float run = 0.0
+        float tot = 0.0
+        int poc = 0
+        float pocV = -1.0
+        for k = 0 to rows - 1
+            run += diff.get(k)
+            bins.set(k, run)
+            tot += run
+            if run > pocV
+                pocV := run
+                poc := k
+        if tot > 0
+            float goal = tot * vaPct
+            float acc = bins.get(poc)
+            int up = poc
+            int dn = poc
+            while acc < goal and (up < rows - 1 or dn > 0)
+                float vUp = up < rows - 1 ? bins.get(up + 1) : -1.0
+                float vDn = dn > 0 ? bins.get(dn - 1) : -1.0
+                if vUp >= vDn
+                    up += 1
+                    acc += vUp
+                else
+                    dn -= 1
+                    acc += vDn
+            float vah = lo + (up + 1) * rh
+            float val = lo + dn * rh
+            result := dir == -1 ? (vah - f0) / (hi - lo) : (f0 - val) / (hi - lo)
+    result
+
+scenName(int scen, int dir) =>
+    "S" + str.tostring(scen) + (dir == 1 ? " LONG" : " SHORT")
+
+fmt(float x, string f) =>
+    na(x) ? "n/a" : str.tostring(x, f)
+
+// ───────────────────────────── Time (§2) ─────────────────────────────
+int  nyMin     = hour(time, TZ) * 60 + minute(time, TZ)    // bar OPEN time, NY
+int  nyDate    = year(time, TZ) * 10000 + month(time, TZ) * 100 + dayofmonth(time, TZ)
+bool newDay    = nyDate != nyDate[1]
+int  dow       = dayofweek(time, TZ)
+bool isWeekday = dow >= dayofweek.monday and dow <= dayofweek.friday
+bool isNews    = useNews and str.contains(newsDates, str.format_time(time, "yyyy-MM-dd", TZ))
+bool inLondon  = nyMin < 360                                // 00:00–06:00
+bool afterSix  = nyMin >= 360
+bool inWin     = nyMin >= 570 and nyMin < 840               // 09:30–14:00
+bool prevInWin = not newDay and nyMin[1] >= 570
+bool canPlace  = nyMin + 5 < 840                            // an order placed now can only fill before 14:00
+bool atFlatten = nyMin < 840 and nyMin + 5 >= 840           // the bar that closes at 14:00
+int  weekKey   = year(time, TZ) * 100 + weekofyear(time, TZ)
+
+// ───────────────────────────── State ─────────────────────────────
+// London range and sweeps (§3, §4)
+var float ldnH = na
+var float ldnL = na
+var int   ldnBars = 0
+var bool  hiSw = false
+var bool  loSw = false
+var int   hiSwBar = na
+var int   loSwBar = na
+var bool  hiSwInWin = false
+var bool  loSwInWin = false
+var float hiSinceHi = na
+var int   hiSinceHiBar = na
+var float loSinceHi = na
+var int   loSinceHiBar = na
+var float loSinceLo = na
+var int   loSinceLoBar = na
+var float hiSinceLo = na
+var int   hiSinceLoBar = na
+
+// Active setup (§6, §14 ARMED)
+var int   setupScen = 0        // 0 = none
+var int   setupDir = 0         // 1 long, -1 short
+var int   setupSide = 0        // 1 = high side, -1 = low side (S1/S2)
+var float a1 = na              // fib 1.0, frozen at trigger
+var float a0 = na              // fib 0, follows the extreme
+var float initRange = na
+var int   trigBar = na
+var int   legStart = na
+var float ordLevel = 0.0       // level of the working limit, 0 = none
+var float ordPrice = na
+var float ordVa = na
+var int   ordQty = 0
+var float ordRiskPts = na
+var float refPrice = na        // 0.5 level while no order is working (touched-without-fill check)
+
+// Position (§14 IN_POSITION)
+var bool  inPos = false
+var int   posScen = 0
+var int   posDir = 0
+var float posLevel = na
+var float posA1 = na
+var float posA0 = na
+var float posRiskUsd = na
+var float posVa = na
+var float posLegTrig = na
+var int   posBarsToFill = na
+var int   posEntryTime = na
+
+// Daily counters and scenario flags (§11)
+var int   failsToday = 0
+var int   tradesToday = 0
+var bool  doneDay = false
+var bool  s1FailHi = false
+var bool  s1FailLo = false
+var bool  s2DeadHi = false
+var bool  s2DeadLo = false
+var bool  s3Dead = false
+var int   lastDeathBar = -1
+
+// Risk limits and stats (§13, §16, §17)
+var float cumR = 0.0
+var float peakR = 0.0
+var float maxDdR = 0.0
+var float weekR = 0.0
+var int   nTrades = 0
+var int   nWins = 0
+var int   daysOffLeft = 0
+var bool  weekLimitHit = false
+var bool  blockedToday = false
+var int   curWeek = na
+var int   lastTradeCount = 0
+var int   lastClosed = 0
+
+float plotE = na
+float plotS = na
+float plotT = na
+
+// ───────────────────────────── Daily reset at 00:00 NY (§2) ─────────────────────────────
+if newDay
+    if strategy.position_size != 0
+        strategy.close_all(comment = "day reset", immediately = true)
+    strategy.cancel("E")
+    strategy.cancel("X")
+    ldnH := na
+    ldnL := na
+    ldnBars := 0
+    hiSw := false
+    loSw := false
+    hiSwBar := na
+    loSwBar := na
+    hiSwInWin := false
+    loSwInWin := false
+    setupScen := 0
+    ordLevel := 0.0
+    refPrice := na
+    failsToday := 0
+    tradesToday := 0
+    doneDay := false
+    s1FailHi := false
+    s1FailLo := false
+    s2DeadHi := false
+    s2DeadLo := false
+    s3Dead := false
+    lastDeathBar := -1
+    if weekKey != curWeek
+        curWeek := weekKey
+        weekR := 0.0
+        weekLimitHit := false
+    blockedToday := false
+    if daysOffLeft > 0 and isWeekday
+        blockedToday := true
+        daysOffLeft -= 1
+
+// ───────────────────────────── London range (§3) ─────────────────────────────
+if inLondon
+    ldnH := na(ldnH) ? high : math.max(ldnH, high)
+    ldnL := na(ldnL) ? low : math.min(ldnL, low)
+    ldnBars += 1
+bool ldnValid = not na(ldnH) and ldnBars >= 60    // [IMPL] ≥60 of 72 bars, else "range never formed"
+
+// ───────────────────────────── Sweeps and running extremes (§4) ─────────────────────────────
+if afterSix and ldnValid
+    if hiSw
+        if high > hiSinceHi
+            hiSinceHi := high
+            hiSinceHiBar := bar_index
+        if low < loSinceHi
+            loSinceHi := low
+            loSinceHiBar := bar_index
+    if loSw
+        if low < loSinceLo
+            loSinceLo := low
+            loSinceLoBar := bar_index
+        if high > hiSinceLo
+            hiSinceLo := high
+            hiSinceLoBar := bar_index
+    if not hiSw and high > ldnH
+        hiSw := true
+        hiSwBar := bar_index
+        hiSwInWin := inWin
+        hiSinceHi := high
+        hiSinceHiBar := bar_index
+        loSinceHi := low
+        loSinceHiBar := bar_index
+    if not loSw and low < ldnL
+        loSw := true
+        loSwBar := bar_index
+        loSwInWin := inWin
+        loSinceLo := low
+        loSinceLoBar := bar_index
+        hiSinceLo := high
+        hiSinceLoBar := bar_index
+
+// ───────────────────────────── Fills (§11: count filled entries, not end-of-bar state) ─────────────────────────────
+int tradeCount = strategy.opentrades + strategy.closedtrades
+int newFills = tradeCount - lastTradeCount
+lastTradeCount := tradeCount
+
+if newFills > 0
+    tradesToday += newFills
+    inPos := true
+    posScen := setupScen
+    posDir := setupDir
+    posLevel := ordLevel               // §9: level set frozen at fill
+    posA1 := a1
+    posA0 := a0
+    posRiskUsd := ordRiskPts * syminfo.pointvalue * ordQty
+    posVa := ordVa
+    posLegTrig := initRange
+    posBarsToFill := bar_index - trigBar
+    posEntryTime := time
+    if showLabels
+        label.new(bar_index, posDir == 1 ? low : high,
+             scenName(posScen, posDir) + " @" + str.tostring(posLevel) + "\nva " + fmt(posVa, "#.###") + " · " + str.tostring(posBarsToFill) + " bars · " + str.tostring(ordQty) + " ct",
+             style = posDir == 1 ? label.style_label_up : label.style_label_down,
+             color = color.new(color.blue, 10), textcolor = color.white, size = size.small)
+    setupScen := 0
+    ordLevel := 0.0
+    refPrice := na
+
+// §7: anchor_0 keeps moving after entry; stop and target follow it.
+if inPos
+    posA0 := posDir == -1 ? math.min(posA0, low) : math.max(posA0, high)
+
+// ───────────────────────────── Closed trades → R log (§16) ─────────────────────────────
+if strategy.closedtrades > lastClosed
+    for j = lastClosed to strategy.closedtrades - 1
+        float pnl = strategy.closedtrades.profit(j)
+        float r = posRiskUsd > 0 ? pnl / posRiskUsd : na
+        float mfeR = posRiskUsd > 0 ? strategy.closedtrades.max_runup(j) / posRiskUsd : na
+        float maeR = posRiskUsd > 0 ? strategy.closedtrades.max_drawdown(j) / posRiskUsd : na
+        if not na(r)
+            nTrades += 1
+            nWins += pnl > 0 ? 1 : 0
+            cumR += r
+            peakR := math.max(peakR, cumR)
+            maxDdR := math.max(maxDdR, peakR - cumR)
+            weekR += r
+            if useWeekly and not weekLimitHit and weekR <= -weekLimitR
+                weekLimitHit := true
+                daysOffLeft := daysOff
+        log.info("TRADE | entry {0} | {1} | level {2} | va {3} | leg@trigger {4} | leg@exit {5} | bars→fill {6} | R {7} | MFE {8}R | MAE {9}R",
+             str.format_time(posEntryTime, "yyyy-MM-dd HH:mm", TZ), scenName(posScen, posDir), posLevel, fmt(posVa, "#.###"),
+             fmt(posLegTrig, "#.##"), fmt(math.abs(posA1 - posA0), "#.##"), posBarsToFill, fmt(r, "#.##"), fmt(mfeR, "#.##"), fmt(maeR, "#.##"))
+        if showLabels
+            label.new(bar_index, posDir == 1 ? high : low, (r >= 0 ? "+" : "") + fmt(r, "#.##") + "R",
+                 style = posDir == 1 ? label.style_label_down : label.style_label_up,
+                 color = r >= 0 ? color.new(color.green, 10) : color.new(color.red, 10), textcolor = color.white, size = size.small)
+    lastClosed := strategy.closedtrades
+    inPos := false
+    lastDeathBar := bar_index          // §11: a closed trade retires its setup
+    if tradesToday >= maxTrades
+        doneDay := true
+
+// ───────────────────────────── In position: trail brackets, flat at 14:00 (§10) ─────────────────────────────
+if inPos and strategy.position_size != 0
+    float sP = math.round_to_mintick(fibPrice(posA1, posA0, posDir, stopLevel(posLevel)))
+    float tP = math.round_to_mintick(fibPrice(posA1, posA0, posDir, targetLevel(posLevel)))
+    strategy.exit("X", "E", stop = sP, limit = tP)
+    plotE := strategy.position_avg_price
+    plotS := sP
+    plotT := tP
+    if atFlatten or nyMin >= 840
+        strategy.close_all(comment = "14:00", immediately = true)
+
+// ───────────────────────────── Arm a new setup (§5, §6) ─────────────────────────────
+bool twoBear = close < open and close[1] < open[1]
+bool twoBull = close > open and close[1] > open[1]
+bool riskOff = doneDay or tradesToday >= maxTrades or failsToday >= maxFails or blockedToday or isNews
+bool canArm  = setupScen == 0 and not inPos and strategy.position_size == 0 and not riskOff and inWin and prevInWin and canPlace and ldnValid and isWeekday and bar_index - 1 > lastDeathBar
+bool justArmed = false
+
+if canArm
+    int   cScen = 0
+    int   cDir = 0
+    int   cSide = 0
+    float cA1 = na
+    float cA0 = na
+    int   cStart = na
+    // Priority S1 → S2 → S3 (§15)
+    if hiSw and not loSw and hiSwInWin and not s1FailHi and twoBear and bar_index - 1 >= hiSwBar
+        cScen := 1
+        cDir := -1
+        cSide := 1
+        cA1 := hiSinceHi
+        cA0 := loSinceHi
+        cStart := math.min(hiSinceHiBar, loSinceHiBar)
+    else if loSw and not hiSw and loSwInWin and not s1FailLo and twoBull and bar_index - 1 >= loSwBar
+        cScen := 1
+        cDir := 1
+        cSide := -1
+        cA1 := loSinceLo
+        cA0 := hiSinceLo
+        cStart := math.min(loSinceLoBar, hiSinceLoBar)
+    else if s1FailHi and not s2DeadHi and twoBull
+        cScen := 2
+        cDir := 1
+        cSide := 1
+        cA1 := low[1]                  // §6: single candle wick, bar n-1
+        cA0 := hiSinceHi
+        cStart := math.min(bar_index - 1, hiSinceHiBar)
+    else if s1FailLo and not s2DeadLo and twoBear
+        cScen := 2
+        cDir := -1
+        cSide := -1
+        cA1 := high[1]
+        cA0 := loSinceLo
+        cStart := math.min(bar_index - 1, loSinceLoBar)
+    else if hiSw and loSw and not s3Dead and hiSwBar != loSwBar and bar_index - 1 >= math.max(hiSwBar, loSwBar)
+        bool lowSecond = loSwBar > hiSwBar
+        if lowSecond and twoBull
+            cScen := 3
+            cDir := -1
+            cA1 := hiSinceHi
+            cA0 := loSinceLo
+            cStart := math.min(hiSinceHiBar, loSinceLoBar)
+        else if not lowSecond and twoBear
+            cScen := 3
+            cDir := 1
+            cA1 := loSinceLo
+            cA0 := hiSinceHi
+            cStart := math.min(loSinceLoBar, hiSinceHiBar)
+    if cScen != 0
+        float leg = math.abs(cA1 - cA0)
+        if leg == 0 or leg < legMinPts or leg > legMaxPts
+            lastDeathBar := bar_index      // §11: rejected at trigger, not counted as a failure [IMPL]
+            if showLabels
+                label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + " rejected\nleg " + str.tostring(leg, "#.##"),
+                     style = cDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.gray, 30), textcolor = color.white, size = size.tiny)
+        else
+            setupScen := cScen
+            setupDir := cDir
+            setupSide := cSide
+            a1 := cA1
+            a0 := cA0
+            initRange := leg
+            trigBar := bar_index
+            legStart := cStart
+            ordLevel := 0.0
+            refPrice := na
+            justArmed := true
+            if showLabels
+                label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(leg, "#.##"),
+                     style = cDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.orange, 10), textcolor = color.white, size = size.small)
+
+// ───────────────────────────── Armed: invalidation, then (re)place the limit (§9, §11) ─────────────────────────────
+bool   dead = false
+bool   broke = false
+bool   countFail = true
+string why = ""
+
+if setupScen != 0 and not inPos and not justArmed
+    if setupDir == -1 ? high > a1 : low < a1
+        dead := true
+        broke := true
+        why := "1.0 broken"
+    else if ordLevel == 0 and not na(refPrice) and (setupDir == -1 ? high >= refPrice : low <= refPrice)
+        dead := true
+        why := "entry touched, no order"
+    else if bar_index - trigBar >= expiryBars
+        dead := true
+        why := "expired"
+    else if not canPlace
+        dead := true
+        countFail := false
+        why := "14:00"
+    if not dead
+        a0 := setupDir == -1 ? math.min(a0, low) : math.max(a0, high)
+        if math.abs(a1 - a0) > legGrowMax * initRange
+            dead := true
+            why := "leg grew"
+
+if setupScen != 0 and not inPos and not dead
+    float va  = setupScen == 3 ? na : vaRatio(a1, a0, setupDir, legStart)
+    float lvl = chooseLevel(setupScen, va)
+    ordLevel := 0.0
+    refPrice := math.round_to_mintick(fibPrice(a1, a0, setupDir, 0.5))
+    if lvl > 0
+        float eP = math.round_to_mintick(fibPrice(a1, a0, setupDir, lvl))
+        float sP = math.round_to_mintick(fibPrice(a1, a0, setupDir, stopLevel(lvl)))
+        float tP = math.round_to_mintick(fibPrice(a1, a0, setupDir, targetLevel(lvl)))
+        if setupDir == -1 ? close >= eP : close <= eP
+            dead := true               // price already through the entry [IMPL]
+            why := "price past entry"
+        else
+            float riskEff = riskUsd * (useDdCut and peakR - cumR >= ddLimitR ? ddRiskMult : 1.0)
+            float rp = math.abs(sP - eP)
+            int qty = rp > 0 ? math.min(int(math.floor(riskEff / (rp * syminfo.pointvalue))), maxContracts) : 0
+            if qty >= 1                // §12: never round up, never force 1 contract
+                strategy.entry("E", setupDir == 1 ? strategy.long : strategy.short, qty = qty, limit = eP,
+                     comment = scenName(setupScen, setupDir) + " @" + str.tostring(lvl))
+                strategy.exit("X", "E", stop = sP, limit = tP)
+                ordLevel := lvl
+                ordPrice := eP
+                ordQty := qty
+                ordRiskPts := rp
+                ordVa := va
+                refPrice := eP
+                plotE := eP
+                plotS := sP
+                plotT := tP
+    if ordLevel == 0
+        strategy.cancel("E")
+        strategy.cancel("X")
+
+if dead
+    strategy.cancel("E")
+    strategy.cancel("X")
+    if countFail
+        failsToday += 1
+    if broke
+        if setupScen == 1
+            if setupSide == 1
+                s1FailHi := true
+            else
+                s1FailLo := true
+        else if setupScen == 2
+            if setupSide == 1
+                s2DeadHi := true
+            else
+                s2DeadLo := true
+        else
+            s3Dead := true
+    if showLabels
+        label.new(bar_index, setupDir == 1 ? low : high, "✗ " + why,
+             style = setupDir == 1 ? label.style_label_up : label.style_label_down,
+             color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+    lastDeathBar := bar_index
+    setupScen := 0
+    ordLevel := 0.0
+    refPrice := na
+
+// ───────────────────────────── Plots ─────────────────────────────
+plot(showLdn ? ldnH : na, "London high", color.new(color.gray, 20), 1, plot.style_linebr)
+plot(showLdn ? ldnL : na, "London low", color.new(color.gray, 20), 1, plot.style_linebr)
+plot(showLevels ? plotE : na, "Entry", color.new(color.blue, 0), 2, plot.style_linebr)
+plot(showLevels ? plotS : na, "Stop", color.new(color.red, 0), 2, plot.style_linebr)
+plot(showLevels ? plotT : na, "Target", color.new(color.green, 0), 2, plot.style_linebr)
+bgcolor(inWin ? color.new(color.blue, 94) : na, title = "Trading window")
+
+// ───────────────────────────── Stats (§17) ─────────────────────────────
+if showTable and barstate.islast
+    var table t = table.new(position.top_right, 2, 9, bgcolor = color.new(color.black, 20), border_width = 1)
+    float wr = nTrades > 0 ? 100.0 * nWins / nTrades : na
+    table.cell(t, 0, 0, "Trades", text_color = color.white)
+    table.cell(t, 1, 0, str.tostring(nTrades) + (nTrades < 50 ? "  (<50)" : ""), text_color = nTrades < 50 ? color.orange : color.white)
+    table.cell(t, 0, 1, "Win rate", text_color = color.white)
+    table.cell(t, 1, 1, fmt(wr, "#.#") + "%", text_color = na(wr) ? color.white : wr > 60 ? color.lime : wr > 46.5 ? color.orange : color.red)
+    table.cell(t, 0, 2, "Total R", text_color = color.white)
+    table.cell(t, 1, 2, fmt(cumR, "#.##"), text_color = cumR >= 0 ? color.lime : color.red)
+    table.cell(t, 0, 3, "Avg R", text_color = color.white)
+    table.cell(t, 1, 3, nTrades > 0 ? fmt(cumR / nTrades, "#.###") : "n/a", text_color = color.white)
+    table.cell(t, 0, 4, "Max DD (R)", text_color = color.white)
+    table.cell(t, 1, 4, fmt(maxDdR, "#.##"), text_color = maxDdR < 6 ? color.lime : color.red)
+    table.cell(t, 0, 5, "Breakeven WR @1.15R", text_color = color.white)
+    table.cell(t, 1, 5, "46.5%", text_color = color.gray)
+    table.cell(t, 0, 6, "Today: trades / fails", text_color = color.white)
+    table.cell(t, 1, 6, str.tostring(tradesToday) + " / " + str.tostring(failsToday), text_color = color.white)
+    table.cell(t, 0, 7, "Risk multiplier", text_color = color.white)
+    table.cell(t, 1, 7, useDdCut and peakR - cumR >= ddLimitR ? str.tostring(ddRiskMult) : "1", text_color = color.white)
+    table.cell(t, 0, 8, "Days off left", text_color = color.white)
+    table.cell(t, 1, 8, str.tostring(daysOffLeft) + (blockedToday or isNews ? "  (off today)" : ""), text_color = color.white)
