@@ -1,6 +1,7 @@
 //@version=6
 // SP MODEL — MNQ, 5-minute. Implements SP_MODEL_BOT_SPEC.md.
 // Section numbers in comments (§) refer to that spec.
+// v2: va_ratio locks the level set on the first in-band bar; no value-area rejection.
 // Decisions the spec does not make are marked [IMPL] and listed in README.md.
 strategy("SP Model — MNQ 5m", shorttitle = "SP Model", overlay = true,
      initial_capital = 50000, pyramiding = 0,
@@ -26,12 +27,14 @@ ddRiskMult   = input.float(0.5, "Risk multiplier while in drawdown [IMPL]", minv
 
 grpOpen = "Open questions (§0)"
 vaLow      = input.float(0.412, "Q1 · Lowest va_ratio for the 0.5 entry", step = 0.001, group = grpOpen)
-expiryBars = input.int(12, "Q2 · Setup expiry (bars without fill)", minval = 1, group = grpOpen)
-legGrowMax = input.float(1.5, "Q3 · Abandon when leg grows beyond (×)", minval = 1.0, step = 0.1, group = grpOpen)
+expiryBars = input.int(24, "Q2 · Setup expiry (bars without fill)", minval = 1, group = grpOpen)
+legGrowMax = input.float(2.5, "Q3 · Abandon when leg grows beyond (×)", minval = 1.0, step = 0.1, group = grpOpen)
+useLegFilter = input.bool(false, "Filter leg size at trigger", group = grpOpen)
 legMinPts  = input.float(30, "Min leg at trigger (points)", group = grpOpen)
-legMaxPts  = input.float(150, "Max leg at trigger (points)", group = grpOpen)
+legMaxPts  = input.float(400, "Max leg at trigger (points)", group = grpOpen)
 
 grpVp = "Volume profile (§8)"
+vpRange = input.string("Fib leg", "Profile range", options = ["Fib leg", "London", "Day", "NY session"], group = grpVp)
 vpRows = input.int(999, "Rows", minval = 10, maxval = 2000, group = grpVp)
 vaPct  = input.float(70, "Value area %", minval = 10, maxval = 100, group = grpVp) / 100.0
 
@@ -69,18 +72,18 @@ chooseLevel(int scen, float va) =>
         lvl := va > 0.588 ? 0.0 : va >= 0.5 ? 0.588 : va >= vaLow ? 0.5 : 0.0
     lvl
 
-// §8: fixed-range volume profile over the leg, value area → fib ratio.
+// §8: fixed-range volume profile over bars [fromBar, toBar] and prices [lo, hi] → [VAH, VAL].
 // Volume is spread evenly over the rows a bar touches (difference array, O(bars + rows)).
-vaRatio(float f1, float f0, int dir, int legStart) =>
-    float lo = math.min(f1, f0)
-    float hi = math.max(f1, f0)
-    float result = na
-    if hi > lo and not na(legStart)
+valueArea(int fromBar, int toBar, float lo, float hi) =>
+    float vah = na
+    float val = na
+    if hi > lo and not na(fromBar) and not na(toBar) and toBar >= fromBar
         int rows = vpRows
         float rh = (hi - lo) / rows
         diff = array.new_float(rows + 1, 0.0)
-        int n = math.min(bar_index - legStart, 499)
-        for i = 0 to n
+        int oFrom = bar_index - toBar
+        int oTo = math.min(bar_index - fromBar, 499)
+        for i = oFrom to oTo
             float bh = high[i]
             float bl = low[i]
             float bv = nz(volume[i])
@@ -116,10 +119,19 @@ vaRatio(float f1, float f0, int dir, int legStart) =>
                 else
                     dn -= 1
                     acc += vDn
-            float vah = lo + (up + 1) * rh
-            float val = lo + dn * rh
-            result := dir == -1 ? (vah - f0) / (hi - lo) : (f0 - val) / (hi - lo)
-    result
+            vah := lo + (up + 1) * rh
+            val := lo + dn * rh
+    [vah, val]
+
+// Highest high / lowest low from fromBar to the current bar.
+hiLoSince(int fromBar) =>
+    float hh = na
+    float ll = na
+    if not na(fromBar)
+        for i = 0 to math.min(bar_index - fromBar, 499)
+            hh := na(hh) ? high[i] : math.max(hh, high[i])
+            ll := na(ll) ? low[i] : math.min(ll, low[i])
+    [hh, ll]
 
 scenName(int scen, int dir) =>
     "S" + str.tostring(scen) + (dir == 1 ? " LONG" : " SHORT")
@@ -147,6 +159,9 @@ int  weekKey   = year(time, TZ) * 100 + weekofyear(time, TZ)
 var float ldnH = na
 var float ldnL = na
 var int   ldnBars = 0
+var int   dayStartBar = na
+var int   ldnEndBar = na
+var int   nyStartBar = na
 var bool  hiSw = false
 var bool  loSw = false
 var int   hiSwBar = na
@@ -176,7 +191,10 @@ var float ordPrice = na
 var float ordVa = na
 var int   ordQty = 0
 var float ordRiskPts = na
-var float refPrice = na        // 0.5 level while no order is working (touched-without-fill check)
+var bool  setupLocked = false  // level set chosen; never changes for this setup
+var float lockLevel = 0.0
+var float lockVa = na
+var int   lockBar = na
 
 // Position (§14 IN_POSITION)
 var bool  inPos = false
@@ -189,6 +207,7 @@ var float posRiskUsd = na
 var float posVa = na
 var float posLegTrig = na
 var int   posBarsToFill = na
+var int   posBarsToLock = na
 var int   posEntryTime = na
 
 // Daily counters and scenario flags (§11)
@@ -229,6 +248,9 @@ if newDay
     ldnH := na
     ldnL := na
     ldnBars := 0
+    dayStartBar := bar_index
+    ldnEndBar := na
+    nyStartBar := na
     hiSw := false
     loSw := false
     hiSwBar := na
@@ -237,7 +259,6 @@ if newDay
     loSwInWin := false
     setupScen := 0
     ordLevel := 0.0
-    refPrice := na
     failsToday := 0
     tradesToday := 0
     doneDay := false
@@ -261,6 +282,9 @@ if inLondon
     ldnH := na(ldnH) ? high : math.max(ldnH, high)
     ldnL := na(ldnL) ? low : math.min(ldnL, low)
     ldnBars += 1
+    ldnEndBar := bar_index
+if na(nyStartBar) and nyMin >= 570
+    nyStartBar := bar_index
 bool ldnValid = not na(ldnH) and ldnBars >= 60    // [IMPL] ≥60 of 72 bars, else "range never formed"
 
 // ───────────────────────────── Sweeps and running extremes (§4) ─────────────────────────────
@@ -313,6 +337,7 @@ if newFills > 0
     posVa := ordVa
     posLegTrig := initRange
     posBarsToFill := bar_index - trigBar
+    posBarsToLock := lockBar - trigBar
     posEntryTime := time
     if showLabels
         label.new(bar_index, posDir == 1 ? low : high,
@@ -321,7 +346,6 @@ if newFills > 0
              color = color.new(color.blue, 10), textcolor = color.white, size = size.small)
     setupScen := 0
     ordLevel := 0.0
-    refPrice := na
 
 // §7: anchor_0 keeps moving after entry; stop and target follow it.
 if inPos
@@ -344,9 +368,9 @@ if strategy.closedtrades > lastClosed
             if useWeekly and not weekLimitHit and weekR <= -weekLimitR
                 weekLimitHit := true
                 daysOffLeft := daysOff
-        log.info("TRADE | entry {0} | {1} | level {2} | va {3} | leg@trigger {4} | leg@exit {5} | bars→fill {6} | R {7} | MFE {8}R | MAE {9}R",
+        log.info("TRADE | entry {0} | {1} | level {2} | va@lock {3} | leg@trigger {4} | leg@exit {5} | bars→lock {10} | bars→fill {6} | R {7} | MFE {8}R | MAE {9}R",
              str.format_time(posEntryTime, "yyyy-MM-dd HH:mm", TZ), scenName(posScen, posDir), posLevel, fmt(posVa, "#.###"),
-             fmt(posLegTrig, "#.##"), fmt(math.abs(posA1 - posA0), "#.##"), posBarsToFill, fmt(r, "#.##"), fmt(mfeR, "#.##"), fmt(maeR, "#.##"))
+             fmt(posLegTrig, "#.##"), fmt(math.abs(posA1 - posA0), "#.##"), posBarsToFill, fmt(r, "#.##"), fmt(mfeR, "#.##"), fmt(maeR, "#.##"), posBarsToLock)
         if showLabels
             label.new(bar_index, posDir == 1 ? high : low, (r >= 0 ? "+" : "") + fmt(r, "#.##") + "R",
                  style = posDir == 1 ? label.style_label_down : label.style_label_up,
@@ -427,7 +451,7 @@ if canArm
             cStart := math.min(loSinceLoBar, hiSinceHiBar)
     if cScen != 0
         float leg = math.abs(cA1 - cA0)
-        if leg == 0 or leg < legMinPts or leg > legMaxPts
+        if leg == 0 or (useLegFilter and (leg < legMinPts or leg > legMaxPts))
             lastDeathBar := bar_index      // §11: rejected at trigger, not counted as a failure [IMPL]
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + " rejected\nleg " + str.tostring(leg, "#.##"),
@@ -443,7 +467,10 @@ if canArm
             trigBar := bar_index
             legStart := cStart
             ordLevel := 0.0
-            refPrice := na
+            setupLocked := false
+            lockLevel := 0.0
+            lockVa := na
+            lockBar := na
             justArmed := true
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(leg, "#.##"),
@@ -461,9 +488,6 @@ if setupScen != 0 and not inPos and not justArmed
         dead := true
         broke := true
         why := "1.0 broken"
-    else if ordLevel == 0 and not na(refPrice) and (setupDir == -1 ? high >= refPrice : low <= refPrice)
-        dead := true
-        why := "entry touched, no order"
     else if bar_index - trigBar >= expiryBars
         dead := true
         why := "expired"
@@ -478,31 +502,62 @@ if setupScen != 0 and not inPos and not justArmed
             why := "leg grew"
 
 if setupScen != 0 and not inPos and not dead
-    float va  = setupScen == 3 ? na : vaRatio(a1, a0, setupDir, legStart)
-    float lvl = chooseLevel(setupScen, va)
+    // Watch the profile until va_ratio lands in a band, then lock the level set.
+    if not setupLocked
+        float va = na
+        if setupScen != 3
+            int   pFrom = na
+            int   pTo = bar_index
+            float pLo = na
+            float pHi = na
+            if vpRange == "Fib leg"
+                pFrom := legStart
+                pLo := math.min(a1, a0)
+                pHi := math.max(a1, a0)
+            else if vpRange == "London"
+                pFrom := dayStartBar
+                pTo := ldnEndBar
+                pLo := ldnL
+                pHi := ldnH
+            else
+                pFrom := vpRange == "Day" ? dayStartBar : nyStartBar
+                [hh, ll] = hiLoSince(pFrom)
+                pLo := ll
+                pHi := hh
+            [vah, val] = valueArea(pFrom, pTo, pLo, pHi)
+            float rng = math.abs(a1 - a0)
+            if not na(vah) and rng > 0
+                va := setupDir == -1 ? (vah - a0) / rng : (a0 - val) / rng
+        float lvl = chooseLevel(setupScen, va)
+        if lvl > 0
+            setupLocked := true
+            lockLevel := lvl
+            lockVa := va
+            lockBar := bar_index
+            if showLabels
+                label.new(bar_index, setupDir == 1 ? low : high, "lock @" + str.tostring(lvl) + "\nva " + fmt(va, "#.###"),
+                     style = setupDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.purple, 10), textcolor = color.white, size = size.tiny)
     ordLevel := 0.0
-    refPrice := math.round_to_mintick(fibPrice(a1, a0, setupDir, 0.5))
-    if lvl > 0
-        float eP = math.round_to_mintick(fibPrice(a1, a0, setupDir, lvl))
-        float sP = math.round_to_mintick(fibPrice(a1, a0, setupDir, stopLevel(lvl)))
-        float tP = math.round_to_mintick(fibPrice(a1, a0, setupDir, targetLevel(lvl)))
-        if setupDir == -1 ? close >= eP : close <= eP
-            dead := true               // price already through the entry [IMPL]
-            why := "price past entry"
-        else
+    if setupLocked
+        float eP = math.round_to_mintick(fibPrice(a1, a0, setupDir, lockLevel))
+        float sP = math.round_to_mintick(fibPrice(a1, a0, setupDir, stopLevel(lockLevel)))
+        float tP = math.round_to_mintick(fibPrice(a1, a0, setupDir, targetLevel(lockLevel)))
+        // Price already through the entry: a limit there would fill as a market order. Wait. [IMPL]
+        bool beyond = setupDir == -1 ? close >= eP : close <= eP
+        if not beyond
             float riskEff = riskUsd * (useDdCut and peakR - cumR >= ddLimitR ? ddRiskMult : 1.0)
             float rp = math.abs(sP - eP)
             int qty = rp > 0 ? math.min(int(math.floor(riskEff / (rp * syminfo.pointvalue))), maxContracts) : 0
             if qty >= 1                // §12: never round up, never force 1 contract
                 strategy.entry("E", setupDir == 1 ? strategy.long : strategy.short, qty = qty, limit = eP,
-                     comment = scenName(setupScen, setupDir) + " @" + str.tostring(lvl))
+                     comment = scenName(setupScen, setupDir) + " @" + str.tostring(lockLevel))
                 strategy.exit("X", "E", stop = sP, limit = tP)
-                ordLevel := lvl
+                ordLevel := lockLevel
                 ordPrice := eP
                 ordQty := qty
                 ordRiskPts := rp
-                ordVa := va
-                refPrice := eP
+                ordVa := lockVa
                 plotE := eP
                 plotS := sP
                 plotT := tP
@@ -535,7 +590,6 @@ if dead
     lastDeathBar := bar_index
     setupScen := 0
     ordLevel := 0.0
-    refPrice := na
 
 // ───────────────────────────── Plots ─────────────────────────────
 plot(showLdn ? ldnH : na, "London high", color.new(color.gray, 20), 1, plot.style_linebr)

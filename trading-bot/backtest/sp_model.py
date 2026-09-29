@@ -26,14 +26,15 @@ class Params:
     max_trades: int = 1
     max_fails: int = 3
     va_low: float = 0.412
-    expiry_bars: int = 12
-    leg_grow_max: float = 1.5
+    expiry_bars: int = 24
+    leg_grow_max: float = 2.5
+    use_leg_filter: bool = False
     leg_min: float = 30.0
-    leg_max: float = 150.0
+    leg_max: float = 400.0
     vp_rows: int = 999
     va_pct: float = 0.70
+    vp_range: str = "leg"  # leg | london | day | ny
     ldn_min_bars: int = 60
-    kill_on_touch_no_order: bool = True  # README [IMPL] #3
 
 
 def fib_price(f1, f0, d, lvl):
@@ -67,9 +68,9 @@ def tick(x):
     return round(x * 4) / 4
 
 
-def va_ratio(bars, start, end, f1, f0, d, rows, pct):
-    lo, hi = min(f1, f0), max(f1, f0)
-    if hi <= lo:
+def value_area(bars, start, end, lo, hi, rows, pct):
+    """Fixed-range volume profile over bars[start..end] and prices [lo, hi] -> (VAH, VAL)."""
+    if start is None or hi <= lo:
         return None
     rh = (hi - lo) / rows
     diff = [0.0] * (rows + 1)
@@ -99,8 +100,28 @@ def va_ratio(bars, start, end, f1, f0, d, rows, pct):
         else:
             dn -= 1
             acc += v_dn
-    vah, val = lo + (up + 1) * rh, lo + dn * rh
-    return (vah - f0) / (hi - lo) if d == -1 else (f0 - val) / (hi - lo)
+    return lo + (up + 1) * rh, lo + dn * rh
+
+
+def va_ratio(bars, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL):
+    """§8 va_ratio, with the profile range switchable (fib leg by default)."""
+    f1, f0, d = setup["a1"], setup["a0"], setup["dir"]
+    if p.vp_range == "leg":
+        start, end, lo, hi = setup["start"], i, min(f1, f0), max(f1, f0)
+    elif p.vp_range == "london":
+        start, end, lo, hi = day_start, ldn_end, ldnL, ldnH
+    else:
+        start = day_start if p.vp_range == "day" else ny_start
+        end = i
+        if start is None:
+            return None
+        lo, hi = min(bars.low[start:end + 1]), max(bars.high[start:end + 1])
+    va = value_area(bars, start, end, lo, hi, p.vp_rows, p.va_pct)
+    if va is None:
+        return None
+    vah, val = va
+    rng = abs(f1 - f0)
+    return (vah - f0) / rng if d == -1 else (f0 - val) / rng
 
 
 @dataclass
@@ -148,6 +169,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
     ref_price = None
     # position
     pos = None
+    day_start = ldn_end = ny_start = None
 
     for i in range(len(b.time)):
         t = b.time[i]
@@ -166,6 +188,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if day is not None and weekday:
                 pass
             day = t.date()
+            day_start, ldn_end, ny_start = i, None, None
             if pos:  # safety close
                 pos = None
             order = None
@@ -229,6 +252,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             ldnH = h if ldnH is None else max(ldnH, h)
             ldnL = l if ldnL is None else min(ldnL, l)
             ldnBars += 1
+            ldn_end = i
+        if ny_start is None and ny_min >= 570:
+            ny_start = i
         ldn_valid = ldnH is not None and ldnBars >= p.ldn_min_bars
 
         # sweeps (§4)
@@ -270,7 +296,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 res.trades.append(dict(entry_time=pos["entry_time"], exit_time=t, scenario=pos["scen"],
                                        side="LONG" if d == 1 else "SHORT", level=pos["level"], va=pos["va"],
                                        leg_trigger=pos["leg_trig"], leg_exit=abs(pos["a1"] - pos["a0"]),
-                                       bars_to_fill=pos["bars_to_fill"], exit=why, r=round(r, 3),
+                                       bars_to_fill=pos["bars_to_fill"], bars_to_lock=pos["bars_to_lock"], exit=why, r=round(r, 3),
                                        mfe_r=round(pos["mfe"], 2), mae_r=round(pos["mae"], 2), qty=pos["qty"]))
                 log(i, f"EXIT {why} R={r:.2f}")
                 pos = None
@@ -308,12 +334,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
-                if leg == 0 or leg < p.leg_min or leg > p.leg_max:
+                if leg == 0 or (p.use_leg_filter and (leg < p.leg_min or leg > p.leg_max)):
                     f[f"S{cand['scen']}_rejected_leg_{'small' if leg < p.leg_min else 'big'}"] += 1
                     log(i, f"S{cand['scen']} {'LONG' if cand['dir'] == 1 else 'SHORT'} rejected leg={leg:.2f}")
                     lastDeath = i
                 else:
-                    setup = dict(cand, init=leg, trig=i)
+                    setup = dict(cand, init=leg, trig=i, locked=False, level=0.0, lock_va=None, lock_bar=None)
                     order = None
                     ref_price = None
                     just_armed = True
@@ -326,8 +352,6 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             d = setup["dir"]
             if (h > setup["a1"]) if d == -1 else (l < setup["a1"]):
                 dead, broke, why = True, True, "1.0 broken"
-            elif p.kill_on_touch_no_order and order is None and ref_price is not None and ((h >= ref_price) if d == -1 else (l <= ref_price)):
-                dead, why = True, "entry touched, no order"
             elif i - setup["trig"] >= p.expiry_bars:
                 dead, why = True, "expired"
             elif not can_place:
@@ -340,25 +364,26 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         # place / update the limit (§9)
         if setup is not None and not dead:
             d = setup["dir"]
-            va = None if setup["scen"] == 3 else va_ratio(b, setup["start"], i, setup["a1"], setup["a0"], d, p.vp_rows, p.va_pct)
-            if va is not None:
-                f["va_samples"] += 1
-                band = ">0.588" if va > 0.588 else "0.5-0.588" if va >= 0.5 else "0.412-0.5" if va >= p.va_low else "<0.412"
-                f[f"va_{band}"] += 1
-            lvl = choose_level(setup["scen"], va, p.va_low)
+            if not setup["locked"]:
+                va = None if setup["scen"] == 3 else va_ratio(b, p, setup, i, day_start, ldn_end, ny_start, ldnH, ldnL)
+                lvl = choose_level(setup["scen"], va, p.va_low)
+                if lvl > 0:  # lock: the level set never changes for this setup
+                    setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i)
+                    f[f"S{setup['scen']}_locked"] += 1
+                    log(i, f"S{setup['scen']} locked @{lvl} va={va}")
             order = None
-            ref_price = tick(fib_price(setup["a1"], setup["a0"], d, 0.5))
-            if lvl > 0:
+            if setup["locked"]:
+                lvl, va = setup["level"], setup["lock_va"]
                 eP = tick(fib_price(setup["a1"], setup["a0"], d, lvl))
                 sP = tick(fib_price(setup["a1"], setup["a0"], d, stop_level(lvl)))
                 tP = tick(fib_price(setup["a1"], setup["a0"], d, target_level(lvl)))
                 if (c >= eP) if d == -1 else (c <= eP):
-                    dead, why = True, "price past entry"
+                    f["bars_price_beyond_entry"] += 1  # a limit here would fill as market; wait [IMPL]
                 else:
                     rp = abs(sP - eP)
                     qty = min(math.floor(p.risk_usd / (rp * POINT_VALUE)), p.max_contracts) if rp > 0 else 0
                     if qty >= 1:
-                        order = dict(dir=d, price=eP, stop=sP, tgt=tP, qty=qty, level=lvl, va=va, risk_pts=rp)
+                        order = dict(dir=d, price=eP, stop=sP, tgt=tP, qty=qty, level=lvl, va=va, risk_pts=rp, bars_to_lock=setup['lock_bar'] - setup['trig'])
                         f["orders_placed"] += 1
                     else:
                         f["skipped_size"] += 1
