@@ -1,5 +1,5 @@
 //@version=6
-// PROP ORB — MNQ 5m. 15-minute opening range breakout built for a Lucid 50K eval ($2,000 EOD trailing drawdown,
+// PROP ORB — MNQ 5m or 15m. 15-minute opening range breakout built for a Lucid 50K eval ($2,000 EOD trailing drawdown,
 // $3,000 target, flat before 16:45 ET). Mirrors backtest/orb_prop.py.
 //
 //  • Opening range 09:30–09:45 NY. From 09:45, stop orders one tick beyond both sides (one cancels the other).
@@ -37,8 +37,9 @@ target    = input.float(3000, "Profit target $", step = 100, group = grpP)
 ddGuard   = input.bool(true, "Skip a trade whose full loss would breach the drawdown", group = grpP)
 stopAtTgt = input.bool(true, "Stop trading once the target is reached", group = grpP)
 
-if timeframe.period != "5"
-    runtime.error("Prop ORB runs on the 5-minute chart.")
+if timeframe.period != "5" and timeframe.period != "15"
+    runtime.error("Prop ORB runs on the 5- or 15-minute chart.")
+int barMin = timeframe.in_seconds() / 60
 
 // ───────────────────────────── Time ─────────────────────────────
 int  nyMin  = hour(time, TZ) * 60 + minute(time, TZ)       // bar OPEN time
@@ -87,9 +88,9 @@ if strategy.opentrades + strategy.closedtrades > entriesSeen
 entriesSeen := strategy.opentrades + strategy.closedtrades
 
 // ───────────────────────────── Orders ─────────────────────────────
-bool inEntryWindow = nyMin + 5 >= orEnd and nyMin + 5 <= lastEntry     // decided at this bar's close, works next bar
+bool inEntryWindow = nyMin + barMin >= orEnd and nyMin + barMin <= lastEntry     // decided at this bar's close, works next bar
 bool blocked = (stopAtTgt and passed) or failed
-if not na(orH) and nyMin + 5 >= orEnd and na(stopPts)
+if not na(orH) and nyMin + barMin >= orEnd and na(stopPts)
     float rng = orH - orL
     stopPts := slMult * rng
     tgtPts := tpMult * rng
@@ -124,7 +125,7 @@ if lossTicks > 0
     strategy.exit("XS", "S", loss = lossTicks, profit = profTicks)
 
 // flat before the close — nothing overnight
-if strategy.position_size != 0 and nyMin + 5 >= flatAt
+if strategy.position_size != 0 and nyMin + barMin >= flatAt
     strategy.close_all(comment = "15:55 flat", immediately = true)
 
 // ───────────────────────────── Plots ─────────────────────────────
