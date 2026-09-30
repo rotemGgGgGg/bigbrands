@@ -15,13 +15,19 @@ sweep the reference is the running extreme since the sweep; crossing the old Lon
 **Trigger.** Two consecutive candles on the same day; the sweep candle may be the first. Doji counts as both
 bullish and bearish. No body minimum.
 
-**Scenarios** (not restated in the v7 spec — carried over from the trader's earlier confirmations):
-- S1: one side swept *inside* 09:30–14:00, other side not swept. Trigger against the sweep. 1.0 = extreme since the sweep.
-- S2: continuation. After an in-window sweep: opens when S1 breaks its 1.0; 1.0 = S1's anchor 0.
-  After a pre-open sweep: reference = post-sweep extreme at the first two-candle pullback; opens when price
-  breaks it; 1.0 = the pullback extreme between reference and break **[IMPL-confirm]**. Trigger in the continuation direction.
-- S3: both sides swept (from 06:00). Direction against the second sweep. 1.0 = the first side's extreme. 0.5 only, no value area.
-- Once both sides are swept, only S3 can arm.
+**Scenarios and fib 1.0 (trader, v7.2)** — fib 1.0 differs per scenario:
+
+| Scenario | Swept | Trigger | fib 1.0 |
+|---|---|---|---|
+| S1 SHORT | London high, inside 09:30–14:00 | two bearish | highest point made after the sweep |
+| S1 LONG | London low, inside 09:30–14:00 | two bullish | low of the first bullish trigger candle |
+| S2 LONG | London high | two bullish, ending at/after the bar that broke the reference | low of the first trigger candle |
+| S2 SHORT | London low | two bearish, ending at/after the bar that broke the reference | high of the first trigger candle |
+| S3 | both (from 06:00) | against the second sweep | first sweep's extreme; 0 at the second sweep's extreme |
+
+S2 reference: after an in-window sweep, S1's 1.0 (S2 opens when S1 breaks it); after a pre-open sweep, the
+post-sweep extreme at the first two-candle pullback (same rule as the trigger). "First trigger candle" = the first
+of the two, whether or not it is the one that broke the reference. Once both sides are swept, only S3 can arm.
 
 **Fib.** 1.0 fixed when the setup arms. 0 = extreme counted forward from the 1.0 bar only. Before the fill the
 limit moves with the fib as 0 extends; after the fill entry/stop/target are frozen.
@@ -66,7 +72,11 @@ Same 60 days of Yahoo NQ data: v6 = 12 trades, v7 = 17 trades (0 S1, 6 S2, 11 S3
 4. A limit that would sit through the market at the bar close (sell limit below price, buy limit above) is not placed that bar; the setup stays alive.
 5. 1.0 break = strictly beyond the 1.0 (touch is not a break).
 6. After an S2 or S3 1.0 break, that scenario is done for the day (carried over from v6).
-7. S2 after a pre-open sweep: 1.0 = pullback extreme between the reference and the break.
+7. ~~S2 pre-open 1.0 = pullback extreme~~ — superseded by the v7.2 anchor table.
+11. S2's trigger pair only has to end at or after the bar that broke the reference.
+12. A later trigger in the same scenario and direction keeps the first trigger's anchor (no re-anchoring).
+13. If the second trigger candle trades beyond the first candle's extreme, the 1.0 is broken on the trigger: no setup.
+    (Alternative — check the 1.0 only from the next bar — gives 18 trades instead of 19; Aug 10 no trade either way.)
 8. London range needs ≥ 60 of its 72 bars.
 9. "Same setup" (not a replacement) = same scenario, direction and 1.0 price and bar.
 10. Fixed position size.

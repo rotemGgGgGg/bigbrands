@@ -33,6 +33,7 @@ class Params:
     use_s2: bool = True
     use_s3: bool = True
     check: bool = True          # invariants raise InvariantError
+    reject_self_break: bool = True  # [IMPL] second trigger candle beyond the first candle's extreme → no setup
     trace: list | None = None   # debug: per-bar state
 
 
@@ -189,8 +190,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if s["scen"] == 1:
                 side = s["side"]
                 S["s1_fail"][side] = True
-                # S2 inherits S1's anchor_0 as its anchor_1
-                S["s2"][side].update(elig=True, elig_bar=i, a1=s["a0"], a1_bar=s["a0_bar"])
+                S["s2"][side].update(elig=True, elig_bar=i)   # S1 broke its 1.0: S2 opens on this side
             elif s["scen"] == 2:
                 S["s2_dead"][s["side"]] = True     # [IMPL] carried over from v6
             else:
@@ -274,7 +274,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         two_bear = i > 0 and T[i - 1].date() == t.date() and c <= o and C[i - 1] <= O[i - 1]
 
         # 7 ── S2 eligibility after a pre-open sweep: reference = post-sweep extreme at the first
-        #      two-candle pullback; S2 opens when price breaks it; S2's 1.0 = the pullback extreme [IMPL-confirm]
+        #      two-candle pullback; S2 opens when price breaks it
         if valid:
             for side, pull in ((1, two_bear), (-1, two_bull)):
                 st = S["s2"][side]
@@ -284,13 +284,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if st["ref"] is None:
                     if pull and i - 1 >= swb:
                         st["ref"], st["ref_bar"] = S["ext"][side], S["ext_bar"][side]
-                        v, k = extreme_since(st["ref_bar"], i, -side)
-                        st["pull"], st["pull_bar"] = v, k
                     continue
-                if (l < st["pull"]) if side == 1 else (h > st["pull"]):
-                    st["pull"], st["pull_bar"] = (l if side == 1 else h), i
                 if (h > st["ref"]) if side == 1 else (l < st["ref"]):
-                    st.update(elig=True, elig_bar=i, a1=st["pull"], a1_bar=st["pull_bar"])
+                    st.update(elig=True, elig_bar=i)
                     log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} opens (pre-open reference broken)")
 
         # 8 ── triggers: the second candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and
@@ -312,13 +308,23 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         continue
                     trig_s1 = two_bear if side == 1 else two_bull
                     trig_s2 = two_bull if side == 1 else two_bear
+                    # fib 1.0 per scenario (trader, v7.2): S1 SHORT = highest point since the sweep;
+                    # S1 LONG / S2 = the extreme of the FIRST candle of the two-candle trigger
+                    first = (L[i - 1], i - 1) if side == 1 else (H[i - 1], i - 1)   # for S2 (continuation)
                     if p.use_s1 and S["sw_win"][side] and not S["s1_fail"][side] and trig_s1 and i - 1 >= swb:
-                        cand = dict(scen=1, d=-side, side=side, a1=S["ext"][side], a1_bar=S["ext_bar"][side])
-                    elif p.use_s2 and S["s2"][side]["elig"] and not S["s2_dead"][side] and trig_s2 and i - 1 >= S["s2"][side]["elig_bar"]:
-                        st = S["s2"][side]
-                        cand = dict(scen=2, d=side, side=side, a1=st["a1"], a1_bar=st["a1_bar"])
+                        if side == 1:
+                            cand = dict(scen=1, d=-1, side=1, a1=S["ext"][1], a1_bar=S["ext_bar"][1])
+                        else:
+                            cand = dict(scen=1, d=1, side=-1, a1=L[i - 1], a1_bar=i - 1)
+                    elif p.use_s2 and S["s2"][side]["elig"] and not S["s2_dead"][side] and trig_s2 and i >= S["s2"][side]["elig_bar"]:
+                        # the pair only has to END at or after the break bar: the first candle may be the one before it [IMPL]
+                        cand = dict(scen=2, d=side, side=side, a1=first[0], a1_bar=first[1])
+            if p.reject_self_break and cand is not None and cand["a1_bar"] == i - 1 and ((h > cand["a1"]) if cand["d"] == -1 else (l < cand["a1"])):
+                res.funnel[f"S{cand['scen']} trigger broke its own 1.0"] += 1
+                cand = None   # [IMPL] the second candle already traded beyond the first candle's extreme
             if cand is not None:
-                same = setup is not None and all(setup[k] == cand[k] for k in ("scen", "d", "a1", "a1_bar"))
+                # [IMPL] a later trigger in the same scenario and direction keeps the first trigger's anchor
+                same = setup is not None and setup["scen"] == cand["scen"] and setup["d"] == cand["d"]
                 if not same:
                     a0, a0_bar = extreme_since(cand["a1_bar"], i, cand["d"])
                     leg = abs(cand["a1"] - a0)

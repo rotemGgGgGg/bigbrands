@@ -1,5 +1,5 @@
 //@version=6
-// SP MODEL v7 — MNQ 5m. Written from scratch against the trader-confirmed spec (SPEC_V7.md).
+// SP MODEL v7.2 — MNQ 5m. Written from scratch against the trader-confirmed spec (SPEC_V7.md).
 // Mirrors backtest/sp_v7.py step for step. Decisions the spec does not make are marked [IMPL].
 //
 // Per bar, at the close:
@@ -153,20 +153,12 @@ var bool  s2DeadLo = false
 var bool  s3Dead = false
 var float refHi = na                // S2 after a pre-open high sweep
 var int   refHiBar = na
-var float pullHi = na
-var int   pullHiBar = na
 var bool  eligHi = false
 var int   eligHiBar = na
-var float s2A1Hi = na
-var int   s2A1HiBar = na
 var float refLo = na
 var int   refLoBar = na
-var float pullLo = na
-var int   pullLoBar = na
 var bool  eligLo = false
 var int   eligLoBar = na
-var float s2A1Lo = na
-var int   s2A1LoBar = na
 var int   tradesToday = 0
 // armed setup
 var int   sScen = 0
@@ -279,20 +271,12 @@ if newDay
     s3Dead := false
     refHi := na
     refHiBar := na
-    pullHi := na
-    pullHiBar := na
     eligHi := false
     eligHiBar := na
-    s2A1Hi := na
-    s2A1HiBar := na
     refLo := na
     refLoBar := na
-    pullLo := na
-    pullLoBar := na
     eligLo := false
     eligLoBar := na
-    s2A1Lo := na
-    s2A1LoBar := na
     tradesToday := 0
     sScen := 0
     ordActive := false
@@ -344,16 +328,12 @@ if sScen != 0
         if sScen == 1
             if sSide == 1
                 s1FailHi := true
-                eligHi := true              // S2 inherits S1's anchor_0 as its anchor_1
+                eligHi := true              // S1 broke its 1.0: S2 opens on this side
                 eligHiBar := bar_index
-                s2A1Hi := sA0
-                s2A1HiBar := sA0Bar
             else
                 s1FailLo := true
                 eligLo := true
                 eligLoBar := bar_index
-                s2A1Lo := sA0
-                s2A1LoBar := sA0Bar
         else if sScen == 2
             if sSide == 1
                 s2DeadHi := true            // [IMPL] carried over from v6
@@ -380,42 +360,23 @@ bool twoBear = sameDay and close <= open and close[1] <= open[1]
 
 // ───────────────────────────── 7 S2 eligibility after a pre-open sweep ─────────────────────────────
 // Reference = post-sweep extreme at the first two-candle pullback; S2 opens when price breaks it.
-// S2's 1.0 = the pullback extreme between the reference and the break. [IMPL-confirm]
 if valid
     if not na(swHi) and not swHiWin and not eligHi
         if na(refHi)
             if twoBear and bar_index - 1 >= swHi
                 refHi := extHi
                 refHiBar := extHiBar
-                [pv, pb] = extremeSince(refHiBar, -1)
-                pullHi := pv
-                pullHiBar := pb
-        else
-            if low < pullHi
-                pullHi := low
-                pullHiBar := bar_index
-            if high > refHi
-                eligHi := true
-                eligHiBar := bar_index
-                s2A1Hi := pullHi
-                s2A1HiBar := pullHiBar
+        else if high > refHi
+            eligHi := true
+            eligHiBar := bar_index
     if not na(swLo) and not swLoWin and not eligLo
         if na(refLo)
             if twoBull and bar_index - 1 >= swLo
                 refLo := extLo
                 refLoBar := extLoBar
-                [pv, pb] = extremeSince(refLoBar, 1)
-                pullLo := pv
-                pullLoBar := pb
-        else
-            if high > pullLo
-                pullLo := high
-                pullLoBar := bar_index
-            if low < refLo
-                eligLo := true
-                eligLoBar := bar_index
-                s2A1Lo := pullLo
-                s2A1LoBar := pullLoBar
+        else if low < refLo
+            eligLo := true
+            eligLoBar := bar_index
 
 // ───────────────────────────── 8 triggers; a new setup replaces an armed one ─────────────────────────────
 // The second trigger candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and before 14:00.
@@ -440,6 +401,9 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cA1 := extLo
                 cA1Bar := extLoBar
     else
+        // fib 1.0 per scenario (trader, v7.2): S1 SHORT = highest point since the sweep;
+        // S1 LONG / S2 = the extreme of the FIRST candle of the two-candle trigger.
+        // S2's pair only has to END at or after the bar that broke the reference [IMPL].
         if not na(swHi)
             if useS1 and swHiWin and not s1FailHi and twoBear and bar_index - 1 >= swHi
                 cScen := 1
@@ -447,27 +411,31 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cSide := 1
                 cA1 := extHi
                 cA1Bar := extHiBar
-            else if useS2 and eligHi and not s2DeadHi and twoBull and bar_index - 1 >= eligHiBar
+            else if useS2 and eligHi and not s2DeadHi and twoBull and bar_index >= eligHiBar
                 cScen := 2
                 cDir := 1
                 cSide := 1
-                cA1 := s2A1Hi
-                cA1Bar := s2A1HiBar
+                cA1 := low[1]
+                cA1Bar := bar_index - 1
         if cScen == 0 and not na(swLo)
             if useS1 and swLoWin and not s1FailLo and twoBull and bar_index - 1 >= swLo
                 cScen := 1
                 cDir := 1
                 cSide := -1
-                cA1 := extLo
-                cA1Bar := extLoBar
-            else if useS2 and eligLo and not s2DeadLo and twoBear and bar_index - 1 >= eligLoBar
+                cA1 := low[1]
+                cA1Bar := bar_index - 1
+            else if useS2 and eligLo and not s2DeadLo and twoBear and bar_index >= eligLoBar
                 cScen := 2
                 cDir := -1
                 cSide := -1
-                cA1 := s2A1Lo
-                cA1Bar := s2A1LoBar
+                cA1 := high[1]
+                cA1Bar := bar_index - 1
+    // [IMPL] the second candle already traded beyond the first candle's extreme → the 1.0 is broken, no setup
+    if cScen != 0 and cA1Bar == bar_index - 1 and (cDir == -1 ? high > cA1 : low < cA1)
+        cScen := 0
     if cScen != 0
-        bool same = sScen == cScen and sDir == cDir and sA1 == cA1 and sA1Bar == cA1Bar
+        // [IMPL] a later trigger in the same scenario and direction keeps the first trigger's anchor
+        bool same = sScen == cScen and sDir == cDir
         if not same
             [a0v, a0b] = extremeSince(cA1Bar, cDir)
             if math.abs(cA1 - a0v) > 0
