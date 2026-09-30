@@ -33,6 +33,7 @@ class Params:
     use_s2: bool = True
     use_s3: bool = True
     check: bool = True          # invariants raise InvariantError
+    trace: list | None = None   # debug: per-bar state
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -349,6 +350,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 through = (c >= e) if s["d"] == -1 else (c <= e)   # [IMPL] a limit through the market is not placed
                 if not through:
                     order = dict(d=s["d"], entry=e, stop=st_, tgt=tg, level=lvl, va=va, qty=p.qty)
+        if p.trace is not None:
+            p.trace.append(dict(t=t, o=o, h=h, l=l, c=c, sw=dict(S["sw"]), s2={k: dict(v) for k, v in S["s2"].items()},
+                                setup=None if setup is None else {k: setup.get(k) for k in ("scen", "d", "a1", "a1_bar", "a0", "a0_bar", "last_va")},
+                                order=None if order is None else dict(order), pos=None if pos is None else pos["entry"]))
     return res
 
 
