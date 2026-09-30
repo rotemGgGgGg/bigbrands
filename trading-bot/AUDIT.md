@@ -17,13 +17,22 @@ The chart and the spec disagree on S2's anchor → trader decision.
 |---|---|---|---|---|
 | 1 | Pine | No plot of a1 / a0 — only entry/stop/target were drawn, so any fib on the chart was manual | Can't audit anchors visually | No → (added) Fib 1.0 / Fib 0 plots |
 | 2 | Both | S2 fib 1.0 = trigger-candle wick (spec §6); trader's chart uses the swing low | Changes every S2 entry price | **Resolved:** trader confirmed the swing low (S1's anchor_0); spec §6 was wrong |
-| 3 | Python | Open position at a day change is dropped without recording (Pine closes and records it) | 0 occurrences: every weekday has its 13:55 bar | No |
+| 3 | Python | Open position at a day change is dropped without recording (Pine closes and records it) | 0 occurrences | **Fixed:** closed and recorded at the new day's first bar, like Pine |
 | 4 | Python | `entry` key not cleared on unlock | None: every read is guarded by `locked` | Harmless |
 | 5 | Python | `pos.a0` keeps updating after fill (logging only) — `leg_exit` ≠ Pine's leg-at-lock | Log column only | No |
-| 6 | Logic diff | Stop and target touched in the same bar: Python assumes stop (spec §10); Pine's emulator picks by bar path | Can flip a trade's result | Known |
-| 7 | Logic diff | Weekly −3R days off, −5R risk cut and news days exist only in Pine | Can skip days / change size in Pine only | No |
+| 6 | Logic diff | Intrabar sequencing. The old Python checked the fill bar's whole high/low for the target, including price action from before the fill → **2 false wins** (Jul 24, Sep 1) in every earlier report | Total R overstated by ~4R | **Fixed:** Python walks each bar along TradingView's emulator path (open → nearer extreme → other extreme → close) |
+| 7 | Logic diff | Weekly −3R days off, −5R risk cut and news days exist only in Pine | Can skip days / change size in Pine only | **Fixed:** added to Python |
 | 8 | Logic diff | Swing-toggle pivots: Python strict >, Pine `ta.pivothigh` tie rules | Only with the toggle on (off) | Known |
 | 9 | Pine | `s2WhyHi/Lo` not reset daily | Unused | Cosmetic |
+
+| 10 | Data | Yahoo NQ bad print 2026-08-25 02:10 (open 29,105.75, ~80 pts below neighbours) fakes the London low → Aug 25 S1 missing in Python | Explains TV-only Aug 25 trade; repairing the bar reproduces it (11:00 S1 LONG, target) | Data, not logic |
+
+## Pine vs Python (Aug 11 – Sep 28, TradingView export vs backtester on Yahoo NQ)
+
+8 of 9 TradingView trades match on date, time (±1 bar), scenario, direction and outcome.
+Aug 25 (TV only) is the Yahoo bad print above. Sep 4 S3 (Python only) and the 1-bar offset on
+Aug 19 are unresolved without TradingView's own bars — next step: run the backtester on the
+TradingView chart export.
 
 ## State persistence (per variable group)
 

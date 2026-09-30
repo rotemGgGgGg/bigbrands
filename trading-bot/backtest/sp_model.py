@@ -41,7 +41,24 @@ class Params:
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
     check: bool = True  # invariants: fail loudly (InvariantError) instead of producing a wrong trade
-    trace: list | None = None  # debug: per-bar state appended while a setup or position is live
+    trace: list | None = None
+    blocked: list | None = None      # diagnostic: triggers that fired while another setup was active
+    replace_unlocked: bool = False
+    # Order of events inside a bar follows TradingView's broker emulator (open → nearer extreme → other extreme → close),
+    # so a fill and an exit in the same bar are sequenced exactly as in Pine.
+    use_weekly: bool = True    # −3R in a week → next 2 trading days off (Pine parity)
+    week_limit_r: float = 3.0
+    days_off: int = 2
+    use_dd_cut: bool = True    # −5R from equity high → risk × 0.5 until back at the high (Pine parity)
+    dd_limit_r: float = 5.0
+    dd_mult: float = 0.5
+    use_news: bool = True
+    news_dates: str = "2024-01-05,2024-01-11,2024-01-31,2024-02-02,2024-02-13,2024-03-08,2024-03-12,2024-03-20,2024-04-05,2024-04-10,2024-05-01,2024-05-03,2024-05-15,2024-06-07,2024-06-12,2024-07-05,2024-07-11,2024-07-31,2024-08-02,2024-08-14,2024-09-06,2024-09-11,2024-09-18,2024-10-04,2024-10-10,2024-11-01,2024-11-07,2024-11-13,2024-12-06,2024-12-11,2024-12-18"
+    win_start: int = 570  # 09:30 NY, minutes
+    win_end: int = 840    # 14:00 NY
+    t_place_through: bool = False    # test [IMPL]: price already through the entry at lock → still place the limit (fills next open)
+    t_trigger_preopen: bool = False  # test [IMPL]: first trigger candle may close before 09:30
+    t_retrigger_overlap: bool = False  # test [IMPL]: a new trigger may use the bar a setup died on   # diagnostic only: a new trigger replaces an armed, not-yet-locked setup  # debug: per-bar state appended while a setup or position is live
     use_s1: bool = True
     use_s2: bool = True
     use_s3: bool = True
@@ -156,6 +173,45 @@ def swing_start(bars, a1bar, d, k):
     return max(0, a1bar - 150)
 
 
+def bar_path(o, h, l, c):
+    """TradingView broker emulator: open → nearer extreme → other extreme → close."""
+    return [o, h, l, c] if (h - o) <= (o - l) else [o, l, h, c]
+
+
+def walk_bar(o, h, l, c, d, entry=None, stop=None, tgt=None, in_pos=False):
+    """Walk one bar along the emulator path. Returns (fill_price | None, (exit_reason, price) | None)."""
+    fill = None
+    if not in_pos and entry is not None and ((o <= entry) if d == 1 else (o >= entry)):
+        fill, in_pos = o, True  # gapped through the limit: filled at the open
+    if in_pos:
+        if (o <= stop) if d == 1 else (o >= stop):
+            return fill, ("stop", o)
+        if (o >= tgt) if d == 1 else (o <= tgt):
+            return fill, ("target", o)
+    cur = o
+    for nxt in bar_path(o, h, l, c)[1:]:
+        while True:
+            up = nxt > cur
+            lv = []
+            if not in_pos and entry is not None and up == (d == -1):
+                lv.append(("entry", entry))
+            if in_pos:
+                if up == (d == -1):
+                    lv.append(("stop", stop))
+                else:
+                    lv.append(("target", tgt))
+            hit = [(n, x) for n, x in lv if (cur < x <= nxt if up else nxt <= x < cur)]
+            if not hit:
+                break
+            n, x = min(hit, key=lambda z: abs(z[1] - cur))
+            if n == "entry":
+                fill, in_pos, cur = x, True, x
+                continue
+            return fill, (n, x)
+        cur = nxt
+    return fill, None
+
+
 class InvariantError(AssertionError):
     pass
 
@@ -181,6 +237,7 @@ class Result:
     funnel: Counter = field(default_factory=Counter)
     events: list = field(default_factory=list)
     setups: list = field(default_factory=list)
+    days: dict = field(default_factory=dict)  # end-of-day snapshot per date (diagnostics)
 
 
 def run(df: pd.DataFrame, p: Params = Params()) -> Result:
@@ -213,6 +270,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
     # position
     pos = None
     day_start = ldn_end = ny_start = None
+    day_reset_pos = False
+    cum_r = peak_r = week_r = 0.0
+    week_hit = False
+    days_off_left = 0
+    blocked_today = False
+    cur_week = None
 
     for i in range(len(b.time)):
         t = b.time[i]
@@ -220,11 +283,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         weekday = t.weekday() < 5
         in_london = ny_min < 360
         after_six = ny_min >= 360
-        in_win = 570 <= ny_min < 840
-        can_place = ny_min + 5 < 840
-        at_flatten = ny_min < 840 <= ny_min + 5
+        in_win = p.win_start <= ny_min < p.win_end
+        can_place = ny_min + 5 < p.win_end
+        at_flatten = ny_min < p.win_end <= ny_min + 5
         new_day = t.date() != day
-        prev_in_win = (not new_day) and i > 0 and (b.time[i - 1].hour * 60 + b.time[i - 1].minute) >= 570
+        prev_in_win = (not new_day) and i > 0 and (b.time[i - 1].hour * 60 + b.time[i - 1].minute) >= p.win_start
         o, h, l, c = b.open[i], b.high[i], b.low[i], b.close[i]
 
         if new_day:
@@ -232,9 +295,15 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 pass
             day = t.date()
             day_start, ldn_end, ny_start = i, None, None
-            if pos:  # safety close
-                pos = None
+            day_reset_pos = pos is not None  # closed and recorded below, like Pine's close_all at the day reset
             order = None
+            blocked_today = False
+            if weekday and days_off_left > 0:
+                blocked_today = True
+                days_off_left -= 1
+            wk = t.isocalendar()[:2]
+            if wk != cur_week:
+                cur_week, week_r, week_hit = wk, 0.0, False
             ldnH = ldnL = None
             ldnBars = 0
             hiSw = loSw = False
@@ -255,9 +324,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         closed_this_bar = None
         if order is not None and pos is None:
             d = order["dir"]
-            filled = (h >= order["price"]) if d == -1 else (l <= order["price"])
-            if filled:
-                fill = max(o, order["price"]) if d == -1 else min(o, order["price"])
+            fill, ex = walk_bar(o, h, l, c, d, entry=order["price"], stop=order["stop"], tgt=order["tgt"])
+            if fill is not None:
                 if p.check:
                     _inv((fill >= order["price"] - 0.25) if d == -1 else (fill <= order["price"] + 0.25), i, b,
                          f"fill {fill} worse than limit {order['price']} by more than a tick")
@@ -273,31 +341,13 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 setup = None
                 order = None
                 ref_price = None
-                # same-bar exit, pessimistic (§10): stop first
-                if (d == -1 and h >= pos["stop"]) or (d == 1 and l <= pos["stop"]):
-                    closed_this_bar = ("stop", pos["stop"])
-                elif (d == -1 and l <= pos["tgt"]) or (d == 1 and h >= pos["tgt"]):
-                    closed_this_bar = ("target", pos["tgt"])
+                closed_this_bar = ex
         elif pos is not None:
             d = pos["dir"]
-            if d == -1:
-                if o >= pos["stop"]:
-                    closed_this_bar = ("stop", o)
-                elif h >= pos["stop"]:
-                    closed_this_bar = ("stop", pos["stop"])
-                elif o <= pos["tgt"]:
-                    closed_this_bar = ("target", o)
-                elif l <= pos["tgt"]:
-                    closed_this_bar = ("target", pos["tgt"])
-            else:
-                if o <= pos["stop"]:
-                    closed_this_bar = ("stop", o)
-                elif l <= pos["stop"]:
-                    closed_this_bar = ("stop", pos["stop"])
-                elif o >= pos["tgt"]:
-                    closed_this_bar = ("target", o)
-                elif h >= pos["tgt"]:
-                    closed_this_bar = ("target", pos["tgt"])
+            _, closed_this_bar = walk_bar(o, h, l, c, d, stop=pos["stop"], tgt=pos["tgt"], in_pos=True)
+        if day_reset_pos and pos is not None and closed_this_bar is None:
+            closed_this_bar = ("day reset", c)  # Pine closes a leftover position at the new day's first bar
+        day_reset_pos = False
 
         # London range (§3)
         if in_london:
@@ -345,7 +395,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             adv = (h - pos["entry"]) if d == -1 else (pos["entry"] - l)
             pos["mfe"] = max(pos["mfe"], fav / pos["risk_pts"])
             pos["mae"] = max(pos["mae"], adv / pos["risk_pts"])
-            if closed_this_bar is None and (at_flatten or ny_min >= 840):
+            if closed_this_bar is None and (at_flatten or ny_min >= p.win_end):
                 closed_this_bar = ("14:00", c)
             if closed_this_bar is not None:
                 why, px = closed_this_bar
@@ -357,6 +407,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                                        bars_to_fill=pos["bars_to_fill"], bars_to_lock=pos["bars_to_lock"], exit=why, r=round(r, 3),
                                        mfe_r=round(pos["mfe"], 2), mae_r=round(pos["mae"], 2), qty=pos["qty"]))
                 log(i, f"EXIT {why} R={r:.2f}")
+                cum_r += r
+                peak_r = max(peak_r, cum_r)
+                week_r += r
+                if p.use_weekly and not week_hit and week_r <= -p.week_limit_r:
+                    week_hit, days_off_left = True, p.days_off
                 pos = None
                 lastDeath = i
                 if trades_today >= p.max_trades:
@@ -412,11 +467,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     st2.update(elig=True, elig_bar=i, a1=st2["pull"], a1_bar=st2["pull_bar"],
                                x=(h if side == 1 else l), x_bar=i, why="ref" if broke_ref else "swing")
                     f[f"s2_open_{'ref' if broke_ref else 'swing'}"] += 1
-        risk_off = done_day or trades_today >= p.max_trades or fails >= p.max_fails
-        can_arm = (setup is None and pos is None and not risk_off and in_win and prev_in_win and can_place
-                   and ldn_valid and weekday and i - 1 > lastDeath)
+        is_news = p.use_news and f"{t:%Y-%m-%d}" in p.news_dates
+        risk_off = done_day or trades_today >= p.max_trades or fails >= p.max_fails or blocked_today or is_news
+        can_arm_any = (pos is None and not risk_off and in_win and (prev_in_win or (p.t_trigger_preopen and not new_day)) and can_place
+                       and ldn_valid and weekday and (i - 1 >= lastDeath if p.t_retrigger_overlap else i - 1 > lastDeath))
+        can_arm = setup is None and can_arm_any
+        watch = can_arm_any and setup is not None and (p.blocked is not None or p.replace_unlocked)
         just_armed = False
-        if can_arm:
+        if can_arm or watch:
             cand = None
             if hiSw and loSw:
                 if p.use_s3 and not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
@@ -433,6 +491,16 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 cand = dict(scen=2, dir=1, side=1, a1=s2[1]["a1"], a0=s2[1]["x"], start=min(s2[1]["a1_bar"], s2[1]["x_bar"]), a1bar=s2[1]["a1_bar"], a0bar=s2[1]["x_bar"], swbar=hiSwBar, s2why=s2[1]["why"])
             elif p.use_s2 and s2[-1]["elig"] and not s2DeadLo and two_bear and i - 1 >= s2[-1]["elig_bar"]:
                 cand = dict(scen=2, dir=-1, side=-1, a1=s2[-1]["a1"], a0=s2[-1]["x"], start=min(s2[-1]["a1_bar"], s2[-1]["x_bar"]), a1bar=s2[-1]["a1_bar"], a0bar=s2[-1]["x_bar"], swbar=loSwBar, s2why=s2[-1]["why"])
+            if cand and setup is not None:
+                if p.blocked is not None and not (cand["scen"] == setup["scen"] and cand["dir"] == setup["dir"] and cand["a1"] == setup["a1"]):
+                    p.blocked.append(dict(t=t, scen=cand["scen"], dir=cand["dir"], active=setup["scen"],
+                                          active_locked=setup["locked"], active_since=setup["time"]))
+                if p.replace_unlocked and not setup["locked"] and not (cand["scen"] == setup["scen"] and cand["a1"] == setup["a1"]):
+                    setup["outcome"] = "replaced"
+                    setup = None
+                    order = None
+                else:
+                    cand = None
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
@@ -520,11 +588,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 eP = tick(fib_price(setup["a1"], setup["a0"], d, lvl))
                 sP = tick(fib_price(setup["a1"], setup["a0"], d, stop_level(lvl)))
                 tP = tick(fib_price(setup["a1"], setup["a0"], d, target_level(lvl)))
-                if (c >= eP) if d == -1 else (c <= eP):
+                if not p.t_place_through and ((c >= eP) if d == -1 else (c <= eP)):
                     dead, why = True, "entry touched, no fill"  # closed through the entry before an order could work
                 else:
                     rp = abs(sP - eP)
-                    qty = min(math.floor(p.risk_usd / (rp * POINT_VALUE)), p.max_contracts) if rp > 0 else 0
+                    risk_eff = p.risk_usd * (p.dd_mult if p.use_dd_cut and peak_r - cum_r >= p.dd_limit_r else 1.0)
+                    qty = min(math.floor(risk_eff / (rp * POINT_VALUE)), p.max_contracts) if rp > 0 else 0
                     if p.check:
                         _inv((tP < eP < sP) if d == -1 else (sP < eP < tP), i, b, f"bracket on wrong side: stop {sP} entry {eP} target {tP} dir {d}")
                         _inv(eP == setup["entry"], i, b, f"order entry {eP} != locked entry {setup['entry']}")
@@ -559,6 +628,20 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             setup = None
             order = None
             ref_price = None
+
+        ds = res.days.setdefault(t.date(), dict(ldnH=None, ldnL=None, hi_sw=None, lo_sw=None, hi_in_win=False, lo_in_win=False,
+                                                 s1_fail_hi=False, s1_fail_lo=False, s2_ref_hi=None, s2_ref_lo=None,
+                                                 s2_elig_hi=None, s2_elig_lo=None, risk_off=False, ldn_valid=False))
+        ds.update(ldnH=ldnH, ldnL=ldnL, ldn_valid=ldn_valid, risk_off=ds["risk_off"] or (in_win and risk_off))
+        if hiSw and ds["hi_sw"] is None:
+            ds.update(hi_sw=b.time[hiSwBar], hi_in_win=hiSwInWin)
+        if loSw and ds["lo_sw"] is None:
+            ds.update(lo_sw=b.time[loSwBar], lo_in_win=loSwInWin)
+        if s2:
+            ds.update(s1_fail_hi=s1FailHi, s1_fail_lo=s1FailLo,
+                      s2_ref_hi=s2[1]["ref"], s2_ref_lo=s2[-1]["ref"],
+                      s2_elig_hi=None if not s2[1]["elig"] else b.time[s2[1]["elig_bar"]],
+                      s2_elig_lo=None if not s2[-1]["elig"] else b.time[s2[-1]["elig_bar"]])
 
         if p.trace is not None and (setup is not None or pos is not None or dead or closed_this_bar):
             src = setup if setup is not None else {}
