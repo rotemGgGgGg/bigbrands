@@ -433,7 +433,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if lvl > 0:  # the level set never changes while the anchors stay frozen
                     setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i,
                                  entry=tick(fib_price(setup["a1"], setup["a0"], d, lvl)))
-                    setup.setdefault("lock_hist", []).append((i, lvl, va))
+                    setup.setdefault("lock_hist", []).append((i, lvl, va, abs(setup["a1"] - setup["a0"])))
                     f[f"S{setup['scen']}_locked"] += 1
                     log(i, f"S{setup['scen']} locked @{lvl} va={va}")
             order = None
