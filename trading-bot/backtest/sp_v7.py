@@ -35,7 +35,9 @@ class Params:
     check: bool = True          # invariants raise InvariantError
     max_fails: int = 3               # 3 failed setups (1.0 broken) in a day → stop for the session
     s2_break_on_close: bool = False  # all breaks are wick-based (trader); True only for comparison
-    reject_self_break: bool = True  # [IMPL] second trigger candle beyond the first candle's extreme → no setup
+    reject_self_break: bool = True
+    s2_cancel: bool = True      # v7.5: price back through the broken level before the trigger kills the round
+    s2_dead_highest: bool = True  # v7.5: a cancelled round waits for the HIGHEST swing high (lowest low) since its break  # [IMPL] second trigger candle beyond the first candle's extreme → no setup
     trace: list | None = None   # debug: per-bar state
 
 
@@ -171,7 +173,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     s3_dead=False,
                     # S2 per side: pre-open reference, open flag, bar of the latest break, break count (round id),
                     # latest swing formed after that break (3-bar pivot) — a close beyond it opens a new round
-                    s2={side: dict(ref=None, ref_bar=None, elig=False, elig_bar=None, round=0, swing=None)
+                    s2={side: dict(ref=None, ref_bar=None, elig=False, elig_bar=None, round=0, swing=None, level=None, dead=False, used=0)
                         for side in (1, -1)},
                     fails=0, trades=0, capped=False)
 
@@ -194,7 +196,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 side = s["side"]
                 S["s1_fail"][side] = True
                 st = S["s2"][side]                         # S1 broke its 1.0: S2 opens on this side
-                st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None)
+                st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None, level=s["a1"], dead=False)
             elif s["scen"] == 3:
                 S["s3_dead"] = True                # [IMPL] carried over from v6
             S["fails"] += 1                        # a 1.0 break is a failed setup [IMPL]
@@ -291,14 +293,20 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     continue
                 px = c if p.s2_break_on_close else (h if side == 1 else l)
                 if st["elig"]:
+                    # v7.5 (trader): before the round's trigger, a wick back through the broken level cancels the break
+                    if p.s2_cancel and not st["dead"] and st["round"] != st["used"] and i > st["elig_bar"] \
+                            and ((l < st["level"]) if side == 1 else (h > st["level"])):
+                        st["dead"] = True
+                        log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} round {st['round']} dead (back through {st['level']})")
                     j = i - 1
                     if j - 1 >= 0 and j > st["elig_bar"] and T[j - 1].date() == t.date():
+                        keep = p.s2_dead_highest and st["dead"] and st["swing"] is not None
                         if side == 1 and H[j] > H[j - 1] and H[j] > H[i]:
-                            st["swing"] = H[j]
+                            st["swing"] = max(st["swing"], H[j]) if keep else H[j]
                         if side == -1 and L[j] < L[j - 1] and L[j] < L[i]:
-                            st["swing"] = L[j]
+                            st["swing"] = min(st["swing"], L[j]) if keep else L[j]
                     if st["swing"] is not None and ((px > st["swing"]) if side == 1 else (px < st["swing"])):
-                        st.update(elig_bar=i, round=st["round"] + 1, swing=None)
+                        st.update(elig_bar=i, round=st["round"] + 1, level=st["swing"], swing=None, dead=False)
                         log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} re-opens (swing broken, round {st['round']})")
                     continue
                 if S["sw_win"][side]:
@@ -308,7 +316,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         st["ref"], st["ref_bar"] = S["ext"][side], S["ext_bar"][side]
                     continue
                 if (px > st["ref"]) if side == 1 else (px < st["ref"]):
-                    st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None)
+                    st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None, level=st["ref"], dead=False)
                     log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} opens (pre-open reference broken)")
 
         # 8 ── triggers: the second candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and
@@ -338,7 +346,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                             cand = dict(scen=1, d=-1, side=1, a1=S["ext"][1], a1_bar=S["ext_bar"][1])
                         else:
                             cand = dict(scen=1, d=1, side=-1, a1=L[i - 1], a1_bar=i - 1)
-                    elif p.use_s2 and S["s2"][side]["elig"] and trig_s2 and i >= S["s2"][side]["elig_bar"]:
+                    elif p.use_s2 and S["s2"][side]["elig"] and not S["s2"][side]["dead"] \
+                            and S["s2"][side]["round"] != S["s2"][side]["used"] and trig_s2 and i >= S["s2"][side]["elig_bar"]:
+                        # one setup per round (v7.4); a cancelled round waits for the next swing break (v7.5)
                         # the pair only has to END at or after the break bar: the first candle may be the one before it [IMPL]
                         cand = dict(scen=2, d=side, side=side, a1=first[0], a1_bar=first[1], round=S["s2"][side]["round"])
             if p.reject_self_break and cand is not None and cand["a1_bar"] == i - 1 and ((h > cand["a1"]) if cand["d"] == -1 else (l < cand["a1"])):
@@ -356,6 +366,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         if setup is not None:
                             setup["outcome"] = "replaced"
                             res.funnel[f"S{setup['scen']} replaced"] += 1
+                        if cand["scen"] == 2:
+                            S["s2"][cand["side"]]["used"] = cand["round"]
                         setup = dict(cand, a0=a0, a0_bar=a0_bar, time=t, trig_bar=i, leg_trig=leg, outcome=None)
                         res.setups.append(setup)
                         order = None

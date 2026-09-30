@@ -33,6 +33,7 @@ vaPct     = input.float(70, "Value area %", minval = 10, maxval = 100, group = g
 grpX = "Execution"
 qty      = input.int(1, "Contracts [IMPL: fixed, the spec does not size]", minval = 1, group = grpX)
 maxFails = input.int(3, "Failed setups (1.0 broken) that end the session", minval = 1, group = grpX)
+deadWaitsHighest = input.bool(true, "Cancelled S2 round waits for the highest swing high / lowest swing low since its break (off = latest swing)", group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
 
 grpD = "Display"
@@ -155,6 +156,10 @@ var int   roundHi = 0               // S2 round per side: +1 on every break (ref
 var int   roundLo = 0
 var int   usedRoundHi = 0           // S2 round that already had its setup (one setup per round)
 var int   usedRoundLo = 0
+var float brkHi = na                // level the current S2 LONG round broke
+var float brkLo = na
+var bool  deadHi = false            // v7.5: price came back through that level before the trigger → round cancelled
+var bool  deadLo = false
 var float swingHi2 = na             // latest swing high formed after the last S2 LONG break
 var float swingLo2 = na             // latest swing low formed after the last S2 SHORT break
 var bool  s3Dead = false
@@ -280,6 +285,10 @@ if newDay
     roundLo := 0
     usedRoundHi := 0
     usedRoundLo := 0
+    brkHi := na
+    brkLo := na
+    deadHi := false
+    deadLo := false
     swingHi2 := na
     swingLo2 := na
     s3Dead := false
@@ -346,12 +355,16 @@ if sScen != 0
                 eligHiBar := bar_index
                 roundHi += 1
                 swingHi2 := na
+                brkHi := sA1
+                deadHi := false
             else
                 s1FailLo := true
                 eligLo := true
                 eligLoBar := bar_index
                 roundLo += 1
                 swingLo2 := na
+                brkLo := sA1
+                deadLo := false
         else if sScen == 3
             s3Dead := true                  // [IMPL] carried over from v6
         failsToday += 1                     // a 1.0 break is a failed setup; replacement and 14:00 are not
@@ -383,11 +396,16 @@ bool pivotOk = nyDate[2] == nyDate
 if valid
     if not na(swHi)
         if eligHi
+            // v7.5 (trader): before the round's trigger, a wick back below the broken level cancels the break
+            if not deadHi and roundHi != usedRoundHi and bar_index > eligHiBar and low < brkHi
+                deadHi := true
             if bar_index - 1 > eligHiBar and pivotOk and high[1] > high[2] and high[1] > high
-                swingHi2 := high[1]
+                swingHi2 := deadWaitsHighest and deadHi and not na(swingHi2) ? math.max(swingHi2, high[1]) : high[1]
             if not na(swingHi2) and high > swingHi2
                 eligHiBar := bar_index
                 roundHi += 1
+                brkHi := swingHi2
+                deadHi := false
                 swingHi2 := na
         else if not swHiWin
             if na(refHi)
@@ -399,13 +417,19 @@ if valid
                 eligHiBar := bar_index
                 roundHi += 1
                 swingHi2 := na
+                brkHi := refHi
+                deadHi := false
     if not na(swLo)
         if eligLo
+            if not deadLo and roundLo != usedRoundLo and bar_index > eligLoBar and high > brkLo
+                deadLo := true
             if bar_index - 1 > eligLoBar and pivotOk and low[1] < low[2] and low[1] < low
-                swingLo2 := low[1]
+                swingLo2 := deadWaitsHighest and deadLo and not na(swingLo2) ? math.min(swingLo2, low[1]) : low[1]
             if not na(swingLo2) and low < swingLo2
                 eligLoBar := bar_index
                 roundLo += 1
+                brkLo := swingLo2
+                deadLo := false
                 swingLo2 := na
         else if not swLoWin
             if na(refLo)
@@ -417,6 +441,8 @@ if valid
                 eligLoBar := bar_index
                 roundLo += 1
                 swingLo2 := na
+                brkLo := refLo
+                deadLo := false
 
 // ───────────────────────────── 8 triggers; a new setup replaces an armed one ─────────────────────────────
 // The second trigger candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and before 14:00.
@@ -452,7 +478,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cSide := 1
                 cA1 := extHi
                 cA1Bar := extHiBar
-            else if useS2 and eligHi and roundHi != usedRoundHi and twoBull and bar_index >= eligHiBar
+            else if useS2 and eligHi and not deadHi and roundHi != usedRoundHi and twoBull and bar_index >= eligHiBar
                 cScen := 2
                 cDir := 1
                 cSide := 1
@@ -466,7 +492,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cSide := -1
                 cA1 := low[1]
                 cA1Bar := bar_index - 1
-            else if useS2 and eligLo and roundLo != usedRoundLo and twoBear and bar_index >= eligLoBar
+            else if useS2 and eligLo and not deadLo and roundLo != usedRoundLo and twoBear and bar_index >= eligLoBar
                 cScen := 2
                 cDir := -1
                 cSide := -1
