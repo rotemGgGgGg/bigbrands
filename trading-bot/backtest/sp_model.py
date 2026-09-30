@@ -40,6 +40,7 @@ class Params:
     vp_price: str = "anchors"  # leg range only — rows span: anchors (a1..a0) | bars (high/low of the bars, like TradingView FRVP)
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
+    s2_swing_highs: bool = False  # S2 also on the break of an intermediate swing high/low (unconfirmed)
     a0_from_a1: bool = True  # S1: a0 = extreme since the bar of a1, not since the sweep
 
 
@@ -190,6 +191,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
     done_day = False
     s1FailHi = s1FailLo = s2DeadHi = s2DeadLo = s3Dead = False
     lastDeath = -1
+    s2 = {}  # per-side S2 state: ref extreme after a pre-open sweep, eligibility, running extreme since the break
     # setup
     setup = None  # dict
     order = None  # working limit placed at previous close
@@ -230,6 +232,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             done_day = False
             s1FailHi = s1FailLo = s2DeadHi = s2DeadLo = s3Dead = False
             lastDeath = -1
+            s2 = {1: dict(ref=None, ref_bar=None, swing=None, elig=False, elig_bar=None, x=None, x_bar=None, why=None),
+                  -1: dict(ref=None, ref_bar=None, swing=None, elig=False, elig_bar=None, x=None, x_bar=None, why=None)}
             if weekday:
                 f["days"] += 1
 
@@ -345,6 +349,40 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         # arm (§5, §6)
         two_bear = i > 0 and c < o and b.close[i - 1] < b.open[i - 1]
         two_bull = i > 0 and c > o and b.close[i - 1] > b.open[i - 1]
+
+        # S2 eligibility. In-window sweep: S1 failing sets it (in the death block below).
+        # Pre-open sweep: S1 never arms, so the reference is the post-sweep extreme at the first
+        # two-candle pullback after the sweep; S2 opens when price breaks it (optionally: an
+        # intermediate swing high/low formed on the way back).
+        if s2:
+            k = p.swing_k
+            for side, swept, sw_in_win, sw_bar, ext, pull in (
+                    (1, hiSw, hiSwInWin, hiSwBar, hiSinceHi, two_bear),
+                    (-1, loSw, loSwInWin, loSwBar, loSinceLo, two_bull)):
+                st2 = s2[side]
+                if st2["elig"]:
+                    better = (h > st2["x"]) if side == 1 else (l < st2["x"])
+                    if better:
+                        st2["x"], st2["x_bar"] = (h if side == 1 else l), i
+                    continue
+                if not swept or sw_in_win:
+                    continue
+                if st2["ref"] is None:
+                    if pull and i - 1 >= sw_bar:
+                        st2["ref"] = ext
+                        st2["ref_bar"] = hiSinceHiBar if side == 1 else loSinceLoBar
+                    continue
+                j = i - k
+                if p.s2_swing_highs and j > st2["ref_bar"] and j - k >= 0:
+                    if side == 1 and all(b.high[j] > b.high[j + o2] for o2 in range(-k, k + 1) if o2) and b.high[j] < st2["ref"]:
+                        st2["swing"] = b.high[j]
+                    if side == -1 and all(b.low[j] < b.low[j + o2] for o2 in range(-k, k + 1) if o2) and b.low[j] > st2["ref"]:
+                        st2["swing"] = b.low[j]
+                broke_ref = (h > st2["ref"]) if side == 1 else (l < st2["ref"])
+                broke_sw = st2["swing"] is not None and ((h > st2["swing"]) if side == 1 else (l < st2["swing"]))
+                if broke_ref or broke_sw:
+                    st2.update(elig=True, elig_bar=i, x=(h if side == 1 else l), x_bar=i, why="ref" if broke_ref else "swing")
+                    f[f"s2_open_{'ref' if broke_ref else 'swing'}"] += 1
         risk_off = done_day or trades_today >= p.max_trades or fails >= p.max_fails
         can_arm = (setup is None and pos is None and not risk_off and in_win and prev_in_win and can_place
                    and ldn_valid and weekday and i - 1 > lastDeath)
@@ -362,10 +400,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
             elif loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
                 cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, swbar=loSwBar)
-            elif s1FailHi and not s2DeadHi and two_bull:
-                cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=hiSinceHi, start=min(i - 1, hiSinceHiBar), a1bar=i - 1, swbar=hiSwBar)
-            elif s1FailLo and not s2DeadLo and two_bear:
-                cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=loSinceLo, start=min(i - 1, loSinceLoBar), a1bar=i - 1, swbar=loSwBar)
+            elif s2[1]["elig"] and not s2DeadHi and two_bull and i - 1 >= s2[1]["elig_bar"]:
+                cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=s2[1]["x"], start=min(i - 1, s2[1]["x_bar"]), a1bar=i - 1, swbar=hiSwBar, s2why=s2[1]["why"])
+            elif s2[-1]["elig"] and not s2DeadLo and two_bear and i - 1 >= s2[-1]["elig_bar"]:
+                cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=s2[-1]["x"], start=min(i - 1, s2[-1]["x_bar"]), a1bar=i - 1, swbar=loSwBar, s2why=s2[-1]["why"])
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
@@ -463,8 +501,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if setup["scen"] == 1:
                     if setup["side"] == 1:
                         s1FailHi = True
+                        s2[1].update(elig=True, elig_bar=i, x=hiSinceHi, x_bar=hiSinceHiBar, why="S1 failed")
                     else:
                         s1FailLo = True
+                        s2[-1].update(elig=True, elig_bar=i, x=loSinceLo, x_bar=loSinceLoBar, why="S1 failed")
                 elif setup["scen"] == 2:
                     if setup["side"] == 1:
                         s2DeadHi = True

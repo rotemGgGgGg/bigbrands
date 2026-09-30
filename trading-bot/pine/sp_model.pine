@@ -2,6 +2,9 @@
 // SP MODEL — MNQ, 5-minute. Implements SP_MODEL_BOT_SPEC.md with the trader's confirmed corrections.
 // Section numbers in comments (§) refer to that spec. Decisions the spec does not make are marked [IMPL].
 //
+// v6 sweep timing: a sweep counts from 06:00. Only S1 needs its sweep inside 09:30–14:00.
+//   S2 after a pre-open sweep: the reference is the post-sweep extreme at the first two-candle pullback;
+//   S2 opens when price breaks it. After an in-window sweep, S2 opens when S1 fails. Entries only 09:30–14:00.
 // v5 setup lifecycle (S1/S2/S3):
 //   trigger → leg forms (a0 follows every new extreme, measured from the bar of a1)
 //   → first bar that does not extend the leg: anchors freeze
@@ -26,6 +29,8 @@ grpScen = "Scenarios"
 useS1 = input.bool(true, "S1 — sweep reverses", group = grpScen)
 useS2 = input.bool(true, "S2 — sweep fails, continuation", group = grpScen)
 useS3 = input.bool(true, "S3 — both London levels taken", group = grpScen)
+s2Swing = input.bool(false, "S2 on intermediate swing highs / lows (unconfirmed)", group = grpScen,
+     tooltip = "Pre-open sweeps: S2 also opens when price breaks a smaller swing formed on the way back, not only the post-sweep extreme.")
 
 grpRisk = "Risk & sizing (§12, §13)"
 riskUsd      = input.float(250.0, "Risk per trade ($)", minval = 1, group = grpRisk, tooltip = "25K: 125 · 50K: 250")
@@ -228,6 +233,24 @@ var bool  s2DeadLo = false
 var bool  s3Dead = false
 var int   lastDeathBar = -1
 
+// S2 eligibility per side (hi = S2 LONG after the high was swept, lo = S2 SHORT after the low was swept)
+var float s2RefHi = na         // post-sweep high at the first two-candle pullback (pre-open sweeps)
+var int   s2RefHiBar = na
+var float s2SwingHi = na       // latest swing high below the reference (swing variant)
+var bool  s2EligHi = false
+var int   s2EligHiBar = na
+var float s2XHi = na           // running high since S2 opened = fib 0 for the S2 long
+var int   s2XHiBar = na
+var string s2WhyHi = ""
+var float s2RefLo = na
+var int   s2RefLoBar = na
+var float s2SwingLo = na
+var bool  s2EligLo = false
+var int   s2EligLoBar = na
+var float s2XLo = na
+var int   s2XLoBar = na
+var string s2WhyLo = ""
+
 // Risk limits and stats (§13, §16, §17)
 var float cumR = 0.0
 var float peakR = 0.0
@@ -280,6 +303,20 @@ if newDay
     s2DeadLo := false
     s3Dead := false
     lastDeathBar := -1
+    s2RefHi := na
+    s2RefHiBar := na
+    s2SwingHi := na
+    s2EligHi := false
+    s2EligHiBar := na
+    s2XHi := na
+    s2XHiBar := na
+    s2RefLo := na
+    s2RefLoBar := na
+    s2SwingLo := na
+    s2EligLo := false
+    s2EligLoBar := na
+    s2XLo := na
+    s2XLoBar := na
     if weekKey != curWeek
         curWeek := weekKey
         weekR := 0.0
@@ -335,6 +372,56 @@ if afterSix and ldnValid
         hiSinceLo := high
         hiSinceLoBar := bar_index
 bool bothSwept = hiSw and loSw
+bool twoBear = close < open and close[1] < open[1]
+bool twoBull = close > open and close[1] > open[1]
+float pivH = ta.pivothigh(high, 2, 2)
+float pivL = ta.pivotlow(low, 2, 2)
+
+// ───────────────────────────── S2 eligibility (v6) ─────────────────────────────
+// In-window sweep: S2 opens when S1 fails (see the dead block). Pre-open sweep: S1 never arms, so the
+// reference is the post-sweep extreme at the first two-candle pullback; S2 opens when price breaks it.
+if hiSw
+    if s2EligHi
+        if high > s2XHi
+            s2XHi := high
+            s2XHiBar := bar_index
+    else if not hiSwInWin
+        if na(s2RefHi)
+            if twoBear and bar_index - 1 >= hiSwBar
+                s2RefHi := hiSinceHi
+                s2RefHiBar := hiSinceHiBar
+        else
+            if s2Swing and not na(pivH) and bar_index - 2 > s2RefHiBar and pivH < s2RefHi
+                s2SwingHi := pivH
+            bool brokeRef = high > s2RefHi
+            bool brokeSw = not na(s2SwingHi) and high > s2SwingHi
+            if brokeRef or brokeSw
+                s2EligHi := true
+                s2EligHiBar := bar_index
+                s2XHi := high
+                s2XHiBar := bar_index
+                s2WhyHi := brokeRef ? "break" : "swing"
+if loSw
+    if s2EligLo
+        if low < s2XLo
+            s2XLo := low
+            s2XLoBar := bar_index
+    else if not loSwInWin
+        if na(s2RefLo)
+            if twoBull and bar_index - 1 >= loSwBar
+                s2RefLo := loSinceLo
+                s2RefLoBar := loSinceLoBar
+        else
+            if s2Swing and not na(pivL) and bar_index - 2 > s2RefLoBar and pivL > s2RefLo
+                s2SwingLo := pivL
+            bool brokeRef = low < s2RefLo
+            bool brokeSw = not na(s2SwingLo) and low < s2SwingLo
+            if brokeRef or brokeSw
+                s2EligLo := true
+                s2EligLoBar := bar_index
+                s2XLo := low
+                s2XLoBar := bar_index
+                s2WhyLo := brokeRef ? "break" : "swing"
 
 // ───────────────────────────── Fills (§11: count filled entries, not end-of-bar state) ─────────────────────────────
 int tradeCount = strategy.opentrades + strategy.closedtrades
@@ -414,8 +501,6 @@ if inPos and strategy.position_size != 0
 
 // ───────────────────────────── Arm a new setup (§5, §6) ─────────────────────────────
 // Once both London levels are swept it is S3 — never S1 or S2.
-bool twoBear = close < open and close[1] < open[1]
-bool twoBull = close > open and close[1] > open[1]
 bool riskOff = doneDay or tradesToday >= maxTrades or failsToday >= maxFails or blockedToday or isNews
 bool canArm  = setupScen == 0 and not inPos and strategy.position_size == 0 and not riskOff and inWin and prevInWin and canPlace and ldnValid and isWeekday and bar_index - 1 > lastDeathBar
 bool justArmed = false
@@ -456,20 +541,20 @@ if canArm
         cA1 := loSinceLo
         cA0 := hiSinceLo
         cStart := math.min(loSinceLoBar, hiSinceLoBar)
-    else if useS2 and s1FailHi and not s2DeadHi and twoBull
+    else if useS2 and s2EligHi and not s2DeadHi and twoBull and bar_index - 1 >= s2EligHiBar
         cScen := 2
         cDir := 1
         cSide := 1
         cA1 := low[1]                  // §6: single candle wick, bar n-1
-        cA0 := hiSinceHi
-        cStart := math.min(bar_index - 1, hiSinceHiBar)
-    else if useS2 and s1FailLo and not s2DeadLo and twoBear
+        cA0 := s2XHi                   // running high since S2 opened
+        cStart := math.min(bar_index - 1, s2XHiBar)
+    else if useS2 and s2EligLo and not s2DeadLo and twoBear and bar_index - 1 >= s2EligLoBar
         cScen := 2
         cDir := -1
         cSide := -1
         cA1 := high[1]
-        cA0 := loSinceLo
-        cStart := math.min(bar_index - 1, loSinceLoBar)
+        cA0 := s2XLo
+        cStart := math.min(bar_index - 1, s2XLoBar)
     if cScen != 0
         float leg = math.abs(cA1 - cA0)
         if leg == 0 or (useLegFilter and (leg < legMinPts or leg > legMaxPts))
@@ -613,8 +698,18 @@ if dead
         if setupScen == 1
             if setupSide == 1
                 s1FailHi := true
+                s2EligHi := true       // S1 failed by breaking its 1.0: S2 opens on this side
+                s2EligHiBar := bar_index
+                s2XHi := hiSinceHi
+                s2XHiBar := hiSinceHiBar
+                s2WhyHi := "S1 failed"
             else
                 s1FailLo := true
+                s2EligLo := true
+                s2EligLoBar := bar_index
+                s2XLo := loSinceLo
+                s2XLoBar := loSinceLoBar
+                s2WhyLo := "S1 failed"
         else if setupScen == 2
             if setupSide == 1
                 s2DeadHi := true
