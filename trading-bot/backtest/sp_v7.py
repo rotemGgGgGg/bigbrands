@@ -365,13 +365,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
     return res
 
 
-def load(path: str | None = None) -> pd.DataFrame:
+def load(path: str | None = None, tz: str = TZ, stamp: str = "auto") -> pd.DataFrame:
+    """A local file (NinjaTrader export, TradingView export or CSV — see data.py), or 60 days of Yahoo NQ."""
     if path:
-        df = pd.read_csv(path, parse_dates=[0], index_col=0)
-        df.columns = [c.lower() for c in df.columns]
-        if df.index.tz is None:
-            df.index = df.index.tz_localize("UTC")
-        return df.tz_convert(TZ)[["open", "high", "low", "close", "volume"]]
+        from data import load_file
+        return load_file(path, tz=tz, stamp=stamp)
     import yfinance as yf
 
     d = yf.download("NQ=F", period="60d", interval="5m", prepost=True, progress=False, auto_adjust=False)

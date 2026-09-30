@@ -1,0 +1,3 @@
+pandas>=2.0
+# optional: only for the 60-day Yahoo fallback
+yfinance
