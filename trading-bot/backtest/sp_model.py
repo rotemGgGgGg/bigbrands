@@ -40,6 +40,9 @@ class Params:
     vp_price: str = "anchors"  # leg range only — rows span: anchors (a1..a0) | bars (high/low of the bars, like TradingView FRVP)
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
+    use_s1: bool = True
+    use_s2: bool = True
+    use_s3: bool = True
     s2_swing_highs: bool = False  # S2 also on the break of an intermediate swing high/low (unconfirmed)
     a0_from_a1: bool = True  # S1: a0 = extreme since the bar of a1, not since the sweep
 
@@ -390,19 +393,19 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         if can_arm:
             cand = None
             if hiSw and loSw:
-                if not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
+                if p.use_s3 and not s3Dead and hiSwBar != loSwBar and i - 1 >= max(hiSwBar, loSwBar):
                     low_second = loSwBar > hiSwBar
                     if low_second and two_bull:
                         cand = dict(scen=3, dir=-1, side=0, a1=hiSinceHi, a0=loSinceLo, start=min(hiSinceHiBar, loSinceLoBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
                     elif not low_second and two_bear:
                         cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar), a1bar=loSinceLoBar, swbar=loSwBar)
-            elif hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
+            elif p.use_s1 and hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
                 cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
-            elif loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
+            elif p.use_s1 and loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
                 cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, swbar=loSwBar)
-            elif s2[1]["elig"] and not s2DeadHi and two_bull and i - 1 >= s2[1]["elig_bar"]:
+            elif p.use_s2 and s2[1]["elig"] and not s2DeadHi and two_bull and i - 1 >= s2[1]["elig_bar"]:
                 cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=s2[1]["x"], start=min(i - 1, s2[1]["x_bar"]), a1bar=i - 1, swbar=hiSwBar, s2why=s2[1]["why"])
-            elif s2[-1]["elig"] and not s2DeadLo and two_bear and i - 1 >= s2[-1]["elig_bar"]:
+            elif p.use_s2 and s2[-1]["elig"] and not s2DeadLo and two_bear and i - 1 >= s2[-1]["elig_bar"]:
                 cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=s2[-1]["x"], start=min(i - 1, s2[-1]["x_bar"]), a1bar=i - 1, swbar=loSwBar, s2why=s2[-1]["why"])
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
