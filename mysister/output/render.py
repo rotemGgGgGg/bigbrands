@@ -7,7 +7,7 @@ SRC = '/home/user/bigbrands/mysister/mysister'
 OUT = sys.argv[1] if len(sys.argv) > 1 else f'{S}/work/video_silent.mp4'
 PREVIEW = os.environ.get('PREVIEW')  # "t1,t2,..." -> write stills only
 W, H, FPS = 1920, 1080, 30
-INTRO = 4.2            # seconds before her voice starts
+INTRO = 0.5            # seconds before her voice starts
 FONT = f'{S}/fonts/Heebo.ttf'
 
 def P(n):
@@ -53,22 +53,26 @@ for i, p in enumerate(phrases):
                  'words': [(clean(w[0]), w[1] + INTRO) for w in p]})
 
 # ---------- photo timeline (anchored to what she says) ----------
-# (voice time where this group starts, [photos])
+# photos by contact-sheet index (sorted filenames)
+import glob as _g
+ALL = sorted(_g.glob(f'{SRC}/*.jpeg'))
+def I(*ix):
+    return [ALL[i] for i in ix]
+FACE, SUN, DRIVE = 'FACE', 'SUN', 'DRIVE'
+# (voice time, [items]) -- FACE = her on camera, DRIVE = crater road clip, SUN = sunset clip
 groups = [
-    (0.0,  ['15.51.49 (2)', '15.59.45']),                       # hi, I'm Michaela / Mitzpe Ramon
-    (5.3,  ['15.51.50 (4)', '15.51.49 (4)']),                   # grew up, quiet desert, kids
-    (11.1, ['15.51.49 (10)', '15.53.18', '15.51.49']),          # small community, everyone on the street
-    (16.4, ['15.51.50 (1)', '15.51.55 (1)', '15.51.55', '15.51.55 (3)']),  # everyday life, home
-    (27.1, ['15.52.03 (1)', '15.52.03']),                       # today, no longer live there
-    (34.4, ['15.51.50 (3)', '15.53.18 (1)', '15.51.49 (1)', '15.51.50 (5)']),  # community, people of all backgrounds
-    (44.8, ['15.51.49 (9)', '15.51.56 (1)', '15.51.49 (8)', '15.51.49 (7)', '15.51.50 (2)', '15.51.49 (6)']),  # slow pace, space to explore
-    (53.5, ['15.52.03 (2)', '15.59.52 (1)', '15.53.18 (2)', '15.53.18 (3)', '15.59.53']),  # seven years, grew and changed
-    (65.0, ['15.51.49 (3)', '15.51.50 (6)', '15.59.51', '15.51.49 (5)', '15.59.44', '15.59.45 (3)']),  # first home, childhood memories
-    (77.1, ['15.59.44 (1)', '15.51.56', '15.59.45 (2)', '15.59.45 (1)']),  # places that belong to us
-    (84.0, ['15.59.52']),                                       # ...belong to me (sunset)
+    (-0.5, [FACE]),                  # opening ~16s: "hi, I'm Michaela" ... "everyone on the street"
+    (16.4, I(13, 18, 21, 20)),       # everyday life / it was just home
+    (27.0, I(2, 24)),                # "today, now that I don't live there..."
+    (33.6, I(17, 10, 31, 0)),        # community, people of all backgrounds
+    (44.8, [DRIVE]),                 # slow pace, middle of nowhere
+    (49.4, I(8, 12)),                # space to discover, be curious, create
+    (53.5, I(25, 38, 28, 42)),       # seven years, grew and changed
+    (65.0, [FACE]),                  # closing ~20s: "but Mitzpe is still at the base of it all..."
+    (85.7, [SUN]),                   # music-only outro over the sunset
 ]
-VOICE_END = 88.0
-OUTRO = 4.5
+VOICE_END = 85.7
+OUTRO = 6.3
 TOTAL = INTRO + VOICE_END + OUTRO
 XF = 0.9  # crossfade seconds
 
@@ -77,8 +81,8 @@ for gi, (t0, ps) in enumerate(groups):
     t1 = groups[gi + 1][0] if gi + 1 < len(groups) else VOICE_END + OUTRO
     d = (t1 - t0) / len(ps)
     for j, p in enumerate(ps):
-        shots.append([INTRO + t0 + j * d, INTRO + t0 + (j + 1) * d, P(p)])
-shots[0][0] = INTRO - 0.6  # first photo emerges from the title
+        shots.append([INTRO + t0 + j * d, INTRO + t0 + (j + 1) * d, p])
+shots[0][0] = 0.0
 
 # ---------- image prep: warm desert grade ----------
 def grade(im):
@@ -124,7 +128,46 @@ def ease(t):
     t = min(max(t, 0), 1)
     return t * t * (3 - 2 * t)
 
-def kenburns(path, t, idx):
+FDIR = f'{S}/work/face'; SDIR = f'{S}/work/sun'; DDIR = f'{S}/work/clips/drive'
+def video_frame(path, t, prog):
+    if path == FACE:
+        n = int(round((t - INTRO) * FPS)) + 1
+        im = Image.open(f'{FDIR}/{min(max(n,1),2636):05d}.jpg').convert('RGB')
+        im = grade_face(im)
+    elif path == DRIVE:
+        st = [s for s in shots if s[2] == DRIVE][0][0]
+        n = int((t - st + XF / 2) * FPS * 0.9) + 45
+        fr = grade(Image.open(f'{DDIR}/{min(max(n,1),340):05d}.jpg').convert('RGB'))
+        bg = ImageEnhance.Brightness(fr.resize((W // 6, H // 6)).filter(ImageFilter.GaussianBlur(6)).resize((W, H), Image.BICUBIC)).enhance(0.5)
+        z = 1.0 + 0.04 * prog
+        fw, fh = int(1344 * z), int(756 * z)
+        fg = fr.resize((fw, fh), Image.LANCZOS)
+        ox, oy = (W - fw) // 2, (H - fh) // 2 - 30
+        sh = Image.new('L', (W, H), 0)
+        ImageDraw.Draw(sh).rectangle([ox + 8, oy + 16, ox + fw + 8, oy + fh + 16], fill=140)
+        bg.paste((10, 6, 2), (0, 0), sh.filter(ImageFilter.GaussianBlur(26)))
+        bg.paste(fg, (ox, oy))
+        return bg
+    else:
+        st = [s for s in shots if s[2] == SUN][0][0]
+        n = int((t - st + XF / 2) * FPS * 0.55) + 1
+        im = grade(Image.open(f'{SDIR}/{min(max(n,1),108):05d}.jpg').convert('RGB'))
+    z = 1.0 + 0.05 * prog
+    cw, ch = W / z, H / z
+    return im.transform((W, H), Image.AFFINE, (cw / W, 0, (W - cw) / 2 - 40 * prog * (path == FACE), 0, ch / H, (H - ch) / 2), resample=Image.BICUBIC)
+
+def grade_face(im):
+    # pull the green garden toward the warm desert palette, keep skin natural
+    a = np.asarray(im).astype(np.float32) / 255.0
+    lum = (a * [0.299, 0.587, 0.114]).sum(2, keepdims=True)
+    a = lum + (a - lum) * 0.78
+    a = a * [1.05, 0.99, 0.9] + [0.015, 0.008, 0.0]
+    a = 0.035 + a * 0.94
+    return Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
+
+def kenburns(path, t, idx, prog_t=None):
+    if path in (FACE, SUN, DRIVE):
+        return video_frame(path, prog_t, t)
     c = prepared(path)
     CW, CH = c.size
     z0, z1 = (1.25, 1.12) if idx % 2 == 0 else (1.12, 1.25)   # alternate zoom in / out
@@ -136,53 +179,6 @@ def kenburns(path, t, idx):
     x0 = (CW - cw) / 2 + dx
     y0 = (CH - ch) / 2 + dy
     return c.transform((W, H), Image.AFFINE, (cw / W, 0, x0, 0, ch / H, y0), resample=Image.BICUBIC)
-
-# ---------- title (photo-filled "knockout" letters) ----------
-title_bg = prepared(P('15.51.49 (2)'))  # overwritten below; placeholder load
-crater = grade(ImageOps.exif_transpose(Image.open(P('15.59.45'))).convert('RGB'))
-crater = ImageOps.fit(crater, (W, H), Image.LANCZOS)
-sunset = grade(ImageOps.exif_transpose(Image.open(P('15.59.52'))).convert('RGB'))
-sunset = ImageOps.fit(sunset, (W, H), Image.LANCZOS)
-
-def make_mask(text, size, weight=900):
-    f = ImageFont.truetype(FONT, size)
-    try:
-        f.set_variation_by_axes([weight])
-    except Exception:
-        pass
-    m = Image.new('L', (W, H), 0)
-    d = ImageDraw.Draw(m)
-    bb = d.textbbox((0, 0), text, font=f, direction='rtl')
-    d.text(((W - (bb[2] - bb[0])) / 2 - bb[0], (H - (bb[3] - bb[1])) / 2 - bb[1] - 20), text, font=f, fill=255, direction='rtl')
-    return m
-
-title_mask = make_mask('מצפה רמון', 330)
-sub_f = ImageFont.truetype(FONT, 40); sub_f.set_variation_by_axes([300])
-sand = (228, 206, 170)
-
-def title_frame(t, img, mask, subtitle, fade_out_at):
-    """Dark sand backdrop, letters filled with the photo, slow push-in."""
-    z = 1.0 + 0.05 * (t / 6)
-    cw, ch = W / z, H / z
-    base = img.transform((W, H), Image.AFFINE, (cw / W, 0, (W - cw) / 2, 0, ch / H, (H - ch) / 2), resample=Image.BICUBIC)
-    bg = ImageEnhance.Brightness(base.filter(ImageFilter.GaussianBlur(18))).enhance(0.38)
-    reveal = ease((t - 0.2) / 1.6)
-    # letters rise and sharpen in
-    m = mask.transform((W, H), Image.AFFINE, (1, 0, 0, 0, 1, -30 * (1 - reveal)))
-    m = m.filter(ImageFilter.GaussianBlur(10 * (1 - reveal) + 0.01)).point(lambda v: int(v * reveal))
-    out = bg.copy()
-    out.paste(ImageEnhance.Brightness(base).enhance(1.12), (0, 0), m)
-    # thin sand line + subtitle
-    a = ease((t - 1.1) / 1.2)
-    if a > 0:
-        lay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-        d = ImageDraw.Draw(lay)
-        lw = int(220 * a)
-        d.rectangle([W / 2 - lw / 2, 745, W / 2 + lw / 2, 747], fill=sand + (int(200 * a),))
-        bb = d.textbbox((0, 0), subtitle, font=sub_f, direction='rtl')
-        d.text(((W - (bb[2] - bb[0])) / 2 - bb[0], 775), subtitle, font=sub_f, fill=sand + (int(235 * a),), direction='rtl')
-        out = Image.alpha_composite(out.convert('RGBA'), lay).convert('RGB')
-    return out
 
 # ---------- subtitles ----------
 SUB_SIZE = 64
@@ -223,12 +219,6 @@ def draw_subs(frame, t):
         frame.paste(TXT, (0, 0), alpha)
     return frame
 
-# ---------- end card ----------
-end_mask = make_mask('מצפה רמון', 210)
-def end_frame(t):
-    # t: seconds since voice end
-    return title_frame(2.0 + t * 0.5, sunset, end_mask, 'המקום ששייך לי', 0)
-
 grain_rng = np.random.default_rng(7)
 grains = [grain_rng.normal(0, 3.2, (H // 2, W // 2, 1)).astype(np.float32) for _ in range(8)]
 
@@ -237,7 +227,7 @@ def photo_at(t):
     out = None
     for i, (a, b, p) in cur:
         prog = (t - (a - XF / 2)) / (b - a + XF)
-        im = kenburns(p, prog, i)
+        im = kenburns(p, prog, i, t)
         if out is None:
             out = im
         else:
@@ -246,23 +236,13 @@ def photo_at(t):
     return out
 
 def frame_at(t):
-    if t < INTRO:
-        f = title_frame(t, crater, title_mask, 'הבית הראשון שלי', INTRO)
-        k = ease((t - (INTRO - 0.9)) / 0.9)
-        if k > 0:
-            f = Image.blend(f, photo_at(max(t, shots[0][0])), k)
-    else:
-        f = photo_at(t)
-        tv = t - INTRO
-        if tv > VOICE_END + 0.3:
-            k = ease((tv - VOICE_END - 0.3) / 1.2)
-            f = Image.blend(f, end_frame(tv - VOICE_END - 0.3), k)
+    f = photo_at(t)
     f = draw_subs(f, t)
     a = np.asarray(f).astype(np.float32) * vig
     g = grains[int(t * FPS) % 8]
     a += np.repeat(np.repeat(g, 2, 0), 2, 1)
     # fade in from / out to black
-    fade = min(ease(t / 0.8), ease((TOTAL - t) / 1.2))
+    fade = min(ease(t / 1.0), ease((TOTAL - t) / 2.2))
     a *= fade
     return np.clip(a, 0, 255).astype(np.uint8)
 
