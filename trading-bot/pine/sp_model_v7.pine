@@ -153,6 +153,8 @@ var int   failsToday = 0
 var bool  capped = false
 var int   roundHi = 0               // S2 round per side: +1 on every break (reference, S1 1.0, or a new swing)
 var int   roundLo = 0
+var int   usedRoundHi = 0           // S2 round that already had its setup (one setup per round)
+var int   usedRoundLo = 0
 var float swingHi2 = na             // latest swing high formed after the last S2 LONG break
 var float swingLo2 = na             // latest swing low formed after the last S2 SHORT break
 var bool  s3Dead = false
@@ -276,6 +278,8 @@ if newDay
     capped := false
     roundHi := 0
     roundLo := 0
+    usedRoundHi := 0
+    usedRoundLo := 0
     swingHi2 := na
     swingLo2 := na
     s3Dead := false
@@ -448,7 +452,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cSide := 1
                 cA1 := extHi
                 cA1Bar := extHiBar
-            else if useS2 and eligHi and twoBull and bar_index >= eligHiBar
+            else if useS2 and eligHi and roundHi != usedRoundHi and twoBull and bar_index >= eligHiBar
                 cScen := 2
                 cDir := 1
                 cSide := 1
@@ -462,7 +466,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 cSide := -1
                 cA1 := low[1]
                 cA1Bar := bar_index - 1
-            else if useS2 and eligLo and twoBear and bar_index >= eligLoBar
+            else if useS2 and eligLo and roundLo != usedRoundLo and twoBear and bar_index >= eligLoBar
                 cScen := 2
                 cDir := -1
                 cSide := -1
@@ -491,6 +495,11 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                 sA0Bar := a0b
                 sA1AtArm := cA1
                 sRound := cRound
+                if cScen == 2                   // one S2 setup per round: after it fails, wait for the next swing break
+                    if cSide == 1
+                        usedRoundHi := cRound
+                    else
+                        usedRoundLo := cRound
                 if showLabels
                     label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(math.abs(cA1 - a0v), "#.##"),
                          style = cDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.orange, 10), textcolor = color.white, size = size.small)

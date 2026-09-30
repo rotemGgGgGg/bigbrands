@@ -32,7 +32,8 @@ of the two, whether or not it is the one that broke the reference. Once both sid
 **S2 rounds (trader, v7.3).** S2 re-triggers on every new break, not just the first. After each break, the
 latest swing that forms afterwards (3 bars: middle bar's low below both neighbours; mirror for highs) is tracked;
 a wick beyond it opens a new round. A trigger in a new round is a new setup: fresh 1.0 from its first trigger
-candle, old anchors discarded. **All breaks are wick-based** — sweep, 1.0 invalidation, reference, swing.
+candle, old anchors discarded. **One setup per round (v7.4):** after a round's setup fails (1.0 break), S2 on that
+side waits for the next swing break — no re-arm in the same round. **All breaks are wick-based** — sweep, 1.0 invalidation, reference, swing.
 
 **Caps.** A 1.0 break = one failed setup; 3 failures end the session. The first filled trade ends the session.
 Replacement by a fresher setup and 14:00 are not failures. A failed S2 does not end S2 for the day.
