@@ -11,7 +11,7 @@ import collections
 
 import pandas as pd
 
-import sp_v7 as v
+import sp_v8 as v
 
 
 def stats(rs):
@@ -33,7 +33,7 @@ def main():
     ap.add_argument("file")
     ap.add_argument("--tz", default="America/New_York", help="time zone of the file's timestamps (if they have no offset)")
     ap.add_argument("--stamp", default="auto", choices=["auto", "open", "close"], help="timestamp marks the bar's open or close")
-    ap.add_argument("--out", default="trades_v7.csv")
+    ap.add_argument("--out", default="trades_v8.csv")
     a = ap.parse_args()
 
     df = v.load(a.file, tz=a.tz, stamp=a.stamp)

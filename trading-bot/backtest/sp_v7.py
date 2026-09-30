@@ -307,7 +307,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                             st["swing"] = min(st["swing"], L[j]) if keep else L[j]
                     if st["swing"] is not None and ((px > st["swing"]) if side == 1 else (px < st["swing"])):
                         st.update(elig_bar=i, round=st["round"] + 1, level=st["swing"], swing=None, dead=False)
-                        log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} re-opens (swing broken, round {st['round']})")
+                        log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} re-opens (swing {st['level']} broken, round {st['round']})")
                     continue
                 if S["sw_win"][side]:
                     continue
