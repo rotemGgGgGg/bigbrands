@@ -7,14 +7,14 @@ SRC = '/home/user/bigbrands/mysister/mysister'
 OUT = sys.argv[1] if len(sys.argv) > 1 else f'{S}/work/video_silent.mp4'
 PREVIEW = os.environ.get('PREVIEW')  # "t1,t2,..." -> write stills only
 W, H, FPS = 1920, 1080, 30
-INTRO = 0.5            # seconds before her voice starts
+INTRO = 0.0            # seconds before her voice starts
 FONT = f'{S}/fonts/Heebo.ttf'
 
 def P(n):
     return f'{SRC}/WhatsApp Image 2026-09-30 at {n}.jpeg'
 
 # ---------- transcript -> subtitle phrases ----------
-FIX = {('לך', 'יום'): ('לכם', 'היום')}
+FIX = {('לך', 'יום'): ('לכם', 'היום'), ('שיש', 'לי'): ('שהשאיר', 'לי')}
 segs = json.load(open(f'{S}/work/transcript.json'))
 words = []
 for s in segs:
@@ -72,7 +72,7 @@ groups = [
     (85.7, [SUN]),                   # music-only outro over the sunset
 ]
 VOICE_END = 85.7
-OUTRO = 6.3
+OUTRO = 3.8
 TOTAL = INTRO + VOICE_END + OUTRO
 XF = 0.9  # crossfade seconds
 
