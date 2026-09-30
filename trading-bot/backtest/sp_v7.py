@@ -293,8 +293,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     st.update(elig=True, elig_bar=i, a1=st["pull"], a1_bar=st["pull_bar"])
                     log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} opens (pre-open reference broken)")
 
-        # 8 ── triggers: from 06:00 to 14:00; a new setup replaces an armed, unfilled one
-        if valid and pos is None and S["trades"] == 0 and 360 <= mn and mn + 5 < 840:
+        # 8 ── triggers: the second candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and
+        #      before 14:00. A trigger completing earlier is void — it never arms. Sweeps still count from 06:00.
+        #      A new setup replaces an armed, unfilled one.
+        if valid and pos is None and S["trades"] == 0 and mn + 5 >= 570 and mn + 5 < 840:
             cand = None
             hs, ls = S["sw"][1], S["sw"][-1]
             if hs is not None and ls is not None:          # both sides taken → S3 only

@@ -6,7 +6,8 @@ same step order per bar. v6 files are kept unchanged for reference.
 ## Spec as implemented
 
 **Sessions.** London range 00:00–06:00 NY. Sweeps count from 06:00 (the range is still forming before).
-Setups can arm any time 06:00–14:00. Limits can only work between 09:30 and 14:00. Flat at 14:00.
+**Trigger timing (trader, v7.1):** the second trigger candle must close at or after 09:30 (earliest: the 09:25 bar).
+A trigger completing earlier is void and never arms. Limits can only work between 09:30 and 14:00. Flat at 14:00.
 
 **Sweep.** Wick is enough; exact touch counts (`high >= London high`). Each level is consumed once. After the
 sweep the reference is the running extreme since the sweep; crossing the old London level again is not a sweep.
@@ -38,7 +39,7 @@ Nothing else ends a setup: no expiry, no touch rule.
 
 | # | Area | v6 | v7 | Moves trades? |
 |---|---|---|---|---|
-| 1 | Setup arming time | Triggers only 09:30–14:00 | Triggers from 06:00; a pre-open setup waits for 09:30 to place its limit | **Yes** — main source of the 5 extra trades (entries at 09:30–09:45) |
+| 1 | Setup arming time | Both trigger candles inside 09:30–14:00 | v7.1: the second candle closes at or after 09:30 — the 09:25 bar may complete a trigger | Rarely vs v6 |
 | 2 | Limit before fill | Anchors freeze on the first non-extending bar; limit placed only after the freeze and a value-area lock | Limit placed from the trigger bar and moved every bar with the fib | **Yes** — orders sit one bar earlier after each extension |
 | 3 | Level choice | Locked once in band; relocked only after a re-anchor | Re-chosen every bar (0.5 ↔ 0.588 ↔ none) until the fill | Yes |
 | 4 | VA floor | 0.412 | 0.41 | Rarely |

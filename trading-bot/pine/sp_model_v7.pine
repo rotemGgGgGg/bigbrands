@@ -4,7 +4,7 @@
 //
 // Per bar, at the close:
 //   1 fills  2 new day  3 London range  4 sweeps  5 flat at 14:00  6 armed setup: 1.0 break / 14:00 / fib 0 extends
-//   7 S2 eligibility (pre-open)  8 triggers (a new setup replaces an armed one)  9 place / move the limit
+//   7 S2 eligibility (pre-open)  8 triggers closing 09:30–14:00 (a new setup replaces an armed one)  9 place / move the limit
 //
 // margin 1%: the v6 default of 100% would reject every MNQ order at $50K capital.
 strategy("SP Model v7 — MNQ 5m", shorttitle = "SP v7", overlay = true,
@@ -417,8 +417,10 @@ if valid
                 s2A1Lo := pullLo
                 s2A1LoBar := pullLoBar
 
-// ───────────────────────────── 8 triggers 06:00–14:00; a new setup replaces an armed one ─────────────────────────────
-if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and nyMin >= 360 and nyMin + 5 < 840
+// ───────────────────────────── 8 triggers; a new setup replaces an armed one ─────────────────────────────
+// The second trigger candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and before 14:00.
+// A trigger completing earlier is void — it never arms. Sweeps still count from 06:00.
+if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and nyMin + 5 >= 570 and nyMin + 5 < 840
     int   cScen = 0
     int   cDir = 0
     int   cSide = 0
