@@ -26,6 +26,8 @@ class Params:
     max_trades: int = 1
     max_fails: int = 3
     va_low: float = 0.412
+    va_mid: float = 0.5
+    va_high: float = 0.588
     expiry_bars: int = 0  # 0 = off
     leg_grow_max: float = 0.0  # 0 = off (the cap was an invented parameter)
     use_leg_filter: bool = False
@@ -79,14 +81,14 @@ def target_level(lvl):
     return 0.36 if lvl == 0.588 else 0.267
 
 
-def choose_level(scen, va, va_low):
+def choose_level(scen, va, va_low, va_mid=0.5, va_high=0.588):
     if scen == 3:
         return 0.5
     if va is None:
         return 0.0
-    if va > 0.588:
+    if va > va_high:
         return 0.0
-    if va >= 0.5:
+    if va >= va_mid:
         return 0.588
     if va >= va_low:
         return 0.5
@@ -575,7 +577,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if setup["frozen"]:
                     setup["va_frozen"].append(va)
             if setup["frozen"] and not setup["locked"]:
-                lvl = choose_level(setup["scen"], va, p.va_low)
+                lvl = choose_level(setup["scen"], va, p.va_low, p.va_mid, p.va_high)
                 if lvl > 0:  # the level set never changes while the anchors stay frozen
                     setup.update(locked=True, level=lvl, lock_va=va, lock_bar=i,
                                  entry=tick(fib_price(setup["a1"], setup["a0"], d, lvl)))
