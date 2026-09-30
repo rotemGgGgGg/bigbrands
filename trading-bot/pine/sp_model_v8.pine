@@ -1,0 +1,516 @@
+//@version=6
+// SP MODEL v8 — MNQ 5m. Rewritten from TRADER_BRAIN.md (rules as of v7.5). Mirrors backtest/sp_v8.py step for step.
+// Tags: [T] trader-confirmed · [IMPL] our decision, not confirmed by the trader.
+//
+// Per bar, at the close:
+//   1 fills  2 new day  3 London range  4 sweeps  5 position / flat at 14:00  6 armed setup
+//   7 S2 rounds  8 triggers (second candle closes 09:30–14:00)  9 place / move the limit
+//
+// Each London level is a Side (+1 = the high, -1 = the low). S1 trades against the sweep, S2 with it.
+// margin 1%: the default of 100% would reject every MNQ order at $50K capital.
+strategy("SP Model v8 — MNQ 5m", shorttitle = "SP v8", overlay = true,
+     initial_capital = 50000, pyramiding = 0,
+     margin_long = 1, margin_short = 1,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0,
+     process_orders_on_close = false, calc_on_every_tick = false,
+     max_bars_back = 500, max_labels_count = 500, max_lines_count = 500)
+
+const string TZ = "America/New_York"
+const int LDN_END = 360      // 06:00
+const int WIN_START = 570    // 09:30
+const int WIN_END = 840      // 14:00
+
+// ───────────────────────────── Inputs ─────────────────────────────
+grpS = "Scenarios"
+useS1 = input.bool(true, "S1 — sweep reverses", group = grpS)
+useS2 = input.bool(true, "S2 — continuation", group = grpS)
+useS3 = input.bool(true, "S3 — both London levels taken", group = grpS)
+
+grpV = "Value area"
+vaFloor   = input.float(0.41, "Floor (below → no trade)", step = 0.001, group = grpV)
+vaMid     = input.float(0.5, "0.5 entry below / 0.588 entry from", step = 0.001, group = grpV)
+vaCeiling = input.float(0.588, "Ceiling (above → no trade)", step = 0.001, group = grpV)
+vpRows    = input.int(999, "Rows", minval = 10, maxval = 2000, group = grpV)
+vaPct     = input.float(70, "Value area %", minval = 10, maxval = 100, group = grpV) / 100.0
+
+grpX = "Rules"
+maxFails = input.int(3, "Failed setups (1.0 broken) that end the session", minval = 1, group = grpX)
+deadWaitsHighest = input.bool(true, "Cancelled S2 round waits for the most extreme swing since its break (off = latest swing)", group = grpX)
+qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
+checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
+
+grpD = "Display"
+showFib    = input.bool(true, "Fib 1.0 / 0", group = grpD)
+showLevels = input.bool(true, "Entry / stop / target", group = grpD)
+showLabels = input.bool(true, "Labels", group = grpD)
+showTable  = input.bool(true, "Stats table", group = grpD)
+
+if timeframe.period != "5"
+    runtime.error("SP Model v8 runs on the 5-minute chart only.")
+
+// ───────────────────────────── Types ─────────────────────────────
+// One London level: its sweep, the extreme since the sweep, S1's failure and the S2 round machine.
+type Side
+    int   sign                  // +1 London high (S1 short / S2 long), -1 London low (S1 long / S2 short)
+    int   sweepBar = na
+    bool  sweepInWin = false
+    float ext = na              // extreme since the sweep — the consumed level's new reference
+    int   extBar = na
+    bool  s1Failed = false
+    float ref = na              // pre-open sweep: post-sweep extreme at the first two-candle pullback
+    bool  s2Open = false
+    int   round = 0             // +1 on every break
+    int   breakBar = na
+    float level = na            // the level this round broke
+    bool  cancelled = false     // price came back through `level` before the trigger (v7.5)
+    int   used = 0              // round that already produced its setup
+    float swing = na            // swing to break for the next round
+
+// ───────────────────────────── Helpers ─────────────────────────────
+beyond(float x, float lvl, int sign) =>
+    sign == 1 ? x > lvl : x < lvl
+
+fibPrice(float f1, float f0, int dir, float lvl) =>
+    float rng = math.abs(f1 - f0)
+    dir == -1 ? f0 + rng * lvl : f0 - rng * lvl
+
+stopOf(float lvl) =>
+    lvl == 0.588 ? 0.816 : 0.702
+
+targetOf(float lvl) =>
+    lvl == 0.588 ? 0.36 : 0.267
+
+chooseLevel(int scen, float va) =>
+    float lvl = 0.0
+    if scen == 3
+        lvl := 0.5                                      // [T] S3: 0.5 only, no value area
+    else if not na(va) and va <= vaCeiling and va >= vaFloor
+        lvl := va >= vaMid ? 0.588 : 0.5
+    lvl
+
+method openRound(Side sd, float lvl) =>
+    sd.s2Open := true
+    sd.breakBar := bar_index
+    sd.level := lvl
+    sd.round := sd.round + 1
+    sd.swing := na
+    sd.cancelled := false
+    sd
+
+// fib 0 counts forward from the 1.0 bar only [T]; ties keep the earliest bar.
+extremeSince(int fromBar, int dir) =>
+    float v = na
+    int vb = na
+    int n = math.min(bar_index - fromBar, 499)
+    for k = n to 0
+        float x = dir == -1 ? low[k] : high[k]
+        if na(v) or (dir == -1 ? x < v : x > v)
+            v := x
+            vb := bar_index - k
+    [v, vb]
+
+// Fixed-range volume profile over bars [fromBar, now] and prices [lo, hi] → [VAH, VAL].
+valueArea(int fromBar, float lo, float hi) =>
+    float vah = na
+    float val = na
+    if hi > lo
+        int rows = vpRows
+        float rh = (hi - lo) / rows
+        diff = array.new_float(rows + 1, 0.0)
+        for i = 0 to math.min(bar_index - fromBar, 499)
+            float bh = high[i]
+            float bl = low[i]
+            if bh > lo and bl < hi
+                int i0 = math.max(0, math.min(rows - 1, int(math.floor((bl - lo) / rh))))
+                int i1 = math.max(0, math.min(rows - 1, int(math.floor((bh - lo) / rh))))
+                float per = nz(volume[i]) / (i1 - i0 + 1)
+                diff.set(i0, diff.get(i0) + per)
+                diff.set(i1 + 1, diff.get(i1 + 1) - per)
+        bins = array.new_float(rows, 0.0)
+        float run = 0.0
+        float tot = 0.0
+        int poc = 0
+        float pocV = -1.0
+        for k = 0 to rows - 1
+            run += diff.get(k)
+            bins.set(k, run)
+            tot += run
+            if run > pocV
+                pocV := run
+                poc := k
+        if tot > 0
+            float acc = bins.get(poc)
+            int up = poc
+            int dn = poc
+            while acc < tot * vaPct and (up < rows - 1 or dn > 0)
+                float vUp = up < rows - 1 ? bins.get(up + 1) : -1.0
+                float vDn = dn > 0 ? bins.get(dn - 1) : -1.0
+                if vUp >= vDn
+                    up += 1
+                    acc += vUp
+                else
+                    dn -= 1
+                    acc += vDn
+            vah := lo + (up + 1) * rh
+            val := lo + dn * rh
+    [vah, val]
+
+scenName(int scen, int dir) =>
+    "S" + str.tostring(scen) + (dir == 1 ? " LONG" : " SHORT")
+
+stamp() =>
+    str.format_time(time, "yyyy-MM-dd HH:mm", TZ)
+
+// ───────────────────────────── Time ─────────────────────────────
+int  nyMin  = hour(time, TZ) * 60 + minute(time, TZ)       // bar OPEN time, NY
+int  nyDate = year(time, TZ) * 10000 + month(time, TZ) * 100 + dayofmonth(time, TZ)
+bool newDay = nyDate != nyDate[1]
+bool inWin  = nyMin >= WIN_START and nyMin < WIN_END
+
+// ───────────────────────────── State ─────────────────────────────
+var Side hiS = Side.new(1)
+var Side loS = Side.new(-1)
+var float ldnH = na
+var float ldnL = na
+var int   ldnN = 0
+var bool  s3Dead = false
+var int   failsToday = 0
+var bool  capped = false
+var int   tradesToday = 0
+// armed setup
+var int   sScen = 0
+var int   sDir = 0
+var int   sSide = 0
+var float sA1 = na
+var int   sA1Bar = na
+var int   sRound = 0
+var float sA0 = na
+var int   sA0Bar = na
+var float sA1AtArm = na
+// order placed at the previous close
+var bool  ordActive = false
+var float ordEntry = na
+var float ordStop = na
+var float ordTgt = na
+var float ordLevel = na
+var float ordVa = na
+var int   ordScen = 0
+var int   ordDir = 0
+// position
+var bool  inPos = false
+var int   pScen = 0
+var int   pDir = 0
+var float pLevel = na
+var float pVa = na
+var float pEntry = na
+var float pStop = na
+var float pTgt = na
+var float pA1 = na
+var float pA0 = na
+// stats
+var int   lastCount = 0
+var int   lastClosed = 0
+var int   nT = 0
+var int   nW = 0
+var float totR = 0.0
+var array<int>   nBy = array.new_int(4, 0)
+var array<int>   wBy = array.new_int(4, 0)
+var array<float> rBy = array.new_float(4, 0.0)
+
+float plotE = na
+float plotS = na
+float plotT = na
+
+// ───────────────────────────── 1 fills ─────────────────────────────
+int tradeCount = strategy.opentrades + strategy.closedtrades
+if tradeCount > lastCount
+    if checkInv and ordActive
+        float fillPx = strategy.position_size != 0 ? strategy.position_avg_price : strategy.closedtrades.entry_price(strategy.closedtrades - 1)
+        if ordDir == 1 ? fillPx > ordEntry : fillPx < ordEntry
+            runtime.error(str.format("INVARIANT fill {0} worse than limit {1} at {2}", fillPx, ordEntry, stamp()))
+    inPos := true
+    pScen := ordScen
+    pDir := ordDir
+    pLevel := ordLevel
+    pVa := ordVa
+    pEntry := ordEntry
+    pStop := ordStop
+    pTgt := ordTgt
+    pA1 := sA1
+    pA0 := sA0
+    tradesToday += tradeCount - lastCount                  // the first fill ends the day [T]
+    sScen := 0
+    if showLabels
+        label.new(bar_index, pDir == 1 ? low : high, scenName(pScen, pDir) + " @" + str.tostring(pLevel) + (na(pVa) ? "" : "\nva " + str.tostring(pVa, "#.###")),
+             style = pDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.blue, 10), textcolor = color.white, size = size.small)
+lastCount := tradeCount
+
+if strategy.closedtrades > lastClosed
+    for j = lastClosed to strategy.closedtrades - 1
+        float risk = math.abs(pStop - pEntry) * syminfo.pointvalue * math.abs(strategy.closedtrades.size(j))
+        float r = risk > 0 ? strategy.closedtrades.profit(j) / risk : na
+        if not na(r)
+            nT += 1
+            nW += r > 0 ? 1 : 0
+            totR += r
+            nBy.set(pScen, nBy.get(pScen) + 1)
+            wBy.set(pScen, wBy.get(pScen) + (r > 0 ? 1 : 0))
+            rBy.set(pScen, rBy.get(pScen) + r)
+        log.info("TRADE | entry {0} | {1} | level {2} | entry {3} stop {4} target {5} | R {6}",
+             str.format_time(strategy.closedtrades.entry_time(j), "yyyy-MM-dd HH:mm", TZ), scenName(pScen, pDir), pLevel, pEntry, pStop, pTgt, r)
+        if showLabels
+            label.new(bar_index, pDir == 1 ? high : low, (r >= 0 ? "+" : "") + str.tostring(r, "#.##") + "R",
+                 style = pDir == 1 ? label.style_label_down : label.style_label_up,
+                 color = r >= 0 ? color.new(color.green, 10) : color.new(color.red, 10), textcolor = color.white, size = size.small)
+    lastClosed := strategy.closedtrades
+    inPos := strategy.position_size != 0
+
+// ───────────────────────────── 2 new day at 00:00 NY ─────────────────────────────
+if newDay
+    if strategy.position_size != 0
+        strategy.close_all(comment = "day reset", immediately = true)
+    strategy.cancel("E")
+    hiS := Side.new(1)
+    loS := Side.new(-1)
+    ldnH := na
+    ldnL := na
+    ldnN := 0
+    s3Dead := false
+    failsToday := 0
+    capped := false
+    tradesToday := 0
+    sScen := 0
+    ordActive := false
+
+// ───────────────────────────── 3 London range 00:00–06:00 [T] ─────────────────────────────
+if nyMin < LDN_END
+    ldnH := na(ldnH) ? high : math.max(ldnH, high)
+    ldnL := na(ldnL) ? low : math.min(ldnL, low)
+    ldnN += 1
+bool valid = not na(ldnH) and ldnN >= 60    // [IMPL] ≥60 of 72 bars
+
+// ───────────────────────────── 4 sweeps from 06:00: wick, exact touch, each level consumed once [T] ─────────────────────────────
+sweepStep(Side sd, float px, float lvl, bool win) =>
+    if not na(sd.sweepBar)
+        if beyond(px, sd.ext, sd.sign)
+            sd.ext := px
+            sd.extBar := bar_index
+    else if px == lvl or beyond(px, lvl, sd.sign)
+        sd.sweepBar := bar_index
+        sd.sweepInWin := win
+        sd.ext := px
+        sd.extBar := bar_index
+    sd
+
+if nyMin >= LDN_END and valid
+    sweepStep(hiS, high, ldnH, inWin)
+    sweepStep(loS, low, ldnL, inWin)
+
+// ───────────────────────────── 5 position: frozen bracket, flat at 14:00 [T] ─────────────────────────────
+if inPos and strategy.position_size != 0
+    strategy.exit("X", "E", stop = pStop, limit = pTgt)
+    plotE := pEntry
+    plotS := pStop
+    plotT := pTgt
+    if nyMin + 5 >= WIN_END
+        strategy.close_all(comment = "14:00", immediately = true)
+
+// ───────────────────────────── 6 armed setup: 1.0 break → dead, 14:00 → dead, else fib 0 extends [T] ─────────────────────────────
+if sScen != 0
+    string why = ""
+    if beyond(sDir == -1 ? high : low, sA1, -sDir)
+        why := "1.0 broken"
+        if sScen == 1                                   // S1 broke its 1.0 → S2 opens on that side [T]
+            Side sd = sSide == 1 ? hiS : loS
+            sd.s1Failed := true
+            sd.openRound(sA1)
+        else if sScen == 3
+            s3Dead := true                              // [IMPL]
+        failsToday += 1                                 // a 1.0 break is a failed setup [T]
+        if failsToday >= maxFails
+            capped := true
+    else if nyMin + 5 >= WIN_END
+        why := "14:00"
+    else if beyond(sDir == -1 ? low : high, sA0, sDir)
+        sA0 := sDir == -1 ? low : high
+        sA0Bar := bar_index
+    if why != ""
+        if showLabels
+            label.new(bar_index, sDir == 1 ? low : high, "✗ " + why, style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                 color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+        sScen := 0
+
+bool sameDay = nyDate[1] == nyDate
+bool twoBull = sameDay and close >= open and close[1] >= open[1]    // doji counts both ways [T]
+bool twoBear = sameDay and close <= open and close[1] <= open[1]
+
+// ───────────────────────────── 7 S2 rounds [T] ─────────────────────────────
+// Opened by S1's 1.0 break (step 6), by a pre-open sweep's reference break, or by a break of the 3-bar swing formed
+// after the last break. A wick back through the broken level before the round's trigger cancels it (v7.5); a
+// cancelled round waits for the most extreme swing since. All breaks are wick-based.
+bool pivotOk = nyDate[2] == nyDate
+float hi1 = high[1]
+float hi2 = high[2]
+float lo1 = low[1]
+float lo2 = low[2]
+
+s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
+    if not na(sd.sweepBar)
+        float toward = sd.sign == 1 ? high : low
+        float back = sd.sign == 1 ? low : high
+        if sd.s2Open
+            if not sd.cancelled and sd.round != sd.used and bar_index > sd.breakBar and beyond(back, sd.level, -sd.sign)
+                sd.cancelled := true
+            // 3-bar pivot at the previous bar, formed after the break
+            if bar_index - 1 > sd.breakBar and pivOk and beyond(p1, p2, sd.sign) and beyond(p1, p0, sd.sign)
+                if deadWaitsHighest and sd.cancelled and not na(sd.swing)
+                    sd.swing := sd.sign == 1 ? math.max(sd.swing, p1) : math.min(sd.swing, p1)
+                else
+                    sd.swing := p1
+            if not na(sd.swing) and beyond(toward, sd.swing, sd.sign)
+                sd.openRound(sd.swing)
+        else if not sd.sweepInWin                       // pre-open sweep: reference = first two-candle pullback [T]
+            if na(sd.ref)
+                if pullback and bar_index - 1 >= sd.sweepBar
+                    sd.ref := sd.ext
+            else if beyond(toward, sd.ref, sd.sign)
+                sd.openRound(sd.ref)
+    sd
+
+if valid
+    s2Step(hiS, twoBear, pivotOk, hi1, hi2, high)
+    s2Step(loS, twoBull, pivotOk, lo1, lo2, low)
+
+// ───────────────────────────── 8 triggers: second candle closes 09:30–14:00 [T] ─────────────────────────────
+if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and not capped and nyMin + 5 >= WIN_START and nyMin + 5 < WIN_END
+    int   cScen = 0
+    int   cDir = 0
+    int   cSide = 0
+    float cA1 = na
+    int   cA1Bar = na
+    int   cRound = 0
+    if not na(hiS.sweepBar) and not na(loS.sweepBar)
+        // both taken → S3 only, against the second sweep; 1.0 = first sweep's extreme [T]
+        if useS3 and not s3Dead and hiS.sweepBar != loS.sweepBar and bar_index - 1 >= math.max(hiS.sweepBar, loS.sweepBar)
+            if loS.sweepBar > hiS.sweepBar and twoBull
+                cScen := 3
+                cDir := -1
+                cA1 := hiS.ext
+                cA1Bar := hiS.extBar
+            else if hiS.sweepBar > loS.sweepBar and twoBear
+                cScen := 3
+                cDir := 1
+                cA1 := loS.ext
+                cA1Bar := loS.extBar
+    else
+        for sd in array.from(hiS, loS)
+            if cScen == 0 and not na(sd.sweepBar)
+                bool s1Trig = sd.sign == 1 ? twoBear : twoBull
+                bool s2Trig = sd.sign == 1 ? twoBull : twoBear
+                if useS1 and sd.sweepInWin and not sd.s1Failed and s1Trig and bar_index - 1 >= sd.sweepBar
+                    // S1 SHORT: highest point since the sweep; S1 LONG: low of the first trigger candle [T]
+                    cScen := 1
+                    cDir := -sd.sign
+                    cSide := sd.sign
+                    cA1 := sd.sign == 1 ? sd.ext : lo1
+                    cA1Bar := sd.sign == 1 ? sd.extBar : bar_index - 1
+                else if useS2 and sd.s2Open and not sd.cancelled and sd.round != sd.used and s2Trig and bar_index >= sd.breakBar
+                    // S2: far extreme of the first trigger candle [T]; the pair may start before the break [IMPL]
+                    cScen := 2
+                    cDir := sd.sign
+                    cSide := sd.sign
+                    cA1 := sd.sign == 1 ? lo1 : hi1
+                    cA1Bar := bar_index - 1
+                    cRound := sd.round
+    // [IMPL] the second candle already traded beyond the first candle's extreme → 1.0 broken, no setup
+    if cScen != 0 and cA1Bar == bar_index - 1 and beyond(cDir == -1 ? high : low, cA1, -cDir)
+        cScen := 0
+    // [IMPL] a later trigger of the same scenario, direction and round keeps the first anchor
+    if cScen != 0 and not (sScen == cScen and sDir == cDir and sRound == cRound)
+        [a0v, a0b] = extremeSince(cA1Bar, cDir)
+        if math.abs(cA1 - a0v) > 0
+            if sScen != 0 and showLabels
+                label.new(bar_index, sDir == 1 ? low : high, "↺ replaced", style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.gray, 40), textcolor = color.white, size = size.tiny)
+            if cScen == 2                               // one setup per round [IMPL]
+                Side used = cSide == 1 ? hiS : loS
+                used.used := cRound
+            sScen := cScen
+            sDir := cDir
+            sSide := cSide
+            sA1 := cA1
+            sA1Bar := cA1Bar
+            sA0 := a0v
+            sA0Bar := a0b
+            sA1AtArm := cA1
+            sRound := cRound
+            if showLabels
+                label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(math.abs(cA1 - a0v), "#.##"),
+                     style = cDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.orange, 10), textcolor = color.white, size = size.small)
+
+// ───────────────────────────── 9 place / move the limit: fills 09:30–14:00 [T], last placement at the 13:50 close [IMPL] ─────────────────────────────
+ordActive := false
+if sScen != 0 and not inPos and strategy.position_size == 0 and nyMin >= WIN_START - 5 and nyMin + 5 < WIN_END
+    if checkInv and sA1 != sA1AtArm
+        runtime.error(str.format("INVARIANT a1 moved {0} -> {1} at {2}", sA1AtArm, sA1, stamp()))
+    float va = na
+    if sScen != 3
+        float lo = math.min(sA1, sA0)
+        float hi = math.max(sA1, sA0)
+        [vah, val] = valueArea(sA1Bar, lo, hi)
+        if not na(vah) and hi > lo
+            va := sDir == -1 ? (vah - sA0) / (hi - lo) : (sA0 - val) / (hi - lo)
+    float lvl = chooseLevel(sScen, va)
+    if lvl > 0
+        float eP = math.round_to_mintick(fibPrice(sA1, sA0, sDir, lvl))
+        float sP = math.round_to_mintick(fibPrice(sA1, sA0, sDir, stopOf(lvl)))
+        float tP = math.round_to_mintick(fibPrice(sA1, sA0, sDir, targetOf(lvl)))
+        if checkInv and not (sDir == -1 ? tP < eP and eP < sP : sP < eP and eP < tP)
+            runtime.error(str.format("INVARIANT bracket on wrong side stop {0} entry {1} target {2} at {3}", sP, eP, tP, stamp()))
+        if not (sDir == -1 ? close >= eP : close <= eP)         // [IMPL] a limit through the market is not placed
+            strategy.entry("E", sDir == 1 ? strategy.long : strategy.short, qty = qty, limit = eP, comment = scenName(sScen, sDir) + " @" + str.tostring(lvl))
+            strategy.exit("X", "E", stop = sP, limit = tP)
+            ordActive := true
+            ordEntry := eP
+            ordStop := sP
+            ordTgt := tP
+            ordLevel := lvl
+            ordVa := va
+            ordScen := sScen
+            ordDir := sDir
+            plotE := eP
+            plotS := sP
+            plotT := tP
+if not ordActive and not inPos and strategy.position_size == 0
+    strategy.cancel("E")
+    strategy.cancel("X")
+
+// ───────────────────────────── Plots ─────────────────────────────
+plot(ldnH, "London high", color.new(color.gray, 20), 1, plot.style_linebr)
+plot(ldnL, "London low", color.new(color.gray, 20), 1, plot.style_linebr)
+plot(showLevels ? plotE : na, "Entry", color.new(color.blue, 0), 2, plot.style_linebr)
+plot(showLevels ? plotS : na, "Stop", color.new(color.red, 0), 2, plot.style_linebr)
+plot(showLevels ? plotT : na, "Target", color.new(color.green, 0), 2, plot.style_linebr)
+plot(showFib ? (sScen != 0 ? sA1 : inPos ? pA1 : na) : na, "Fib 1.0", color.new(color.orange, 0), 1, plot.style_linebr)
+plot(showFib ? (sScen != 0 ? sA0 : inPos ? pA0 : na) : na, "Fib 0", color.new(color.purple, 0), 1, plot.style_linebr)
+bgcolor(inWin ? color.new(color.blue, 94) : na, title = "Entry window")
+
+// ───────────────────────────── Stats ─────────────────────────────
+if showTable and barstate.islast
+    var table tb = table.new(position.top_right, 4, 6, bgcolor = color.new(color.black, 20), border_width = 1)
+    table.cell(tb, 0, 0, "", text_color = color.white)
+    table.cell(tb, 1, 0, "Trades", text_color = color.white)
+    table.cell(tb, 2, 0, "Wins", text_color = color.white)
+    table.cell(tb, 3, 0, "R", text_color = color.white)
+    for sc = 1 to 3
+        table.cell(tb, 0, sc, "S" + str.tostring(sc), text_color = color.white)
+        table.cell(tb, 1, sc, str.tostring(nBy.get(sc)), text_color = color.white)
+        table.cell(tb, 2, sc, str.tostring(wBy.get(sc)), text_color = color.white)
+        table.cell(tb, 3, sc, str.tostring(rBy.get(sc), "#.##"), text_color = color.white)
+    table.cell(tb, 0, 4, "All", text_color = color.white)
+    table.cell(tb, 1, 4, str.tostring(nT), text_color = color.white)
+    table.cell(tb, 2, 4, str.tostring(nW), text_color = color.white)
+    table.cell(tb, 3, 4, str.tostring(totR, "#.##"), text_color = totR >= 0 ? color.lime : color.red)
+    table.cell(tb, 0, 5, "Setup", text_color = color.white)
+    table.cell(tb, 1, 5, sScen == 0 ? "none" : scenName(sScen, sDir), text_color = color.white)

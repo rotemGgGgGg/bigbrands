@@ -142,8 +142,25 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 | v7.4 | one S2 setup per round | 30 | +3.33 |
 | v7.5 latest-swing | cancelled break, wait for latest swing | 26 | +5.33 |
 | **v7.5 (default)** | cancelled break, wait for highest swing | **18** (S2 7, S3 11) | **−1.08** |
+| **v8** | full rewrite from this file (Side objects); Python v8 = v7.5 on trades, all events and the funnel | 18 | −1.08 |
 
-## 8. Open questions for the trader
+## 8. Code
+- `pine/sp_model_v8.pine` and `backtest/sp_v8.py` are the current versions (v7 files kept for reference).
+- Python v8 reproduces v7.5 exactly (18 trades / 500 events, and 26 / 1,172 with the latest-swing variant).
+- Pine v8 is not compiled yet — the user compiles it in TradingView.
+
+## 9. Trader-style review of the 18 v7.5 trades
+- Every S2 trade follows a break that held until its trigger (the v7.5 rule does this by construction).
+- Dropping IMPL 9 (self-break on the trigger) brings back an Aug 10 11:50 short — the trader said Aug 10 has no
+  trade, so IMPL 9 agrees with a labelled day.
+- Sep 3 13:00 S2 LONG is a different setup from the rejected v6 one (trigger 12:40, 4 bars to fill, leg ×1.2) —
+  consistent with the rules, needs his verdict.
+- S3 setups live long: Sep 28 (23 bars, leg ×1.6), Aug 6 (22 bars). Allowed ("no expiry") but unlike the Feb 16
+  benchmark — worth showing him.
+- Pace: 18 trades in 2.3 months = 7.8/month vs his ~9/month.
+- S1 produces 0 trades: 7 S1 LONG triggers die on IMPL 9, the rest on 14:00 or a 1.0 break.
+
+## 10. Open questions for the trader
 1. After a cancelled break: wait for the highest swing since the break, or any newer (lower) swing?
 2. Does a **loss** allow a second trade? (Stated: "the first fill ends the day, win or lose" — treated as yes-ends.)
 3. Which are the other two "not right" days?
