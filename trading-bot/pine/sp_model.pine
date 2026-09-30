@@ -3,6 +3,7 @@
 // Section numbers in comments (§) refer to that spec. Decisions the spec does not make are marked [IMPL].
 //
 // v6 sweep timing: a sweep counts from 06:00. Only S1 needs its sweep inside 09:30–14:00.
+//   S2 fib 1.0 = S1's anchor_0 where S1 failed (pre-open: the pullback extreme before the break).
 //   S2 after a pre-open sweep: the reference is the post-sweep extreme at the first two-candle pullback;
 //   S2 opens when price breaks it. After an in-window sweep, S2 opens when S1 fails. Entries only 09:30–14:00.
 // v5 setup lifecycle (S1/S2/S3):
@@ -197,6 +198,7 @@ var int   setupSide = 0        // 1 = high side, -1 = low side (S1/S2)
 var float a1 = na              // fib 1.0, fixed at trigger
 var float a0 = na              // fib 0: follows the leg until the anchors freeze
 var float liveA0 = na          // live extreme of the leg
+var int   liveA0Bar = na       // bar of that extreme (S2 inherits it when S1 fails)
 var bool  extending = false    // did this bar make a new extreme?
 var bool  setupFrozen = false  // anchors frozen (first non-extending bar)
 var bool  setupLocked = false  // va_ratio in band: level chosen, prices fixed
@@ -248,6 +250,10 @@ var int   s2EligHiBar = na
 var float s2XHi = na           // running high since S2 opened = fib 0 for the S2 long
 var int   s2XHiBar = na
 var string s2WhyHi = ""
+var float s2A1Hi = na          // S2 long fib 1.0: S1's anchor_0 when S1 failed, or the pre-open pullback low
+var int   s2A1HiBar = na
+var float s2PullHi = na        // pre-open: lowest low since the reference high (becomes s2A1Hi at the break)
+var int   s2PullHiBar = na
 var float s2RefLo = na
 var int   s2RefLoBar = na
 var float s2SwingLo = na
@@ -256,6 +262,10 @@ var int   s2EligLoBar = na
 var float s2XLo = na
 var int   s2XLoBar = na
 var string s2WhyLo = ""
+var float s2A1Lo = na
+var int   s2A1LoBar = na
+var float s2PullLo = na        // pre-open: highest high since the reference low
+var int   s2PullLoBar = na
 
 // Risk limits and stats (§13, §16, §17)
 var float cumR = 0.0
@@ -316,6 +326,14 @@ if newDay
     s2EligHiBar := na
     s2XHi := na
     s2XHiBar := na
+    s2A1Hi := na
+    s2A1HiBar := na
+    s2PullHi := na
+    s2PullHiBar := na
+    s2A1Lo := na
+    s2A1LoBar := na
+    s2PullLo := na
+    s2PullLoBar := na
     s2RefLo := na
     s2RefLoBar := na
     s2SwingLo := na
@@ -396,7 +414,14 @@ if hiSw
             if twoBear and bar_index - 1 >= hiSwBar
                 s2RefHi := hiSinceHi
                 s2RefHiBar := hiSinceHiBar
+                for k = 0 to math.min(bar_index - s2RefHiBar, 499)
+                    if na(s2PullHi) or low[k] < s2PullHi
+                        s2PullHi := low[k]
+                        s2PullHiBar := bar_index - k
         else
+            if low < s2PullHi
+                s2PullHi := low
+                s2PullHiBar := bar_index
             if s2Swing and not na(pivH) and bar_index - 2 > s2RefHiBar and pivH < s2RefHi
                 s2SwingHi := pivH
             bool brokeRef = high > s2RefHi
@@ -404,6 +429,8 @@ if hiSw
             if brokeRef or brokeSw
                 s2EligHi := true
                 s2EligHiBar := bar_index
+                s2A1Hi := s2PullHi         // [IMPL-confirm] pre-open: S2's 1.0 = pullback low before the break
+                s2A1HiBar := s2PullHiBar
                 s2XHi := high
                 s2XHiBar := bar_index
                 s2WhyHi := brokeRef ? "break" : "swing"
@@ -417,7 +444,14 @@ if loSw
             if twoBull and bar_index - 1 >= loSwBar
                 s2RefLo := loSinceLo
                 s2RefLoBar := loSinceLoBar
+                for k = 0 to math.min(bar_index - s2RefLoBar, 499)
+                    if na(s2PullLo) or high[k] > s2PullLo
+                        s2PullLo := high[k]
+                        s2PullLoBar := bar_index - k
         else
+            if high > s2PullLo
+                s2PullLo := high
+                s2PullLoBar := bar_index
             if s2Swing and not na(pivL) and bar_index - 2 > s2RefLoBar and pivL > s2RefLo
                 s2SwingLo := pivL
             bool brokeRef = low < s2RefLo
@@ -425,6 +459,8 @@ if loSw
             if brokeRef or brokeSw
                 s2EligLo := true
                 s2EligLoBar := bar_index
+                s2A1Lo := s2PullLo         // [IMPL-confirm] pre-open: S2's 1.0 = pullback high before the break
+                s2A1LoBar := s2PullLoBar
                 s2XLo := low
                 s2XLoBar := bar_index
                 s2WhyLo := brokeRef ? "break" : "swing"
@@ -523,6 +559,7 @@ if canArm
     float cA1 = na
     float cA0 = na
     int   cStart = na
+    int   cA0Bar = na
     if bothSwept
         if useS3 and not s3Dead and hiSwBar != loSwBar and bar_index - 1 >= math.max(hiSwBar, loSwBar)
             bool lowSecond = loSwBar > hiSwBar
@@ -531,12 +568,14 @@ if canArm
                 cDir := -1
                 cA1 := hiSinceHi
                 cA0 := loSinceLo
+                cA0Bar := loSinceLoBar
                 cStart := math.min(hiSinceHiBar, loSinceLoBar)
             else if not lowSecond and twoBear
                 cScen := 3
                 cDir := 1
                 cA1 := loSinceLo
                 cA0 := hiSinceHi
+                cA0Bar := hiSinceHiBar
                 cStart := math.min(loSinceLoBar, hiSinceHiBar)
     else if useS1 and hiSw and hiSwInWin and not s1FailHi and twoBear and bar_index - 1 >= hiSwBar
         cScen := 1
@@ -544,6 +583,7 @@ if canArm
         cSide := 1
         cA1 := hiSinceHi
         cA0 := loSinceHi
+        cA0Bar := loSinceHiBar
         cStart := math.min(hiSinceHiBar, loSinceHiBar)
     else if useS1 and loSw and loSwInWin and not s1FailLo and twoBull and bar_index - 1 >= loSwBar
         cScen := 1
@@ -551,21 +591,24 @@ if canArm
         cSide := -1
         cA1 := loSinceLo
         cA0 := hiSinceLo
+        cA0Bar := hiSinceLoBar
         cStart := math.min(loSinceLoBar, hiSinceLoBar)
     else if useS2 and s2EligHi and not s2DeadHi and twoBull and bar_index - 1 >= s2EligHiBar
         cScen := 2
         cDir := 1
         cSide := 1
-        cA1 := low[1]                  // §6: single candle wick, bar n-1
-        cA0 := s2XHi                   // running high since S2 opened
-        cStart := math.min(bar_index - 1, s2XHiBar)
+        cA1 := s2A1Hi                  // §6 (corrected): S1's anchor_0 where S1 failed, not the trigger wick
+        cA0 := s2XHi                   // running high since then
+        cA0Bar := s2XHiBar
+        cStart := math.min(s2A1HiBar, s2XHiBar)
     else if useS2 and s2EligLo and not s2DeadLo and twoBear and bar_index - 1 >= s2EligLoBar
         cScen := 2
         cDir := -1
         cSide := -1
-        cA1 := high[1]
+        cA1 := s2A1Lo
         cA0 := s2XLo
-        cStart := math.min(bar_index - 1, s2XLoBar)
+        cA0Bar := s2XLoBar
+        cStart := math.min(s2A1LoBar, s2XLoBar)
     if cScen != 0
         float leg = math.abs(cA1 - cA0)
         if leg == 0 or (useLegFilter and (leg < legMinPts or leg > legMaxPts))
@@ -581,6 +624,7 @@ if canArm
             a1 := cA1
             a0 := cA0
             liveA0 := cA0
+            liveA0Bar := cA0Bar
             extending := cDir == -1 ? low <= cA0 : high >= cA0
             setupFrozen := false
             setupLocked := false
@@ -629,6 +673,8 @@ if setupScen != 0 and not inPos and not justArmed
         float prevLive = liveA0
         extending := setupDir == -1 ? low < prevLive : high > prevLive
         liveA0 := setupDir == -1 ? math.min(prevLive, low) : math.max(prevLive, high)
+        if extending
+            liveA0Bar := bar_index
         if extending and setupFrozen
             // New extreme: the retracement was false. Unlock and keep dragging the fib.
             setupFrozen := false
@@ -724,6 +770,8 @@ if dead
                 s1FailHi := true
                 s2EligHi := true       // S1 failed by breaking its 1.0: S2 opens on this side
                 s2EligHiBar := bar_index
+                s2A1Hi := a0               // S2 inherits S1's anchor_0 as its anchor_1
+                s2A1HiBar := liveA0Bar
                 s2XHi := hiSinceHi
                 s2XHiBar := hiSinceHiBar
                 s2WhyHi := "S1 failed"
@@ -731,6 +779,8 @@ if dead
                 s1FailLo := true
                 s2EligLo := true
                 s2EligLoBar := bar_index
+                s2A1Lo := a0
+                s2A1LoBar := liveA0Bar
                 s2XLo := loSinceLo
                 s2XLoBar := loSinceLoBar
                 s2WhyLo := "S1 failed"

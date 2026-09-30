@@ -16,7 +16,7 @@ The chart and the spec disagree on S2's anchor → trader decision.
 | # | Where | Finding | Effect | Intentional? |
 |---|---|---|---|---|
 | 1 | Pine | No plot of a1 / a0 — only entry/stop/target were drawn, so any fib on the chart was manual | Can't audit anchors visually | No → (added) Fib 1.0 / Fib 0 plots |
-| 2 | Both | S2 fib 1.0 = trigger-candle wick (spec §6); trader's chart uses the swing low | Changes every S2 entry price | Spec vs trader — open |
+| 2 | Both | S2 fib 1.0 = trigger-candle wick (spec §6); trader's chart uses the swing low | Changes every S2 entry price | **Resolved:** trader confirmed the swing low (S1's anchor_0); spec §6 was wrong |
 | 3 | Python | Open position at a day change is dropped without recording (Pine closes and records it) | 0 occurrences: every weekday has its 13:55 bar | No |
 | 4 | Python | `entry` key not cleared on unlock | None: every read is guarded by `locked` | Harmless |
 | 5 | Python | `pos.a0` keeps updating after fill (logging only) — `leg_exit` ≠ Pine's leg-at-lock | Log column only | No |

@@ -246,8 +246,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             done_day = False
             s1FailHi = s1FailLo = s2DeadHi = s2DeadLo = s3Dead = False
             lastDeath = -1
-            s2 = {1: dict(ref=None, ref_bar=None, swing=None, elig=False, elig_bar=None, x=None, x_bar=None, why=None),
-                  -1: dict(ref=None, ref_bar=None, swing=None, elig=False, elig_bar=None, x=None, x_bar=None, why=None)}
+            s2 = {side: dict(ref=None, ref_bar=None, swing=None, pull=None, pull_bar=None, elig=False, elig_bar=None,
+                             a1=None, a1_bar=None, x=None, x_bar=None, why=None) for side in (1, -1)}
             if weekday:
                 f["days"] += 1
 
@@ -391,7 +391,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     if pull and i - 1 >= sw_bar:
                         st2["ref"] = ext
                         st2["ref_bar"] = hiSinceHiBar if side == 1 else loSinceLoBar
+                        rb = st2["ref_bar"]
+                        seg = range(rb, i + 1)
+                        pb = min(seg, key=lambda q: b.low[q]) if side == 1 else max(seg, key=lambda q: b.high[q])
+                        st2["pull"], st2["pull_bar"] = (b.low[pb] if side == 1 else b.high[pb]), pb
                     continue
+                against = l if side == 1 else h  # extreme against the S2 direction, since the reference bar
+                if st2["pull"] is None or ((against < st2["pull"]) if side == 1 else (against > st2["pull"])):
+                    st2["pull"], st2["pull_bar"] = against, i
                 j = i - k
                 if p.s2_swing_highs and j > st2["ref_bar"] and j - k >= 0:
                     if side == 1 and all(b.high[j] > b.high[j + o2] for o2 in range(-k, k + 1) if o2) and b.high[j] < st2["ref"]:
@@ -401,7 +408,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 broke_ref = (h > st2["ref"]) if side == 1 else (l < st2["ref"])
                 broke_sw = st2["swing"] is not None and ((h > st2["swing"]) if side == 1 else (l < st2["swing"]))
                 if broke_ref or broke_sw:
-                    st2.update(elig=True, elig_bar=i, x=(h if side == 1 else l), x_bar=i, why="ref" if broke_ref else "swing")
+                    # [IMPL-confirm] pre-open: S2's a1 = the pullback extreme between the reference and the break
+                    st2.update(elig=True, elig_bar=i, a1=st2["pull"], a1_bar=st2["pull_bar"],
+                               x=(h if side == 1 else l), x_bar=i, why="ref" if broke_ref else "swing")
                     f[f"s2_open_{'ref' if broke_ref else 'swing'}"] += 1
         risk_off = done_day or trades_today >= p.max_trades or fails >= p.max_fails
         can_arm = (setup is None and pos is None and not risk_off and in_win and prev_in_win and can_place
@@ -417,13 +426,13 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     elif not low_second and two_bear:
                         cand = dict(scen=3, dir=1, side=0, a1=loSinceLo, a0=hiSinceHi, start=min(loSinceLoBar, hiSinceHiBar), a1bar=loSinceLoBar, swbar=loSwBar)
             elif p.use_s1 and hiSw and not loSw and hiSwInWin and not s1FailHi and two_bear and i - 1 >= hiSwBar:
-                cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, swbar=hiSwBar)
+                cand = dict(scen=1, dir=-1, side=1, a1=hiSinceHi, a0=loSinceHi, start=min(hiSinceHiBar, loSinceHiBar), a1bar=hiSinceHiBar, a0bar=loSinceHiBar, swbar=hiSwBar)
             elif p.use_s1 and loSw and not hiSw and loSwInWin and not s1FailLo and two_bull and i - 1 >= loSwBar:
-                cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, swbar=loSwBar)
+                cand = dict(scen=1, dir=1, side=-1, a1=loSinceLo, a0=hiSinceLo, start=min(loSinceLoBar, hiSinceLoBar), a1bar=loSinceLoBar, a0bar=hiSinceLoBar, swbar=loSwBar)
             elif p.use_s2 and s2[1]["elig"] and not s2DeadHi and two_bull and i - 1 >= s2[1]["elig_bar"]:
-                cand = dict(scen=2, dir=1, side=1, a1=b.low[i - 1], a0=s2[1]["x"], start=min(i - 1, s2[1]["x_bar"]), a1bar=i - 1, swbar=hiSwBar, s2why=s2[1]["why"])
+                cand = dict(scen=2, dir=1, side=1, a1=s2[1]["a1"], a0=s2[1]["x"], start=min(s2[1]["a1_bar"], s2[1]["x_bar"]), a1bar=s2[1]["a1_bar"], a0bar=s2[1]["x_bar"], swbar=hiSwBar, s2why=s2[1]["why"])
             elif p.use_s2 and s2[-1]["elig"] and not s2DeadLo and two_bear and i - 1 >= s2[-1]["elig_bar"]:
-                cand = dict(scen=2, dir=-1, side=-1, a1=b.high[i - 1], a0=s2[-1]["x"], start=min(i - 1, s2[-1]["x_bar"]), a1bar=i - 1, swbar=loSwBar, s2why=s2[-1]["why"])
+                cand = dict(scen=2, dir=-1, side=-1, a1=s2[-1]["a1"], a0=s2[-1]["x"], start=min(s2[-1]["a1_bar"], s2[-1]["x_bar"]), a1bar=s2[-1]["a1_bar"], a0bar=s2[-1]["x_bar"], swbar=loSwBar, s2why=s2[-1]["why"])
             if cand:
                 leg = abs(cand["a1"] - cand["a0"])
                 f[f"S{cand['scen']}_triggers"] += 1
@@ -433,7 +442,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     lastDeath = i
                 else:
                     setup = dict(cand, init=leg, trig=i, frozen=False, locked=False, level=0.0, lock_va=None, lock_bar=None,
-                                 live_a0=cand["a0"], va_frozen=[], va_all=[], refreezes=0, outcome=None, time=t)
+                                 live_a0=cand["a0"], live_a0_bar=cand.get("a0bar"), va_frozen=[], va_all=[], refreezes=0, outcome=None, time=t)
                     res.setups.append(setup)
                     order = None
                     ref_price = None
@@ -459,6 +468,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 prev = setup["live_a0"]
                 setup["extending"] = (l < prev) if d == -1 else (h > prev)
                 setup["live_a0"] = min(prev, l) if d == -1 else max(prev, h)
+                if setup["extending"]:
+                    setup["live_a0_bar"] = i
                 if setup["extending"] and setup["frozen"]:
                     # new extreme: the retracement was false — unlock and re-anchor
                     setup.update(frozen=False, locked=False, level=0.0, lock_va=None, lock_bar=None)
@@ -533,10 +544,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if setup["scen"] == 1:
                     if setup["side"] == 1:
                         s1FailHi = True
-                        s2[1].update(elig=True, elig_bar=i, x=hiSinceHi, x_bar=hiSinceHiBar, why="S1 failed")
+                        s2[1].update(elig=True, elig_bar=i, a1=setup["a0"], a1_bar=setup["live_a0_bar"], x=hiSinceHi, x_bar=hiSinceHiBar, why="S1 failed")
                     else:
                         s1FailLo = True
-                        s2[-1].update(elig=True, elig_bar=i, x=loSinceLo, x_bar=loSinceLoBar, why="S1 failed")
+                        s2[-1].update(elig=True, elig_bar=i, a1=setup["a0"], a1_bar=setup["live_a0_bar"], x=loSinceLo, x_bar=loSinceLoBar, why="S1 failed")
                 elif setup["scen"] == 2:
                     if setup["side"] == 1:
                         s2DeadHi = True
