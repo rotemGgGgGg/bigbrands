@@ -66,22 +66,20 @@ Same 60 days of Yahoo NQ data: v6 = 12 trades, v7 = 17 trades (0 S1, 6 S2, 11 S3
 
 ## [IMPL] — decisions the spec does not make
 
-1. Sweeps only from 06:00 ("setups are tracked from 00:00" read as: the day's state starts at 00:00, the range forms until 06:00).
+1. Sweeps only from 06:00 (the London range forms until 06:00).
 2. S1 still needs its sweep inside 09:30–14:00 (only S2/S3 were extended to pre-open sweeps).
-3. Last limit placement at the 13:50 bar's close (so it can only fill before 14:00). "A limit may still be placed as late as 14:00" read as: works until 14:00.
-4. A limit that would sit through the market at the bar close (sell limit below price, buy limit above) is not placed that bar; the setup stays alive.
+3. Last limit placement at the 13:50 bar's close (so it can only fill before 14:00).
+4. A limit that would sit through the market at the bar close is not placed that bar; the setup stays alive.
 5. 1.0 break = strictly beyond the 1.0 (touch is not a break).
 6. After an S2 or S3 1.0 break, that scenario is done for the day (carried over from v6).
-7. ~~S2 pre-open 1.0 = pullback extreme~~ — superseded by the v7.2 anchor table.
-11. S2's trigger pair only has to end at or after the bar that broke the reference.
-12. A later trigger in the same scenario and direction keeps the first trigger's anchor (no re-anchoring).
-13. If the second trigger candle trades beyond the first candle's extreme, the 1.0 is broken on the trigger: no setup.
-    (Alternative — check the 1.0 only from the next bar — gives 18 trades instead of 19; Aug 10 no trade either way.)
-8. London range needs ≥ 60 of its 72 bars.
-9. "Same setup" (not a replacement) = same scenario, direction and 1.0 price and bar.
-10. Fixed position size.
+7. S2's trigger pair only has to end at or after the bar that broke the reference.
+8. A later trigger in the same scenario and direction keeps the first trigger's anchor; only a different scenario or direction replaces the setup.
+9. If the second trigger candle trades beyond the first candle's extreme, the 1.0 is broken on the trigger: no setup.
+   (Alternative — check the 1.0 only from the next bar — gives 18 trades instead of 19; Aug 10 no trade either way.)
+10. London range needs ≥ 60 of its 72 bars.
+11. Fixed position size.
 
 ## Questions for the trader
 
-- Items 2, 3, 4 and 7 above change which trades happen; the others are edge cases.
+- Items 2, 4, 7, 8 and 9 above change which trades happen; the others are edge cases.
 - "Max 1 trade per day" and "a win ends the session" say the same thing. Does a **loss** allow a second trade?
