@@ -39,7 +39,7 @@ stopAtTgt = input.bool(true, "Stop trading once the target is reached", group = 
 
 if timeframe.period != "5" and timeframe.period != "15"
     runtime.error("Prop ORB runs on the 5- or 15-minute chart.")
-int barMin = timeframe.in_seconds() / 60
+int barMin = int(timeframe.in_seconds() / 60)
 
 // ───────────────────────────── Time ─────────────────────────────
 int  nyMin  = hour(time, TZ) * 60 + minute(time, TZ)       // bar OPEN time
