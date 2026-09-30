@@ -29,6 +29,14 @@ S2 reference: after an in-window sweep, S1's 1.0 (S2 opens when S1 breaks it); a
 post-sweep extreme at the first two-candle pullback (same rule as the trigger). "First trigger candle" = the first
 of the two, whether or not it is the one that broke the reference. Once both sides are swept, only S3 can arm.
 
+**S2 rounds (trader, v7.3).** S2 re-triggers on every new break, not just the first. After each break, the
+latest swing that forms afterwards (3 bars: middle bar's low below both neighbours; mirror for highs) is tracked;
+a wick beyond it opens a new round. A trigger in a new round is a new setup: fresh 1.0 from its first trigger
+candle, old anchors discarded. **All breaks are wick-based** — sweep, 1.0 invalidation, reference, swing.
+
+**Caps.** A 1.0 break = one failed setup; 3 failures end the session. The first filled trade ends the session.
+Replacement by a fresher setup and 14:00 are not failures. A failed S2 does not end S2 for the day.
+
 **Fib.** 1.0 fixed when the setup arms. 0 = extreme counted forward from the 1.0 bar only. Before the fill the
 limit moves with the fib as 0 extends; after the fill entry/stop/target are frozen.
 
@@ -71,7 +79,7 @@ Same 60 days of Yahoo NQ data: v6 = 12 trades, v7 = 17 trades (0 S1, 6 S2, 11 S3
 3. Last limit placement at the 13:50 bar's close (so it can only fill before 14:00).
 4. A limit that would sit through the market at the bar close is not placed that bar; the setup stays alive.
 5. 1.0 break = strictly beyond the 1.0 (touch is not a break).
-6. After an S2 or S3 1.0 break, that scenario is done for the day (carried over from v6).
+6. After an S3 1.0 break, S3 is done for the day (carried over from v6). S2 is not (v7.3).
 7. S2's trigger pair only has to end at or after the bar that broke the reference.
 8. A later trigger in the same scenario and direction keeps the first trigger's anchor; only a different scenario or direction replaces the setup.
 9. If the second trigger candle trades beyond the first candle's extreme, the 1.0 is broken on the trigger: no setup.

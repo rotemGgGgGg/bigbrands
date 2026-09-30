@@ -33,6 +33,8 @@ class Params:
     use_s2: bool = True
     use_s3: bool = True
     check: bool = True          # invariants raise InvariantError
+    max_fails: int = 3               # 3 failed setups (1.0 broken) in a day → stop for the session
+    s2_break_on_close: bool = False  # all breaks are wick-based (trader); True only for comparison
     reject_self_break: bool = True  # [IMPL] second trigger candle beyond the first candle's extreme → no setup
     trace: list | None = None   # debug: per-bar state
 
@@ -166,11 +168,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     ext={1: None, -1: None},         # extreme since that side's sweep (high for 1, low for -1)
                     ext_bar={1: None, -1: None},
                     s1_fail={1: False, -1: False},
-                    s2_dead={1: False, -1: False},
                     s3_dead=False,
-                    s2={side: dict(ref=None, ref_bar=None, pull=None, pull_bar=None, elig=False, elig_bar=None,
-                                   a1=None, a1_bar=None) for side in (1, -1)},
-                    trades=0)
+                    # S2 per side: pre-open reference, open flag, bar of the latest break, break count (round id),
+                    # latest swing formed after that break (3-bar pivot) — a close beyond it opens a new round
+                    s2={side: dict(ref=None, ref_bar=None, elig=False, elig_bar=None, round=0, swing=None)
+                        for side in (1, -1)},
+                    fails=0, trades=0, capped=False)
 
     def extreme_since(bar, i, d):
         """fib 0 counts forward from the 1.0 bar: short → lowest low, long → highest high over [bar, i]."""
@@ -190,11 +193,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if s["scen"] == 1:
                 side = s["side"]
                 S["s1_fail"][side] = True
-                S["s2"][side].update(elig=True, elig_bar=i)   # S1 broke its 1.0: S2 opens on this side
-            elif s["scen"] == 2:
-                S["s2_dead"][s["side"]] = True     # [IMPL] carried over from v6
-            else:
+                st = S["s2"][side]                         # S1 broke its 1.0: S2 opens on this side
+                st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None)
+            elif s["scen"] == 3:
                 S["s3_dead"] = True                # [IMPL] carried over from v6
+            S["fails"] += 1                        # a 1.0 break is a failed setup [IMPL]
+            if S["fails"] >= p.max_fails:
+                S["capped"] = True
+                log(i, f"{p.max_fails} failed setups — stop for the session")
         setup, order = None, None
 
     for i in range(len(T)):
@@ -273,26 +279,42 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         two_bull = i > 0 and T[i - 1].date() == t.date() and c >= o and C[i - 1] >= O[i - 1]   # doji counts both ways
         two_bear = i > 0 and T[i - 1].date() == t.date() and c <= o and C[i - 1] <= O[i - 1]
 
-        # 7 ── S2 eligibility after a pre-open sweep: reference = post-sweep extreme at the first
-        #      two-candle pullback; S2 opens when price breaks it
+        # 7 ── S2 rounds. First opening: S1 breaks its 1.0 (in-window sweep), or — after a pre-open sweep — a close
+        #      beyond the reference (post-sweep extreme at the first two-candle pullback). After every break, the next
+        #      swing (3-bar pivot: middle bar beyond both neighbours) that forms is tracked; a close beyond it opens
+        #      a new round with a fresh trigger and fresh anchors.
         if valid:
             for side, pull in ((1, two_bear), (-1, two_bull)):
                 st = S["s2"][side]
                 swb = S["sw"][side]
-                if swb is None or S["sw_win"][side] or st["elig"]:
+                if swb is None:
+                    continue
+                px = c if p.s2_break_on_close else (h if side == 1 else l)
+                if st["elig"]:
+                    j = i - 1
+                    if j - 1 >= 0 and j > st["elig_bar"] and T[j - 1].date() == t.date():
+                        if side == 1 and H[j] > H[j - 1] and H[j] > H[i]:
+                            st["swing"] = H[j]
+                        if side == -1 and L[j] < L[j - 1] and L[j] < L[i]:
+                            st["swing"] = L[j]
+                    if st["swing"] is not None and ((px > st["swing"]) if side == 1 else (px < st["swing"])):
+                        st.update(elig_bar=i, round=st["round"] + 1, swing=None)
+                        log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} re-opens (swing broken, round {st['round']})")
+                    continue
+                if S["sw_win"][side]:
                     continue
                 if st["ref"] is None:
                     if pull and i - 1 >= swb:
                         st["ref"], st["ref_bar"] = S["ext"][side], S["ext_bar"][side]
                     continue
-                if (h > st["ref"]) if side == 1 else (l < st["ref"]):
-                    st.update(elig=True, elig_bar=i)
+                if (px > st["ref"]) if side == 1 else (px < st["ref"]):
+                    st.update(elig=True, elig_bar=i, round=st["round"] + 1, swing=None)
                     log(i, f"S2 {'LONG' if side == 1 else 'SHORT'} opens (pre-open reference broken)")
 
         # 8 ── triggers: the second candle must CLOSE at or after 09:30 (bar opening 09:25 or later) and
         #      before 14:00. A trigger completing earlier is void — it never arms. Sweeps still count from 06:00.
         #      A new setup replaces an armed, unfilled one.
-        if valid and pos is None and S["trades"] == 0 and mn + 5 >= 570 and mn + 5 < 840:
+        if valid and pos is None and S["trades"] == 0 and not S["capped"] and mn + 5 >= 570 and mn + 5 < 840:
             cand = None
             hs, ls = S["sw"][1], S["sw"][-1]
             if hs is not None and ls is not None:          # both sides taken → S3 only
@@ -316,15 +338,17 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                             cand = dict(scen=1, d=-1, side=1, a1=S["ext"][1], a1_bar=S["ext_bar"][1])
                         else:
                             cand = dict(scen=1, d=1, side=-1, a1=L[i - 1], a1_bar=i - 1)
-                    elif p.use_s2 and S["s2"][side]["elig"] and not S["s2_dead"][side] and trig_s2 and i >= S["s2"][side]["elig_bar"]:
+                    elif p.use_s2 and S["s2"][side]["elig"] and trig_s2 and i >= S["s2"][side]["elig_bar"]:
                         # the pair only has to END at or after the break bar: the first candle may be the one before it [IMPL]
-                        cand = dict(scen=2, d=side, side=side, a1=first[0], a1_bar=first[1])
+                        cand = dict(scen=2, d=side, side=side, a1=first[0], a1_bar=first[1], round=S["s2"][side]["round"])
             if p.reject_self_break and cand is not None and cand["a1_bar"] == i - 1 and ((h > cand["a1"]) if cand["d"] == -1 else (l < cand["a1"])):
                 res.funnel[f"S{cand['scen']} trigger broke its own 1.0"] += 1
                 cand = None   # [IMPL] the second candle already traded beyond the first candle's extreme
             if cand is not None:
                 # [IMPL] a later trigger in the same scenario and direction keeps the first trigger's anchor
-                same = setup is not None and setup["scen"] == cand["scen"] and setup["d"] == cand["d"]
+                # an S2 in a new round (a new swing broken) is a new setup with fresh anchors
+                same = setup is not None and setup["scen"] == cand["scen"] and setup["d"] == cand["d"] \
+                    and setup.get("round") == cand.get("round")
                 if not same:
                     a0, a0_bar = extreme_since(cand["a1_bar"], i, cand["d"])
                     leg = abs(cand["a1"] - a0)
