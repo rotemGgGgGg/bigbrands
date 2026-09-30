@@ -68,6 +68,9 @@ showLdn    = input.bool(true, "London high / low", group = grpVis)
 showLevels = input.bool(true, "Entry / stop / target", group = grpVis)
 showLabels = input.bool(true, "Setup and trade labels", group = grpVis)
 showTable  = input.bool(true, "Stats table", group = grpVis)
+showFib    = input.bool(true, "Fib 1.0 / 0 anchors", group = grpVis)
+checkInv   = input.bool(true, "Stop on invariant breach (debug)", group = grpVis,
+     tooltip = "Halts the script with an error if an order ever disagrees with the model's own anchors.")
 
 if timeframe.period != "5"
     runtime.error("SP Model runs on the 5-minute chart only (§1).")
@@ -206,6 +209,9 @@ var int   trigBar = na
 var int   legStart = na
 var float ordLevel = 0.0       // level of the working limit, 0 = no order working
 var int   ordQty = 0
+var float ordPrice = na        // limit price of the working order (for the fill invariant)
+var float a1AtArm = na         // invariant: a1 never moves after the trigger
+var float a0AtFreeze = na      // invariant: a0 never moves while the anchors are frozen
 var float ordRiskPts = na
 
 // Position (§14 IN_POSITION)
@@ -428,6 +434,11 @@ int tradeCount = strategy.opentrades + strategy.closedtrades
 int newFills = tradeCount - lastTradeCount
 lastTradeCount := tradeCount
 
+if newFills > 0 and checkInv and not na(ordPrice)
+    float fillPx = strategy.position_size != 0 ? strategy.position_avg_price : strategy.closedtrades.entry_price(strategy.closedtrades - 1)
+    bool okFill = setupDir == 1 ? fillPx <= ordPrice + syminfo.mintick : fillPx >= ordPrice - syminfo.mintick
+    if not okFill
+        runtime.error(str.format("INVARIANT fill {0} worse than limit {1} at {2}", fillPx, ordPrice, str.format_time(time, "yyyy-MM-dd HH:mm", TZ)))
 if newFills > 0
     tradesToday += newFills
     inPos := true
@@ -582,6 +593,8 @@ if canArm
             legStart := cStart
             ordLevel := 0.0
             justArmed := true
+            a1AtArm := cA1
+            a0AtFreeze := na
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(leg, "#.##"),
                      style = cDir == 1 ? label.style_label_up : label.style_label_down,
@@ -635,6 +648,14 @@ if setupScen != 0 and not inPos and not dead
     // STEP 1 — freeze the anchors on the first bar that does not extend the leg.
     if not setupFrozen and not extending
         setupFrozen := true
+        a0AtFreeze := a0
+    if checkInv
+        if a1 != a1AtArm
+            runtime.error(str.format("INVARIANT a1 moved {0} -> {1} at {2}", a1AtArm, a1, str.format_time(time, "yyyy-MM-dd HH:mm", TZ)))
+        if (setupDir == -1 ? a1 - a0 : a0 - a1) <= 0
+            runtime.error(str.format("INVARIANT leg not positive a1 {0} a0 {1} at {2}", a1, a0, str.format_time(time, "yyyy-MM-dd HH:mm", TZ)))
+        if setupFrozen and a0 != a0AtFreeze
+            runtime.error(str.format("INVARIANT a0 moved while frozen {0} -> {1} at {2}", a0AtFreeze, a0, str.format_time(time, "yyyy-MM-dd HH:mm", TZ)))
     // STEP 2 — after the freeze, re-check va_ratio every bar (retracement bars included) until it enters the band.
     if setupFrozen and not setupLocked
         float va = na
@@ -676,10 +697,13 @@ if setupScen != 0 and not inPos and not dead
             float rp = math.abs(sP - eP)
             int qty = rp > 0 ? math.min(int(math.floor(riskEff / (rp * syminfo.pointvalue))), maxContracts) : 0
             if qty >= 1                // §12: never round up, never force 1 contract
+                if checkInv and not (setupDir == -1 ? tP < eP and eP < sP : sP < eP and eP < tP)
+                    runtime.error(str.format("INVARIANT bracket on wrong side stop {0} entry {1} target {2} at {3}", sP, eP, tP, str.format_time(time, "yyyy-MM-dd HH:mm", TZ)))
                 strategy.entry("E", setupDir == 1 ? strategy.long : strategy.short, qty = qty, limit = eP,
                      comment = scenName(setupScen, setupDir) + " @" + str.tostring(lockLevel))
                 strategy.exit("X", "E", stop = sP, limit = tP)
                 ordLevel := lockLevel
+                ordPrice := eP
                 ordQty := qty
                 ordRiskPts := rp
                 plotE := eP
@@ -731,6 +755,8 @@ plot(showLdn ? ldnL : na, "London low", color.new(color.gray, 20), 1, plot.style
 plot(showLevels ? plotE : na, "Entry", color.new(color.blue, 0), 2, plot.style_linebr)
 plot(showLevels ? plotS : na, "Stop", color.new(color.red, 0), 2, plot.style_linebr)
 plot(showLevels ? plotT : na, "Target", color.new(color.green, 0), 2, plot.style_linebr)
+plot(showFib ? (setupScen != 0 ? a1 : inPos ? posA1 : na) : na, "Fib 1.0", color.new(color.orange, 0), 1, plot.style_linebr)
+plot(showFib ? (setupScen != 0 ? a0 : inPos ? posA0 : na) : na, "Fib 0", color.new(color.purple, 0), 1, plot.style_linebr)
 bgcolor(inWin ? color.new(color.blue, 94) : na, title = "Trading window")
 
 // ───────────────────────────── Stats (§17) ─────────────────────────────

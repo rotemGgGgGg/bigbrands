@@ -40,6 +40,8 @@ class Params:
     vp_price: str = "anchors"  # leg range only — rows span: anchors (a1..a0) | bars (high/low of the bars, like TradingView FRVP)
     trail_after_fill: bool = False  # False: bracket frozen at lock prices
     ldn_min_bars: int = 60
+    check: bool = True  # invariants: fail loudly (InvariantError) instead of producing a wrong trade
+    trace: list | None = None  # debug: per-bar state appended while a setup or position is live
     use_s1: bool = True
     use_s2: bool = True
     use_s3: bool = True
@@ -154,6 +156,15 @@ def swing_start(bars, a1bar, d, k):
     return max(0, a1bar - 150)
 
 
+class InvariantError(AssertionError):
+    pass
+
+
+def _inv(ok, i, bars, msg):
+    if not ok:
+        raise InvariantError(f"bar {i} {bars.time[i]:%Y-%m-%d %H:%M}: {msg}")
+
+
 @dataclass
 class Bars:
     time: list
@@ -247,6 +258,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             filled = (h >= order["price"]) if d == -1 else (l <= order["price"])
             if filled:
                 fill = max(o, order["price"]) if d == -1 else min(o, order["price"])
+                if p.check:
+                    _inv((fill >= order["price"] - 0.25) if d == -1 else (fill <= order["price"] + 0.25), i, b,
+                         f"fill {fill} worse than limit {order['price']} by more than a tick")
+                    exp = tick(fib_price(setup["a1"], setup["a0"], d, order["level"]))
+                    _inv(abs(order["price"] - exp) <= 0.25, i, b,
+                         f"limit {order['price']} != fib {order['level']} of current anchors {exp} (a1 {setup['a1']} a0 {setup['a0']})")
                 pos = dict(order, entry=fill, a1=setup["a1"], a0=setup["a0"], scen=setup["scen"],
                            bars_to_fill=i - setup["trig"], leg_trig=setup["init"], entry_time=t,
                            stop=order["stop"], tgt=order["tgt"], mfe=0.0, mae=0.0)
@@ -455,6 +472,15 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             d = setup["dir"]
             setup["extending"] = (l <= setup["a0"]) if d == -1 else (h >= setup["a0"])
 
+        if p.check and setup is not None:
+            _inv(setup["a1"] == setup.setdefault("a1_at_arm", setup["a1"]), i, b, f"a1 moved: {setup['a1_at_arm']} -> {setup['a1']}")
+            leg_now = (setup["a1"] - setup["a0"]) if setup["dir"] == -1 else (setup["a0"] - setup["a1"])
+            _inv(leg_now > 0, i, b, f"leg not positive: a1 {setup['a1']} a0 {setup['a0']} dir {setup['dir']}")
+            if setup["frozen"]:
+                _inv(setup["a0"] == setup.setdefault("a0_at_freeze", setup["a0"]), i, b, f"a0 moved while frozen: {setup['a0_at_freeze']} -> {setup['a0']}")
+            else:
+                setup.pop("a0_at_freeze", None)
+
         # place / update the limit (§9)
         if setup is not None and not dead:
             d = setup["dir"]
@@ -488,6 +514,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 else:
                     rp = abs(sP - eP)
                     qty = min(math.floor(p.risk_usd / (rp * POINT_VALUE)), p.max_contracts) if rp > 0 else 0
+                    if p.check:
+                        _inv((tP < eP < sP) if d == -1 else (sP < eP < tP), i, b, f"bracket on wrong side: stop {sP} entry {eP} target {tP} dir {d}")
+                        _inv(eP == setup["entry"], i, b, f"order entry {eP} != locked entry {setup['entry']}")
                     if qty >= 1:
                         order = dict(dir=d, price=eP, stop=sP, tgt=tP, qty=qty, level=lvl, va=va, risk_pts=rp, bars_to_lock=setup['lock_bar'] - setup['trig'])
                         f["orders_placed"] += 1
@@ -519,6 +548,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             setup = None
             order = None
             ref_price = None
+
+        if p.trace is not None and (setup is not None or pos is not None or dead or closed_this_bar):
+            src = setup if setup is not None else {}
+            p.trace.append(dict(i=i, t=t, o=o, h=h, l=l, c=c, scen=src.get("scen"), a1=src.get("a1"), a0=src.get("a0"),
+                                live_a0=src.get("live_a0"), extending=src.get("extending"), frozen=src.get("frozen"),
+                                locked=src.get("locked"), level=src.get("level"), entry=src.get("entry"),
+                                order=None if order is None else order["price"], pos=None if pos is None else dict(entry=pos["entry"], stop=pos["stop"], tgt=pos["tgt"], a1=pos["a1"], a0=pos["a0"]),
+                                dead=why if dead else None, closed=closed_this_bar))
 
     return res
 
