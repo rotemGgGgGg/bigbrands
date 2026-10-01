@@ -87,9 +87,10 @@ class Settings(BaseModel):
         Path(self.settings_path).write_text(json.dumps(keep, indent=2), encoding="utf-8")
 
 
-def load_settings(home: str | None = None) -> Settings:
-    e = os.environ
-    home = home or e.get("BRIDGE_HOME", ".")
+def load_settings(home: str | None = None, use_env: bool = True) -> Settings:
+    """use_env=False for per-user settings in the web edition: one env secret must never be shared by every user."""
+    e = os.environ if use_env else {}
+    home = home or os.environ.get("BRIDGE_HOME", ".")
     Path(home).mkdir(parents=True, exist_ok=True)
     p = Path(home) / "settings.json"
     data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}

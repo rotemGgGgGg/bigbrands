@@ -218,7 +218,7 @@ th:last-child, td:last-child { text-align: right; }
 
 @media (max-width: 1100px) {
   .app { grid-template-columns: 76px 1fr; }
-  .nav button span, .side-btn span, .badge, .logo span, .cookie, .side-link { display: none; }
+  .nav button span, .side-btn span, .badge, .sidebar .logo span, .cookie, .side-link { display: none; }
   .nav button, .side-btn { justify-content: center; }
   .metrics { grid-template-columns: repeat(3, 1fr); row-gap: 16px; }
   .newsbar { grid-template-columns: 1fr; } .newsbar .sep { display: none; }
@@ -227,3 +227,47 @@ td.empty, th.empty { text-align: center !important; white-space: normal; }
 /* text that sits directly on the ribbon stays readable */
 .note, .h1, .lead, .page > div > .lead { text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 18px rgba(0,0,0,.85); }
 .note { color: #c4c4cc; }
+
+/* ── login / signup (web edition) ── */
+.auth { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.35); }
+.auth.open { display: flex; }
+.auth-card { width: min(400px, 100%); padding: 30px 26px; display: grid; gap: 18px; }
+.auth-card .logo { margin: 0 0 4px; }
+.auth-card form { display: grid; gap: 14px; }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 4px; background: rgba(0,0,0,.4); }
+.auth-tabs button { border: 0; background: none; padding: 8px; border-radius: 999px; font-weight: 700; color: var(--dim); }
+.auth-tabs button.on { background: var(--chrome); color: #000; }
+.auth-err { color: #fda4af; font-size: 13px; min-height: 18px; }
+
+/* ── phones: sidebar becomes a bottom bar, everything stacks ── */
+@media (max-width: 700px) {
+  body { overflow: auto; }
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 100vh; padding: 10px 10px calc(84px + env(safe-area-inset-bottom)); gap: 12px; }
+  .main { overflow: visible; padding-bottom: 20px; }
+  .sidebar {
+    position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 30;
+    flex-direction: row; padding: 6px; border-radius: 18px; overflow-x: auto;
+  }
+  .sidebar .logo, .side-bottom .side-sep, .side-bottom .upgrade, .side-bottom .cookie, .side-bottom [data-page="refer"], #signout { display: none !important; }
+  .nav { grid-auto-flow: column; gap: 4px; }
+  .nav button, .side-btn { padding: 10px 12px; justify-content: center; }
+  .nav button span, .badge { display: none; }
+  .side-bottom { margin: 0; display: flex; }
+  .side-link[data-page="account"] { display: block !important; font-size: 0; padding: 10px 12px; }
+  .side-link[data-page="account"]::before { content: "⚙"; font-size: 17px; color: var(--text); }
+  .topbar { padding: 14px; }
+  .stats { gap: 16px; width: 100%; justify-content: space-between; }
+  .live { border-right: 0; padding-right: 0; width: 100%; }
+  .seg { width: 100%; overflow-x: auto; border-radius: 14px; }
+  .seg button { flex: 1 0 auto; padding: 10px 12px; }
+  .newsbar { grid-template-columns: 1fr; gap: 12px; }
+  .metrics { grid-template-columns: repeat(2, 1fr); row-gap: 16px; }
+  .metrics > div { border-right: 0; }
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr; }
+  .setup { bottom: calc(90px + env(safe-area-inset-bottom)); right: 12px; }
+  .h1 { font-size: 20px; }
+}
+
+.page > *, .main { min-width: 0; }
+body.authing .app, body.authing .setup { visibility: hidden; }

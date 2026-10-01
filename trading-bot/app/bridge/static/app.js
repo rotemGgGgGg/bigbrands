@@ -5,6 +5,10 @@
 const qs = new URLSearchParams(location.search);
 if (qs.get("t")) { sessionStorage.setItem("t", qs.get("t")); history.replaceState(null, "", location.pathname + location.hash); }
 const TOKEN = sessionStorage.getItem("t") || "";
+let MODE = "desktop";       // "desktop" (the .exe, token) or "cloud" (web edition, login cookie)
+let ME = null;              // logged-in email (cloud)
+let installPrompt = null;   // Android/Chrome "Add to Home Screen" prompt
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -21,7 +25,10 @@ async function api(path, method = "GET", body) {
   if (!r.ok) {
     let msg = r.statusText;
     try { msg = (await r.json()).detail || msg; } catch { /* keep statusText */ }
-    if (r.status === 401) msg = "Session expired — reopen the app.";
+    if (r.status === 401) {
+      if (MODE === "cloud" && !path.startsWith("/auth/")) { showAuth(); throw new Error("Please log in"); }
+      if (MODE !== "cloud") msg = "Session expired — reopen the app.";
+    }
     throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
   return r.json();
@@ -62,6 +69,7 @@ window.addEventListener("hashchange", () => { page = location.hash.slice(1) || "
 
 // ── data ──
 async function refresh() {
+  if (MODE === "cloud" && !ME) return;
   try {
     S = await api("/api/state");
     if (!NEWS || Date.now() - NEWS._at > 300000) { NEWS = await api("/api/news"); NEWS._at = Date.now(); }
@@ -162,7 +170,7 @@ const views = {
       <div class="cards">${cards || '<div class="panel card">No connections yet.</div>'}</div>
       <section class="panel card"><h4>Leader — TradingView</h4>
         <p class="lead">Create an alert on your strategy, tick <b>Webhook URL</b> and paste the address below. Put this JSON in the alert message:</p>
-        <div class="kv" style="margin:12px 0"><span>Webhook URL</span><b class="mono">${esc((set.public_url || "https://YOUR-PUBLIC-ADDRESS") + "/webhook")}</b></div>
+        <div class="kv" style="margin:12px 0"><span>Webhook URL</span><b class="mono">${esc(webhookUrl(set))}</b></div>
         <div class="codebox mono" id="alertJson">${esc(alertJson(set.webhook_secret))}</div>
         <div class="row" style="margin-top:10px"><button class="btn small" data-act="copy" data-src="alertJson">Copy alert message</button></div>
       </section></div>`;
@@ -224,19 +232,73 @@ const views = {
 
   async account() {
     const s = await api("/api/settings");
-    return `<div class="page"><div><div class="h1">My Account</div><p class="lead">App settings. Saved in ${esc(s.home)}</p></div>
+    const cloud = MODE === "cloud";
+    return `<div class="page"><div><div class="h1">My Account</div><p class="lead">${cloud ? "Signed in as " + esc(ME) : "App settings. Saved in " + esc(s.home)}</p></div>
+      ${installCard()}
       <section class="panel card"><h4>Mode <span class="${s.dry_run ? "warn" : "pos"}">${s.dry_run ? "TEST — nothing is sent" : "LIVE — orders are sent"}</span></h4>
         <p class="lead">Test mode runs every rule and logs what it would send, without sending. Go live only after a test signal looks right.</p>
         <div class="row" style="margin-top:10px">${s.dry_run ? '<button class="btn red" data-act="mode" data-live="true">Go LIVE</button>' : '<button class="btn" data-act="mode" data-live="false">Back to test mode</button>'}</div></section>
       <section class="panel card"><h4>Appearance <button class="switch ${bgOn() ? "on" : ""}" data-act="bg" title="Animated background"></button></h4>
         <p class="lead">Slow-moving chrome ribbon behind the app. Off = a still image.</p></section>
-      <section class="panel card"><h4>Webhook</h4><div class="grid2">
-        <label>Public address TradingView can reach (tunnel or VPS)<input id="pub" placeholder="https://my-tunnel.example.com" value="${esc(s.public_url)}"></label>
-        <label>Webhook secret (inside the alert JSON)<input readonly class="mono" value="${esc(s.webhook_secret)}"></label></div>
-        <div class="row" style="margin-top:12px"><button class="btn green small" data-act="savePub">Save address</button><button class="btn small" data-act="regen">New secret</button></div>
-        <p class="lead" style="margin-top:12px">The app listens on port ${s.port}. TradingView only posts to ports 80/443, so expose it with a tunnel (e.g. Cloudflare Tunnel → http://localhost:${s.port}) and paste the tunnel address above.</p></section></div>`;
+      <section class="panel card"><h4>Webhook</h4>
+        ${cloud ? `<div class="kv" style="margin-bottom:12px"><span>Your webhook URL</span><b class="mono">${esc(webhookUrl(s))}</b></div>
+          <div class="grid2"><label>Webhook secret (inside the alert JSON)<input readonly class="mono" value="${esc(s.webhook_secret)}"></label></div>
+          <div class="row" style="margin-top:12px"><button class="btn small" data-act="regen">New secret</button></div>`
+        : `<div class="grid2">
+          <label>Public address TradingView can reach (tunnel or VPS)<input id="pub" placeholder="https://my-tunnel.example.com" value="${esc(s.public_url)}"></label>
+          <label>Webhook secret (inside the alert JSON)<input readonly class="mono" value="${esc(s.webhook_secret)}"></label></div>
+          <div class="row" style="margin-top:12px"><button class="btn green small" data-act="savePub">Save address</button><button class="btn small" data-act="regen">New secret</button></div>
+          <p class="lead" style="margin-top:12px">The app listens on port ${s.port}. TradingView only posts to ports 80/443, so expose it with a tunnel (e.g. Cloudflare Tunnel → http://localhost:${s.port}) and paste the tunnel address above.</p>`}</section>
+      ${cloud ? '<section class="panel card"><h4>Session</h4><button class="btn" data-act="logout">Log out</button></section>' : ""}</div>`;
   },
 };
+
+function webhookUrl(s) {
+  if (MODE === "cloud") return location.origin + "/webhook";
+  return (s.public_url || "https://YOUR-PUBLIC-ADDRESS") + "/webhook";
+}
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function installCard() {
+  if (MODE !== "cloud") return `<section class="panel card"><h4>On your phone</h4>
+    <p class="lead">The phone app is the web edition: run it on a server (see the README), open its address on the phone and tap <b>Add to Home Screen</b>.</p></section>`;
+  if (isStandalone()) return `<section class="panel card"><h4>On your phone <span class="pos">installed ✓</span></h4><p class="lead">You're using the installed app.</p></section>`;
+  const how = isIOS() ? "Safari → <b>Share</b> (□↑) → <b>Add to Home Screen</b>."
+    : installPrompt ? "Tap the button — it installs like a normal app." : "Chrome menu (⋮) → <b>Install app</b> / <b>Add to Home screen</b>.";
+  return `<section class="panel card"><h4>Add to your phone</h4><p class="lead">${how}</p>
+    ${installPrompt && !isIOS() ? '<div class="row" style="margin-top:10px"><button class="btn-white" data-act="install">Install app</button></div>' : ""}
+    <p class="lead" style="margin-top:10px">Open this on the phone: <b class="mono">${esc(location.origin)}</b></p></section>`;
+}
+
+// ── login / signup (web edition) ──
+function showAuth(tab = "login") {
+  ME = null;
+  const box = $("#auth");
+  box.innerHTML = `<div class="auth-card panel">
+    <div class="logo"><span>${esc(document.title || "TRADEBRIDGE")}</span></div>
+    <div class="auth-tabs"><button data-act="authTab" data-tab="login" class="${tab === "login" ? "on" : ""}">Log in</button>
+      <button data-act="authTab" data-tab="signup" class="${tab === "signup" ? "on" : ""}">Sign up</button></div>
+    <form id="authForm" data-tab="${tab}">
+      <label>Email<input id="a_email" type="email" autocomplete="email" required></label>
+      <label>Password<input id="a_pw" type="password" autocomplete="${tab === "login" ? "current-password" : "new-password"}" minlength="8" required></label>
+      <div class="auth-err" id="a_err"></div>
+      <button class="btn-white" type="submit" style="width:100%;justify-content:center">${tab === "login" ? "Log in" : "Create account"}</button>
+    </form>
+    <p class="lead" style="text-align:center;margin-top:14px;font-size:12px">${tab === "login" ? "No account yet? Sign up — it's free." : "8+ characters. Your data stays on this server."}</p>
+  </div>`;
+  box.classList.add("open");
+  document.body.classList.add("authing");
+  $("#authForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const t = e.target.dataset.tab;
+    try {
+      const r = await api(`/auth/${t}`, "POST", { email: $("#a_email").value, password: $("#a_pw").value });
+      ME = r.email; box.classList.remove("open"); box.innerHTML = ""; document.body.classList.remove("authing");
+      S = null; NEWS = null; await refresh(); render();
+    } catch (err) { $("#a_err").textContent = err.message; }
+  });
+  $("#a_email").focus();
+}
 
 function placeholder(title, text) { return `<div class="page"><div><div class="h1">${title}</div></div><section class="panel card empty">${text}</section></div>`; }
 function activity() {
@@ -321,6 +383,9 @@ const handlers = {
     act(async () => { await api("/api/settings", "PUT", { dry_run: d.live !== "true" }); render(); }, d.live === "true" ? "LIVE" : "Test mode");
   },
   bg: () => { try { localStorage.setItem("bg", bgOn() ? "off" : "on"); } catch { /* storage blocked */ } mountBackdrop(); render(); },
+  authTab: (d) => showAuth(d.tab),
+  install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; render(); },
+  logout: async () => { await fetch("/auth/logout", { method: "POST" }); S = null; showAuth(); },
   savePub: () => act(async () => { await api("/api/settings", "PUT", { public_url: $("#pub").value }); }, "Saved"),
   regen: () => { if (confirm("Make a new secret? Update the TradingView alert message afterwards.")) act(async () => { await api("/api/settings", "PUT", { regenerate_secret: true }); render(); }, "New secret"); },
 };
@@ -367,10 +432,19 @@ function renderSetup() {
     + (next ? "" : "");
 }
 $("#setupPill").addEventListener("click", () => $("#setup").classList.toggle("open"));
-$("#signout").addEventListener("click", () => {
+$("#signout").addEventListener("click", async () => {
+  if (MODE === "cloud") { await fetch("/auth/logout", { method: "POST" }); S = null; showAuth(); return; }
   if (window.pywebview?.api?.quit) { if (confirm("Close the app? The copier stops.")) window.pywebview.api.quit(); }
   else toast("Close this window to sign out.");
 });
 
-refresh().then(render);
+(async function start() {
+  try { MODE = (await (await fetch("/api/mode")).json()).mode; } catch { /* offline: keep desktop */ }
+  if (MODE === "cloud") {
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+    try { ME = (await api("/api/me")).email; } catch { return; }   // shows the login screen
+  }
+  await refresh();
+  render();
+})();
 setInterval(refresh, 3000);

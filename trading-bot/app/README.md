@@ -53,3 +53,26 @@ python desktop.py --selftest     # בדיקת הפעלה בלי חלון
 ```
 pyinstaller --noconfirm --onefile --windowed --name TRADEBRIDGE --icon icon.ico --add-data "bridge/static;bridge/static" --collect-submodules uvicorn --collect-all webview --collect-data tzdata desktop.py
 ```
+
+## גרסת ווב + טלפון (הרשמה / התחברות)
+אותה אפליקציה כאתר: כל משתמש נרשם עם אימייל וסיסמה ומקבל העתקה נפרדת משלו — חיבורים, חוקים, יומן וסוד webhook משלו.
+המשתמשים נשמרים ב-SQLite (`users.db`), סיסמאות מוצפנות ב-scrypt, התחברות נשמרת בעוגייה ל-30 יום.
+
+הרצה:
+```
+pip install -r requirements.txt
+BRIDGE_DATA=./data uvicorn bridge.cloud:create_cloud_app --factory --host 0.0.0.0 --port 8000
+```
+או Docker:
+```
+docker build -t tradebridge .
+docker run -d -p 8000:8000 -v tradebridge-data:/data tradebridge
+```
+**חובה HTTPS ציבורי** — גם בשביל TradingView וגם כדי שהטלפון יאפשר "הוספה למסך הבית".
+שרת (VPS / Render / Railway / Fly.io) עם דומיין, או בבדיקה: `cloudflared tunnel --url http://localhost:8000`.
+
+### להוסיף לטלפון
+- **אנדרואיד (Chrome):** נכנסים לכתובת → My Account → "Install app" (או תפריט ⋮ → Install app).
+- **אייפון (Safari):** נכנסים לכתובת → כפתור שיתוף ⬆ → "Add to Home Screen".
+
+נפתח במסך מלא עם אייקון, כמו אפליקציה. כתובת ה-webhook לכל משתמש מוצגת ב-My Account.

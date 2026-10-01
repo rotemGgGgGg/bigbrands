@@ -1,0 +1,7 @@
+tests
+__pycache__
+*.db
+accounts.json
+data
+dist
+build

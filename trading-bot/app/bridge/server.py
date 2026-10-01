@@ -237,18 +237,26 @@ class SettingsIn(BaseModel):
     regenerate_secret: bool = False
 
 
-def create_app(bridge: Bridge | None = None) -> FastAPI:
-    b = bridge or Bridge()
+def settings_view(b: Bridge) -> dict:
+    return dict(brand=BRAND, dry_run=b.s.dry_run, news_blackout_min=b.s.news_blackout_min, public_url=b.s.public_url,
+                webhook_secret=b.s.webhook_secret, port=b.s.port, home=str(Path(b.s.home).resolve()))
+
+
+def build_app(bridges, bridge_dep, find_by_secret, mode: str) -> FastAPI:
+    """The whole HTTP surface. `bridges()` lists every running bridge (one per user), `bridge_dep` is the FastAPI
+    dependency that returns the caller's bridge (or 401), `find_by_secret` routes a TradingView alert to its owner."""
 
     async def auto_flatten():
         """Safety net: at each connection's flatten time (NY) close it, once a day."""
         done: dict[str, str] = {}
         while True:
-            now = b.clock().astimezone(NY)
-            for a in list(b.accounts):
-                if now.weekday() < 5 and now.time() >= _hm(a.rules.flatten_at) and done.get(a.id) != now.date().isoformat():
-                    done[a.id] = now.date().isoformat()
-                    await b.flatten_all(f"auto {a.rules.flatten_at} NY", only=a.id)
+            for b in list(bridges()):
+                now = b.clock().astimezone(NY)
+                for a in list(b.accounts):
+                    key = f"{id(b)}:{a.id}"
+                    if now.weekday() < 5 and now.time() >= _hm(a.rules.flatten_at) and done.get(key) != now.date().isoformat():
+                        done[key] = now.date().isoformat()
+                        await b.flatten_all(f"auto {a.rules.flatten_at} NY", only=a.id)
             await asyncio.sleep(20)
 
     @contextlib.asynccontextmanager
@@ -258,18 +266,25 @@ def create_app(bridge: Bridge | None = None) -> FastAPI:
         task.cancel()
 
     app = FastAPI(title=BRAND, lifespan=lifespan)
-    app.state.bridge = b
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
-
-    def token(x_token: str = Header(default="")):
-        if not secrets.compare_digest(x_token, b.s.admin_token):
-            raise HTTPException(401, "missing or wrong session token")
-
-    auth = [Depends(token)]
+    B = Depends(bridge_dep)
 
     @app.get("/")
     def index():
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/manifest.webmanifest")
+    def manifest():
+        return FileResponse(STATIC / "manifest.webmanifest", media_type="application/manifest+json")
+
+    @app.get("/sw.js")
+    def service_worker():
+        # served from the root so it may control the whole app
+        return FileResponse(STATIC / "sw.js", media_type="text/javascript", headers={"Cache-Control": "no-cache"})
+
+    @app.get("/api/mode")
+    def get_mode():
+        return {"mode": mode, "brand": BRAND}
 
     @app.post("/webhook")
     async def webhook(req: Request):
@@ -279,27 +294,30 @@ def create_app(bridge: Bridge | None = None) -> FastAPI:
             raise HTTPException(400, "body must be JSON")
         if not isinstance(raw, dict):
             raise HTTPException(400, "body must be a JSON object")
+        b = find_by_secret(str(raw.get("secret", "")))
+        if b is None:
+            raise HTTPException(401, "bad secret")
         return {"results": await b.handle(raw)}
 
-    @app.get("/api/state", dependencies=auth)
-    def state():
+    @app.get("/api/state")
+    def state(b: Bridge = B):
         return b.state()
 
-    @app.get("/api/journal", dependencies=auth)
-    def journal():
+    @app.get("/api/journal")
+    def journal(b: Bridge = B):
         return b.journal()
 
-    @app.get("/api/news", dependencies=auth)
-    async def news():
+    @app.get("/api/news")
+    async def news(b: Bridge = B):
         return await b.news.summary(b.clock())
 
     # connections
-    @app.get("/api/connections", dependencies=auth)
-    def connections():
+    @app.get("/api/connections")
+    def connections(b: Bridge = B):
         return [a.model_dump() for a in b.accounts]
 
-    @app.post("/api/connections", dependencies=auth)
-    def add_connection(c: ConnectionIn):
+    @app.post("/api/connections")
+    def add_connection(c: ConnectionIn, b: Bridge = B):
         base = re.sub(r"[^a-z0-9]+", "-", c.name.lower()).strip("-") or "conn"
         acc_id, n = base, 2
         while any(a.id == acc_id for a in b.accounts):
@@ -310,8 +328,8 @@ def create_app(bridge: Bridge | None = None) -> FastAPI:
         b.store.log("account", {"added": a.name}, a.id)
         return a.model_dump()
 
-    @app.put("/api/connections/{acc_id}", dependencies=auth)
-    def update_connection(acc_id: str, c: ConnectionIn):
+    @app.put("/api/connections/{acc_id}")
+    def update_connection(acc_id: str, c: ConnectionIn, b: Bridge = B):
         a = b.get(acc_id)
         for k, v in c.model_dump().items():
             setattr(a, k, Rules(**v) if k == "rules" else v)
@@ -319,64 +337,63 @@ def create_app(bridge: Bridge | None = None) -> FastAPI:
         b.store.log("account", {"updated": a.name}, a.id)
         return a.model_dump()
 
-    @app.delete("/api/connections/{acc_id}", dependencies=auth)
-    def delete_connection(acc_id: str):
+    @app.delete("/api/connections/{acc_id}")
+    def delete_connection(acc_id: str, b: Bridge = B):
         a = b.get(acc_id)
         b.accounts.remove(a)
         b.save()
         b.store.log("account", {"removed": a.name}, acc_id)
         return {"ok": True}
 
-    @app.post("/api/connections/{acc_id}/follow", dependencies=auth)
-    def follow(acc_id: str, on: bool):
+    @app.post("/api/connections/{acc_id}/follow")
+    def follow(acc_id: str, on: bool, b: Bridge = B):
         a = b.get(acc_id)
         a.enabled = on
         b.save()
         b.store.log("account", {"follow": on}, acc_id)
         return {"id": acc_id, "follow": on}
 
-    @app.post("/api/connections/{acc_id}/flatten", dependencies=auth)
-    async def flatten_one(acc_id: str):
+    @app.post("/api/connections/{acc_id}/flatten")
+    async def flatten_one(acc_id: str, b: Bridge = B):
         b.get(acc_id)
         return {"results": await b.flatten_all("manual", only=acc_id)}
 
-    @app.post("/api/followers", dependencies=auth)
-    def all_followers(on: bool):
+    @app.post("/api/followers")
+    def all_followers(on: bool, b: Bridge = B):
         for a in b.accounts:
             a.enabled = on
         b.save()
         b.store.log("account", {"follow_all": on})
         return {"follow": on}
 
-    @app.post("/api/kill", dependencies=auth)
-    def set_kill(on: bool):
+    @app.post("/api/kill")
+    def set_kill(on: bool, b: Bridge = B):
         b.store.put("kill", on)
         b.store.log("kill", {"on": on})
         return {"kill": on}
 
-    @app.post("/api/flatten", dependencies=auth)
-    async def flatten():
+    @app.post("/api/flatten")
+    async def flatten(b: Bridge = B):
         return {"results": await b.flatten_all("manual")}
 
-    @app.post("/api/cancel", dependencies=auth)
-    async def cancel():
+    @app.post("/api/cancel")
+    async def cancel(b: Bridge = B):
         return {"results": await b.cancel_all()}
 
-    @app.post("/api/test-signal", dependencies=auth)
-    async def test_signal(action: str = "buy", position: str = "long"):
+    @app.post("/api/test-signal")
+    async def test_signal(action: str = "buy", position: str = "long", b: Bridge = B):
         """A fake leader signal that runs every rule but never sends anything."""
         raw = dict(secret=b.s.webhook_secret, strategy="test", symbol="MNQ1!", action=action, position=position,
                    contracts=1, price=0, id=f"test-{_time.time()}")
         return {"results": await b.handle(raw, dry=True)}
 
     # settings
-    @app.get("/api/settings", dependencies=auth)
-    def get_settings():
-        return dict(brand=BRAND, dry_run=b.s.dry_run, news_blackout_min=b.s.news_blackout_min, public_url=b.s.public_url,
-                    webhook_secret=b.s.webhook_secret, port=b.s.port, home=str(Path(b.s.home).resolve()))
+    @app.get("/api/settings")
+    def get_settings(b: Bridge = B):
+        return settings_view(b)
 
-    @app.put("/api/settings", dependencies=auth)
-    def put_settings(s: SettingsIn):
+    @app.put("/api/settings")
+    def put_settings(s: SettingsIn, b: Bridge = B):
         if s.dry_run is not None:
             b.s.dry_run = s.dry_run
         if s.news_blackout_min is not None:
@@ -388,12 +405,30 @@ def create_app(bridge: Bridge | None = None) -> FastAPI:
         if b.persist:
             b.s.save()
         b.store.log("settings", s.model_dump(exclude_none=True))
-        return get_settings()
+        return settings_view(b)
 
-    @app.post("/api/feedback", dependencies=auth)
-    async def feedback(req: Request):
+    @app.post("/api/feedback")
+    async def feedback(req: Request, b: Bridge = B):
         body = await req.json()
         b.store.log("feedback", {"text": str(body.get("text", ""))[:4000]})
         return {"ok": True}
 
+    return app
+
+
+def create_app(bridge: Bridge | None = None) -> FastAPI:
+    """Desktop / single-user: one bridge, the dashboard unlocked by the session token only the app window knows."""
+    b = bridge or Bridge()
+
+    def bridge_dep(x_token: str = Header(default="")) -> Bridge:
+        if not secrets.compare_digest(x_token, b.s.admin_token):
+            raise HTTPException(401, "missing or wrong session token")
+        return b
+
+    def find(secret: str) -> Bridge | None:
+        ok = b.s.webhook_secret and secrets.compare_digest(secret, b.s.webhook_secret)
+        return b if ok else None
+
+    app = build_app(lambda: [b], bridge_dep, find, "desktop")
+    app.state.bridge = b
     return app

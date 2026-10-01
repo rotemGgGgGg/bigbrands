@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TRADEBRIDGE</title>
 <link rel="stylesheet" href="/static/app.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230d1a2c%27/%3E%3Cpath d=%27M9 22V10h8%27 stroke=%27%232fd17a%27 stroke-width=%273%27 fill=%27none%27/%3E%3Cpath d=%27M15 22h8V10%27 stroke=%27%23f2c230%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
 </head>
 <body>
@@ -32,6 +37,7 @@
 
 <div class="modal" id="modal"><div class="panel" id="modalBody"></div></div>
 <div class="toast" id="toast"></div>
+<div class="auth" id="auth"></div>
 
 <script src="/static/app.js"></script>
 </body>
