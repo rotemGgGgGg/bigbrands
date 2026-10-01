@@ -1,0 +1,43 @@
+[
+  {
+    "id": "lucid-1",
+    "name": "Lucid 50K #1",
+    "enabled": false,
+    "multiplier": 1,
+    "url": "https://api.pickmytrade.io/v2/add-trade-data",
+    "template_open": {
+      "symbol": "MNQ",
+      "date": "{{time}}",
+      "data": "{{side}}",
+      "quantity": "{{qty}}",
+      "risk_percentage": 0,
+      "price": "{{price}}",
+      "tp": 0, "percentage_tp": 0, "dollar_tp": 0,
+      "sl": 0, "dollar_sl": 0, "percentage_sl": 0,
+      "trail": 0, "trail_stop": 0, "trail_trigger": 0, "trail_freq": 0,
+      "update_tp": false, "update_sl": false, "breakeven": 0,
+      "token": "PASTE_YOUR_PICKMYTRADE_TOKEN",
+      "account_id": "PASTE_THE_TRADOVATE_ACCOUNT_ID"
+    },
+    "template_close": {
+      "symbol": "MNQ",
+      "date": "{{time}}",
+      "data": "close",
+      "quantity": "{{qty}}",
+      "price": "{{price}}",
+      "token": "PASTE_YOUR_PICKMYTRADE_TOKEN",
+      "account_id": "PASTE_THE_TRADOVATE_ACCOUNT_ID"
+    },
+    "rules": {
+      "entry_start": "09:30",
+      "entry_end": "15:30",
+      "flatten_at": "15:55",
+      "max_contracts": 2,
+      "max_trades_per_day": 3,
+      "daily_loss_limit": 600,
+      "trailing_dd": 2000,
+      "dd_buffer": 300,
+      "profit_target": 3000
+    }
+  }
+]

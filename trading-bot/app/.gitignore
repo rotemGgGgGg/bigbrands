@@ -1,0 +1,4 @@
+accounts.json
+*.db
+.env
+__pycache__/
