@@ -115,8 +115,11 @@ def main() -> int:
                     break
             w.destroy()
 
-        threading.Timer(120, lambda: os._exit(3)).start()             # never hang CI
+        guard = threading.Timer(120, lambda: os._exit(3))              # never hang CI
+        guard.daemon = True
+        guard.start()
         webview.start(check, win, private_mode=False, storage_path=str(home / "webview"))
+        guard.cancel()
     else:
         webview.start(private_mode=False, storage_path=str(home / "webview"))
     server.should_exit = True                                          # window closed → stop the copier
