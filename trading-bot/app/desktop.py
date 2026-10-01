@@ -2,6 +2,7 @@
 
     python desktop.py              # run the app
     python desktop.py --selftest   # start the server, check the API answers, exit 0/1 (used by CI on the built .exe)
+    python desktop.py --windowtest # also open the real window, read the rendered page, close (CI)
 
 Data (settings.json, accounts.json, bridge.db, app.log) lives in %APPDATA%\\TRADEBRIDGE on Windows.
 """
@@ -93,11 +94,34 @@ def main() -> int:
             for w in list(webview.windows):
                 w.destroy()
 
-    webview.create_window(BRAND, url, width=1480, height=920, min_size=(1100, 700), background_color="#07101d", js_api=Api())
-    webview.start(private_mode=False, storage_path=str(home / "webview"))
+    win = webview.create_window(BRAND, url, width=1480, height=920, min_size=(1100, 700), background_color="#07101d", js_api=Api())
+    result = {"ok": True}
+
+    if "--windowtest" in sys.argv:
+        result["ok"] = False
+
+        def check(w):
+            for _ in range(60):                                        # wait for the dashboard to render
+                time.sleep(1)
+                try:
+                    brand = w.evaluate_js("document.getElementById('brand').textContent")
+                    rows = w.evaluate_js("document.querySelectorAll('.panel').length")
+                except Exception as e:
+                    print("windowtest: js not ready", repr(e), flush=True)
+                    continue
+                if brand == BRAND and rows and rows >= 3:
+                    result["ok"] = True
+                    print(f"windowtest OK: brand={brand} panels={rows}", flush=True)
+                    break
+            w.destroy()
+
+        threading.Timer(120, lambda: os._exit(3)).start()             # never hang CI
+        webview.start(check, win, private_mode=False, storage_path=str(home / "webview"))
+    else:
+        webview.start(private_mode=False, storage_path=str(home / "webview"))
     server.should_exit = True                                          # window closed → stop the copier
     th.join(timeout=5)
-    return 0
+    return 0 if result["ok"] else 1
 
 
 if __name__ == "__main__":

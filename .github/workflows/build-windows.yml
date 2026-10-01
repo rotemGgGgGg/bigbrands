@@ -15,9 +15,9 @@ jobs:
       run:
         working-directory: trading-bot/app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -44,7 +44,14 @@ jobs:
           Get-Content "$env:APPDATA\TRADEBRIDGE\app.log" -Tail 20
           if ($p.ExitCode -ne 0) { throw "selftest failed with exit code $($p.ExitCode)" }
 
-      - uses: actions/upload-artifact@v4
+      - name: Window test (WebView2 renders the dashboard)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\TRADEBRIDGE.exe" -ArgumentList "--windowtest" -Wait -PassThru
+          Get-Content "$env:APPDATA\TRADEBRIDGE\app.log" -Tail 25
+          if ($p.ExitCode -ne 0) { throw "window test failed with exit code $($p.ExitCode)" }
+
+      - uses: actions/upload-artifact@v5
         with:
           name: TRADEBRIDGE-windows
           path: trading-bot/app/dist/TRADEBRIDGE.exe
