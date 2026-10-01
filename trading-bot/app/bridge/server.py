@@ -110,7 +110,6 @@ class Bridge:
         block = "" if sig.is_close else await self.news.blackout(now, self.s.news_blackout_min)
         async with self.lock:
             self.store.log("signal", {k: v for k, v in raw.items() if k != "secret"} | ({"test": True} if dry else {}))
-            self.store.put("leader", dict(symbol=sig.symbol, position=sig.position, price=sig.price, at=now.isoformat()))
             out = []
             for acc in self.accounts:
                 st = self.store.load_state(acc.id)
@@ -119,6 +118,8 @@ class Bridge:
                 if d.send:
                     rec |= await self.deliver(acc, d.payload, dry)
                     if not dry:
+                        ok = isinstance(rec.get("status"), int) and rec["status"] < 400 or rec.get("status") == "dry-run"
+                        self.store.put(f"sync:{acc.id}", ok)
                         self.store.save_state(acc.id, st)
                         if d.trade:
                             self.store.log("trade", d.trade, acc.id)
@@ -166,13 +167,8 @@ class Bridge:
         risk = [e for e in ev if e["kind"] == "skip" and any(r in e["data"].get("reason", "") for r in RISK_REASONS)]
         prot = [e for e in ev if e["kind"] == "skip" and any(r in e["data"].get("reason", "") for r in PROTECT_REASONS)]
         ms = [e["data"]["ms"] for e in ev if e["kind"] == "order" and isinstance(e["data"].get("status"), int) and e["data"].get("ms")]
-        leader = self.store.get("leader") or {}
-        want = {"long": 1, "short": -1, "flat": 0}.get(leader.get("position", "flat"), 0)
-        out_sync = 0
-        for a in self.accounts:
-            if a.enabled and leader:
-                pos = self.store.load_state(a.id).position
-                out_sync += (pos > 0) - (pos < 0) != want
+        # out of sync = the broker may not hold what the copier thinks: the last order to that account failed
+        out_sync = sum(1 for a in self.accounts if a.enabled and self.store.get(f"sync:{a.id}", True) is False)
         status = "HEALTHY" if not fails and not out_sync else "ATTENTION"
         return dict(failures=len(fails), risk_blocks=len(risk), out_of_sync=out_sync, protected=len(prot),
                     avg_ms=round(sum(ms) / len(ms)) if ms else None, status=status)
@@ -195,7 +191,8 @@ class Bridge:
             dict(key="connection", title="Add a connection", done=bool(self.accounts)),
             dict(key="template", title="Paste your PickMyTrade alert JSON",
                  done=any(a.template_open and "PASTE" not in str(a.template_open) for a in self.accounts)),
-            dict(key="signal", title="Receive a first TradingView signal", done=bool(self.store.events(1, ("signal",)))),
+            dict(key="signal", title="Receive a first TradingView signal",
+                 done=any(not e["data"].get("test") for e in self.store.events(50, ("signal",)))),
             dict(key="live", title="Switch from test mode to live", done=not self.s.dry_run),
         ]
         return dict(steps=steps, done=sum(s["done"] for s in steps), total=len(steps))

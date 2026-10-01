@@ -1,112 +1,38 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trading Bridge</title>
-<style>
-  :root { --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --text:#e6e8ee; --dim:#8a93a6; --green:#2ecc71; --red:#e5484d; --amber:#f5a524; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:14px/1.45 system-ui, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--text); }
-  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line); }
-  h1 { font-size:18px; margin:0; }
-  .pill { padding:3px 10px; border-radius:999px; font-size:12px; border:1px solid var(--line); color:var(--dim); }
-  .pill.on { color:#111; background:var(--amber); border-color:var(--amber); }
-  .pill.live { color:#111; background:var(--green); border-color:var(--green); }
-  main { padding:16px; display:grid; gap:16px; }
-  .row { display:flex; flex-wrap:wrap; gap:10px; }
-  button { font:inherit; padding:9px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
-  button.danger { background:var(--red); border-color:var(--red); color:#fff; }
-  button.warn { background:var(--amber); border-color:var(--amber); color:#111; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
-  .card h2 { margin:0 0 8px; font-size:15px; display:flex; justify-content:space-between; align-items:center; }
-  .kv { display:grid; grid-template-columns:1fr auto; gap:4px 12px; color:var(--dim); }
-  .kv b { color:var(--text); font-weight:600; direction:ltr; text-align:left; }
-  .pos { color:var(--green); } .neg { color:var(--red); }
-  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-  th, td { padding:7px 10px; border-bottom:1px solid var(--line); text-align:right; vertical-align:top; }
-  th { color:var(--dim); font-weight:500; }
-  td.ltr { direction:ltr; text-align:left; font-family:ui-monospace, Consolas, monospace; font-size:12px; word-break:break-all; }
-  .wrap { overflow-x:auto; }
-</style>
+<title>TRADEBRIDGE</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230d1a2c%27/%3E%3Cpath d=%27M9 22V10h8%27 stroke=%27%232fd17a%27 stroke-width=%273%27 fill=%27none%27/%3E%3Cpath d=%27M15 22h8V10%27 stroke=%27%23f2c230%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
 </head>
 <body>
-<header>
-  <h1>Trading Bridge</h1>
-  <div class="row">
-    <span id="mode" class="pill">…</span>
-    <span id="kill" class="pill">…</span>
-    <span id="clock" class="pill">…</span>
-  </div>
-</header>
-<main>
-  <div class="row">
-    <button id="killBtn" class="warn">עצור כניסות חדשות</button>
-    <button id="flatBtn" class="danger">סגור הכל עכשיו</button>
-  </div>
-  <section class="cards" id="accounts"></section>
-  <div class="wrap">
-    <table>
-      <thead><tr><th>זמן (UTC)</th><th>סוג</th><th>חשבון</th><th>פרטים</th></tr></thead>
-      <tbody id="events"></tbody>
-    </table>
-  </div>
-</main>
-<script>
-const $ = (id) => document.getElementById(id);
-const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const money = (v) => `<b class="${v > 0 ? "pos" : v < 0 ? "neg" : ""}">${v >= 0 ? "+" : ""}${Number(v).toFixed(0)}$</b>`;
-const KIND = { signal: "אות", order: "נשלח", skip: "דולג", flatten: "סגירה", kill: "עצירה", account: "חשבון", duplicate: "כפול" };
-let state = null;
+<div class="backdrop"></div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span id="brand">TRADEBRIDGE</span></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-bottom">
+      <button class="side-btn" data-page="refer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span>Refer &amp; Earn</span></button>
+      <div class="side-sep"></div>
+      <button class="side-btn upgrade" data-page="upgrade"><span>↗&nbsp; Upgrade Plan</span></button>
+      <button class="side-link" data-page="account">My Account</button>
+      <button class="side-link" id="signout">⇥&nbsp; Sign Out</button>
+      <div class="cookie">Cookie settings</div>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
 
-async function api(path, method = "GET") {
-  const r = await fetch(path, { method });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
+<div class="setup" id="setup">
+  <div class="setup-list" id="setupList"></div>
+  <button class="setup-pill" id="setupPill"><span class="n" id="setupN">1</span><span id="setupText">Setup 1/4</span><span class="chev">︿</span></button>
+</div>
 
-function render(s) {
-  state = s;
-  $("mode").textContent = s.dry_run ? "מצב בדיקה — לא נשלח כלום" : "LIVE — נשלח לברוקר";
-  $("mode").className = "pill " + (s.dry_run ? "" : "live");
-  $("kill").textContent = s.kill ? "כניסות חדשות עצורות" : "כניסות פתוחות";
-  $("kill").className = "pill " + (s.kill ? "on" : "");
-  $("killBtn").textContent = s.kill ? "אפשר כניסות חדשות" : "עצור כניסות חדשות";
-  $("clock").textContent = "ניו יורק " + s.now_ny.slice(11, 16);
-  $("accounts").innerHTML = s.accounts.map((a) => `
-    <div class="card">
-      <h2>${esc(a.name)}<button data-acc="${esc(a.id)}" data-on="${!a.enabled}">${a.enabled ? "פעיל ✓" : "כבוי"}</button></h2>
-      <div class="kv">
-        <span>פוזיציה (הערכה)</span><b>${a.position === 0 ? "אין" : (a.position > 0 ? "+" : "") + a.position + " " + esc(a.symbol) + " @ " + a.entry}</b>
-        <span>היום</span>${money(a.today)}
-        <span>עסקאות היום</span><b>${a.trades_today}</b>
-        <span>סה"כ (הערכה)</span>${money(a.balance)}
-        <span>מרווח עד הדראודאון</span><b class="${a.room < 500 ? "neg" : ""}">${a.room.toFixed(0)}$</b>
-        <span>יעד</span><b>${a.target ? a.target + "$" : "—"}</b>
-        <span>מכפיל</span><b>×${a.multiplier}</b>
-      </div>
-    </div>`).join("") || `<div class="card">אין חשבונות. ערוך את accounts.json והפעל מחדש.</div>`;
-  $("events").innerHTML = s.events.map((e) => `
-    <tr><td>${e.ts.slice(5, 19).replace("T", " ")}</td><td>${KIND[e.kind] || e.kind}</td><td>${esc(e.account)}</td>
-    <td class="ltr">${esc(JSON.stringify(e.data))}</td></tr>`).join("");
-}
+<div class="modal" id="modal"><div class="panel" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
 
-async function refresh() {
-  try { render(await api("/api/state")); } catch (e) { $("mode").textContent = "אין חיבור לשרת"; }
-}
-
-document.addEventListener("click", async (ev) => {
-  const t = ev.target;
-  if (t.dataset.acc) { await api(`/api/accounts/${t.dataset.acc}/enabled?on=${t.dataset.on}`, "POST"); refresh(); }
-});
-$("killBtn").onclick = async () => { await api(`/api/kill?on=${!state.kill}`, "POST"); refresh(); };
-$("flatBtn").onclick = async () => {
-  if (!confirm("לשלוח סגירה לכל החשבונות הפתוחים?")) return;
-  await api("/api/flatten", "POST"); refresh();
-};
-refresh();
-setInterval(refresh, 3000);
-</script>
+<script src="/static/app.js"></script>
 </body>
 </html>
