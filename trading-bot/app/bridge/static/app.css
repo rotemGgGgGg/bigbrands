@@ -25,20 +25,29 @@ body {
   background: var(--bg-0);
   overflow: hidden;
 }
-/* chrome-ribbon backdrop: live Spline scene, with an offline fallback drawn in CSS */
+/* chrome-ribbon backdrop: one static SVG, drifted slowly with transform-only animations (compositor, ~free) */
 .backdrop { position: fixed; inset: 0; z-index: -1; background: #000; overflow: hidden; }
-.backdrop iframe { position: absolute; inset: -2%; width: 104%; height: 104%; border: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
-.backdrop.ready iframe { opacity: 1; }
-.backdrop .fallback {
-  position: absolute; inset: 0; transition: opacity 1.2s ease;
-  background:
-    radial-gradient(60% 30% at 30% 70%, rgba(255,255,255,.10), transparent 70%),
-    radial-gradient(40% 20% at 70% 25%, rgba(255,255,255,.12), transparent 70%),
-    linear-gradient(120deg, transparent 38%, rgba(255,255,255,.05) 46%, rgba(125,211,252,.10) 49%, rgba(250,204,21,.07) 51%, transparent 58%),
-    #000;
+.backdrop .ribbon {
+  position: absolute; inset: -8%; background: url("/static/ribbon.svg") center / cover no-repeat;
+  animation: drift 48s ease-in-out infinite alternate; will-change: transform;
 }
-.backdrop.ready .fallback { opacity: 0; }
-.backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(0,0,0,.55)); pointer-events: none; }
+.backdrop .sheen {
+  position: absolute; inset: -30%;
+  background: linear-gradient(115deg, transparent 42%, rgba(34,211,238,.10) 47%, rgba(250,204,21,.08) 50%, rgba(251,113,133,.08) 53%, transparent 58%);
+  mix-blend-mode: screen; animation: sweep 22s ease-in-out infinite alternate; will-change: transform, opacity;
+}
+.backdrop::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(0,0,0,.6)); pointer-events: none; }
+.backdrop.still .ribbon, .backdrop.still .sheen { animation: none; }
+@keyframes drift {
+  0%   { transform: translate3d(-2%, 2%, 0) scale(1.04) rotate(-1.5deg); }
+  50%  { transform: translate3d(1%, -1%, 0) scale(1.10) rotate(0.5deg); }
+  100% { transform: translate3d(3%, -3%, 0) scale(1.06) rotate(2deg); }
+}
+@keyframes sweep {
+  0%   { transform: translate3d(-12%, 6%, 0); opacity: .35; }
+  100% { transform: translate3d(12%, -6%, 0); opacity: .9; }
+}
+@media (prefers-reduced-motion: reduce) { .backdrop .ribbon, .backdrop .sheen { animation: none; } }
 
 button { font: inherit; color: inherit; cursor: pointer; }
 a { color: inherit; }
@@ -216,6 +225,5 @@ th:last-child, td:last-child { text-align: right; }
 }
 td.empty, th.empty { text-align: center !important; white-space: normal; }
 /* text that sits directly on the ribbon stays readable */
-.backdrop iframe { filter: brightness(.82) contrast(1.08); }
 .note, .h1, .lead, .page > div > .lead { text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 18px rgba(0,0,0,.85); }
 .note { color: #c4c4cc; }

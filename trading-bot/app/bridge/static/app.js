@@ -8,20 +8,9 @@ const TOKEN = sessionStorage.getItem("t") || "";
 
 const $ = (s, r = document) => r.querySelector(s);
 
-// ── chrome-ribbon background (live 3D scene from Spline; static fallback when off or offline) ──
-const SCENE = "https://my.spline.design/3dgradient-AcpgG6LxFkpnJSoowRHPfcbO";
+// ── chrome-ribbon background: a local SVG that drifts slowly; the switch in My Account freezes it ──
 const bgOn = () => { try { return localStorage.getItem("bg") !== "off"; } catch { return true; } };
-async function mountBackdrop() {
-  const box = document.getElementById("backdrop");
-  box.querySelector("iframe")?.remove();
-  box.classList.remove("ready");
-  if (!bgOn() || !navigator.onLine) return;
-  try { await fetch(SCENE, { mode: "no-cors", cache: "no-store" }); } catch { return; }   // offline → keep the fallback
-  const f = document.createElement("iframe");
-  f.src = SCENE; f.title = "background"; f.tabIndex = -1; f.setAttribute("aria-hidden", "true");
-  f.addEventListener("load", () => setTimeout(() => box.classList.add("ready"), 1500));
-  box.appendChild(f);
-}
+function mountBackdrop() { document.getElementById("backdrop").classList.toggle("still", !bgOn()); }
 mountBackdrop();
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const money = (v) => { const n = Number(v || 0); return `<span class="${n > 0 ? "pos" : n < 0 ? "neg" : ""}">${n >= 0 ? "+" : "−"}$${Math.abs(n).toFixed(2)}</span>`; };
@@ -240,7 +229,7 @@ const views = {
         <p class="lead">Test mode runs every rule and logs what it would send, without sending. Go live only after a test signal looks right.</p>
         <div class="row" style="margin-top:10px">${s.dry_run ? '<button class="btn red" data-act="mode" data-live="true">Go LIVE</button>' : '<button class="btn" data-act="mode" data-live="false">Back to test mode</button>'}</div></section>
       <section class="panel card"><h4>Appearance <button class="switch ${bgOn() ? "on" : ""}" data-act="bg" title="Animated background"></button></h4>
-        <p class="lead">Animated chrome-ribbon background. It needs internet and uses the graphics card — turn it off on a slow PC.</p></section>
+        <p class="lead">Slow-moving chrome ribbon behind the app. Off = a still image.</p></section>
       <section class="panel card"><h4>Webhook</h4><div class="grid2">
         <label>Public address TradingView can reach (tunnel or VPS)<input id="pub" placeholder="https://my-tunnel.example.com" value="${esc(s.public_url)}"></label>
         <label>Webhook secret (inside the alert JSON)<input readonly class="mono" value="${esc(s.webhook_secret)}"></label></div>
