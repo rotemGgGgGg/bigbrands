@@ -34,6 +34,7 @@ jobs:
           --add-data "bridge/static;bridge/static"
           --collect-submodules uvicorn
           --collect-all webview
+          --collect-data tzdata
           desktop.py
 
       - name: Self-test the built .exe

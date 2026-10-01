@@ -51,5 +51,5 @@ python desktop.py --selftest     # בדיקת הפעלה בלי חלון
 ```
 בנייה מקומית ב-Windows:
 ```
-pyinstaller --noconfirm --onefile --windowed --name TRADEBRIDGE --icon icon.ico --add-data "bridge/static;bridge/static" --collect-submodules uvicorn --collect-all webview desktop.py
+pyinstaller --noconfirm --onefile --windowed --name TRADEBRIDGE --icon icon.ico --add-data "bridge/static;bridge/static" --collect-submodules uvicorn --collect-all webview --collect-data tzdata desktop.py
 ```
