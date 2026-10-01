@@ -7,6 +7,22 @@ if (qs.get("t")) { sessionStorage.setItem("t", qs.get("t")); history.replaceStat
 const TOKEN = sessionStorage.getItem("t") || "";
 
 const $ = (s, r = document) => r.querySelector(s);
+
+// ── chrome-ribbon background (live 3D scene from Spline; static fallback when off or offline) ──
+const SCENE = "https://my.spline.design/3dgradient-AcpgG6LxFkpnJSoowRHPfcbO";
+const bgOn = () => { try { return localStorage.getItem("bg") !== "off"; } catch { return true; } };
+async function mountBackdrop() {
+  const box = document.getElementById("backdrop");
+  box.querySelector("iframe")?.remove();
+  box.classList.remove("ready");
+  if (!bgOn() || !navigator.onLine) return;
+  try { await fetch(SCENE, { mode: "no-cors", cache: "no-store" }); } catch { return; }   // offline → keep the fallback
+  const f = document.createElement("iframe");
+  f.src = SCENE; f.title = "background"; f.tabIndex = -1; f.setAttribute("aria-hidden", "true");
+  f.addEventListener("load", () => setTimeout(() => box.classList.add("ready"), 1500));
+  box.appendChild(f);
+}
+mountBackdrop();
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const money = (v) => { const n = Number(v || 0); return `<span class="${n > 0 ? "pos" : n < 0 ? "neg" : ""}">${n >= 0 ? "+" : "−"}$${Math.abs(n).toFixed(2)}</span>`; };
 const fmtTime = (iso) => iso ? new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -223,6 +239,8 @@ const views = {
       <section class="panel card"><h4>Mode <span class="${s.dry_run ? "warn" : "pos"}">${s.dry_run ? "TEST — nothing is sent" : "LIVE — orders are sent"}</span></h4>
         <p class="lead">Test mode runs every rule and logs what it would send, without sending. Go live only after a test signal looks right.</p>
         <div class="row" style="margin-top:10px">${s.dry_run ? '<button class="btn red" data-act="mode" data-live="true">Go LIVE</button>' : '<button class="btn" data-act="mode" data-live="false">Back to test mode</button>'}</div></section>
+      <section class="panel card"><h4>Appearance <button class="switch ${bgOn() ? "on" : ""}" data-act="bg" title="Animated background"></button></h4>
+        <p class="lead">Animated chrome-ribbon background. It needs internet and uses the graphics card — turn it off on a slow PC.</p></section>
       <section class="panel card"><h4>Webhook</h4><div class="grid2">
         <label>Public address TradingView can reach (tunnel or VPS)<input id="pub" placeholder="https://my-tunnel.example.com" value="${esc(s.public_url)}"></label>
         <label>Webhook secret (inside the alert JSON)<input readonly class="mono" value="${esc(s.webhook_secret)}"></label></div>
@@ -313,6 +331,7 @@ const handlers = {
     if (d.live === "true" && !confirm("Go LIVE? Orders will be sent to every following connection.")) return;
     act(async () => { await api("/api/settings", "PUT", { dry_run: d.live !== "true" }); render(); }, d.live === "true" ? "LIVE" : "Test mode");
   },
+  bg: () => { try { localStorage.setItem("bg", bgOn() ? "off" : "on"); } catch { /* storage blocked */ } mountBackdrop(); render(); },
   savePub: () => act(async () => { await api("/api/settings", "PUT", { public_url: $("#pub").value }); }, "Saved"),
   regen: () => { if (confirm("Make a new secret? Update the TradingView alert message afterwards.")) act(async () => { await api("/api/settings", "PUT", { regenerate_secret: true }); render(); }, "New secret"); },
 };
@@ -320,20 +339,20 @@ const handlers = {
 function drawSnapshot() {
   const c = $("#snap"); if (!c || !S) return;
   const g = c.getContext("2d");
-  const grd = g.createLinearGradient(0, 0, 1200, 630); grd.addColorStop(0, "#1a2c47"); grd.addColorStop(1, "#07101d");
+  const grd = g.createLinearGradient(0, 0, 1200, 630); grd.addColorStop(0, "#1c1c1f"); grd.addColorStop(1, "#000000");
   g.fillStyle = grd; g.fillRect(0, 0, 1200, 630);
-  g.fillStyle = "#eef2f8"; g.font = "800 44px Segoe UI, Arial"; g.fillText(S.brand, 70, 110);
-  g.fillStyle = "#9aa8bd"; g.font = "600 24px Segoe UI, Arial"; g.fillText(new Date().toLocaleDateString(), 70, 155);
-  const tiles = [["REALIZED P&L", (S.realized >= 0 ? "+" : "−") + "$" + Math.abs(S.realized).toFixed(2), S.realized >= 0 ? "#2fd17a" : "#ff3b4e"],
-    ["FOLLOWERS", String(S.rows.filter((r) => r.follow).length), "#eef2f8"], ["COPIER", S.health.status, S.health.status === "HEALTHY" ? "#2fd17a" : "#f2c230"]];
+  g.fillStyle = "#f5f5f7"; g.font = "800 44px Segoe UI, Arial"; g.fillText(S.brand, 70, 110);
+  g.fillStyle = "#9a9aa2"; g.font = "600 24px Segoe UI, Arial"; g.fillText(new Date().toLocaleDateString(), 70, 155);
+  const tiles = [["REALIZED P&L", (S.realized >= 0 ? "+" : "−") + "$" + Math.abs(S.realized).toFixed(2), S.realized >= 0 ? "#34d399" : "#f43f5e"],
+    ["FOLLOWERS", String(S.rows.filter((r) => r.follow).length), "#f5f5f7"], ["COPIER", S.health.status, S.health.status === "HEALTHY" ? "#34d399" : "#facc15"]];
   tiles.forEach(([k, v, col], i) => {
     const x = 70 + i * 360;
-    g.strokeStyle = "rgba(190,210,240,.3)"; g.lineWidth = 2; g.beginPath(); g.roundRect(x, 240, 320, 220, 22); g.stroke();
-    g.fillStyle = "#9aa8bd"; g.font = "700 20px Segoe UI, Arial"; g.fillText(k, x + 30, 290);
+    g.strokeStyle = "rgba(255,255,255,.28)"; g.lineWidth = 2; g.beginPath(); g.roundRect(x, 240, 320, 220, 22); g.stroke();
+    g.fillStyle = "#9a9aa2"; g.font = "700 20px Segoe UI, Arial"; g.fillText(k, x + 30, 290);
     let fs = 52; do { g.font = `800 ${fs}px Segoe UI, Arial`; fs -= 2; } while (g.measureText(v).width > 260 && fs > 20);
     g.fillStyle = col; g.fillText(v, x + 30, 380);
   });
-  g.fillStyle = "#6f7d92"; g.font = "500 18px Segoe UI, Arial"; g.fillText("Estimated from leader signals.", 70, 560);
+  g.fillStyle = "#66666e"; g.font = "500 18px Segoe UI, Arial"; g.fillText("Estimated from leader signals.", 70, 560);
 }
 
 async function render() {

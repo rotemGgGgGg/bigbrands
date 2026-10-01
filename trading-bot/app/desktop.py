@@ -94,7 +94,7 @@ def main() -> int:
             for w in list(webview.windows):
                 w.destroy()
 
-    win = webview.create_window(BRAND, url, width=1480, height=920, min_size=(1100, 700), background_color="#07101d", js_api=Api())
+    win = webview.create_window(BRAND, url, width=1480, height=920, min_size=(1100, 700), background_color="#000000", js_api=Api())
     result = {"ok": True}
 
     if "--windowtest" in sys.argv:
