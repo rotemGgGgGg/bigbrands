@@ -1,0 +1,18 @@
+# One-tap hosting on Render: New → Blueprint → this repo. Runs the web edition (login + phone app).
+services:
+  - type: web
+    name: tradebridge
+    runtime: docker
+    dockerContext: ./trading-bot/app
+    dockerfilePath: ./trading-bot/app/Dockerfile
+    plan: starter                 # always on; the free plan sleeps and would miss TradingView alerts
+    healthCheckPath: /api/mode
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: BRIDGE_DATA
+        value: /data
+    disk:                         # keeps users and connections across restarts
+      name: data
+      mountPath: /data
+      sizeGB: 1
