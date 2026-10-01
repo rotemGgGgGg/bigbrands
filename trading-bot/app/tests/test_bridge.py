@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from bridge.config import Account, Rules, Settings, point_value  # noqa: E402
+from bridge.config import Account, Rules, Settings, point_value, to_micro  # noqa: E402
 from bridge.engine import AccountState, Signal, decide, render  # noqa: E402
+from bridge.news import News  # noqa: E402
 from bridge.server import Bridge, create_app  # noqa: E402
 
 NY = ZoneInfo("America/New_York")
@@ -35,6 +36,21 @@ def test_point_value():
     assert point_value("MNQ1!") == 2.0
     assert point_value("CME_MINI:NQZ2026") == 20.0
     assert point_value("MES1!") == 5.0
+
+
+def test_to_micro():
+    assert to_micro("NQ1!") == "MNQ1!" and to_micro("CME_MINI:ESZ2026") == "MESZ2026" and to_micro("MNQ1!") == "MNQ1!"
+
+
+def test_micros_only_sends_micro_symbol():
+    a = acc(micros_only=True)
+    d = decide(Signal("t", "NQ1!", "buy", 1, "long", 20000.0), a, AccountState(), at(10, 0), False)
+    assert d.payload["symbol"] == "MNQ1!"
+
+
+def test_news_block_stops_entries():
+    d = decide(sig(), acc(), AccountState(), at(10, 0), False, block="news blackout: NFP")
+    assert not d.send and "news" in d.reason
 
 
 def test_render_keeps_types():
@@ -95,6 +111,13 @@ def test_copy_trading_multiplier_and_cap():
 
 
 # ── server ──
+async def _no_news():
+    return []
+
+
+H = {"X-Token": "tok"}
+
+
 class FakeSender:
     def __init__(self):
         self.calls = []
@@ -106,10 +129,10 @@ class FakeSender:
 
 @pytest.fixture
 def client(tmp_path):
-    s = Settings(webhook_secret="s3cret", admin_pass="pw", dry_run=False, db_path=str(tmp_path / "t.db"))
+    s = Settings(webhook_secret="s3cret", admin_token="tok", dry_run=False, home=str(tmp_path))
     sender = FakeSender()
     b = Bridge(s, [acc(id="a1"), acc(id="a2", multiplier=2), acc(id="off").model_copy(update={"enabled": False})],
-               sender=sender, clock=lambda: at(10, 0))
+               sender=sender, clock=lambda: at(10, 0), news=News(fetch=_no_news))
     c = TestClient(create_app(b))
     c.sender = sender
     return c
@@ -134,25 +157,67 @@ def test_webhook_rejects_bad_secret_and_duplicates(client):
     assert client.post("/webhook", json=alert()).json()["results"] == []     # same alert twice → ignored
 
 
-def test_dashboard_needs_password(client):
+def test_dashboard_needs_token(client):
     assert client.get("/api/state").status_code == 401
-    assert client.get("/api/state", auth=("admin", "pw")).status_code == 200
+    assert client.get("/api/state", headers={"X-Token": "nope"}).status_code == 401
+    r = client.get("/api/state", headers=H)
+    assert r.status_code == 200 and r.json()["setup"]["total"] == 4
+    assert client.get("/").status_code == 200
 
 
 def test_kill_and_flatten(client):
     client.post("/webhook", json=alert())
-    client.post("/api/kill?on=true", auth=("admin", "pw"))
+    client.post("/api/kill?on=true", headers=H)
     r = client.post("/webhook", json=alert(id="L2", price="20010"))
     assert not any(x["send"] for x in r.json()["results"])
-    r = client.post("/api/flatten", auth=("admin", "pw")).json()["results"]
+    r = client.post("/api/flatten", headers=H).json()["results"]
     assert {x["account"] for x in r} == {"a1", "a2"}
-    st = client.get("/api/state", auth=("admin", "pw")).json()
-    assert all(a["position"] == 0 for a in st["accounts"])
+    st = client.get("/api/state", headers=H).json()
+    assert all(r["qty"] == 0 for r in st["rows"]) and st["open_positions"] == 0
 
 
 def test_dry_run_sends_nothing(tmp_path):
-    s = Settings(webhook_secret="s3cret", admin_pass="pw", dry_run=True, db_path=str(tmp_path / "d.db"))
+    s = Settings(webhook_secret="s3cret", admin_token="tok", dry_run=True, home=str(tmp_path))
     sender = FakeSender()
-    c = TestClient(create_app(Bridge(s, [acc()], sender=sender, clock=lambda: at(10, 0))))
+    c = TestClient(create_app(Bridge(s, [acc()], sender=sender, clock=lambda: at(10, 0), news=News(fetch=_no_news))))
     r = c.post("/webhook", json=alert()).json()["results"]
     assert r[0]["status"] == "dry-run" and sender.calls == []
+
+
+def test_connections_crud_and_follow(client):
+    r = client.post("/api/connections", headers=H, json={"name": "Lucid #2", "group": "evals", "multiplier": 2})
+    cid = r.json()["id"]
+    assert cid == "lucid-2" and r.json()["enabled"] is False
+    assert client.post(f"/api/connections/{cid}/follow?on=true", headers=H).json()["follow"]
+    client.put(f"/api/connections/{cid}", headers=H, json={"name": "Lucid #2", "micros_only": True, "rules": {"max_contracts": 5}})
+    con = {c["id"]: c for c in client.get("/api/connections", headers=H).json()}
+    assert con[cid]["micros_only"] and con[cid]["rules"]["max_contracts"] == 5
+    client.post("/api/followers?on=false", headers=H)
+    assert not any(c["enabled"] for c in client.get("/api/connections", headers=H).json())
+    assert client.delete(f"/api/connections/{cid}", headers=H).json()["ok"]
+
+
+def test_journal_records_round_trip(client):
+    client.post("/webhook", json=alert())
+    client.post("/webhook", json=alert(action="sell", position="flat", price="20010", id="X"))
+    j = client.get("/api/journal", headers=H).json()
+    assert j["stats"]["trades"] == 2 and j["stats"]["net"] == 20 + 40     # a1 ×1, a2 ×2, 10 pts × $2
+
+
+def test_test_signal_never_sends(client):
+    r = client.post("/api/test-signal", headers=H).json()["results"]
+    assert {x["status"] for x in r if x["send"]} == {"dry-run"} and client.sender.calls == []
+    st = client.get("/api/state", headers=H).json()
+    assert st["open_positions"] == 0
+
+
+def test_health_counts_risk_blocks(client):
+    client.post("/api/kill?on=true", headers=H)
+    client.post("/webhook", json=alert())
+    h = client.get("/api/state", headers=H).json()["health"]
+    assert h["protected"] >= 2
+
+
+def test_settings_toggle_live(client):
+    s = client.put("/api/settings", headers=H, json={"dry_run": True, "news_blackout_min": 5}).json()
+    assert s["dry_run"] and s["news_blackout_min"] == 5

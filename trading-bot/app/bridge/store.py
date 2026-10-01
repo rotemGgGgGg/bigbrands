@@ -24,9 +24,18 @@ class Store:
                             (datetime.now(timezone.utc).isoformat(timespec="seconds"), kind, account, json.dumps(data)))
             self.db.commit()
 
-    def events(self, limit: int = 100) -> list[dict]:
+    def events(self, limit: int = 100, kinds: tuple[str, ...] = (), since: str = "") -> list[dict]:
+        q, args = "select ts, kind, account, data from events where 1=1", []
+        if kinds:
+            q += f" and kind in ({','.join('?' * len(kinds))})"
+            args += list(kinds)
+        if since:
+            q += " and ts >= ?"
+            args.append(since)
+        q += " order by id desc limit ?"
+        args.append(limit)
         with self._lock:
-            rows = self.db.execute("select ts, kind, account, data from events order by id desc limit ?", (limit,)).fetchall()
+            rows = self.db.execute(q, args).fetchall()
         return [dict(ts=r[0], kind=r[1], account=r[2], data=json.loads(r[3])) for r in rows]
 
     def get(self, k: str, default=None):

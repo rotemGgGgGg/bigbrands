@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
-from .config import Account, point_value
+from .config import Account, point_value, to_micro
 
 NY = ZoneInfo("America/New_York")
 
@@ -43,6 +43,7 @@ class AccountState:
     position: int = 0           # signed contracts (estimate)
     entry_price: float = 0.0
     symbol: str = ""
+    entry_time: str = ""
     day: str = ""               # NY date the counters belong to
     realized_today: float = 0.0
     trades_today: int = 0
@@ -66,6 +67,7 @@ class Decision:
     reason: str
     qty: int = 0
     payload: dict = field(default_factory=dict)
+    trade: dict | None = None   # filled on a close: the estimated round trip for the journal
 
 
 def _hm(s: str) -> time:
@@ -91,23 +93,29 @@ def render(template: dict, values: dict) -> dict:
     return sub(copy.deepcopy(template))
 
 
-def decide(sig: Signal, acc: Account, st: AccountState, now: datetime, kill: bool) -> Decision:
-    """What to do for one account. Mutates `st` only when the order will be sent."""
+def decide(sig: Signal, acc: Account, st: AccountState, now: datetime, kill: bool, block: str = "") -> Decision:
+    """What to do for one account. Mutates `st` only when the order will be sent.
+    `block` is an extra reason to refuse new entries (e.g. a news blackout); exits are never blocked."""
     st.roll_day(now.astimezone(NY).date().isoformat())
     r = acc.rules
-    pv = point_value(sig.symbol)
+    symbol = to_micro(sig.symbol) if acc.micros_only else sig.symbol
+    pv = point_value(symbol)
 
     if sig.is_close:
         if st.position == 0:
             return Decision(acc.id, False, "already flat")
         qty = abs(st.position)
-        payload = render(acc.template_close, dict(side=sig.side, qty=qty, symbol=sig.symbol, price=sig.price, time=now.isoformat()))
+        payload = render(acc.template_close, dict(side=sig.side, qty=qty, symbol=st.symbol or symbol, price=sig.price, time=now.isoformat()))
         if acc.enabled:                     # exits go out even with the kill switch on
+            pv = point_value(st.symbol or symbol)
             pnl = (sig.price - st.entry_price) * (1 if st.position > 0 else -1) * qty * pv
+            trade = dict(account=acc.id, symbol=st.symbol or symbol, side="LONG" if st.position > 0 else "SHORT", qty=qty,
+                         entry=st.entry_price, exit=sig.price, pnl=round(pnl, 2), opened=st.entry_time, closed=now.isoformat(),
+                         strategy=sig.strategy)
             st.realized_today += pnl
             st.balance += pnl
             st.position, st.entry_price = 0, 0.0
-            return Decision(acc.id, True, f"close est {pnl:+.0f}$", qty, payload)
+            return Decision(acc.id, True, f"close est {pnl:+.0f}$", qty, payload, trade)
         return Decision(acc.id, False, "account disabled")
 
     # ── new entry: every guard must pass ──
@@ -116,6 +124,8 @@ def decide(sig: Signal, acc: Account, st: AccountState, now: datetime, kill: boo
         return Decision(acc.id, False, "kill switch on")
     if not acc.enabled:
         return Decision(acc.id, False, "account disabled")
+    if block:
+        return Decision(acc.id, False, block)
     if not (_hm(r.entry_start) <= t < _hm(r.entry_end)):
         return Decision(acc.id, False, f"outside entry window {r.entry_start}-{r.entry_end} NY")
     if st.position != 0:
@@ -133,9 +143,9 @@ def decide(sig: Signal, acc: Account, st: AccountState, now: datetime, kill: boo
     if sig.sl <= 0 and room < r.dd_buffer:
         return Decision(acc.id, False, f"room to drawdown {room:.0f}$ < buffer")
 
-    payload = render(acc.template_open, dict(side=sig.side, qty=qty, symbol=sig.symbol, price=sig.price, sl=sig.sl, tp=sig.tp,
+    payload = render(acc.template_open, dict(side=sig.side, qty=qty, symbol=symbol, price=sig.price, sl=sig.sl, tp=sig.tp,
                                              time=now.isoformat()))
     st.position = qty if sig.side == "buy" else -qty
-    st.entry_price, st.symbol = sig.price, sig.symbol
+    st.entry_price, st.symbol, st.entry_time = sig.price, symbol, now.isoformat()
     st.trades_today += 1
     return Decision(acc.id, True, "open", qty, payload)
