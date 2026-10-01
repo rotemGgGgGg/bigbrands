@@ -330,7 +330,8 @@ function drawSnapshot() {
     const x = 70 + i * 360;
     g.strokeStyle = "rgba(190,210,240,.3)"; g.lineWidth = 2; g.beginPath(); g.roundRect(x, 240, 320, 220, 22); g.stroke();
     g.fillStyle = "#9aa8bd"; g.font = "700 20px Segoe UI, Arial"; g.fillText(k, x + 30, 290);
-    g.fillStyle = col; g.font = "800 52px Segoe UI, Arial"; g.fillText(v, x + 30, 380);
+    let fs = 52; do { g.font = `800 ${fs}px Segoe UI, Arial`; fs -= 2; } while (g.measureText(v).width > 260 && fs > 20);
+    g.fillStyle = col; g.fillText(v, x + 30, 380);
   });
   g.fillStyle = "#6f7d92"; g.font = "500 18px Segoe UI, Arial"; g.fillText("Estimated from leader signals.", 70, 560);
 }
