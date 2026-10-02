@@ -28,7 +28,7 @@ LDN_END, WIN_START, WIN_END = 360, 570, 840              # 06:00, 09:30, 14:00 i
 @dataclass
 class Params:
     va_floor: float = 0.41          # [T] below → no trade
-    va_mid: float = 0.5             # [T] 0.41–0.5 → 0.5 entry; 0.5–0.588 → 0.588 entry
+    va_mid: float = 0.51            # [T] 0.41–0.51 → 0.5 entry (VA sitting on 0.5 counts as 0.5); 0.51–0.588 → 0.588
     va_ceiling: float = 0.588       # [T] above → no trade
     vp_rows: int = 999              # [T]
     va_pct: float = 0.70            # [T]

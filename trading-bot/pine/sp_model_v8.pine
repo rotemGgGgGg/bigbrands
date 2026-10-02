@@ -29,7 +29,7 @@ useS3 = input.bool(true, "S3 — both London levels taken", group = grpS)
 
 grpV = "Value area"
 vaFloor   = input.float(0.41, "Floor (below → no trade)", step = 0.001, group = grpV)
-vaMid     = input.float(0.5, "0.5 entry below / 0.588 entry from", step = 0.001, group = grpV)
+vaMid     = input.float(0.51, "0.5 entry below / 0.588 entry from", step = 0.001, group = grpV)
 vaCeiling = input.float(0.588, "Ceiling (above → no trade)", step = 0.001, group = grpV)
 vpRows    = input.int(999, "Rows", minval = 10, maxval = 2000, group = grpV)
 vaPct     = input.float(70, "Value area %", minval = 10, maxval = 100, group = grpV) / 100.0

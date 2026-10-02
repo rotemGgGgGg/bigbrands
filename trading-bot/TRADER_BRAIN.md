@@ -75,7 +75,7 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 
 ### Value area
 - **[T]** FRVP over the fib leg (from the 1.0 bar to now, price range a1..a0), 999 rows, 70 %, Volume Total.
-- **[T]** Bands: above 0.588 → no trade · 0.5–0.588 → limit at 0.588 · 0.41–0.5 → limit at 0.5 · below 0.41 → no
+- **[T]** Bands: above 0.588 → no trade · 0.51–0.588 → limit at 0.588 · 0.41–0.51 → limit at 0.5 (a VA sitting on 0.5 is a 0.5 entry — trader, Oct 2; tolerance 0.01 is ours) · below 0.41 → no
   trade. "0.25 and 0.70 are both explicit skips." Checked every bar from the trigger.
 - Trader habit: "he drags the volume profile forward as the leg extends and takes the trade the first moment VAH
   lands on the entry level".
