@@ -460,6 +460,11 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
 
 // ───────────────────────────── 9 place / move the limit: fills 09:30–14:00 [T], last placement at the 13:50 close [IMPL] ─────────────────────────────
 ordActive := false
+var float shownVa = na
+var float shownLvl = na
+if sScen == 0
+    shownVa := na
+    shownLvl := na
 if sScen != 0 and not inPos and strategy.position_size == 0 and nyMin >= WIN_START - 5 and nyMin + 5 < WIN_END
     if checkInv and sA1 != sA1AtArm
         runtime.error(str.format("INVARIANT a1 moved {0} -> {1} at {2}", sA1AtArm, sA1, stamp()))
@@ -471,6 +476,8 @@ if sScen != 0 and not inPos and strategy.position_size == 0 and nyMin >= WIN_STA
         if not na(vah) and hi > lo
             va := sDir == -1 ? (vah - sA0) / (hi - lo) : (sA0 - val) / (hi - lo)
     float lvl = chooseLevel(sScen, va)
+    shownVa := va
+    shownLvl := lvl
     if lvl > 0
         float eP = math.round_to_mintick(fibPrice(sA1, sA0, sDir, lvl))
         float sP = math.round_to_mintick(fibPrice(sA1, sA0, sDir, stopOf(lvl)))
@@ -507,7 +514,7 @@ bgcolor(inWin ? color.new(color.blue, 94) : na, title = "Entry window")
 
 // ───────────────────────────── Stats ─────────────────────────────
 if showTable and barstate.islast
-    var table tb = table.new(position.top_right, 4, 6, bgcolor = color.new(color.black, 20), border_width = 1)
+    var table tb = table.new(position.top_right, 4, 7, bgcolor = color.new(color.black, 20), border_width = 1)
     table.cell(tb, 0, 0, "", text_color = color.white)
     table.cell(tb, 1, 0, "Trades", text_color = color.white)
     table.cell(tb, 2, 0, "Wins", text_color = color.white)
@@ -523,3 +530,6 @@ if showTable and barstate.islast
     table.cell(tb, 3, 4, str.tostring(totR, "#.##"), text_color = totR >= 0 ? color.lime : color.red)
     table.cell(tb, 0, 5, "Setup", text_color = color.white)
     table.cell(tb, 1, 5, sScen == 0 ? "none" : scenName(sScen, sDir), text_color = color.white)
+    table.cell(tb, 0, 6, "VA", text_color = color.white)
+    table.cell(tb, 1, 6, na(shownVa) ? "-" : str.tostring(shownVa, "#.###"), text_color = color.white)
+    table.cell(tb, 2, 6, na(shownLvl) ? "" : shownLvl == 0 ? "no trade" : "@" + str.tostring(shownLvl), text_color = color.white)
