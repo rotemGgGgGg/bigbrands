@@ -7,7 +7,7 @@ Each London level is a `Side` (+1 = London high, -1 = London low). A side carrie
 since the sweep, S1's failure flag and the S2 round machine. S1 trades against the sweep, S2 with it.
 
 Usage:
-    python sp_v8.py              # last 60 days of NQ=F from Yahoo
+    python sp_v8.py              # last 60 days of MNQ=F from Yahoo
     python sp_v8.py data.csv     # NinjaTrader / TradingView / CSV export (see data.py)
 """
 from __future__ import annotations
@@ -407,13 +407,14 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
 
 
 def load(path: str | None = None, tz: str = TZ, stamp: str = "auto") -> pd.DataFrame:
-    """A local file (NinjaTrader export, TradingView export or CSV — see data.py), or 60 days of Yahoo NQ."""
+    """A local file (NinjaTrader export, TradingView export or CSV — see data.py), or 60 days of Yahoo MNQ.
+    MNQ=F, not NQ=F: its bars and volume match TradingView's MNQ1! (trade lists identical, checked Oct 2)."""
     if path:
         from data import load_file
         return load_file(path, tz=tz, stamp=stamp)
     import yfinance as yf
 
-    d = yf.download("NQ=F", period="60d", interval="5m", prepost=True, progress=False, auto_adjust=False)
+    d = yf.download("MNQ=F", period="60d", interval="5m", prepost=True, progress=False, auto_adjust=False)
     d.columns = [c[0].lower() for c in d.columns]
     return d.tz_convert(TZ)[["open", "high", "low", "close", "volume"]]
 
