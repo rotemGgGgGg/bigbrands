@@ -63,6 +63,8 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
   fallen back through is not a break any more."
 - **[T by example] v7.5** After a cancellation, S2 waits for a break of the **highest swing high (lowest swing
   low) formed since the cancelled break** — Aug 12 "waits for 30,001.75". **[OPEN]** confirm this vs "latest swing".
+- **[T] Oct 2** A **new S2 break before the fill is a new setup**: the armed setup on that side is dropped at the
+  break. If the new round is then cancelled, nothing is left — no trade (Aug 18, Sep 29 were −1R each without this).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
 - **[IMPL]** The trigger pair only has to END at or after the break bar.
 - **[T]** All breaks are wick-based (sweep, reference, swing, 1.0).
@@ -143,6 +145,8 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 | v7.5 latest-swing | cancelled break, wait for latest swing | 26 | +5.33 |
 | **v7.5 (default)** | cancelled break, wait for highest swing | **18** (S2 7, S3 11) | **−1.08** |
 | **v8** | full rewrite from this file (Side objects); Python v8 = v7.5 on trades, all events and the funnel | 18 | −1.08 |
+| v8 + VA on 0.5 | VA up to 0.51 → 0.5 entry (trader, Oct 2) | 19 | +0.07 |
+| **v8 + new break** | a new S2 break drops the waiting setup (trader, Oct 2) | **17** (9 wins) | **+2.07** |
 
 ## 8. Code
 - `pine/sp_model_v8.pine` and `backtest/sp_v8.py` are the current versions (v7 files kept for reference).

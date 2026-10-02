@@ -34,6 +34,7 @@ class Params:
     va_pct: float = 0.70            # [T]
     max_fails: int = 3              # [T] three 1.0 breaks end the session
     dead_waits_highest: bool = True  # [T by example, OPEN] a cancelled S2 round waits for the most extreme swing
+    new_break_ends_setup: bool = True  # [T] a new S2 break before the fill = a new setup; the waiting one is gone
     use_s1: bool = True
     use_s2: bool = True
     use_s3: bool = True
@@ -324,6 +325,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     if sd.swing is not None and beyond(toward, sd.swing, sd.sign):
                         sd.open_round(i, sd.swing)
                         log(i, f"S2 {sd.name} re-opens (swing {sd.level} broken, round {sd.round})")
+                        if p.new_break_ends_setup and setup is not None and pos is None \
+                                and setup["scen"] == 2 and setup["side"] == sd.sign:
+                            end_setup(i, "new break")              # [T] a new break is a new setup (trader, Oct 2)
                 elif not sd.sweep_in_window:                 # pre-open sweep: reference = first two-candle pullback
                     if sd.ref is None:
                         if pullback and i - 1 >= sd.sweep_bar:

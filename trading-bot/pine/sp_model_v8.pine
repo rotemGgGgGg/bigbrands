@@ -37,6 +37,7 @@ vaPct     = input.float(70, "Value area %", minval = 10, maxval = 100, group = g
 grpX = "Rules"
 maxFails = input.int(3, "Failed setups (1.0 broken) that end the session", minval = 1, group = grpX)
 deadWaitsHighest = input.bool(true, "Cancelled S2 round waits for the most extreme swing since its break (off = latest swing)", group = grpX)
+newBreakEnds = input.bool(true, "A new S2 break before the fill ends the waiting setup", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
 
@@ -379,8 +380,16 @@ s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
     sd
 
 if valid
+    int hiR0 = hiS.round
+    int loR0 = loS.round
     s2Step(hiS, twoBear, pivotOk, hi1, hi2, high)
     s2Step(loS, twoBull, pivotOk, lo1, lo2, low)
+    // [T] a new S2 break before the fill is a new setup — the waiting one is gone (trader, Oct 2)
+    if newBreakEnds and sScen == 2 and not inPos and strategy.position_size == 0 and (sSide == 1 ? hiS.round > hiR0 : loS.round > loR0)
+        if showLabels
+            label.new(bar_index, sDir == 1 ? low : high, "✗ new break", style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                 color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+        sScen := 0
 
 // ───────────────────────────── 8 triggers: second candle closes 09:30–14:00 [T] ─────────────────────────────
 if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and not capped and nyMin + 5 >= WIN_START and nyMin + 5 < WIN_END
