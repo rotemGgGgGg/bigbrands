@@ -65,6 +65,11 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
   low) formed since the cancelled break** — Aug 12 "waits for 30,001.75". **[OPEN]** confirm this vs "latest swing".
 - **[T] Oct 2** A **new S2 break before the fill is a new setup**: the armed setup on that side is dropped at the
   break. If the new round is then cancelled, nothing is left — no trade (Aug 18, Sep 29 were −1R each without this).
+- **[T idea Oct 2, number OPEN]** …but only after a **real retrace**: if the deepest pullback of the waiting leg is
+  below `new_after_retrace` (default 0.36) the new break is the **same setup** (its 0 just moves); that absorbed
+  break must hold — price back through it kills the setup (Sep 29). Decisive days: Sep 3, Sep 14, Oct 2.
+- **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
+  That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
 - **[IMPL]** The trigger pair only has to END at or after the break bar.
 - **[T]** All breaks are wick-based (sweep, reference, swing, 1.0).

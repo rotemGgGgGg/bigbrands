@@ -35,6 +35,9 @@ class Params:
     max_fails: int = 3              # [T] three 1.0 breaks end the session
     dead_waits_highest: bool = True  # [T by example, OPEN] a cancelled S2 round waits for the most extreme swing
     new_break_ends_setup: bool = True  # [T] a new S2 break before the fill = a new setup; the waiting one is gone
+    new_after_retrace: float | None = 0.36  # [T idea, number OPEN] …but only after a real retrace (deepest pullback
+                                            # ≥ this fraction of the leg); otherwise the same setup and its 0 moves.
+                                            # None = every new break is a new setup
     use_s1: bool = True
     use_s2: bool = True
     use_s3: bool = True
@@ -296,6 +299,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 end_setup(i, "14:00")
             elif beyond(l if s["d"] == -1 else h, s["a0"], s["d"]):
                 s["a0"], s["a0_bar"] = (l if s["d"] == -1 else h), i
+            elif s["a0"] != s["a1"]:                        # deepest pullback of the leg so far (bars that didn't extend it)
+                s["deep"] = max(s.get("deep", 0.0), abs(s["a0"] - (l if s["d"] == 1 else h)) / abs(s["a0"] - s["a1"]))
 
         same_day = i > 0 and T[i - 1].date() == t.date()
         two_bull = same_day and c >= o and C[i - 1] >= O[i - 1]          # doji counts both ways [T]
@@ -311,6 +316,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 toward = h if sd.sign == 1 else l            # price in the S2 direction
                 back = l if sd.sign == 1 else h
                 if sd.s2_open:
+                    w = setup.get("watch") if setup is not None and pos is None else None
+                    if w is not None and setup["side"] == sd.sign and w == sd.round and i > sd.break_bar \
+                            and beyond(back, sd.level, -sd.sign):
+                        log(i, f"S2 {sd.name} round {sd.round} dead (back through {sd.level})")
+                        end_setup(i, "new break failed")           # [T] a break that doesn't hold (Sep 29)
+                        w = None
                     if not sd.cancelled and sd.round != sd.used and i > sd.break_bar and beyond(back, sd.level, -sd.sign):
                         sd.cancelled = True
                         log(i, f"S2 {sd.name} round {sd.round} dead (back through {sd.level})")
@@ -327,7 +338,12 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         log(i, f"S2 {sd.name} re-opens (swing {sd.level} broken, round {sd.round})")
                         if p.new_break_ends_setup and setup is not None and pos is None \
                                 and setup["scen"] == 2 and setup["side"] == sd.sign:
-                            end_setup(i, "new break")              # [T] a new break is a new setup (trader, Oct 2)
+                            if p.new_after_retrace is None or setup.get("deep", 0.0) >= p.new_after_retrace:
+                                end_setup(i, "new break")          # [T] a new break is a new setup (trader, Oct 2)
+                            else:                                  # no real retrace yet: same setup, the 0 just moves
+                                sd.used = sd.round
+                                setup["watch"] = sd.round
+                                log(i, f"S2 {sd.name} same setup (pullback only {setup.get('deep', 0.0):.2f} of the leg)")
                 elif not sd.sweep_in_window:                 # pre-open sweep: reference = first two-candle pullback
                     if sd.ref is None:
                         if pullback and i - 1 >= sd.sweep_bar:

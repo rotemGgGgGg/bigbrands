@@ -38,6 +38,7 @@ grpX = "Rules"
 maxFails = input.int(3, "Failed setups (1.0 broken) that end the session", minval = 1, group = grpX)
 deadWaitsHighest = input.bool(true, "Cancelled S2 round waits for the most extreme swing since its break (off = latest swing)", group = grpX)
 newBreakEnds = input.bool(true, "A new S2 break before the fill ends the waiting setup", group = grpX)
+newAfterRetrace = input.float(0.36, "…only after a pullback of at least (fraction of the leg; 0 = always)", step = 0.01, group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
 
@@ -186,6 +187,8 @@ var int   sSide = 0
 var float sA1 = na
 var int   sA1Bar = na
 var int   sRound = 0
+var float sDeep = 0.0                                   // deepest pullback of the leg so far, as a fraction of it
+var int   sWatch = 0                                    // S2 round this setup absorbed (no real retrace) and now needs to hold
 var float sA0 = na
 var int   sA0Bar = na
 var float sA1AtArm = na
@@ -336,6 +339,8 @@ if sScen != 0
     else if beyond(sDir == -1 ? low : high, sA0, sDir)
         sA0 := sDir == -1 ? low : high
         sA0Bar := bar_index
+    else if sA0 != sA1
+        sDeep := math.max(sDeep, math.abs(sA0 - (sDir == 1 ? low : high)) / math.abs(sA0 - sA1))
     if why != ""
         if showLabels
             label.new(bar_index, sDir == 1 ? low : high, "✗ " + why, style = sDir == 1 ? label.style_label_up : label.style_label_down,
@@ -380,16 +385,35 @@ s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
     sd
 
 if valid
+    // [T] an absorbed break that price falls back through kills the setup (Sep 29)
+    if sScen == 2 and sWatch != 0 and not inPos and strategy.position_size == 0
+        Side ws = sSide == 1 ? hiS : loS
+        if ws.round == sWatch and bar_index > ws.breakBar and beyond(sSide == 1 ? low : high, ws.level, -sSide)
+            if showLabels
+                label.new(bar_index, sDir == 1 ? low : high, "✗ new break failed", style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+            sScen := 0
+            sWatch := 0
     int hiR0 = hiS.round
     int loR0 = loS.round
     s2Step(hiS, twoBear, pivotOk, hi1, hi2, high)
     s2Step(loS, twoBull, pivotOk, lo1, lo2, low)
-    // [T] a new S2 break before the fill is a new setup — the waiting one is gone (trader, Oct 2)
+    // [T] a new S2 break before the fill is a new setup (Oct 2) — but only after a real pullback; without one
+    // it is the same setup and its 0 just moves
     if newBreakEnds and sScen == 2 and not inPos and strategy.position_size == 0 and (sSide == 1 ? hiS.round > hiR0 : loS.round > loR0)
-        if showLabels
-            label.new(bar_index, sDir == 1 ? low : high, "✗ new break", style = sDir == 1 ? label.style_label_up : label.style_label_down,
-                 color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
-        sScen := 0
+        Side nb = sSide == 1 ? hiS : loS
+        if sDeep >= newAfterRetrace
+            if showLabels
+                label.new(bar_index, sDir == 1 ? low : high, "✗ new break", style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+            sScen := 0
+            sWatch := 0
+        else
+            nb.used := nb.round
+            sWatch := nb.round
+            if showLabels
+                label.new(bar_index, sDir == 1 ? low : high, "→ same setup", style = sDir == 1 ? label.style_label_up : label.style_label_down,
+                     color = color.new(color.gray, 40), textcolor = color.white, size = size.tiny)
 
 // ───────────────────────────── 8 triggers: second candle closes 09:30–14:00 [T] ─────────────────────────────
 if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and not capped and nyMin + 5 >= WIN_START and nyMin + 5 < WIN_END
@@ -454,6 +478,8 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
             sA0Bar := a0b
             sA1AtArm := cA1
             sRound := cRound
+            sDeep := 0.0
+            sWatch := 0
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(math.abs(cA1 - a0v), "#.##"),
                      style = cDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.orange, 10), textcolor = color.white, size = size.small)
