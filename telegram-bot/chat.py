@@ -33,6 +33,7 @@ def app_dir():
 
 CONFIG_PATH = os.path.join(app_dir(), "config.json")
 SESSION_PATH = os.path.join(app_dir(), "telegram")  # Telethon adds .session
+DEFAULT_BOT = "@agronn2bot"
 
 
 def load_config(root):
@@ -41,6 +42,7 @@ def load_config(root):
         with open(CONFIG_PATH, encoding="utf-8") as f:
             config = json.load(f)
 
+    config.setdefault("bot_username", DEFAULT_BOT)
     questions = [
         ("api_id", "api_id from my.telegram.org -> API development tools:"),
         ("api_hash", "api_hash from my.telegram.org:"),
