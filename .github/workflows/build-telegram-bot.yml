@@ -1,0 +1,32 @@
+name: Build Telegram bot .exe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "telegram-bot/**"
+      - ".github/workflows/build-telegram-bot.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        working-directory: telegram-bot
+        run: pip install -r requirements.txt pyinstaller
+      - name: Build exe
+        working-directory: telegram-bot
+        run: pyinstaller --onefile --name TelegramClaudeBot bot.py
+      - name: Package
+        working-directory: telegram-bot
+        run: |
+          Copy-Item config.example.json dist/config.example.json
+          Copy-Item README.md dist/README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TelegramClaudeBot
+          path: telegram-bot/dist/
