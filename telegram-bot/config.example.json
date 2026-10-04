@@ -1,5 +1,5 @@
 {
-  "telegram_bot_token": "PASTE_TOKEN_FROM_BOTFATHER",
-  "anthropic_api_key": "PASTE_KEY_FROM_console.anthropic.com",
-  "allowed_user_ids": []
+  "api_id": "",
+  "api_hash": "",
+  "bot_username": "@the_bot_username"
 }

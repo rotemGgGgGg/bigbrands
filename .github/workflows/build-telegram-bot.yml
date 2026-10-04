@@ -1,4 +1,4 @@
-name: Build Telegram bot .exe
+name: Build Telegram bot chat .exe
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
       - name: Build exe
         working-directory: telegram-bot
-        run: pyinstaller --onefile --name TelegramClaudeBot bot.py
+        run: pyinstaller --onefile --noconsole --name TelegramBotChat chat.py
       - name: Package
         working-directory: telegram-bot
         run: |
@@ -28,5 +28,5 @@ jobs:
           Copy-Item README.md dist/README.md
       - uses: actions/upload-artifact@v4
         with:
-          name: TelegramClaudeBot
+          name: TelegramBotChat
           path: telegram-bot/dist/
