@@ -45,6 +45,7 @@ class Params:
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
     close_cancel: bool = True       # [Oct 5] a break is undone by a 5-minute CLOSE back through it, not a wick
+    s3_sweep_anchors: bool = True   # [T Oct 7] S3 fib = first sweep's extreme → second sweep's extreme, both keep expanding
     session_breaks: bool = True     # [Sep 10] the S2 break itself must be in the session (bar ≥ 09:25), not carried from pre-open
     pivot_at_break: bool = True     # [Sep 22] the high made on the break bar itself is a swing (12:05, 30,935.25)
     s2_run_anchor: bool = True      # [T Oct 7] S2 1.0 = start of the run of same-colour candles that broke
@@ -304,7 +305,10 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         # 6 ── armed setup: 1.0 break (wick, strictly beyond) → dead; 14:00 → dead; else fib 0 extends [T]
         if setup is not None:
             s = setup
-            if beyond(h if s["d"] == -1 else l, s["a1"], -s["d"]):
+            if s["scen"] == 3 and p.s3_sweep_anchors and beyond(h if s["d"] == -1 else l, s["a1"], -s["d"]):
+                s["a1"], s["a1_bar"] = (h if s["d"] == -1 else l), i   # [T Oct 7] S3 keeps expanding: the 1.0 moves
+                s["a1_at_arm"] = s["a1"]
+            elif beyond(h if s["d"] == -1 else l, s["a1"], -s["d"]):
                 end_setup(i, "1.0 broken", broke=True)
             elif mn + 5 >= WIN_END:
                 end_setup(i, "14:00")
@@ -373,9 +377,9 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if p.use_s3 and not D.s3_dead and hi_sd.sweep_bar != lo_sd.sweep_bar \
                         and i - 1 >= max(hi_sd.sweep_bar, lo_sd.sweep_bar):
                     if lo_sd.sweep_bar > hi_sd.sweep_bar and two_bull:
-                        cand = dict(scen=3, d=-1, side=0, a1=hi_sd.ext, a1_bar=hi_sd.ext_bar)
+                        cand = dict(scen=3, d=-1, side=0, a1=hi_sd.ext, a1_bar=hi_sd.ext_bar, a0=lo_sd.ext, a0_bar=lo_sd.ext_bar)
                     elif hi_sd.sweep_bar > lo_sd.sweep_bar and two_bear:
-                        cand = dict(scen=3, d=1, side=0, a1=lo_sd.ext, a1_bar=lo_sd.ext_bar)
+                        cand = dict(scen=3, d=1, side=0, a1=lo_sd.ext, a1_bar=lo_sd.ext_bar, a0=hi_sd.ext, a0_bar=hi_sd.ext_bar)
             else:
                 for sd in (hi_sd, lo_sd):
                     if sd.sweep_bar is None or cand:
@@ -406,7 +410,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             # [IMPL] a later trigger of the same scenario, direction and round keeps the first anchor
             if cand is not None and not (setup is not None and setup["scen"] == cand["scen"] and setup["d"] == cand["d"]
                                          and setup.get("round") == cand.get("round")):
-                a0, a0_bar = extreme_since(cand["a1_bar"], i, cand["d"])
+                if cand["scen"] == 3 and p.s3_sweep_anchors:  # [T Oct 7] S3: 0 = the second sweep's extreme, whatever the order
+                    a0, a0_bar = cand.pop("a0"), cand.pop("a0_bar")
+                else:
+                    cand.pop("a0", None); cand.pop("a0_bar", None)
+                    a0, a0_bar = extreme_since(cand["a1_bar"], i, cand["d"])
                 leg = abs(cand["a1"] - a0)
                 if leg > 0:
                     if setup is not None:
