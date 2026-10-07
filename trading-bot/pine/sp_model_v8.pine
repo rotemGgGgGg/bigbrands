@@ -192,6 +192,7 @@ var int   sDir = 0
 var int   sSide = 0
 var float sA1 = na
 var int   sA1Bar = na
+var HOLIDAYS = array.from(20250101, 20250109, 20250120, 20250217, 20250418, 20250526, 20250619, 20250703, 20250704, 20250901, 20251127, 20251128, 20251224, 20251225, 20260101, 20260119, 20260216, 20260403, 20260525, 20260619, 20260703, 20260907, 20261126, 20261127, 20261224, 20261225, 20270101, 20270118, 20270215, 20270326, 20270531, 20270618, 20270705, 20270906, 20271125, 20271126, 20271224)
 var int   sRound = 0
 var float sDeep = 0.0                                   // deepest pullback of the leg so far, as a fraction of it
 var int   sWatch = 0                                    // S2 round this setup absorbed (no real retrace) and now needs to hold
@@ -288,7 +289,7 @@ if newDay
     ldnN := 0
     s3Dead := false
     failsToday := 0
-    capped := false
+    capped := HOLIDAYS.includes(nyDate)                // [T] no trades on US market holidays / half days
     tradesToday := 0
     sScen := 0
     ordActive := false

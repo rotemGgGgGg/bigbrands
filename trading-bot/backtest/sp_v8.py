@@ -22,6 +22,8 @@ import pandas as pd
 TZ = "America/New_York"
 TICK = 0.25
 LEVELS = {0.5: (0.702, 0.267), 0.588: (0.816, 0.36)}   # entry → (stop, target)   [T]
+# [T Oct 7] no trading on US market holidays and their half days (NYSE calendar)
+HOLIDAYS = {"2025-01-01", "2025-01-09", "2025-01-20", "2025-02-17", "2025-04-18", "2025-05-26", "2025-06-19", "2025-07-03", "2025-07-04", "2025-09-01", "2025-11-27", "2025-11-28", "2025-12-24", "2025-12-25", "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-11-27", "2026-12-24", "2026-12-25", "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-11-26", "2027-12-24"}
 LDN_END, WIN_START, WIN_END = 360, 570, 840              # 06:00, 09:30, 14:00 in minutes (NY)
 
 
@@ -264,6 +266,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 closed = ("day reset", c)
             day, D = t.date(), Day()
             setup = order = None
+            if f"{day}" in HOLIDAYS:
+                D.capped = True                              # [T] no trades on holidays
 
         # 3 ── London range 00:00–06:00 [T]
         if mn < LDN_END:
