@@ -44,6 +44,7 @@ s1PreOpen = input.bool(true, "S1 also after a pre-open sweep", group = grpX)
 closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level", group = grpX)
 closeCancel = input.bool(true, "A break is undone by a close back through it (not a wick)", group = grpX)
 pivotAtBreak = input.bool(true, "The high/low made on the break bar counts as a swing", group = grpX)
+sessionBreaks = input.bool(true, "S2 break must happen in the session (from 09:25)", group = grpX)
 s2RunAnchor = input.bool(true, "S2 1.0 = start of the candle run that broke", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
@@ -456,7 +457,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                     cSide := sd.sign
                     cA1 := sd.sign == 1 ? sd.ext : lo1
                     cA1Bar := sd.sign == 1 ? sd.extBar : bar_index - 1
-                else if useS2 and sd.s2Open and not sd.cancelled and sd.round != sd.used and s2Trig and bar_index >= sd.breakBar
+                else if useS2 and sd.s2Open and not sd.cancelled and sd.round != sd.used and s2Trig and bar_index >= sd.breakBar and (not sessionBreaks or hour(time[bar_index - sd.breakBar], TZ) * 60 + minute(time[bar_index - sd.breakBar], TZ) >= WIN_START - 5)
                     // S2: far extreme of the first trigger candle [T]; the pair may start before the break [IMPL]
                     cScen := 2
                     cDir := sd.sign

@@ -45,6 +45,7 @@ class Params:
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
     close_cancel: bool = True       # [Oct 5] a break is undone by a 5-minute CLOSE back through it, not a wick
+    session_breaks: bool = True     # [Sep 10] the S2 break itself must be in the session (bar ≥ 09:25), not carried from pre-open
     pivot_at_break: bool = True     # [Sep 22] the high made on the break bar itself is a swing (12:05, 30,935.25)
     s2_run_anchor: bool = True      # [T Oct 7] S2 1.0 = start of the run of same-colour candles that broke
     use_s2: bool = True
@@ -386,7 +387,8 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         a1, a1_bar = (sd.ext, sd.ext_bar) if sd.sign == 1 else (L[i - 1], i - 1)
                         cand = dict(scen=1, d=-sd.sign, side=sd.sign, a1=a1, a1_bar=a1_bar)
                     elif p.use_s2 and sd.s2_open and not sd.cancelled and sd.round != sd.used \
-                            and s2_trig and i >= sd.break_bar:
+                            and s2_trig and i >= sd.break_bar \
+                            and (not p.session_breaks or T[sd.break_bar].hour * 60 + T[sd.break_bar].minute >= WIN_START - 5):
                         # S2: the far extreme of the first trigger candle [T]; the pair may start before the break [IMPL]
                         k = i - 1
                         if p.s2_run_anchor:                  # back to the first candle of the run (Oct 6: 09:50, not 10:00)

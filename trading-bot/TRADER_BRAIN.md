@@ -84,6 +84,8 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 - **[T by example Oct 7] Sep 22** the high made on the break bar itself is a swing: after the 12:05 round was cancelled,
   the 12:45 close above 30,935.25 (12:05 high) is the next break. Trade: S2 LONG @0.5 13:35 → target. 1.0 = start of the
   green run, 12:40 (30,895.5) — **[T Oct 7]** confirmed, same rule as Oct 6.
+- **[T Oct 7] Sep 10** "we didn't break under any swing low": an S2 round opened before the session (07:45 reference
+  break) does not give an in-session setup; S2 needs its break at 09:25 or later. Removes Sep 10 (−1R).
 - **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
   That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
