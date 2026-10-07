@@ -42,7 +42,7 @@ class Params:
     use_s1: bool = True
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
-    s2_run_anchor: bool = False     # [OPEN, Oct 6 by example] S2 1.0 = start of the run of same-colour candles that broke
+    s2_run_anchor: bool = True      # [T Oct 7] S2 1.0 = start of the run of same-colour candles that broke
     use_s2: bool = True
     use_s3: bool = True
     ldn_min_bars: int = 60          # [IMPL] London range needs ≥ 60 of its 72 bars
