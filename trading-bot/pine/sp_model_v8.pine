@@ -39,6 +39,8 @@ maxFails = input.int(3, "Failed setups (1.0 broken) that end the session", minva
 deadWaitsHighest = input.bool(true, "Cancelled S2 round waits for the most extreme swing since its break (off = latest swing)", group = grpX)
 newBreakEnds = input.bool(true, "A new S2 break before the fill ends the waiting setup", group = grpX)
 newAfterRetrace = input.float(0.36, "…only after a pullback of at least (fraction of the leg; 0 = always)", step = 0.01, group = grpX)
+s1PreOpen = input.bool(true, "S1 also after a pre-open sweep", group = grpX)
+closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
 
@@ -363,7 +365,7 @@ float lo2 = low[2]
 
 s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
     if not na(sd.sweepBar)
-        float toward = sd.sign == 1 ? high : low
+        float toward = closeBreaks ? close : sd.sign == 1 ? high : low
         float back = sd.sign == 1 ? low : high
         if sd.s2Open
             if not sd.cancelled and sd.round != sd.used and bar_index > sd.breakBar and beyond(back, sd.level, -sd.sign)
@@ -441,7 +443,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
             if cScen == 0 and not na(sd.sweepBar)
                 bool s1Trig = sd.sign == 1 ? twoBear : twoBull
                 bool s2Trig = sd.sign == 1 ? twoBull : twoBear
-                if useS1 and sd.sweepInWin and not sd.s1Failed and s1Trig and bar_index - 1 >= sd.sweepBar
+                if useS1 and (sd.sweepInWin or s1PreOpen) and not sd.s1Failed and s1Trig and bar_index - 1 >= sd.sweepBar
                     // S1 SHORT: highest point since the sweep; S1 LONG: low of the first trigger candle [T]
                     cScen := 1
                     cDir := -sd.sign

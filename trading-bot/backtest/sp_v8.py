@@ -39,6 +39,8 @@ class Params:
                                             # ≥ this fraction of the leg); otherwise the same setup and its 0 moves.
                                             # None = every new break is a new setup
     use_s1: bool = True
+    s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
+    close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
     use_s2: bool = True
     use_s3: bool = True
     ldn_min_bars: int = 60          # [IMPL] London range needs ≥ 60 of its 72 bars
@@ -313,7 +315,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             for sd, pullback in ((D.sides[1], two_bear), (D.sides[-1], two_bull)):
                 if sd.sweep_bar is None:
                     continue
-                toward = h if sd.sign == 1 else l            # price in the S2 direction
+                toward = c if p.close_breaks else (h if sd.sign == 1 else l)   # price in the S2 direction
                 back = l if sd.sign == 1 else h
                 if sd.s2_open:
                     w = setup.get("watch") if setup is not None and pos is None else None
@@ -370,7 +372,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         continue
                     s1_trig = two_bear if sd.sign == 1 else two_bull
                     s2_trig = two_bull if sd.sign == 1 else two_bear
-                    if p.use_s1 and sd.sweep_in_window and not sd.s1_failed and s1_trig and i - 1 >= sd.sweep_bar:
+                    if p.use_s1 and (sd.sweep_in_window or p.s1_after_preopen) and not sd.s1_failed and s1_trig and i - 1 >= sd.sweep_bar:
                         # S1 SHORT: highest point since the sweep; S1 LONG: low of the first trigger candle [T]
                         a1, a1_bar = (sd.ext, sd.ext_bar) if sd.sign == 1 else (L[i - 1], i - 1)
                         cand = dict(scen=1, d=-sd.sign, side=sd.sign, a1=a1, a1_bar=a1_bar)

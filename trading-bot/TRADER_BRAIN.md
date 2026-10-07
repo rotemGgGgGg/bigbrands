@@ -68,6 +68,12 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 - **[T idea Oct 2, number OPEN]** …but only after a **real retrace**: if the deepest pullback of the waiting leg is
   below `new_after_retrace` (default 0.36) the new break is the **same setup** (its 0 just moves); that absorbed
   break must hold — price back through it kills the setup (Sep 29). Decisive days: Sep 3, Sep 14, Oct 2.
+- **[T Oct 7]** S1 is valid after a **pre-open** sweep too, as long as the trigger's second candle closes ≥ 09:30
+  (a setup formed before 09:30 is not entered). Our old [IMPL] "S1 only for in-window sweeps" is **[DEAD]**.
+- **[T Oct 7]** S2 reference / swing breaks need a **5-minute close** beyond the level ("close above the highest
+  point that was created before"), not a wick. Supersedes "all breaks are wick-based" for these breaks.
+- **[T Oct 7] Oct 2 labelled:** the trade is S2 LONG @0.588, 1.0 31,190 / 0 31,282.75, entry 31,228.25, stop
+  31,207, target 31,249.25 — the 10:15 close above 31,258 is a new setup (pullback 0.45 ≥ 0.36; 0.5 gives no trade).
 - **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
   That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
