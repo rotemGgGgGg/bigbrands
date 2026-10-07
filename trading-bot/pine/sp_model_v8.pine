@@ -46,6 +46,7 @@ closeCancel = input.bool(true, "A break is undone by a close back through it (no
 pivotAtBreak = input.bool(true, "The high/low made on the break bar counts as a swing", group = grpX)
 sessionBreaks = input.bool(true, "S2 break must happen in the session (from 09:25)", group = grpX)
 s3SweepAnchors = input.bool(true, "S3 fib from the first sweep's extreme to the second's, both expanding", group = grpX)
+s3NoTrigger = input.bool(true, "S3 needs no trigger: live from the second sweep", group = grpX)
 s2RunAnchor = input.bool(true, "S2 1.0 = start of the candle run that broke", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
@@ -439,13 +440,13 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
     int   cRound = 0
     if not na(hiS.sweepBar) and not na(loS.sweepBar)
         // both taken → S3 only, against the second sweep; 1.0 = first sweep's extreme [T]
-        if useS3 and not s3Dead and hiS.sweepBar != loS.sweepBar and bar_index - 1 >= math.max(hiS.sweepBar, loS.sweepBar)
-            if loS.sweepBar > hiS.sweepBar and twoBull
+        if useS3 and not s3Dead and hiS.sweepBar != loS.sweepBar and bar_index - (s3NoTrigger ? 0 : 1) >= math.max(hiS.sweepBar, loS.sweepBar)
+            if loS.sweepBar > hiS.sweepBar and (twoBull or s3NoTrigger)
                 cScen := 3
                 cDir := -1
                 cA1 := hiS.ext
                 cA1Bar := hiS.extBar
-            else if hiS.sweepBar > loS.sweepBar and twoBear
+            else if hiS.sweepBar > loS.sweepBar and (twoBear or s3NoTrigger)
                 cScen := 3
                 cDir := 1
                 cA1 := loS.ext

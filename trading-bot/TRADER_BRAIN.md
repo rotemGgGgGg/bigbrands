@@ -89,6 +89,8 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 - **[T Oct 7] Aug 28** S3: 1.0 = first sweep's extreme, 0 = second sweep's extreme (not counted from the 1.0 bar);
   both keep expanding — price beyond the 1.0 moves the 1.0, it does not kill S3. Entry on a touch of 0.5 before
   14:00. Aug 28: S3 SHORT 29,927.5 / stop 29,956 / target 29,894.5 → stop (confirmed as the trade).
+- **[T Oct 7] Aug 28** S3 needs **no trigger**: the fib exists from the second sweep and a touch of 0.5 is the entry
+  (Aug 28: short 29,916.75 at 09:35, stop 29,940.75 → stop on 5-minute data).
 - **[T Oct 7]** Both London sides swept → S3 only (S2 stays blocked), re-confirmed on Aug 28.
 - **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
   That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).

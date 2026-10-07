@@ -45,6 +45,7 @@ class Params:
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
     close_cancel: bool = True       # [Oct 5] a break is undone by a 5-minute CLOSE back through it, not a wick
+    s3_no_trigger: bool = True      # [T Oct 7] S3 armed at the second sweep, no two-candle trigger (Aug 28: 09:35 touch)
     s3_sweep_anchors: bool = True   # [T Oct 7] S3 fib = first sweep's extreme → second sweep's extreme, both keep expanding
     session_breaks: bool = True     # [Sep 10] the S2 break itself must be in the session (bar ≥ 09:25), not carried from pre-open
     pivot_at_break: bool = True     # [Sep 22] the high made on the break bar itself is a swing (12:05, 30,935.25)
@@ -375,10 +376,11 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
             if hi_sd.sweep_bar is not None and lo_sd.sweep_bar is not None:
                 # both taken → S3 only, against the second sweep; 1.0 = first sweep's extreme [T]
                 if p.use_s3 and not D.s3_dead and hi_sd.sweep_bar != lo_sd.sweep_bar \
-                        and i - 1 >= max(hi_sd.sweep_bar, lo_sd.sweep_bar):
-                    if lo_sd.sweep_bar > hi_sd.sweep_bar and two_bull:
+                        and i - (0 if p.s3_no_trigger else 1) >= max(hi_sd.sweep_bar, lo_sd.sweep_bar):
+                    # [T Oct 7] S3 needs no trigger: the fib exists from the second sweep, a touch of 0.5 is the entry
+                    if lo_sd.sweep_bar > hi_sd.sweep_bar and (two_bull or p.s3_no_trigger):
                         cand = dict(scen=3, d=-1, side=0, a1=hi_sd.ext, a1_bar=hi_sd.ext_bar, a0=lo_sd.ext, a0_bar=lo_sd.ext_bar)
-                    elif hi_sd.sweep_bar > lo_sd.sweep_bar and two_bear:
+                    elif hi_sd.sweep_bar > lo_sd.sweep_bar and (two_bear or p.s3_no_trigger):
                         cand = dict(scen=3, d=1, side=0, a1=lo_sd.ext, a1_bar=lo_sd.ext_bar, a0=hi_sd.ext, a0_bar=hi_sd.ext_bar)
             else:
                 for sd in (hi_sd, lo_sd):
