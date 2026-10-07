@@ -82,8 +82,8 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
   under 31,232 and killed the round). Trade: S2 LONG @0.5, 1.0 31,200.25 / 0 31,275, entry 31,237.75, stop 31,222.5,
   target 31,255 → target. Supersedes the wick-based v7.5 cancel.
 - **[T by example Oct 7] Sep 22** the high made on the break bar itself is a swing: after the 12:05 round was cancelled,
-  the 12:45 close above 30,935.25 (12:05 high) is the next break. Trade: S2 LONG @0.5 13:35 → target. The trader's 1.0
-  is the 12:25 low 30,889.25, ours the run start 30,895.5 (12:40) — **[OPEN]** which.
+  the 12:45 close above 30,935.25 (12:05 high) is the next break. Trade: S2 LONG @0.5 13:35 → target. 1.0 = start of the
+  green run, 12:40 (30,895.5) — **[T Oct 7]** confirmed, same rule as Oct 6.
 - **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
   That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
