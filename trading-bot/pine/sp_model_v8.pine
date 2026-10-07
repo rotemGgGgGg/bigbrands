@@ -45,6 +45,7 @@ closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level
 closeCancel = input.bool(true, "A break is undone by a close back through it (not a wick)", group = grpX)
 pivotAtBreak = input.bool(true, "The high/low made on the break bar counts as a swing", group = grpX)
 sessionBreaks = input.bool(true, "S2 break must happen in the session (from 09:25)", group = grpX)
+s3SweepAnchors = input.bool(true, "S3 fib from the first sweep's extreme to the second's, both expanding", group = grpX)
 s2RunAnchor = input.bool(true, "S2 1.0 = start of the candle run that broke", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
@@ -331,7 +332,11 @@ if inPos and strategy.position_size != 0
 // ───────────────────────────── 6 armed setup: 1.0 break → dead, 14:00 → dead, else fib 0 extends [T] ─────────────────────────────
 if sScen != 0
     string why = ""
-    if beyond(sDir == -1 ? high : low, sA1, -sDir)
+    if sScen == 3 and s3SweepAnchors and beyond(sDir == -1 ? high : low, sA1, -sDir)
+        sA1 := sDir == -1 ? high : low                  // [T] S3 keeps expanding: the 1.0 moves with price
+        sA1Bar := bar_index
+        sA1AtArm := sA1
+    else if beyond(sDir == -1 ? high : low, sA1, -sDir)
         why := "1.0 broken"
         if sScen == 1                                   // S1 broke its 1.0 → S2 opens on that side [T]
             Side sd = sSide == 1 ? hiS : loS
@@ -478,7 +483,13 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
         cScen := 0
     // [IMPL] a later trigger of the same scenario, direction and round keeps the first anchor
     if cScen != 0 and not (sScen == cScen and sDir == cDir and sRound == cRound)
-        [a0v, a0b] = extremeSince(cA1Bar, cDir)
+        [a0e, a0eb] = extremeSince(cA1Bar, cDir)
+        float a0v = a0e
+        int a0b = a0eb
+        if cScen == 3 and s3SweepAnchors                // [T] S3: 0 = the second sweep's extreme, whatever the order
+            Side sec = cDir == -1 ? loS : hiS
+            a0v := sec.ext
+            a0b := sec.extBar
         if math.abs(cA1 - a0v) > 0
             if sScen != 0 and showLabels
                 label.new(bar_index, sDir == 1 ? low : high, "↺ replaced", style = sDir == 1 ? label.style_label_up : label.style_label_down,
