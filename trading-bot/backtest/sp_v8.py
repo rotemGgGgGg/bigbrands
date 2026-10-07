@@ -42,6 +42,7 @@ class Params:
     use_s1: bool = True
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
+    close_cancel: bool = True       # [Oct 5] a break is undone by a 5-minute CLOSE back through it, not a wick
     s2_run_anchor: bool = True      # [T Oct 7] S2 1.0 = start of the run of same-colour candles that broke
     use_s2: bool = True
     use_s3: bool = True
@@ -318,7 +319,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 if sd.sweep_bar is None:
                     continue
                 toward = c if p.close_breaks else (h if sd.sign == 1 else l)   # price in the S2 direction
-                back = l if sd.sign == 1 else h
+                back = c if p.close_cancel else (l if sd.sign == 1 else h)   # [T Oct 7] a close back through, not a wick
                 if sd.s2_open:
                     w = setup.get("watch") if setup is not None and pos is None else None
                     if w is not None and setup["side"] == sd.sign and w == sd.round and i > sd.break_bar \

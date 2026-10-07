@@ -42,6 +42,7 @@ newBreakEnds = input.bool(true, "A new S2 break before the fill ends the waiting
 newAfterRetrace = input.float(0.36, "…only after a pullback of at least (fraction of the leg; 0 = always)", step = 0.01, group = grpX)
 s1PreOpen = input.bool(true, "S1 also after a pre-open sweep", group = grpX)
 closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level", group = grpX)
+closeCancel = input.bool(true, "A break is undone by a close back through it (not a wick)", group = grpX)
 s2RunAnchor = input.bool(true, "S2 1.0 = start of the candle run that broke", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
@@ -368,7 +369,7 @@ float lo2 = low[2]
 s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
     if not na(sd.sweepBar)
         float toward = closeBreaks ? close : sd.sign == 1 ? high : low
-        float back = sd.sign == 1 ? low : high
+        float back = closeCancel ? close : sd.sign == 1 ? low : high
         if sd.s2Open
             if not sd.cancelled and sd.round != sd.used and bar_index > sd.breakBar and beyond(back, sd.level, -sd.sign)
                 sd.cancelled := true
@@ -393,7 +394,7 @@ if valid
     // [T] an absorbed break that price falls back through kills the setup (Sep 29)
     if sScen == 2 and sWatch != 0 and not inPos and strategy.position_size == 0
         Side ws = sSide == 1 ? hiS : loS
-        if ws.round == sWatch and bar_index > ws.breakBar and beyond(sSide == 1 ? low : high, ws.level, -sSide)
+        if ws.round == sWatch and bar_index > ws.breakBar and beyond(closeCancel ? close : sSide == 1 ? low : high, ws.level, -sSide)
             if showLabels
                 label.new(bar_index, sDir == 1 ? low : high, "✗ new break failed", style = sDir == 1 ? label.style_label_up : label.style_label_down,
                      color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)

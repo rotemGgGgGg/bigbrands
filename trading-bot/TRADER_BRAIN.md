@@ -78,6 +78,9 @@ where possible), SPEC_V7.md. Status tags: **[T]** trader-confirmed · **[IMPL]**
 - **[T Oct 7]** Once S2 opens on a side (price closed through the post-sweep high/low), S1 on that side is over.
 - **[T Oct 7] Oct 6** trader's fib: 1.0 = 31,500.5 = start of the up-run (09:50), not the first candle of the last pair
   (10:00, 31,523). `s2_run_anchor` (default ON, confirmed): with it Oct 6 is a 0.588 long, stopped −1R; changes 8 trades, R worse.
+- **[T by example Oct 7] Oct 5** a break is undone only by a 5-minute **close** back through it (12:25 wicked 2 ticks
+  under 31,232 and killed the round). Trade: S2 LONG @0.5, 1.0 31,200.25 / 0 31,275, entry 31,237.75, stop 31,222.5,
+  target 31,255 → target. Supersedes the wick-based v7.5 cancel.
 - **[OPEN] conflict** Oct 2 the trader calls the 09:30 touch of the pre-open leg (08:30 sweep → 09:05 top) valid.
   That contradicts the [T] rule "second trigger candle must close ≥ 09:30" and principle 2 (no pre-open anchors).
 - **[IMPL] v7.4** One setup per round; after its 1.0 break wait for the next break.
