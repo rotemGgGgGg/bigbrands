@@ -8,6 +8,7 @@ Prints overall, per-year and per-scenario results and writes every trade to a CS
 """
 import argparse
 import collections
+import os
 
 import pandas as pd
 
@@ -28,15 +29,37 @@ def stats(rs):
     return n, w, (100 * w / n if n else 0.0), sum(rs), dd, worst
 
 
+def load_many(paths, tz, stamp):
+    """One file as is. Several (one per contract, e.g. MNQ MAR26 / JUN26 / ...): each New York day comes from the
+    contract that traded the most that day — the front month — so the roll needs no price adjustment."""
+    files = []
+    for p in paths:
+        if os.path.isdir(p):
+            files += sorted(os.path.join(p, f) for f in os.listdir(p) if f.lower().endswith((".txt", ".csv")))
+        else:
+            files.append(p)
+    if len(files) == 1:
+        return v.load(files[0], tz=tz, stamp=stamp)
+    frames = []
+    for f in files:
+        d = v.load(f, tz=tz, stamp=stamp)
+        print(f"  {os.path.basename(f)}: {d.index[0]:%Y-%m-%d} → {d.index[-1]:%Y-%m-%d}")
+        frames.append(d)
+    vol = pd.concat([d["volume"].groupby(d.index.date).sum().rename(i) for i, d in enumerate(frames)], axis=1).fillna(0)
+    pick = vol.idxmax(axis=1)
+    parts = [frames[i][pd.Index(frames[i].index.date).isin(list(pick[pick == i].index))] for i in range(len(frames))]
+    return pd.concat(parts).sort_index()
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("file")
+    ap.add_argument("files", nargs="+", help="one file, several contract files, or a folder of them")
     ap.add_argument("--tz", default="America/New_York", help="time zone of the file's timestamps (if they have no offset)")
     ap.add_argument("--stamp", default="auto", choices=["auto", "open", "close"], help="timestamp marks the bar's open or close")
     ap.add_argument("--out", default="trades_v8.csv")
     a = ap.parse_args()
 
-    df = v.load(a.file, tz=a.tz, stamp=a.stamp)
+    df = load_many(a.files, a.tz, a.stamp)
     days = df.index.normalize().nunique()
     months = max((df.index[-1] - df.index[0]).days / 30.4, 1e-9)
     print(f"data: {df.index[0]:%Y-%m-%d %H:%M} → {df.index[-1]:%Y-%m-%d %H:%M} NY  |  {len(df):,} five-minute bars, {days} days")
