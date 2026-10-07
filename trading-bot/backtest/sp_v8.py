@@ -30,6 +30,7 @@ class Params:
     va_floor: float = 0.41          # [T] below → no trade
     va_mid: float = 0.51            # [T] 0.41–0.51 → 0.5 entry (VA sitting on 0.5 counts as 0.5); 0.51–0.588 → 0.588
     va_ceiling: float = 0.588       # [T] above → no trade
+    va_tol: float = 0.02            # [T Oct 7] slack on floor and ceiling: our profile ≠ TradingView's FRVP to the tick
     vp_rows: int = 999              # [T]
     va_pct: float = 0.70            # [T]
     max_fails: int = 3              # [T] three 1.0 breaks end the session
@@ -41,6 +42,7 @@ class Params:
     use_s1: bool = True
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
+    s2_run_anchor: bool = False     # [OPEN, Oct 6 by example] S2 1.0 = start of the run of same-colour candles that broke
     use_s2: bool = True
     use_s3: bool = True
     ldn_min_bars: int = 60          # [IMPL] London range needs ≥ 60 of its 72 bars
@@ -72,7 +74,7 @@ def beyond(x, lvl, sign):
 def choose_level(scen, va, p):
     if scen == 3:
         return 0.5                                          # [T] S3: 0.5 only, no value area
-    if va is None or va > p.va_ceiling or va < p.va_floor:
+    if va is None or va > p.va_ceiling + p.va_tol or va < p.va_floor - p.va_tol:
         return 0.0
     return 0.588 if va >= p.va_mid else 0.5
 
@@ -352,6 +354,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                             sd.ref = sd.ext
                     elif beyond(toward, sd.ref, sd.sign):
                         sd.open_round(i, sd.ref)
+                        sd.s1_failed = True                  # [T Oct 7] price closed through: no more S1 on this side
                         log(i, f"S2 {sd.name} opens (pre-open reference broken)")
 
         # 8 ── triggers: second candle closes 09:30–14:00 [T]; not after a fill or the 3-fail cap
@@ -379,8 +382,15 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                     elif p.use_s2 and sd.s2_open and not sd.cancelled and sd.round != sd.used \
                             and s2_trig and i >= sd.break_bar:
                         # S2: the far extreme of the first trigger candle [T]; the pair may start before the break [IMPL]
-                        a1 = L[i - 1] if sd.sign == 1 else H[i - 1]
-                        cand = dict(scen=2, d=sd.sign, side=sd.sign, a1=a1, a1_bar=i - 1, round=sd.round)
+                        k = i - 1
+                        if p.s2_run_anchor:                  # back to the first candle of the run (Oct 6: 09:50, not 10:00)
+                            bull = sd.sign == 1
+                            while k - 1 > sd.sweep_bar and T[k - 1].date() == t.date() and \
+                                    ((C[k - 1] >= O[k - 1]) if bull else (C[k - 1] <= O[k - 1])):
+                                k -= 1
+                            k = min(range(k, i), key=lambda q: (L[q], q)) if bull else min(range(k, i), key=lambda q: (-H[q], q))
+                        a1 = L[k] if sd.sign == 1 else H[k]
+                        cand = dict(scen=2, d=sd.sign, side=sd.sign, a1=a1, a1_bar=k, round=sd.round)
             # [IMPL] the second candle already traded beyond the first candle's extreme → 1.0 broken, no setup
             if cand is not None and cand["a1_bar"] == i - 1 and beyond(h if cand["d"] == -1 else l, cand["a1"], -cand["d"]):
                 res.funnel[f"S{cand['scen']} trigger broke its own 1.0"] += 1

@@ -31,6 +31,7 @@ grpV = "Value area"
 vaFloor   = input.float(0.41, "Floor (below → no trade)", step = 0.001, group = grpV)
 vaMid     = input.float(0.51, "0.5 entry below / 0.588 entry from", step = 0.001, group = grpV)
 vaCeiling = input.float(0.588, "Ceiling (above → no trade)", step = 0.001, group = grpV)
+vaTol     = input.float(0.02, "Slack on floor and ceiling (our profile vs FRVP)", step = 0.005, group = grpV)
 vpRows    = input.int(999, "Rows", minval = 10, maxval = 2000, group = grpV)
 vaPct     = input.float(70, "Value area %", minval = 10, maxval = 100, group = grpV) / 100.0
 
@@ -41,6 +42,7 @@ newBreakEnds = input.bool(true, "A new S2 break before the fill ends the waiting
 newAfterRetrace = input.float(0.36, "…only after a pullback of at least (fraction of the leg; 0 = always)", step = 0.01, group = grpX)
 s1PreOpen = input.bool(true, "S1 also after a pre-open sweep", group = grpX)
 closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level", group = grpX)
+s2RunAnchor = input.bool(false, "S2 1.0 = start of the candle run that broke (test)", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
 
@@ -89,7 +91,7 @@ chooseLevel(int scen, float va) =>
     float lvl = 0.0
     if scen == 3
         lvl := 0.5                                      // [T] S3: 0.5 only, no value area
-    else if not na(va) and va <= vaCeiling and va >= vaFloor
+    else if not na(va) and va <= vaCeiling + vaTol and va >= vaFloor - vaTol
         lvl := va >= vaMid ? 0.588 : 0.5
     lvl
 
@@ -384,6 +386,7 @@ s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
                     sd.ref := sd.ext
             else if beyond(toward, sd.ref, sd.sign)
                 sd.openRound(sd.ref)
+                sd.s1Failed := true                     // [T] price closed through: no more S1 on this side
     sd
 
 if valid
@@ -457,6 +460,14 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
                     cSide := sd.sign
                     cA1 := sd.sign == 1 ? lo1 : hi1
                     cA1Bar := bar_index - 1
+                    if s2RunAnchor                      // [OPEN] 1.0 = start of the same-colour run that broke (Oct 6)
+                        int j = 1
+                        while j < 100 and bar_index - (j + 1) > sd.sweepBar and nyDate[j + 1] == nyDate and (sd.sign == 1 ? close[j + 1] >= open[j + 1] : close[j + 1] <= open[j + 1])
+                            j += 1
+                        for q = 1 to j
+                            if sd.sign == 1 ? low[q] <= cA1 : high[q] >= cA1
+                                cA1 := sd.sign == 1 ? low[q] : high[q]
+                                cA1Bar := bar_index - q
                     cRound := sd.round
     // [IMPL] the second candle already traded beyond the first candle's extreme → 1.0 broken, no setup
     if cScen != 0 and cA1Bar == bar_index - 1 and beyond(cDir == -1 ? high : low, cA1, -cDir)
