@@ -43,6 +43,7 @@ class Params:
     s1_after_preopen: bool = True   # [T Oct 7] S1 also after a pre-open sweep (trigger's 2nd candle closes ≥ 09:30)
     close_breaks: bool = True       # [T Oct 7] S2 reference / swing breaks need a 5-minute CLOSE beyond, not a wick
     close_cancel: bool = True       # [Oct 5] a break is undone by a 5-minute CLOSE back through it, not a wick
+    pivot_at_break: bool = True     # [Sep 22] the high made on the break bar itself is a swing (12:05, 30,935.25)
     s2_run_anchor: bool = True      # [T Oct 7] S2 1.0 = start of the run of same-colour candles that broke
     use_s2: bool = True
     use_s3: bool = True
@@ -331,7 +332,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                         sd.cancelled = True
                         log(i, f"S2 {sd.name} round {sd.round} dead (back through {sd.level})")
                     j = i - 1                                # 3-bar pivot at j, formed after the break
-                    if j > sd.break_bar and T[j - 1].date() == t.date():
+                    if (j >= sd.break_bar if p.pivot_at_break else j > sd.break_bar) and T[j - 1].date() == t.date():
                         pj, pa, pb = (H[j], H[j - 1], H[i]) if sd.sign == 1 else (L[j], L[j - 1], L[i])
                         if beyond(pj, pa, sd.sign) and beyond(pj, pb, sd.sign):
                             if p.dead_waits_highest and sd.cancelled and sd.swing is not None:

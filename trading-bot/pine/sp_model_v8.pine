@@ -43,6 +43,7 @@ newAfterRetrace = input.float(0.36, "…only after a pullback of at least (fract
 s1PreOpen = input.bool(true, "S1 also after a pre-open sweep", group = grpX)
 closeBreaks = input.bool(true, "S2 breaks need a 5-minute close beyond the level", group = grpX)
 closeCancel = input.bool(true, "A break is undone by a close back through it (not a wick)", group = grpX)
+pivotAtBreak = input.bool(true, "The high/low made on the break bar counts as a swing", group = grpX)
 s2RunAnchor = input.bool(true, "S2 1.0 = start of the candle run that broke", group = grpX)
 qty      = input.int(1, "Contracts [IMPL: fixed]", minval = 1, group = grpX)
 checkInv = input.bool(true, "Stop on invariant breach", group = grpX)
@@ -374,7 +375,7 @@ s2Step(Side sd, bool pullback, bool pivOk, float p1, float p2, float p0) =>
             if not sd.cancelled and sd.round != sd.used and bar_index > sd.breakBar and beyond(back, sd.level, -sd.sign)
                 sd.cancelled := true
             // 3-bar pivot at the previous bar, formed after the break
-            if bar_index - 1 > sd.breakBar and pivOk and beyond(p1, p2, sd.sign) and beyond(p1, p0, sd.sign)
+            if (pivotAtBreak ? bar_index - 1 >= sd.breakBar : bar_index - 1 > sd.breakBar) and pivOk and beyond(p1, p2, sd.sign) and beyond(p1, p0, sd.sign)
                 if deadWaitsHighest and sd.cancelled and not na(sd.swing)
                     sd.swing := sd.sign == 1 ? math.max(sd.swing, p1) : math.min(sd.swing, p1)
                 else
