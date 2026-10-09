@@ -255,6 +255,7 @@ if tradeCount > lastCount
     pA0 := sA0
     tradesToday += tradeCount - lastCount                  // the first fill ends the day [T]
     sScen := 0
+    alert("SP filled: " + scenName(pScen, pDir) + " @" + str.tostring(pLevel) + " | entry " + str.tostring(pEntry) + " stop " + str.tostring(pStop) + " target " + str.tostring(pTgt), alert.freq_once_per_bar_close)
     if showLabels
         label.new(bar_index, pDir == 1 ? low : high, scenName(pScen, pDir) + " @" + str.tostring(pLevel) + (na(pVa) ? "" : "\nva " + str.tostring(pVa, "#.###")),
              style = pDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.blue, 10), textcolor = color.white, size = size.small)
@@ -509,6 +510,7 @@ if valid and not inPos and strategy.position_size == 0 and tradesToday == 0 and 
             sRound := cRound
             sDeep := 0.0
             sWatch := 0
+            alert("SP setup: " + scenName(cScen, cDir) + " | 1.0 " + str.tostring(cA1) + " | 0 " + str.tostring(a0v), alert.freq_once_per_bar_close)
             if showLabels
                 label.new(bar_index, cDir == 1 ? low : high, scenName(cScen, cDir) + "\nleg " + str.tostring(math.abs(cA1 - a0v), "#.##"),
                      style = cDir == 1 ? label.style_label_up : label.style_label_down, color = color.new(color.orange, 10), textcolor = color.white, size = size.small)
