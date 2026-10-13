@@ -1,0 +1,6 @@
+.env
+*.session
+*.session-journal
+session.txt
+messages.txt
+paper.db
