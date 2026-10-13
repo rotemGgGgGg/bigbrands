@@ -1,0 +1,272 @@
+/**
+ * Desk: where the bot reports, and where its owner looks.
+ *
+ * The bot runs elsewhere and only ever writes here; the page only ever reads.
+ * Two keys keep those apart, so a phone that can see the ledger cannot write
+ * to it, and the bot's key never has to sit in a browser.
+ *
+ * Paper trades are settled here, against real spot gold, on a schedule. A
+ * paper order that is never settled is a number nobody can learn from, and
+ * the bot has no price feed of its own to settle them with.
+ */
+import PAGE from "./page.html";
+import { MANIFEST, ICON } from "./assets.js";
+
+const PIP = 0.1;
+
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
+
+function bearer(req) {
+  const h = req.headers.get("authorization") || "";
+  return h.startsWith("Bearer ") ? h.slice(7).trim() : "";
+}
+
+/** Constant-time compare, so a key cannot be guessed a character at a time. */
+function same(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+const now = () => Math.floor(Date.now() / 1000);
+
+function settle(t, exit, outcome, ts, note = null) {
+  const move = t.side === "buy" ? exit - t.entry : t.entry - exit;
+  return {
+    exit,
+    outcome,
+    closed_at: ts,
+    pips: Math.round((move / PIP) * 10) / 10,
+    // One unit of XAU_USD is one ounce: a dollar of movement is a dollar.
+    pnl: Math.round(move * t.units * 100) / 100,
+    note,
+  };
+}
+
+async function ingest(req, env) {
+  const ev = await req.json().catch(() => null);
+  if (!ev || !ev.type) return json({ error: "bad event" }, 400);
+  const ts = Number(ev.ts) || now();
+
+  if (ev.type === "signal") {
+    const r = await env.DB.prepare(
+      `INSERT INTO signals (ts, side, order_type, entry, sl, tp, status, reason, raw)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(ts, ev.side ?? null, ev.order_type ?? null, ev.entry ?? null, ev.sl ?? null,
+      ev.tp ?? null, ev.status || "skipped", ev.reason ?? null, (ev.raw || "").slice(0, 2000)).run();
+    return json({ ok: true, id: r.meta.last_row_id });
+  }
+
+  if (ev.type === "open") {
+    for (const k of ["side", "units", "entry", "sl", "tp"]) {
+      if (ev[k] === undefined || ev[k] === null) return json({ error: `missing ${k}` }, 400);
+    }
+    const order = ev.order_type || "market";
+    // A market order is in the moment it is sent; anything else waits for
+    // price to come to it.
+    const live = ev.mode === "live";
+    const state = order === "market" || live ? "open" : "pending";
+    const r = await env.DB.prepare(
+      `INSERT INTO trades (signal_id, mode, side, order_type, units, entry, sl, tp,
+                           created_at, opened_at, state)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(ev.signal_id ?? null, live ? "live" : "paper", ev.side, order, Math.abs(ev.units),
+      ev.entry, ev.sl, ev.tp, ts, state === "open" ? ts : null, state).run();
+    return json({ ok: true, id: r.meta.last_row_id });
+  }
+
+  if (ev.type === "close") {
+    const t = await env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(ev.trade_id).first();
+    if (!t) return json({ error: "no such trade" }, 404);
+    const s = settle(t, Number(ev.exit), ev.outcome || "manual", ts, ev.note ?? null);
+    await env.DB.prepare(
+      `UPDATE trades SET state='closed', exit=?, outcome=?, closed_at=?, pips=?, pnl=?, note=?
+       WHERE id = ?`,
+    ).bind(s.exit, s.outcome, s.closed_at, s.pips, s.pnl, s.note, t.id).run();
+    return json({ ok: true, ...s });
+  }
+
+  if (ev.type === "heartbeat") {
+    await env.DB.prepare(
+      "INSERT INTO meta (k, v, ts) VALUES ('bot', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
+    ).bind(JSON.stringify({ mode: ev.mode || "paper", source: ev.source || null }), ts).run();
+    return json({ ok: true });
+  }
+
+  return json({ error: `unknown type ${ev.type}` }, 400);
+}
+
+async function data(env) {
+  const [signals, trades, bot] = await Promise.all([
+    env.DB.prepare("SELECT * FROM signals ORDER BY ts DESC LIMIT 300").all(),
+    env.DB.prepare("SELECT * FROM trades ORDER BY created_at DESC LIMIT 1000").all(),
+    env.DB.prepare("SELECT v, ts FROM meta WHERE k = 'bot'").first(),
+  ]);
+  return json({
+    now: now(),
+    bot: bot ? { ...JSON.parse(bot.v), ts: bot.ts } : null,
+    signals: signals.results || [],
+    trades: trades.results || [],
+  });
+}
+
+/**
+ * Settles paper trades against real one-minute spot gold.
+ *
+ * A pending order fills the first minute price reaches it, and expires after
+ * EXPIRE_MIN if it never does. An open trade closes on the first minute its
+ * target or stop is touched. When one minute touches both, the order inside
+ * it is not in the data, so the stop is assumed: a paper record that flatters
+ * itself is worse than none.
+ */
+const EXPIRE_MIN = 240;
+// The price service returns at most 5,000 minutes, and when a range is longer
+// it silently returns the END of it. A trade from last week settled against
+// this week's prices would close at the wrong time and price, so the range
+// is walked forward a chunk per run, and each trade remembers how far it has
+// been checked.
+const CHUNK_S = 4800 * 60;
+
+async function resolvePaper(env) {
+  if (!env.TWELVEDATA_KEY) return { skipped: "no price key" };
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM trades WHERE mode = 'paper' AND state IN ('pending', 'open')",
+  ).all();
+  if (!results || !results.length) return { open: 0 };
+
+  const cursor = (t) => t.checked_to || (t.opened_at || t.created_at) - 60;
+  const from = Math.min(...results.map(cursor));
+  const to = Math.min(now(), from + CHUNK_S);
+  const fmt = (s) => new Date(s * 1000).toISOString().slice(0, 19).replace("T", " ");
+  const q = new URLSearchParams({
+    symbol: "XAU/USD", interval: "1min", timezone: "UTC", order: "asc",
+    start_date: fmt(from), end_date: fmt(to), outputsize: "5000",
+    apikey: env.TWELVEDATA_KEY,
+  });
+  const res = await fetch(`https://api.twelvedata.com/time_series?${q}`);
+  const body = await res.json();
+  if (body.status === "error" && !/no data/i.test(body.message || "")) return { error: body.message };
+  const bars = (body.values || []).map((v) => ({
+    t: Date.parse(v.datetime.replace(" ", "T") + "Z") / 1000,
+    o: Number(v.open), h: Number(v.high), l: Number(v.low),
+  }));
+  // An empty chunk is a closed market (a weekend), not an error: step past it.
+  const reached = bars.length ? bars[bars.length - 1].t : to;
+
+  let changed = 0;
+  for (const t of results) {
+    if (cursor(t) > to) continue;               // not reached by this chunk yet
+    let state = t.state;
+    let opened = t.opened_at;
+    let done = null;
+    let entry = t.entry;
+    let note = null;
+
+    // A market order fills at whatever gold costs that minute, not at the
+    // number in the message. Paper has to do the same or it is grading a
+    // trade nobody could have taken. Done once, on the first look.
+    if (state === "open" && t.order_type === "market" && !t.checked_to) {
+      const first = bars.find((b) => b.t >= t.created_at - 59);
+      if (first) {
+        entry = first.o;
+        opened = first.t;
+        const past = t.side === "buy"
+          ? (entry <= t.sl ? "stop" : entry >= t.tp ? "target" : null)
+          : (entry >= t.sl ? "stop" : entry <= t.tp ? "target" : null);
+        if (past) {
+          state = "expired";
+          note = `price ${entry.toFixed(2)} was already past the ${past} when the signal arrived`;
+        }
+      }
+    }
+    const live = { ...t, entry };
+
+    for (let i = 0; i < bars.length && state !== "expired"; i++) {
+      const b = bars[i];
+      if (b.t <= cursor(t) || b.t < t.created_at - 60) continue;
+      if (state === "pending") {
+        if (b.t > t.created_at + EXPIRE_MIN * 60) { state = "expired"; break; }
+        const prev = bars[i - 1];
+        let filled;
+        if (t.order_type === "stop") {
+          // A stop fills on a break through the level, not on a visit to it.
+          filled = t.side === "buy"
+            ? b.h >= t.entry && (!prev || prev.h < t.entry)
+            : b.l <= t.entry && (!prev || prev.l > t.entry);
+        } else {
+          filled = b.l <= t.entry && t.entry <= b.h;
+        }
+        if (!filled) continue;
+        state = "open";
+        opened = b.t;
+      }
+      if (state === "open") {
+        if (b.t < opened) continue;
+        const hitTp = t.side === "buy" ? b.h >= t.tp : b.l <= t.tp;
+        const hitSl = t.side === "buy" ? b.l <= t.sl : b.h >= t.sl;
+        if (hitSl) { done = settle(live, t.sl, "sl", b.t, hitTp ? "tp and sl in one minute; stop assumed" : null); break; }
+        if (hitTp) { done = settle(live, t.tp, "tp", b.t); break; }
+      }
+    }
+    if (state === "pending" && reached > t.created_at + EXPIRE_MIN * 60) state = "expired";
+
+    if (done) {
+      await env.DB.prepare(
+        `UPDATE trades SET state='closed', entry=?, opened_at=?, exit=?, outcome=?, closed_at=?, pips=?, pnl=?, note=?, checked_to=?
+         WHERE id = ?`,
+      ).bind(entry, opened, done.exit, done.outcome, done.closed_at, done.pips, done.pnl, done.note, done.closed_at, t.id).run();
+    } else {
+      await env.DB.prepare("UPDATE trades SET state=?, entry=?, opened_at=?, checked_to=?, note=COALESCE(?, note) WHERE id = ?")
+        .bind(state, entry, opened, reached, note, t.id).run();
+    }
+    changed++;
+  }
+  return { checked: results.length, changed, window: [fmt(from), fmt(reached)], bars: bars.length };
+}
+
+export default {
+  async fetch(req, env) {
+    const url = new URL(req.url);
+    const path = url.pathname;
+
+    if (req.method === "GET" && (path === "/" || path === "/index.html")) {
+      return new Response(PAGE, {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-cache",
+          "x-frame-options": "DENY",
+          "referrer-policy": "no-referrer",
+        },
+      });
+    }
+    if (path === "/manifest.webmanifest") {
+      return new Response(MANIFEST, { headers: { "content-type": "application/manifest+json" } });
+    }
+    if (path === "/icon.svg") {
+      return new Response(ICON, { headers: { "content-type": "image/svg+xml", "cache-control": "max-age=86400" } });
+    }
+
+    if (path === "/api/event" && req.method === "POST") {
+      if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);
+      return ingest(req, env);
+    }
+    if (path === "/api/data" && req.method === "GET") {
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      return data(env);
+    }
+    if (path === "/api/resolve" && req.method === "POST") {
+      if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);
+      return json(await resolvePaper(env));
+    }
+    return new Response("not found", { status: 404 });
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(resolvePaper(env).then((r) => console.log("resolve", JSON.stringify(r))));
+  },
+};

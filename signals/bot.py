@@ -23,6 +23,7 @@ import time
 import urllib.parse
 import urllib.request
 
+import desk
 from broker import OandaBroker, PaperBroker
 from parse import parse, risk_reward
 from risk import Limits, size
@@ -83,6 +84,7 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
     """One message, start to finish."""
     sig = parse(text)
     if not sig.tradeable:
+        desk.signal(env, sig, "skipped", "; ".join(sig.problems))
         notify(env, "⏭ <b>skipped</b>\n" + "\n".join(f"• {p}" for p in sig.problems))
         return
 
@@ -95,16 +97,20 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
             f"risk ${abs(sig.entry - sig.stop):.2f} · R:R {rr}")
 
     if not decision.allowed:
-        notify(env, f"{head}\n\n⛔️ <b>not placed</b> — {decision.detail}")
+        desk.signal(env, sig, "skipped", decision.detail)
+        notify(env, f"{head}\n\n⛔️ <b>not placed</b>: {decision.detail}")
         return
 
     fill = broker.market(INSTRUMENT, decision.units, sig.stop, sig.targets[0])
     mode = "LIVE" if live else "PAPER"
     if fill.ok:
+        sid = desk.signal(env, sig, "taken", decision.detail)
+        desk.opened(env, sid, sig, decision.units, "live" if live else "paper")
         at = f" at {fill.price}" if fill.price else ""
         notify(env, f"{head}\n\n✅ <b>{mode}</b> {decision.units} units{at}\n"
                     f"{decision.detail}\n{fill.detail}")
     else:
+        desk.signal(env, sig, "failed", fill.detail)
         notify(env, f"{head}\n\n❌ <b>{mode} failed</b>\n{fill.detail}")
 
 
@@ -137,9 +143,20 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             # worse than a bad trade: nothing would say it had stopped.
             notify(env, f"⚠️ <b>error handling a message</b>\n{e}")
 
-    mode = "LIVE — real orders" if live else "PAPER — nothing sent"
+    mode = "LIVE, real orders" if live else "PAPER, nothing sent"
     notify(env, f"👂 <b>listening</b> to {source}\nmode: {mode}")
+
+    async def beat():
+        # The desk shows the bot as listening only while this keeps arriving,
+        # so a bot that died says so instead of looking merely quiet.
+        import asyncio
+        while True:
+            await asyncio.get_running_loop().run_in_executor(
+                None, desk.heartbeat, env, "live" if live else "paper", source)
+            await asyncio.sleep(60)
+
     client.start()
+    client.loop.create_task(beat())
     client.run_until_disconnected()
 
 

@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1d26" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tape">
+<meta name="robots" content="noindex, nofollow">
+<title>Tape</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Martian+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: oklch(0.972 0.009 80);
+  --paper-sunk: oklch(0.948 0.011 80);
+  --ink: oklch(0.24 0.025 262);
+  --ink-2: oklch(0.45 0.018 262);
+  --ink-3: oklch(0.62 0.012 262);
+  --rule: oklch(0.86 0.012 80);
+  --rule-soft: oklch(0.91 0.01 80);
+  --win: oklch(0.5 0.105 158);
+  --loss: oklch(0.55 0.16 32);
+  --wait: oklch(0.58 0.1 70);
+  --display: "Big Shoulders Display", "Big Shoulders", Impact, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --gutter: clamp(16px, 4vw, 40px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) {
+    --paper: oklch(0.205 0.012 262);
+    --paper-sunk: oklch(0.235 0.014 262);
+    --ink: oklch(0.93 0.012 80);
+    --ink-2: oklch(0.75 0.012 80);
+    --ink-3: oklch(0.57 0.012 262);
+    --rule: oklch(0.34 0.014 262);
+    --rule-soft: oklch(0.28 0.013 262);
+    --win: oklch(0.76 0.12 158);
+    --loss: oklch(0.71 0.15 32);
+    --wait: oklch(0.78 0.1 75);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="night"] {
+  --paper: oklch(0.205 0.012 262);
+  --paper-sunk: oklch(0.235 0.014 262);
+  --ink: oklch(0.93 0.012 80);
+  --ink-2: oklch(0.75 0.012 80);
+  --ink-3: oklch(0.57 0.012 262);
+  --rule: oklch(0.34 0.014 262);
+  --rule-soft: oklch(0.28 0.013 262);
+  --win: oklch(0.76 0.12 158);
+  --loss: oklch(0.71 0.15 32);
+  --wait: oklch(0.78 0.1 75);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 12.5px/1.6 var(--mono);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+button, input { font: inherit; color: inherit; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px; }
+
+.win { color: var(--win); }
+.loss { color: var(--loss); }
+.muted { color: var(--ink-3); }
+.label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------- masthead ---------- */
+.mast {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 28px;
+  padding: calc(env(safe-area-inset-top) + 14px) var(--gutter) 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.brand {
+  display: flex; align-items: baseline; gap: 10px;
+  font: 800 30px/1 var(--display);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.brand small {
+  font: 400 10px/1 var(--mono);
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+.tabs { display: flex; gap: 22px; }
+.tabs a {
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 6px 0;
+  border-bottom: 1.5px solid transparent;
+  transition: color .2s var(--ease), border-color .2s var(--ease);
+}
+.tabs a:hover { color: var(--ink-2); }
+.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+.status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10.5px; color: var(--ink-2);
+  white-space: nowrap;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.dot.on { background: var(--win); box-shadow: 0 0 0 3px color-mix(in oklch, var(--win) 22%, transparent); }
+.dot.stale { background: var(--wait); }
+.icon-btn {
+  appearance: none; background: none; border: 1px solid var(--rule);
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  color: var(--ink-2);
+  transition: border-color .2s var(--ease), color .2s var(--ease);
+}
+.icon-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.demo-flag {
+  padding: 8px var(--gutter);
+  font-size: 10.5px; letter-spacing: 0.08em;
+  background: var(--ink); color: var(--paper);
+}
+
+main { padding: 0 var(--gutter) calc(env(safe-area-inset-bottom) + 96px); max-width: 1240px; margin: 0 auto; }
+.view { animation: rise .32s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .view { animation: none; } * { transition: none !important; } }
+
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  margin: 48px 0 14px;
+}
+.section-head h2 {
+  margin: 0;
+  font: 800 26px/1 var(--display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ---------- overview ---------- */
+.dayline { margin: 44px 0 0; max-width: 52ch; }
+.dayline .label { display: block; margin-bottom: 14px; }
+.dayline p { margin: 0; font: 300 17px/1.55 var(--mono); color: var(--ink-2); }
+.fig {
+  display: block;
+  font: 800 clamp(64px, 12vw, 132px)/0.86 var(--display);
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin: 0 0 14px -2px;
+}
+.fig.win { color: var(--win); }
+.fig.loss { color: var(--loss); }
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 0 48px;
+  margin-top: 40px;
+  border-top: 1px solid var(--ink);
+  padding-top: 18px;
+}
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.readout { font-size: 11px; color: var(--ink-2); min-height: 1.6em; }
+.readout b { font-weight: 500; color: var(--ink); }
+.ranges { display: flex; gap: 4px; }
+.ranges button {
+  appearance: none; background: none; border: 0; cursor: pointer;
+  font-size: 10.5px; letter-spacing: 0.1em; color: var(--ink-3);
+  padding: 4px 8px; border-radius: 2px;
+}
+.ranges button[aria-pressed="true"] { color: var(--paper); background: var(--ink); }
+.chart { position: relative; margin-top: 14px; touch-action: pan-y; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .axis { font: 400 10px var(--mono); fill: var(--ink-3); }
+.empty {
+  border: 1px dashed var(--rule);
+  padding: 44px 24px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+.empty strong { display: block; font: 800 22px/1.1 var(--display); text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; letter-spacing: .03em; }
+
+.receipt { font-size: 11.5px; }
+.receipt .label { display: block; margin-bottom: 10px; }
+.receipt dl { margin: 0; }
+.receipt .row { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; }
+.receipt dt { color: var(--ink-2); white-space: nowrap; }
+.receipt .lead { flex: 1; border-bottom: 1px dotted var(--ink-3); transform: translateY(-4px); opacity: .55; }
+.receipt dd { margin: 0; white-space: nowrap; font-weight: 500; }
+.receipt .break { border-top: 1px solid var(--rule); margin: 8px 0; }
+
+.book { margin-top: 8px; }
+.pos {
+  display: grid;
+  grid-template-columns: 76px 120px minmax(160px, 1fr) 110px 90px;
+  align-items: center; gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.gauge { position: relative; height: 18px; }
+.gauge .bar { position: absolute; top: 8px; height: 2px; }
+.gauge .risk { background: var(--loss); }
+.gauge .reward { background: var(--win); }
+.gauge .entry { position: absolute; top: 2px; width: 1.5px; height: 14px; background: var(--ink); }
+.gauge-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-3); margin-top: 2px; }
+
+/* ---------- side marks & stamps ---------- */
+.side { font-weight: 500; letter-spacing: 0.04em; }
+.side small { display: block; font-weight: 300; font-size: 10px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.stamp {
+  display: inline-block;
+  font: 800 13px/1 var(--display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 7px 3px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 18%, transparent);
+  transform: rotate(var(--tilt, -2deg));
+  opacity: 0.92;
+  white-space: nowrap;
+}
+.stamp.tp { color: var(--win); }
+.stamp.sl { color: var(--loss); }
+.stamp.open, .stamp.pending { color: var(--wait); }
+.stamp.expired, .stamp.skipped { color: var(--ink-3); }
+.stamp.taken { color: var(--ink); }
+.stamp.failed { color: var(--loss); }
+
+/* ---------- ledger ---------- */
+.day { margin-top: 36px; }
+.day-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 8px;
+}
+.day-head h3 { margin: 0; font: 800 22px/1 var(--display); text-transform: uppercase; letter-spacing: .03em; }
+.day-head .total { font: 800 22px/1 var(--display); letter-spacing: .02em; }
+.trade {
+  display: grid;
+  grid-template-columns: 64px 160px minmax(150px, 1fr) 90px 110px 92px;
+  align-items: center; gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.trade:last-child { border-bottom: 0; }
+.trade .time { color: var(--ink-3); }
+.trade .path { white-space: nowrap; }
+.trade .path .arrow { color: var(--ink-3); margin: 0 6px; }
+.trade .num { text-align: right; white-space: nowrap; }
+.trade .money { text-align: right; font-weight: 500; white-space: nowrap; }
+.trade .stamp-cell { text-align: right; }
+.trade .note { grid-column: 2 / -1; font-size: 10.5px; color: var(--ink-3); margin-top: -6px; }
+
+/* ---------- signals ---------- */
+.sig {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 6px 18px;
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+.sig .when { color: var(--ink-3); font-size: 11px; line-height: 1.5; }
+.sig .levels { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.sig .levels span { white-space: nowrap; }
+.sig .levels .k { color: var(--ink-3); margin-right: 6px; font-size: 10px; letter-spacing: .1em; }
+.sig .why { grid-column: 2 / -1; color: var(--ink-2); font-size: 11px; }
+.sig details { grid-column: 2 / -1; }
+.sig summary {
+  cursor: pointer; list-style: none;
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3);
+}
+.sig summary::-webkit-details-marker { display: none; }
+.sig summary::before { content: "+ "; }
+.sig details[open] summary::before { content: "\2212 "; }
+.sig pre {
+  margin: 10px 0 0; padding: 14px 16px;
+  background: var(--paper-sunk);
+  font: 400 11.5px/1.65 var(--mono);
+  white-space: pre-wrap; word-break: break-word;
+  border-radius: 2px;
+}
+.filters { display: flex; gap: 4px; }
+
+/* ---------- lock ---------- */
+.lock {
+  min-height: 100dvh;
+  display: grid; place-items: center;
+  padding: var(--gutter);
+}
+.lock form { width: min(340px, 100%); }
+.lock .brand { font-size: 64px; margin-bottom: 28px; }
+.lock label { display: block; margin-bottom: 8px; }
+.lock input {
+  width: 100%;
+  background: transparent;
+  border: 0; border-bottom: 1.5px solid var(--ink);
+  padding: 10px 0; font-size: 15px;
+  outline: none;
+  letter-spacing: .06em;
+}
+.lock input:focus-visible { border-bottom-color: var(--ink); outline: none; }
+.lock .go {
+  margin-top: 22px;
+  appearance: none; border: 0; cursor: pointer;
+  background: var(--ink); color: var(--paper);
+  padding: 13px 18px; width: 100%;
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  border-radius: 2px;
+}
+.lock .err { color: var(--loss); font-size: 11px; min-height: 1.6em; margin-top: 10px; }
+.lock .alt { display: block; margin-top: 18px; font-size: 10.5px; color: var(--ink-3); letter-spacing: .06em; }
+
+/* ---------- mobile ---------- */
+.tabbar { display: none; }
+@media (max-width: 860px) {
+  .mast { grid-template-columns: auto 1fr auto; gap: 14px; }
+  .mast .tabs { display: none; }
+  .status { justify-self: end; }
+  .brand { font-size: 26px; }
+  .brand small { display: none; }
+  .board { grid-template-columns: 1fr; }
+  .receipt { margin-top: 36px; }
+  .pos { grid-template-columns: 1fr auto; gap: 8px 12px; }
+  .pos .gauge-wrap { grid-column: 1 / -1; }
+  .trade {
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+  }
+  .trade .time { grid-column: 1; }
+  .trade .stamp-cell { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .trade .side { grid-column: 1; }
+  .trade .path { grid-column: 1 / -1; }
+  .trade .num { grid-column: 1; text-align: left; color: var(--ink-3); }
+  .trade .money { grid-column: 2; }
+  .trade .note { grid-column: 1 / -1; margin-top: 0; }
+  .sig { grid-template-columns: 1fr auto; }
+  .sig .when { grid-column: 1; }
+  .sig > .stamp-cell { grid-column: 2; grid-row: 1; }
+  .sig .body { grid-column: 1 / -1; }
+  .tabbar {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 6px 8px calc(env(safe-area-inset-bottom) + 6px);
+  }
+  .tabbar a {
+    text-align: center; text-decoration: none;
+    padding: 10px 0 8px;
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .tabbar a[aria-current="page"] { color: var(--ink); }
+  .tabbar a[aria-current="page"]::before {
+    content: ""; display: block; width: 18px; height: 2px; margin: -10px auto 8px;
+    background: var(--ink);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock" hidden>
+  <form id="lock-form" autocomplete="off">
+    <div class="brand">TAPE</div>
+    <label class="label" for="key">Desk key</label>
+    <input id="key" type="password" inputmode="text" autocapitalize="off" spellcheck="false" required>
+    <button class="go" type="submit">Open the desk</button>
+    <div class="err" id="lock-err" role="alert"></div>
+    <a class="alt" href="?demo">See it with demo data</a>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="demo-flag" id="demo-flag" hidden>DEMO DATA. NOTHING ON THIS PAGE HAPPENED.</div>
+  <header class="mast">
+    <a class="brand" href="#overview">TAPE <small>XAU/USD</small></a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#ledger">Ledger</a>
+      <a href="#signals">Signals</a>
+    </nav>
+    <div class="status" id="status"><i class="dot"></i><span>connecting</span></div>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch day or night">
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 1a6 6 0 0 1 0 12z" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <section class="view" id="view-overview" data-view="overview"></section>
+    <section class="view" id="view-ledger" data-view="ledger" hidden></section>
+    <section class="view" id="view-signals" data-view="signals" hidden></section>
+  </main>
+
+  <nav class="tabbar" aria-label="Sections">
+    <a href="#overview">Overview</a>
+    <a href="#ledger">Ledger</a>
+    <a href="#signals">Signals</a>
+  </nav>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const KEY = "tape.key";
+  const THEME = "tape.theme";
+  const DEMO = new URLSearchParams(location.search).has("demo");
+  const MINUS = "−";
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  let state = { data: null, range: "30d", sigFilter: "all", timer: null };
+
+  /* ---------- theme ---------- */
+  const root = document.documentElement;
+  function applyTheme(t) { if (t) root.dataset.theme = t; else delete root.dataset.theme; }
+  try { applyTheme(localStorage.getItem(THEME)); } catch (_) {}
+  $("#theme").addEventListener("click", () => {
+    const dark = getComputedStyle(root).colorScheme === "dark";
+    const next = dark ? "day" : "night";
+    applyTheme(next);
+    try { localStorage.setItem(THEME, next); } catch (_) {}
+    if (state.data) render();
+  });
+
+  /* ---------- formatting ---------- */
+  const money = (v, signed = true) => {
+    const a = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const s = v > 0 ? (signed ? "+" : "") : v < 0 ? MINUS : "";
+    return `${s}$${a}`;
+  };
+  const pips = (v) => (v > 0 ? "+" : v < 0 ? MINUS : "") + Math.abs(v).toFixed(1);
+  const price = (v) => (v == null ? "·" : Number(v).toFixed(2));
+  const tone = (v) => (v > 0 ? "win" : v < 0 ? "loss" : "");
+  const d = (ts) => new Date(ts * 1000);
+  const hhmm = (ts) => d(ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const dayKey = (ts) => { const x = d(ts); return `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`; };
+  const dayName = (ts) => d(ts).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const longDay = (ts) => d(ts).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const ago = (s) => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : s < 86400 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
+  const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+  const count = (n, one, many) => `${n < 10 ? words[n] : n} ${n === 1 ? one : many}`;
+  const rr = (s) => (s.entry != null && s.sl != null && s.tp != null && s.entry !== s.sl)
+    ? (Math.abs(s.tp - s.entry) / Math.abs(s.entry - s.sl)).toFixed(1) : null;
+  const tilt = (id) => [-2.5, -1, 1.5, -1.8, 0.8][Math.abs(id || 0) % 5] + "deg";
+
+  /* ---------- data ---------- */
+  async function load() {
+    if (DEMO) return demoData();
+    let key = "";
+    try { key = localStorage.getItem(KEY) || ""; } catch (_) {}
+    if (!key) return null;
+    const r = await fetch("/api/data", { headers: { authorization: `Bearer ${key}` }, cache: "no-store" });
+    if (r.status === 401) {
+      try { localStorage.removeItem(KEY); } catch (_) {}
+      showLock("That key did not open the desk.");
+      return null;
+    }
+    if (!r.ok) throw new Error(`desk answered ${r.status}`);
+    return r.json();
+  }
+
+  function stats(trades) {
+    const closed = trades.filter((t) => t.state === "closed").sort((a, b) => a.closed_at - b.closed_at);
+    const wins = closed.filter((t) => t.pnl > 0);
+    const losses = closed.filter((t) => t.pnl < 0);
+    const sum = (a) => a.reduce((s, t) => s + t.pnl, 0);
+    const net = sum(closed);
+    let peak = 0, run = 0, dd = 0;
+    const curve = closed.map((t) => {
+      run += t.pnl; peak = Math.max(peak, run); dd = Math.min(dd, run - peak);
+      return { ts: t.closed_at, v: run, t };
+    });
+    const byDay = new Map();
+    for (const t of closed) byDay.set(dayKey(t.closed_at), (byDay.get(dayKey(t.closed_at)) || 0) + t.pnl);
+    const grossWin = sum(wins), grossLoss = Math.abs(sum(losses));
+    return {
+      closed, wins, losses, net, curve, maxDD: dd,
+      winRate: closed.length ? wins.length / closed.length : null,
+      pf: grossLoss ? grossWin / grossLoss : null,
+      avgWin: wins.length ? grossWin / wins.length : null,
+      avgLoss: losses.length ? -grossLoss / losses.length : null,
+      expectancy: closed.length ? net / closed.length : null,
+      bestDay: byDay.size ? Math.max(...byDay.values()) : null,
+      worstDay: byDay.size ? Math.min(...byDay.values()) : null,
+      first: closed.length ? closed[0].closed_at : null,
+    };
+  }
+
+  /* ---------- status ---------- */
+  function renderStatus(data) {
+    const el = $("#status");
+    const bot = data.bot;
+    if (!bot) { el.innerHTML = `<i class="dot"></i><span>no bot has reported yet</span>`; return; }
+    const age = Math.max(0, data.now - bot.ts);
+    const cls = age < 180 ? "on" : age < 1800 ? "stale" : "";
+    const word = age < 180 ? "listening" : "quiet";
+    el.innerHTML = `<i class="dot ${cls}"></i><span>${esc(bot.mode)} · ${word} · ${ago(age)} ago</span>`;
+  }
+
+  /* ---------- overview ---------- */
+  function renderOverview(data) {
+    const view = $("#view-overview");
+    const s = stats(data.trades);
+    const today = s.closed.filter((t) => dayKey(t.closed_at) === dayKey(data.now));
+    const todayNet = today.reduce((a, t) => a + t.pnl, 0);
+    const hits = today.filter((t) => t.outcome === "tp").length;
+    const book = data.trades.filter((t) => t.state === "open" || t.state === "pending");
+
+    let line;
+    if (!data.trades.length) {
+      line = `Nothing on the tape yet.`;
+    } else if (!today.length) {
+      line = book.length
+        ? `No trade has closed today. ${count(book.length, "position is", "positions are")} on the book.`
+        : `No trade has closed today.`;
+    } else {
+      const dir = todayNet >= 0 ? "Up" : "Down";
+      const how = today.length === 1
+        ? (hits ? "at target" : "stopped out")
+        : hits === today.length ? "every one at target"
+        : hits ? `${words[hits] || hits} of them at target` : "none at target";
+      line = `${dir} on ${count(today.length, "closed trade", "closed trades")} today, ${how}.`;
+    }
+
+    view.innerHTML = `
+      <div class="dayline">
+        <span class="label">${esc(longDay(data.now))}</span>
+        <span class="fig ${today.length ? tone(todayNet) : ""}">${today.length ? money(todayNet) : "$0.00"}</span>
+        <p>${esc(line)}</p>
+      </div>
+
+      <div class="board">
+        <div>
+          <div class="chart-head">
+            <span class="label">Equity, closed trades</span>
+            <div class="ranges" role="group" aria-label="Range">
+              ${["7d", "30d", "all"].map((r) => `<button type="button" data-range="${r}" aria-pressed="${state.range === r}">${r.toUpperCase()}</button>`).join("")}
+            </div>
+          </div>
+          <div class="readout" id="readout"></div>
+          <div class="chart" id="chart"></div>
+        </div>
+        <aside class="receipt">
+          <span class="label">${s.first ? `Since ${esc(dayName(s.first))}` : "All time"}</span>
+          <dl>${receiptRows(s, data)}</dl>
+        </aside>
+      </div>
+
+      <div class="section-head"><h2>On the book</h2><span class="label">${book.length ? count(book.length, "position", "positions") : ""}</span></div>
+      <div class="book">${book.length ? book.map(posRow).join("") : `<div class="empty"><strong>Flat</strong>No open or waiting positions.</div>`}</div>
+    `;
+
+    view.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => {
+      state.range = b.dataset.range; renderOverview(state.data);
+    }));
+    drawCurve(s, data.now);
+  }
+
+  function receiptRows(s, data) {
+    const row = (k, v, cls = "") => `<div class="row"><dt>${k}</dt><span class="lead"></span><dd class="${cls}">${v}</dd></div>`;
+    const dash = "–";
+    const taken = data.signals.filter((x) => x.status === "taken").length;
+    return [
+      row("Net", s.closed.length ? money(s.net) : dash, tone(s.net)),
+      row("Closed trades", s.closed.length),
+      row("Win rate", s.winRate == null ? dash : `${(s.winRate * 100).toFixed(1)}%`),
+      row("Profit factor", s.pf == null ? dash : s.pf.toFixed(2)),
+      row("Average win", s.avgWin == null ? dash : money(s.avgWin), "win"),
+      row("Average loss", s.avgLoss == null ? dash : money(s.avgLoss), "loss"),
+      row("Per trade", s.expectancy == null ? dash : money(s.expectancy), tone(s.expectancy || 0)),
+      `<div class="break"></div>`,
+      row("Deepest drawdown", s.closed.length ? money(s.maxDD) : dash, s.maxDD < 0 ? "loss" : ""),
+      row("Best day", s.bestDay == null ? dash : money(s.bestDay), tone(s.bestDay || 0)),
+      row("Worst day", s.worstDay == null ? dash : money(s.worstDay), tone(s.worstDay || 0)),
+      `<div class="break"></div>`,
+      row("Signals read", data.signals.length),
+      row("Acted on", taken),
+    ].join("");
+  }
+
+  function posRow(t) {
+    const lo = Math.min(t.sl, t.entry, t.tp), hi = Math.max(t.sl, t.entry, t.tp);
+    const pct = (v) => ((v - lo) / (hi - lo || 1)) * 100;
+    const riskL = Math.min(pct(t.sl), pct(t.entry)), riskW = Math.abs(pct(t.entry) - pct(t.sl));
+    const rewL = Math.min(pct(t.tp), pct(t.entry)), rewW = Math.abs(pct(t.tp) - pct(t.entry));
+    const since = t.opened_at || t.created_at;
+    return `<div class="pos">
+      <div class="label">${esc(hhmm(since))}</div>
+      <div class="side">${t.side === "buy" ? "▲ BUY" : "▼ SELL"}<small>${esc(t.order_type)} · ${t.units}u</small></div>
+      <div class="gauge-wrap">
+        <div class="gauge" aria-hidden="true">
+          <span class="bar risk" style="left:${riskL}%;width:${riskW}%"></span>
+          <span class="bar reward" style="left:${rewL}%;width:${rewW}%"></span>
+          <span class="entry" style="left:calc(${pct(t.entry)}% - 0.75px)"></span>
+        </div>
+        <div class="gauge-legend"><span>${t.side === "buy" ? "SL " + price(t.sl) : "TP " + price(t.tp)}</span><span>${price(t.entry)}</span><span>${t.side === "buy" ? "TP " + price(t.tp) : "SL " + price(t.sl)}</span></div>
+      </div>
+      <div class="num muted">1:${rr(t) ?? "–"}</div>
+      <div class="stamp-cell" style="text-align:right"><span class="stamp ${t.state}" style="--tilt:${tilt(t.id)}">${t.state === "pending" ? "Waiting" : "Open"}</span></div>
+    </div>`;
+  }
+
+  function drawCurve(s, now) {
+    const host = $("#chart");
+    const readout = $("#readout");
+    const days = state.range === "7d" ? 7 : state.range === "30d" ? 30 : null;
+    const from = days ? now - days * 86400 : (s.curve[0] ? s.curve[0].ts - 3600 : now - 86400);
+    const before = s.curve.filter((p) => p.ts < from);
+    const base = before.length ? before[before.length - 1].v : 0;
+    const pts = [{ ts: from, v: base, t: null }, ...s.curve.filter((p) => p.ts >= from)];
+
+    if (pts.length < 2) {
+      host.innerHTML = `<div class="empty"><strong>No closed trades ${days ? `in ${days} days` : "yet"}</strong>The line starts with the first trade that closes.</div>`;
+      readout.textContent = "";
+      return;
+    }
+    const end = { ts: Math.max(now, pts[pts.length - 1].ts), v: pts[pts.length - 1].v, t: null };
+    const all = [...pts, end];
+
+    const W = Math.max(280, host.clientWidth);
+    const H = W < 600 ? 210 : 280;
+    const padR = 64, padT = 10, padB = 34;
+    const minV = Math.min(0, ...all.map((p) => p.v));
+    const maxV = Math.max(0, ...all.map((p) => p.v));
+    const span = (maxV - minV) || 1;
+    const lo = minV - span * 0.08, hi = maxV + span * 0.08;
+    const x = (ts) => ((ts - from) / (end.ts - from || 1)) * (W - padR);
+    const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+    // A step line: equity only changes when a trade closes.
+    let path = `M${x(all[0].ts).toFixed(1)},${y(all[0].v).toFixed(1)}`;
+    for (let i = 1; i < all.length; i++) {
+      path += ` H${x(all[i].ts).toFixed(1)} V${y(all[i].v).toFixed(1)}`;
+    }
+    const ink = getComputedStyle(root).getPropertyValue("--ink");
+    const ticks = pts.filter((p) => p.t).map((p) =>
+      `<rect x="${(x(p.ts) - 1).toFixed(1)}" y="${H - 18}" width="2" height="12" fill="var(--${p.t.pnl >= 0 ? "win" : "loss"})" opacity=".85"/>`).join("");
+    const labelV = [maxV, 0, minV].filter((v, i, a) => a.indexOf(v) === i);
+
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Equity curve">
+      ${labelV.map((v) => `<line x1="0" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)" stroke-dasharray="${v === 0 ? "0" : "2 4"}"/>
+        <text class="axis" x="${W - padR + 10}" y="${y(v) + 3.5}">${money(v)}</text>`).join("")}
+      <path d="${path}" fill="none" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>
+      <line x1="0" x2="${W - padR}" y1="${H - 24}" y2="${H - 24}" stroke="var(--rule-soft)"/>
+      ${ticks}
+      <g id="cross" visibility="hidden">
+        <line id="cx" y1="${padT}" y2="${H - 24}" stroke="var(--ink-3)" stroke-dasharray="2 3"/>
+        <circle id="cd" r="3.5" fill="var(--paper)" stroke="${ink}" stroke-width="1.5"/>
+      </g>
+    </svg>`;
+
+    const latest = pts[pts.length - 1];
+    const say = (p) => {
+      if (!p.t) { readout.innerHTML = `${esc(dayName(p.ts))} · <b>${money(p.v)}</b>`; return; }
+      readout.innerHTML = `${esc(dayName(p.ts))} ${esc(hhmm(p.ts))} · <b>${money(p.v)}</b> · ${p.t.side === "buy" ? "buy" : "sell"} ${p.t.outcome === "tp" ? "at target" : p.t.outcome === "sl" ? "stopped" : "closed"} <span class="${tone(p.t.pnl)}">${money(p.t.pnl)}</span>`;
+    };
+    say(latest);
+
+    const svg = host.querySelector("svg");
+    const cross = svg.querySelector("#cross"), cx = svg.querySelector("#cx"), cd = svg.querySelector("#cd");
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * W;
+      let best = pts[0];
+      for (const p of pts) if (Math.abs(x(p.ts) - px) < Math.abs(x(best.ts) - px)) best = p;
+      cross.setAttribute("visibility", "visible");
+      cx.setAttribute("x1", x(best.ts)); cx.setAttribute("x2", x(best.ts));
+      cd.setAttribute("cx", x(best.ts)); cd.setAttribute("cy", y(best.v));
+      say(best);
+    };
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", () => { cross.setAttribute("visibility", "hidden"); say(latest); });
+  }
+
+  /* ---------- ledger ---------- */
+  function renderLedger(data) {
+    const view = $("#view-ledger");
+    const trades = [...data.trades].sort((a, b) => (b.closed_at || b.opened_at || b.created_at) - (a.closed_at || a.opened_at || a.created_at));
+    if (!trades.length) {
+      view.innerHTML = `<div class="section-head"><h2>Ledger</h2></div><div class="empty"><strong>An empty ledger</strong>Every trade the bot places will be written here, with how it ended.</div>`;
+      return;
+    }
+    const groups = new Map();
+    for (const t of trades) {
+      const ts = t.closed_at || t.opened_at || t.created_at;
+      const k = dayKey(ts);
+      if (!groups.has(k)) groups.set(k, { ts, items: [] });
+      groups.get(k).items.push(t);
+    }
+    view.innerHTML = `<div class="section-head"><h2>Ledger</h2><span class="label">${count(trades.length, "trade", "trades")}</span></div>` +
+      [...groups.values()].map((g) => {
+        const net = g.items.filter((t) => t.state === "closed").reduce((a, t) => a + t.pnl, 0);
+        const closed = g.items.some((t) => t.state === "closed");
+        return `<div class="day">
+          <div class="day-head"><h3>${esc(dayName(g.ts))}</h3><span class="total ${tone(net)}">${closed ? money(net) : ""}</span></div>
+          ${g.items.map(tradeRow).join("")}
+        </div>`;
+      }).join("");
+  }
+
+  function tradeRow(t) {
+    const ts = t.closed_at || t.opened_at || t.created_at;
+    const stampKey = t.state === "closed" ? (t.outcome === "tp" ? "tp" : t.outcome === "sl" ? "sl" : "taken") : t.state;
+    const stampText = { tp: "Target", sl: "Stopped", taken: "Closed", open: "Open", pending: "Waiting", expired: "Expired" }[stampKey];
+    const closed = t.state === "closed";
+    return `<div class="trade">
+      <div class="time">${esc(hhmm(ts))}</div>
+      <div class="side">${t.side === "buy" ? "▲ BUY" : "▼ SELL"}<small>${esc(t.order_type)} · ${t.units}u · ${esc(t.mode)}</small></div>
+      <div class="path">${price(t.entry)}<span class="arrow">→</span>${closed ? price(t.exit) : `<span class="muted">SL ${price(t.sl)} / TP ${price(t.tp)}</span>`}</div>
+      <div class="num ${closed ? tone(t.pips) : "muted"}">${closed ? pips(t.pips) + " p" : "–"}</div>
+      <div class="money ${closed ? tone(t.pnl) : "muted"}">${closed ? money(t.pnl) : "–"}</div>
+      <div class="stamp-cell"><span class="stamp ${stampKey}" style="--tilt:${tilt(t.id)}">${stampText}</span></div>
+      ${t.note ? `<div class="note">${esc(t.note)}</div>` : ""}
+    </div>`;
+  }
+
+  /* ---------- signals ---------- */
+  function renderSignals(data) {
+    const view = $("#view-signals");
+    const f = state.sigFilter;
+    const list = data.signals.filter((s) => f === "all" || s.status === f);
+    const n = (k) => data.signals.filter((s) => s.status === k).length;
+    view.innerHTML = `<div class="section-head"><h2>Signals</h2>
+        <div class="ranges filters" role="group" aria-label="Filter">
+          ${[["all", `All ${data.signals.length}`], ["taken", `Taken ${n("taken")}`], ["skipped", `Skipped ${n("skipped")}`]]
+            .map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${f === k}">${l.toUpperCase()}</button>`).join("")}
+        </div></div>` +
+      (list.length ? list.map(sigRow).join("") :
+        `<div class="empty"><strong>${data.signals.length ? "Nothing in this filter" : "Quiet channel"}</strong>${data.signals.length ? "" : "Each message the bot reads appears here, with what it understood and what it did."}</div>`);
+    view.querySelectorAll("[data-f]").forEach((b) => b.addEventListener("click", () => { state.sigFilter = b.dataset.f; renderSignals(state.data); }));
+  }
+
+  function sigRow(s) {
+    const r = rr(s);
+    const levels = s.side ? `<div class="levels">
+        <span class="side">${s.side === "buy" ? "▲ BUY" : "▼ SELL"}${s.order_type && s.order_type !== "market" ? " " + esc(s.order_type.toUpperCase()) : ""}</span>
+        <span><span class="k">AT</span>${price(s.entry)}</span>
+        <span><span class="k">SL</span>${price(s.sl)}</span>
+        <span><span class="k">TP</span>${price(s.tp)}</span>
+        ${r ? `<span><span class="k">R</span>1:${r}</span>` : ""}
+      </div>` : `<div class="levels muted">Not read as a signal</div>`;
+    return `<div class="sig">
+      <div class="when">${esc(dayName(s.ts))}<br>${esc(hhmm(s.ts))}</div>
+      <div class="body">${levels}${s.reason ? `<div class="why">${esc(s.reason)}</div>` : ""}
+        ${s.raw ? `<details><summary>Message</summary><pre>${esc(s.raw)}</pre></details>` : ""}</div>
+      <div class="stamp-cell"><span class="stamp ${esc(s.status)}" style="--tilt:${tilt(s.id)}">${esc(s.status)}</span></div>
+    </div>`;
+  }
+
+  /* ---------- routing ---------- */
+  function route() {
+    const v = (location.hash || "#overview").slice(1);
+    const name = ["overview", "ledger", "signals"].includes(v) ? v : "overview";
+    document.querySelectorAll("[data-view]").forEach((el) => { el.hidden = el.dataset.view !== name; });
+    document.querySelectorAll(".tabs a, .tabbar a").forEach((a) => {
+      if (a.getAttribute("href") === `#${name}`) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    if (name === "overview" && state.data) drawCurve(stats(state.data.trades), state.data.now);
+  }
+  window.addEventListener("hashchange", () => { route(); window.scrollTo({ top: 0 }); });
+
+  function render() {
+    const data = state.data;
+    renderStatus(data);
+    renderOverview(data);
+    renderLedger(data);
+    renderSignals(data);
+    route();
+  }
+
+  /* ---------- lock ---------- */
+  function showLock(msg = "") {
+    $("#app").hidden = true;
+    $("#lock").hidden = false;
+    $("#lock-err").textContent = msg;
+    setTimeout(() => $("#key").focus(), 50);
+  }
+  $("#lock-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = $("#key").value.trim();
+    if (!v) return;
+    try { localStorage.setItem(KEY, v); } catch (_) {}
+    $("#lock-err").textContent = "";
+    await start();
+  });
+
+  async function refresh() {
+    try {
+      const data = await load();
+      if (!data) return false;
+      state.data = data;
+      render();
+      return true;
+    } catch (err) {
+      $("#status").innerHTML = `<i class="dot"></i><span>desk unreachable, retrying</span>`;
+      return Boolean(state.data);
+    }
+  }
+
+  async function start() {
+    const ok = await refresh();
+    if (!ok) { if ($("#app").hidden && !$("#lock-err").textContent) showLock(); return; }
+    $("#lock").hidden = true;
+    $("#app").hidden = false;
+    $("#demo-flag").hidden = !DEMO;
+    render();
+    clearInterval(state.timer);
+    if (!DEMO) state.timer = setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && state.data && !DEMO) refresh(); });
+  let rt;
+  window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => state.data && drawCurve(stats(state.data.trades), state.data.now), 120); });
+
+  /* ---------- demo ---------- */
+  function demoData() {
+    let seed = 20261013;
+    const rnd = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const now = Math.floor(Date.now() / 1000);
+    let px = 4120, id = 0;
+    const signals = [], trades = [];
+    for (let day = 34; day >= 0; day--) {
+      const base = now - day * 86400;
+      const wd = d(base).getDay();
+      if (wd === 0 || wd === 6) continue;
+      const n = Math.floor(rnd() * 5);
+      for (let i = 0; i < n; i++) {
+        id++;
+        const ts = base - Math.floor(rnd() * 36000) - 3600;
+        if (ts > now - 600) continue;
+        px += (rnd() - 0.48) * 22;
+        const side = rnd() > 0.5 ? "buy" : "sell";
+        const order = rnd() > 0.55 ? "stop" : "market";
+        const risk = 3 + rnd() * 8, reward = risk * (1.8 + rnd() * 3.6);
+        const entry = +px.toFixed(2);
+        const sl = +(side === "buy" ? entry - risk : entry + risk).toFixed(2);
+        const tp = +(side === "buy" ? entry + reward : entry - reward).toFixed(2);
+        const raw = `\u{1F4B8}XAUUSD${side === "buy" ? "⬆️" : "⬇️"} [${[1, 3, 5][id % 3]}m]\n\n${side === "buy" ? "\u{1F7E2}Buy" : "\u{1F534}Sell"}${order === "stop" ? " Stop" : ""} : ${entry}\n\u{1F3AF}Take Profit : ${tp}\n\u{1F6AB}Stop Loss : ${sl}\n\nManage wisely & let the trade play out! \u{1F4CA}\u{1F525}`;
+        if (rnd() < 0.08) {
+          signals.push({ id, ts, side: null, order_type: null, entry: null, sl: null, tp: null, status: "skipped", reason: "no stop loss", raw: raw.replace(/\n\u{1F6AB}.*\n/u, "\n") });
+          continue;
+        }
+        signals.push({ id, ts, side, order_type: order, entry, sl, tp, status: "taken", reason: null, raw });
+        const units = Math.max(1, Math.round(50 / risk));
+        const t = { id, signal_id: id, mode: "paper", side, order_type: order, units, entry, sl, tp, created_at: ts, opened_at: ts + 60, note: null };
+        if (day === 0 && i === n - 1) { trades.push({ ...t, state: order === "stop" ? "pending" : "open", opened_at: order === "stop" ? null : ts }); continue; }
+        if (order === "stop" && rnd() < 0.1) { trades.push({ ...t, state: "expired", opened_at: null }); continue; }
+        const won = rnd() < 0.41;
+        const exit = won ? tp : sl;
+        const move = side === "buy" ? exit - entry : entry - exit;
+        trades.push({ ...t, state: "closed", outcome: won ? "tp" : "sl", exit, closed_at: ts + 600 + Math.floor(rnd() * 9000),
+          pips: +(move / 0.1).toFixed(1), pnl: +(move * units).toFixed(2), note: !won && rnd() < 0.15 ? "tp and sl in one minute; stop assumed" : null });
+      }
+    }
+    signals.push({ id: ++id, ts: now - 2400, side: null, order_type: null, entry: null, sl: null, tp: null, status: "skipped",
+      reason: "not a gold signal", raw: "⚡️Essamtrades VIP⚡️\n\n\u{1F4CA} Today's Results \u{1F4CA}\n\n✳️XAUUSD : +120 PIPS❇️" });
+    signals.sort((a, b) => b.ts - a.ts);
+    trades.sort((a, b) => b.created_at - a.created_at);
+    return { now, bot: { mode: "paper", ts: now - 14 }, signals, trades };
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

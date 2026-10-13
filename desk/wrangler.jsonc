@@ -1,0 +1,13 @@
+{
+  "name": "desk",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "desk", "database_id": "9f819ced-041d-4e1d-8315-4ebedc9b5f36" }
+  ],
+  // Paper trades are settled against real spot prices every five minutes.
+  // Live trades are settled by the broker and reported by the bot instead.
+  "triggers": { "crons": ["*/5 * * * *"] }
+}
