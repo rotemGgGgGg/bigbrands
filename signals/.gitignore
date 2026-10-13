@@ -4,3 +4,5 @@
 session.txt
 messages.txt
 paper.db
+history.json
+__pycache__/
