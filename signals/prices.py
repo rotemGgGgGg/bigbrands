@@ -67,9 +67,13 @@ def from_twelvedata(key: str, minutes: int = 390) -> Series:
     return Series(bars, "spot", "XAU/USD")
 
 
-def from_yahoo(range_: str = "1d") -> Series:
+def from_yahoo(range_: str = "1d", interval: str = "1m") -> Series:
+    # Yahoo refuses one-minute bars beyond a week, so a longer reach has to
+    # trade resolution for it: two minutes back to early September, five back
+    # to August. A coarser bar makes an ambiguous outcome more likely, never
+    # a wrong one, because the ambiguity is reported rather than resolved.
     data = _get("https://query1.finance.yahoo.com/v8/finance/chart/GC=F"
-                f"?interval=1m&range={range_}")
+                f"?interval={interval}&range={range_}")
     result = (data.get("chart") or {}).get("result")
     if not result:
         raise RuntimeError(f"yahoo: {(data.get('chart') or {}).get('error')}")
@@ -78,7 +82,7 @@ def from_yahoo(range_: str = "1d") -> Series:
     quote = result["indicators"]["quote"][0]
     bars = [Bar(t, h, l) for t, h, l in
             zip(stamps, quote["high"], quote["low"]) if h is not None and l is not None]
-    return Series(bars, "futures", "GC=F")
+    return Series(bars, "futures", f"GC=F {interval}")
 
 
 def load(minutes: int = 390) -> Series:
