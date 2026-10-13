@@ -46,6 +46,7 @@ class Signal:
     stop: float | None = None
     targets: list[float] = field(default_factory=list)
     timeframe: str | None = None
+    order: str | None = None          # "market", "stop" or "limit"
     problems: list[str] = field(default_factory=list)
 
     @property
@@ -112,8 +113,15 @@ def parse(text: str) -> Signal:
         elif word is None:
             sig.problems.append("direction from arrow only, no word")
 
-    # The entry is labelled with the direction itself in this template.
-    sig.entry = _price(r"buy", text) if sig.side == "buy" else _price(r"sell", text)
+    # The entry is labelled with the direction itself in this template, and
+    # sometimes with an order type after it: "Buy Stop" fills on a break up
+    # through the level, "Buy Limit" on a pullback to it, and a bare "Buy"
+    # is the price at the moment of sending.
+    if sig.side is not None:
+        m = re.search(rf"\b{sig.side}\s*(stop|limit)?\s*[:=]\s*{NUM}", text, re.I)
+        if m:
+            sig.order = (m.group(1) or "market").lower()
+            sig.entry = float(m.group(2))
     if sig.entry is None:
         sig.problems.append("no entry price")
 
