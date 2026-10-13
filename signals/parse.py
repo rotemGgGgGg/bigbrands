@@ -1,75 +1,87 @@
-"""Turning a person's message into an order.
+"""Turning the sender's message into an order.
 
-This is the part that breaks. A signal is written for a human: the direction
-may be a word or an arrow, the entry may be a price, a range, or "market",
-and the targets may be numbered, listed, or absent. Nothing guarantees the
-sender is consistent, and a message that is misread does not fail loudly —
-it opens the wrong trade.
+The sender uses one fixed template, which is the best thing that could have
+happened: a parser for a known shape can demand that shape and refuse
+anything else, instead of hunting for numbers in free text and hoping.
 
-So the parser is deliberately strict. It extracts only what it can name with
-confidence and refuses the rest, because a refusal costs one missed signal
-and a wrong guess costs a position. Every refusal says what was missing, so
-the format it could not read can be added on purpose rather than by luck.
+    💸XAUUSD⬆️ [5m]
 
-The patterns below are a first pass written before seeing the real messages.
-They are meant to be corrected against them, not trusted.
+    🟢Buy  : 4084.84
+    🎯Take Profit : 4118.99
+    🚫Stop Loss : 4071.36
+
+The direction is stated twice, as an arrow and as a word. That redundancy is
+used rather than ignored: if the two ever disagree, the message is refused.
+It is the one check that catches the sender making a mistake, as opposed to
+the parser making one.
+
+Everything here refuses rather than guesses. A refusal costs one missed
+signal and names what was wrong. A wrong read opens a position in the wrong
+direction, which is the whole risk being managed.
 """
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field, asdict
 
-# Gold goes by several names depending on the broker and the writer.
-GOLD = r"(?:XAU\s*/?\s*USD|XAUUSD|GOLD|ZAHAV|זהב)"
+NUM = r"(\d{1,5}(?:\.\d{1,3})?)"
 
-NUM = r"(\d{1,5}(?:[.,]\d{1,3})?)"
+# Gold, and only gold: anything else is a different instrument and a
+# different position size, so it is refused rather than assumed.
+SYMBOL = re.compile(r"\bXAU\s*/?\s*USD\b", re.I)
+
+UP, DOWN = "⬆", "⬇"          # ⬆ ⬇, with or without the emoji selector
+
+# Gold has traded between roughly $250 and $5,000 historically. A number
+# outside this is not a gold price, it is a parse that went wrong.
+PLAUSIBLE = (250.0, 20000.0)
 
 
 @dataclass
 class Signal:
     raw: str
     symbol: str | None = None
-    side: str | None = None           # "buy" or "sell"
-    order_type: str | None = None     # "market" or "limit"
+    side: str | None = None          # "buy" or "sell"
     entry: float | None = None
-    entry_high: float | None = None   # when the sender gives a zone
     stop: float | None = None
     targets: list[float] = field(default_factory=list)
+    timeframe: str | None = None
     problems: list[str] = field(default_factory=list)
 
     @property
     def tradeable(self) -> bool:
-        """Only a signal with a direction, an entry and a stop may be sent on.
-
-        A trade without a stop is an unbounded loss, and this exists because
-        an unbounded loss already happened once.
-        """
-        return not self.problems and self.side is not None and self.stop is not None
+        """Every field present, agreeing, and plausible. Nothing less."""
+        return (not self.problems and self.symbol is not None
+                and self.side is not None and self.entry is not None
+                and self.stop is not None and bool(self.targets))
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
-def _num(text: str) -> float | None:
-    try:
-        return float(text.replace(",", "."))
-    except (TypeError, ValueError):
+def _price(label: str, text: str) -> float | None:
+    """Reads one labelled price. The label must be followed by a separator,
+    so a number belonging to the next line is never picked up instead."""
+    m = re.search(rf"{label}\s*[:=]\s*{NUM}", text, re.I)
+    return float(m.group(1)) if m else None
+
+
+def _direction_from_arrow(text: str) -> str | None:
+    up, down = UP in text, DOWN in text
+    if up and down:
         return None
+    if up:
+        return "buy"
+    if down:
+        return "sell"
+    return None
 
 
-def _find_side(text: str) -> str | None:
-    # Word boundaries matter: "sell" must not be found inside another word,
-    # and a message can mention the opposite direction while describing it.
-    if re.search(r"\b(buy|long|bullish|קונים|לונג)\b", text, re.I):
-        buy = True
-    else:
-        buy = False
-    if re.search(r"\b(sell|short|bearish|מוכרים|שורט)\b", text, re.I):
-        sell = True
-    else:
-        sell = False
+def _direction_from_word(text: str) -> str | None:
+    buy = re.search(r"\bbuy\b", text, re.I) is not None
+    sell = re.search(r"\bsell\b", text, re.I) is not None
     if buy and sell:
-        return None          # ambiguous; the caller records it as a problem
+        return None
     if buy:
         return "buy"
     if sell:
@@ -79,76 +91,86 @@ def _find_side(text: str) -> str | None:
 
 def parse(text: str) -> Signal:
     sig = Signal(raw=text)
-    flat = text.replace("–", "-").replace("—", "-")
 
-    if re.search(GOLD, flat, re.I):
+    if SYMBOL.search(text):
         sig.symbol = "XAU_USD"
     else:
-        sig.problems.append("no instrument named")
+        sig.problems.append("not a gold signal")
 
-    sig.side = _find_side(flat)
-    if sig.side is None:
-        sig.problems.append("direction unclear")
-
-    # Entry: a zone first, since a zone also matches the single-price pattern.
-    zone = re.search(rf"(?:entry|@|at|כניסה)\D{{0,12}}{NUM}\s*-\s*{NUM}", flat, re.I)
-    if zone:
-        lo, hi = _num(zone.group(1)), _num(zone.group(2))
-        sig.entry, sig.entry_high = min(lo, hi), max(lo, hi)
-        sig.order_type = "limit"
+    arrow = _direction_from_arrow(text)
+    word = _direction_from_word(text)
+    if arrow is None and word is None:
+        sig.problems.append("no direction given")
+    elif arrow is not None and word is not None and arrow != word:
+        # The sender's own two statements contradict each other. Guessing
+        # which one they meant is exactly the trade not worth taking.
+        sig.problems.append(f"arrow says {arrow}, word says {word}")
     else:
-        single = re.search(rf"(?:entry|@|at|כניסה)\D{{0,12}}{NUM}", flat, re.I)
-        if single:
-            sig.entry = _num(single.group(1))
-            sig.order_type = "limit"
-        elif re.search(r"\b(market|now|cmp|מיד|עכשיו)\b", flat, re.I):
-            sig.order_type = "market"
-        else:
-            sig.problems.append("no entry found")
+        sig.side = arrow or word
+        if arrow is None:
+            sig.problems.append("direction from word only, no arrow")
+        elif word is None:
+            sig.problems.append("direction from arrow only, no word")
 
-    stop = re.search(rf"(?:sl|stop[\s-]?loss|stop|סטופ)\D{{0,12}}{NUM}", flat, re.I)
-    if stop:
-        sig.stop = _num(stop.group(1))
+    # The entry is labelled with the direction itself in this template.
+    sig.entry = _price(r"buy", text) if sig.side == "buy" else _price(r"sell", text)
+    if sig.entry is None:
+        sig.problems.append("no entry price")
+
+    sig.stop = _price(r"stop\s*loss", text)
+    if sig.stop is None:
+        # A position with no stop is an unbounded loss. There is no version
+        # of this where the trade is taken anyway.
+        sig.problems.append("no stop loss")
+
+    target = _price(r"take\s*profit", text)
+    if target is not None:
+        sig.targets.append(target)
     else:
-        sig.problems.append("no stop loss found")
+        sig.problems.append("no take profit")
 
-    # Targets, however the sender numbers them. The index in "TP1" has to be
-    # told apart from the price in "TP 4125", so an index is only an index
-    # when something separates it from what follows.
-    label = r"(?:tp|target|take[\s-]?profit|מטרה)"
-    index = r"(?:\s*\d{1,2}(?=\s*[:=.)\-]|\s))?"
-    for m in re.finditer(rf"{label}{index}\s*[:=.)\-]?\s*{NUM}", flat, re.I):
-        value = _num(m.group(1))
-        if value is not None and value not in sig.targets:
-            sig.targets.append(value)
-    if not sig.targets:
-        sig.problems.append("no target found")
+    tf = re.search(r"\[\s*(\d+\s*[mhd])\s*\]", text, re.I)
+    if tf:
+        sig.timeframe = tf.group(1).replace(" ", "").lower()
 
     _sanity(sig)
     return sig
 
 
 def _sanity(sig: Signal) -> None:
-    """Catches a parse that read numbers but assembled nonsense.
+    """Catches a parse that read numbers and assembled nonsense.
 
     A buy whose stop sits above its entry is not a cautious trade, it is a
-    misread message, and it is cheaper to notice that here.
+    misread message, and noticing it here is free.
     """
-    if sig.entry is None or sig.stop is None or sig.side is None:
+    for label, value in [("entry", sig.entry), ("stop", sig.stop)] + \
+            [(f"target {i + 1}", t) for i, t in enumerate(sig.targets)]:
+        if value is not None and not (PLAUSIBLE[0] <= value <= PLAUSIBLE[1]):
+            sig.problems.append(f"{label} {value} is not a plausible gold price")
+
+    if sig.entry is None or sig.side is None:
         return
-    if sig.side == "buy" and sig.stop >= sig.entry:
-        sig.problems.append(f"buy with stop {sig.stop} at or above entry {sig.entry}")
-    if sig.side == "sell" and sig.stop <= sig.entry:
-        sig.problems.append(f"sell with stop {sig.stop} at or below entry {sig.entry}")
+    if sig.stop is not None:
+        if sig.side == "buy" and sig.stop >= sig.entry:
+            sig.problems.append(f"buy with stop {sig.stop} at or above entry {sig.entry}")
+        if sig.side == "sell" and sig.stop <= sig.entry:
+            sig.problems.append(f"sell with stop {sig.stop} at or below entry {sig.entry}")
     for t in sig.targets:
         if sig.side == "buy" and t <= sig.entry:
             sig.problems.append(f"buy target {t} at or below entry {sig.entry}")
         if sig.side == "sell" and t >= sig.entry:
             sig.problems.append(f"sell target {t} at or above entry {sig.entry}")
-    # Gold trades in the low thousands; a number far outside that is a price
-    # read out of some other sentence.
-    prices = [("entry", sig.entry), ("stop", sig.stop)]
-    prices += [(f"target {i + 1}", t) for i, t in enumerate(sig.targets)]
-    for label, value in prices:
-        if value is not None and not (500 <= value <= 20000):
-            sig.problems.append(f"{label} {value} is not a plausible gold price")
+
+
+def risk_reward(sig: Signal) -> float | None:
+    """How much is risked per unit of what is being chased.
+
+    Worth knowing before the position is sized, and worth recording for
+    every signal, because the question of whether this sender is worth
+    following is mostly this number against how often the target is hit.
+    """
+    if not sig.tradeable:
+        return None
+    risk = abs(sig.entry - sig.stop)
+    reward = abs(sig.targets[0] - sig.entry)
+    return round(reward / risk, 2) if risk else None

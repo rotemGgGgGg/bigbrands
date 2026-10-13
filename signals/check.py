@@ -9,7 +9,7 @@ before any of it reaches a broker.
 """
 import sys
 
-from parse import parse
+from parse import parse, risk_reward
 
 
 def main(path: str) -> int:
@@ -25,10 +25,11 @@ def main(path: str) -> int:
         first = text.splitlines()[0][:58] if text.splitlines() else ""
         if sig.tradeable:
             ok += 1
-            zone = f"-{sig.entry_high}" if sig.entry_high else ""
-            print(f"{i:>3}. OK      {sig.side.upper():<4} {sig.symbol} "
-                  f"entry {sig.entry}{zone} ({sig.order_type})  "
-                  f"SL {sig.stop}  TP {sig.targets}")
+            rr = risk_reward(sig)
+            risk = abs(sig.entry - sig.stop)
+            print(f"{i:>3}. OK      {sig.side.upper():<4} entry {sig.entry}  "
+                  f"SL {sig.stop}  TP {sig.targets[0]}  "
+                  f"risk {risk:.2f}  R:R {rr}  [{sig.timeframe}]")
         else:
             print(f"{i:>3}. REFUSED {first!r}")
             for p in sig.problems:
