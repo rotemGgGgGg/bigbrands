@@ -1,0 +1,56 @@
+NA 1         keep     0: IS pass  59.9 payout  50.1 npay 0.84 5x  2.6 EV $  348 | OOS pass  85.1 payout  65.3 npay 0.69 5x  0.0 EV $  286
+NA 1         keep  1000: IS pass  59.9 payout  49.3 npay 1.48 5x 13.0 EV $  824 | OOS pass  85.1 payout  61.5 npay 0.82 5x  0.0 EV $  470
+NA 1         keep  1500: IS pass  59.9 payout  49.2 npay 2.15 5x 33.9 EV $ 1328 | OOS pass  85.1 payout  47.8 npay 0.75 5x  0.0 EV $  461
+NA 1         keep  2000: IS pass  59.9 payout  49.2 npay 2.22 5x 36.3 EV $ 1402 | OOS pass  85.1 payout  44.2 npay 0.65 5x  0.8 EV $  368
+NA 1         keep  2500: IS pass  59.9 payout  49.2 npay 2.25 5x 39.0 EV $ 1457 | OOS pass  85.1 payout  39.9 npay 0.83 5x  8.8 EV $  609
+NA 1 + IB 1  keep     0: IS pass  65.8 payout  36.0 npay  0.4 5x  0.0 EV $   81 | OOS pass  50.0 payout  24.8 npay 0.27 5x  0.0 EV $   20
+NA 1 + IB 1  keep  1000: IS pass  65.8 payout  26.4 npay 0.42 5x  0.0 EV $  146 | OOS pass  50.0 payout  19.8 npay 0.26 5x  0.0 EV $   49
+NA 1 + IB 1  keep  1500: IS pass  65.8 payout  22.7 npay 0.44 5x  0.0 EV $  171 | OOS pass  50.0 payout  15.4 npay 0.25 5x  0.0 EV $   27
+NA 1 + IB 1  keep  2000: IS pass  65.8 payout  19.0 npay 0.42 5x  0.9 EV $  169 | OOS pass  50.0 payout  10.7 npay 0.21 5x  0.0 EV $   75
+NA 1 + IB 1  keep  2500: IS pass  65.8 payout  14.3 npay 0.31 5x  0.9 EV $  110 | OOS pass  50.0 payout  10.7 npay 0.35 5x  2.7 EV $  195
+IB 1         keep     0: IS pass  44.8 payout  37.5 npay 0.66 5x  1.0 EV $  237 | OOS pass  51.8 payout  41.7 npay 0.46 5x  0.0 EV $  161
+IB 1         keep  1000: IS pass  44.8 payout  33.6 npay  1.0 5x  1.4 EV $  552 | OOS pass  51.8 payout  34.4 npay  0.4 5x  0.0 EV $  156
+IB 1         keep  1500: IS pass  44.8 payout  30.8 npay 0.83 5x  0.6 EV $  432 | OOS pass  51.8 payout  24.7 npay 0.39 5x  0.0 EV $  110
+IB 1         keep  2000: IS pass  44.8 payout  28.8 npay 0.63 5x  0.0 EV $  285 | OOS pass  51.8 payout  20.4 npay 0.25 5x  0.0 EV $   45
+IB 1         keep  2500: IS pass  44.8 payout  26.3 npay 0.45 5x  0.0 EV $  151 | OOS pass  51.8 payout  12.4 npay 0.13 5x  0.0 EV $  -36
+NA 1 + IB 2  keep     0: IS pass  38.6 payout  15.1 npay 0.18 5x  0.0 EV $   14 | OOS pass  41.2 payout  14.9 npay 0.16 5x  0.0 EV $  -27
+NA 1 + IB 2  keep  1000: IS pass  38.6 payout  13.8 npay  0.2 5x  0.0 EV $   56 | OOS pass  41.2 payout  14.7 npay 0.23 5x  0.0 EV $   59
+NA 1 + IB 2  keep  1500: IS pass  38.6 payout  12.5 npay 0.23 5x  1.1 EV $   78 | OOS pass  41.2 payout  11.9 npay 0.26 5x  0.3 EV $  123
+NA 1 + IB 2  keep  2000: IS pass  38.6 payout  12.2 npay 0.26 5x  2.1 EV $   85 | OOS pass  41.2 payout  11.8 npay 0.25 5x  0.3 EV $  130
+NA 1 + IB 2  keep  2500: IS pass  38.6 payout  12.2 npay 0.27 5x  3.1 EV $   68 | OOS pass  41.2 payout  10.7 npay 0.29 5x  0.4 EV $  165
+
+Afternoon momentum 15:00–15:30, 1 MNQ: trades 485 (5.9/month) win 59.0% avg $+17.7 yrs+ 6/7 worst day $-308
+   keep $1500 IS : pass 100.0%  ≥1 payout  65.0%  avg payouts 1.63  EV/attempt $+1051  (unfinished 9%)
+   keep $1500 OOS: pass 100.0%  ≥1 payout   0.0%  avg payouts 0.00  EV/attempt $-146  (unfinished 86%)
+   keep $2500 IS : pass 100.0%  ≥1 payout  62.5%  avg payouts 1.09  EV/attempt $+487  (unfinished 9%)
+   keep $2500 OOS: pass 100.0%  ≥1 payout   0.0%  avg payouts 0.00  EV/attempt $-146  (unfinished 86%)
+
+Afternoon momentum 15:00–15:30, 2 MNQ: trades 485 (5.9/month) win 59.0% avg $+35.4 yrs+ 6/7 worst day $-615
+   keep $1500 IS : pass  85.3%  ≥1 payout  69.9%  avg payouts 2.45  EV/attempt $+2581  (unfinished 0%)
+   keep $1500 OOS: pass  55.6%  ≥1 payout  32.9%  avg payouts 0.62  EV/attempt $+255  (unfinished 52%)
+   keep $2500 IS : pass  85.3%  ≥1 payout  59.2%  avg payouts 2.44  EV/attempt $+2542  (unfinished 0%)
+   keep $2500 OOS: pass  55.6%  ≥1 payout  16.5%  avg payouts 0.16  EV/attempt $-61  (unfinished 52%)
+
+Afternoon momentum 15:00–15:30, 3 MNQ: trades 485 (5.9/month) win 59.0% avg $+53.1 yrs+ 6/7 worst day $-922
+   keep $1500 IS : pass  91.4%  ≥1 payout  81.2%  avg payouts 3.37  EV/attempt $+2928  (unfinished 0%)
+   keep $1500 OOS: pass  72.0%  ≥1 payout  27.4%  avg payouts 0.68  EV/attempt $+452  (unfinished 24%)
+   keep $2500 IS : pass  91.4%  ≥1 payout  77.6%  avg payouts 3.35  EV/attempt $+2840  (unfinished 0%)
+   keep $2500 OOS: pass  72.0%  ≥1 payout  20.4%  avg payouts 0.68  EV/attempt $+388  (unfinished 24%)
+
+Afternoon momentum 14:30–15:30, 1 MNQ: trades 479 (5.9/month) win 58.0% avg $+16.0 yrs+ 7/7 worst day $-688
+   keep $1500 IS : pass 100.0%  ≥1 payout  66.2%  avg payouts 1.29  EV/attempt $+918  (unfinished 3%)
+   keep $1500 OOS: pass 100.0%  ≥1 payout   0.0%  avg payouts 0.00  EV/attempt $-146  (unfinished 86%)
+   keep $2500 IS : pass 100.0%  ≥1 payout  59.6%  avg payouts 0.96  EV/attempt $+461  (unfinished 3%)
+   keep $2500 OOS: pass 100.0%  ≥1 payout   0.0%  avg payouts 0.00  EV/attempt $-146  (unfinished 86%)
+
+Noise-Area 1 MNQ: trades 952 (11.7/month) win 57.7% avg $+31.8 yrs+ 7/7 worst day $-1900
+   keep $1500 IS : pass  59.9%  ≥1 payout  49.2%  avg payouts 2.15  EV/attempt $+1328  (unfinished 0%)
+   keep $1500 OOS: pass  85.1%  ≥1 payout  47.8%  avg payouts 0.75  EV/attempt $+461  (unfinished 10%)
+   keep $2500 IS : pass  59.9%  ≥1 payout  49.2%  avg payouts 2.25  EV/attempt $+1457  (unfinished 0%)
+   keep $2500 OOS: pass  85.1%  ≥1 payout  39.9%  avg payouts 0.83  EV/attempt $+609  (unfinished 10%)
+
+Noise-Area 1 + Afternoon 1: trades 1020 (12.5/month) win 57.4% avg $+38.1 yrs+ 7/7 worst day $-1900
+   keep $1500 IS : pass  68.2%  ≥1 payout  49.9%  avg payouts 2.06  EV/attempt $+1380  (unfinished 0%)
+   keep $1500 OOS: pass  86.6%  ≥1 payout  71.2%  avg payouts 0.99  EV/attempt $+786  (unfinished 9%)
+   keep $2500 IS : pass  68.2%  ≥1 payout  49.0%  avg payouts 2.17  EV/attempt $+1478  (unfinished 0%)
+   keep $2500 OOS: pass  86.6%  ≥1 payout  52.9%  avg payouts 0.56  EV/attempt $+322  (unfinished 9%)
