@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/user/bigbrands/trading-bot/research/qt/final_combo.py", line 5, in <module>
+    from engine import S, COST_PTS, PT_USD, IS_END
+ModuleNotFoundError: No module named 'engine'

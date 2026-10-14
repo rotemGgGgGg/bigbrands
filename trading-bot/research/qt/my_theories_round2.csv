@@ -1,0 +1,46 @@
+rule,exit,n,win,avg_usd,IS,OOS,yrs
+PDL/PDH sweep & close back → long,c1,337,53.7,-3.6,-5.9,-0.1,3/7
+PDL/PDH sweep & close back → long,c2,337,54.0,29.4,-21.2,105.1,3/7
+PDL/PDH sweep & close back → long,c5,336,56.2,67.1,4.5,161.5,4/7
+PDL/PDH sweep & close back → short,c1,345,45.5,-7.8,-16.4,4.4,3/7
+PDL/PDH sweep & close back → short,c2,345,39.7,-46.9,-37.0,-60.9,2/7
+PDL/PDH sweep & close back → short,c5,344,41.0,-144.6,-155.2,-129.5,1/7
+"PDL/PDH sweep & close back → long, uptrend only",c1,218,51.8,-27.2,-36.8,-15.7,2/7
+"PDL/PDH sweep & close back → long, uptrend only",c2,218,52.8,-13.0,-66.1,50.8,3/7
+"PDL/PDH sweep & close back → long, uptrend only",c5,217,53.5,70.9,12.8,141.5,4/7
+"PDL/PDH sweep & close back → short, downtrend only",c1,110,41.8,-20.0,-28.0,-4.8,2/7
+"PDL/PDH sweep & close back → short, downtrend only",c2,110,40.0,-78.9,17.8,-262.1,3/7
+"PDL/PDH sweep & close back → short, downtrend only",c5,110,40.0,-243.3,-178.8,-365.3,1/7
+"PDL/PDH sweep & close back → long, downtrend only",c1,119,57.1,39.7,38.4,42.6,5/7
+"PDL/PDH sweep & close back → long, downtrend only",c2,119,56.3,107.2,43.3,254.5,7/7
+"PDL/PDH sweep & close back → long, downtrend only",c5,119,61.3,60.2,-7.3,216.0,5/7
+"PDL/PDH sweep & close back → short, uptrend only",c1,235,47.2,-2.1,-10.0,7.7,3/7
+"PDL/PDH sweep & close back → short, uptrend only",c2,235,39.6,-31.9,-67.3,12.0,2/7
+"PDL/PDH sweep & close back → short, uptrend only",c5,234,41.5,-98.2,-142.1,-43.3,1/7
+week-so-far low/high sweep & close back → long,c1,187,56.7,14.8,-6.6,45.9,4/7
+week-so-far low/high sweep & close back → long,c2,187,50.8,-8.2,-80.6,97.7,3/7
+week-so-far low/high sweep & close back → long,c5,187,54.5,10.7,-34.4,76.6,4/7
+week-so-far low/high sweep & close back → short,c1,238,43.3,-36.2,-12.7,-67.0,1/7
+week-so-far low/high sweep & close back → short,c2,238,37.8,-49.1,-22.8,-83.7,2/7
+week-so-far low/high sweep & close back → short,c5,237,41.4,-132.9,-121.3,-148.3,1/7
+"week-so-far low/high sweep & close back → long, uptrend only",c1,123,52.0,-43.3,-63.5,-19.9,2/7
+"week-so-far low/high sweep & close back → long, uptrend only",c2,123,48.0,-54.5,-140.9,45.5,2/7
+"week-so-far low/high sweep & close back → long, uptrend only",c5,123,51.2,-51.0,-60.8,-39.8,2/7
+"week-so-far low/high sweep & close back → short, downtrend only",c1,69,42.0,2.0,34.1,-82.4,3/7
+"week-so-far low/high sweep & close back → short, downtrend only",c2,69,43.5,35.8,78.2,-76.0,3/7
+"week-so-far low/high sweep & close back → short, downtrend only",c5,69,39.1,-220.7,-121.6,-481.4,1/7
+"week-so-far low/high sweep & close back → long, downtrend only",c1,64,65.6,126.4,77.0,243.5,6/7
+"week-so-far low/high sweep & close back → long, downtrend only",c2,64,56.2,81.0,7.8,254.4,3/7
+"week-so-far low/high sweep & close back → long, downtrend only",c5,64,60.9,129.4,4.4,425.6,2/7
+"week-so-far low/high sweep & close back → short, uptrend only",c1,169,43.8,-51.8,-40.3,-63.5,2/7
+"week-so-far low/high sweep & close back → short, uptrend only",c2,169,35.5,-83.8,-82.2,-85.4,1/7
+"week-so-far low/high sweep & close back → short, uptrend only",c5,168,42.3,-96.9,-121.0,-72.1,1/7
+control: every day long,c1,1717,55.8,23.8,12.9,39.6,6/7
+control: every day long,c2,1716,57.1,50.1,28.1,81.9,6/7
+control: every day long,c5,1713,59.6,127.1,73.5,205.2,6/7
+control: close below PDL (real break) → long,c1,413,57.4,69.3,60.6,83.3,6/7
+control: close below PDL (real break) → long,c2,413,59.3,116.0,86.7,162.8,6/7
+control: close below PDL (real break) → long,c5,413,64.4,240.4,137.4,405.0,6/7
+control: close above PDH (real break) → short,c1,604,43.0,-23.6,1.8,-60.2,2/7
+control: close above PDH (real break) → short,c2,603,42.8,-42.6,-21.9,-72.6,1/7
+control: close above PDH (real break) → short,c5,602,41.7,-92.9,-43.1,-165.0,1/7

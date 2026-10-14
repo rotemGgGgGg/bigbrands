@@ -1,0 +1,25 @@
+rule,exit,n,win,avg_usd,IS,OOS,yrs
+baseline: long every day 09:30→,c1030,1718,51.4,-0.5,1.9,-3.9,4/7
+prev day closed below its prior-day low → long,c1030,413,53.8,1.1,8.4,-10.5,4/7
+prev day closed above its prior-day high → short,c1030,604,49.3,-5.2,-7.5,-1.8,3/7
+prev day fell >1% → long,c1030,324,52.2,6.5,4.2,11.2,5/7
+prev day fell >2% → long,c1030,130,56.9,23.3,20.3,31.1,6/7
+prev day rose >1% → short,c1030,389,48.8,-7.6,-2.0,-17.8,3/7
+gap down >0.5% at open → long,c1030,347,51.9,4.6,-1.3,15.1,5/7
+gap up >0.5% at open → short,c1030,424,47.4,7.0,0.8,15.9,5/7
+baseline: long every day 09:30→,c1200,1718,53.6,1.9,5.4,-3.2,4/7
+prev day closed below its prior-day low → long,c1200,413,57.6,18.5,24.4,9.2,5/7
+prev day closed above its prior-day high → short,c1200,604,45.9,-11.7,-8.2,-16.7,2/7
+prev day fell >1% → long,c1200,324,56.5,27.2,13.7,53.6,6/7
+prev day fell >2% → long,c1200,130,58.5,58.8,25.7,145.4,5/7
+prev day rose >1% → short,c1200,389,45.0,-6.7,-2.9,-13.6,4/7
+gap down >0.5% at open → long,c1200,347,51.0,6.6,-5.3,27.9,4/7
+gap up >0.5% at open → short,c1200,424,45.8,4.1,-8.6,22.4,4/7
+baseline: long every day 09:30→,c,1718,53.9,5.4,8.7,0.6,4/7
+prev day closed below its prior-day low → long,c,413,56.2,29.1,56.3,-13.9,5/7
+prev day closed above its prior-day high → short,c,604,45.9,-16.7,0.6,-41.4,2/7
+prev day fell >1% → long,c,324,55.2,35.5,17.2,71.7,5/7
+prev day fell >2% → long,c,130,59.2,74.8,50.2,139.1,5/7
+prev day rose >1% → short,c,389,47.3,-2.3,16.9,-37.2,4/7
+gap down >0.5% at open → long,c,347,52.2,-8.3,-7.2,-10.4,4/7
+gap up >0.5% at open → short,c,424,44.3,-0.1,-18.0,25.8,4/7
