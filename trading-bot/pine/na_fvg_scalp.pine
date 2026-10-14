@@ -1,0 +1,138 @@
+//@version=6
+// NA-FVG Scalp — momentum day + Fair Value Gap retrace, tiny target / wide stop (high win rate with a real edge).
+// Chart: MNQ1! or NQ1!, 1 minute. Research: trading-bot/research/winrate (2020–2026, 812 trades,
+// 88 % wins, +$9/trade per MNQ after $2.50 costs, positive 2020–23 AND 2024–26, max 2–3 losses in a row).
+//
+// 1. Noise band (Zarattini et al.): sigma(t) = mean |close/open09:30 − 1| at that half-hour over the last 14 sessions.
+//    Upper = max(open, prior 16:00 close)·(1+sigma), Lower = min(…)·(1−sigma).
+// 2. The first half-hour close (10:00 … 15:30) outside the band sets today's direction.
+// 3. After that, the first 1-minute Fair Value Gap in that direction (long: high[2] < low) marks the level;
+//    a limit order waits at the gap's edge (long: the gap top = that bar's low) for up to 60 minutes.
+// 4. Target = 0.15 × typical daily move, stop = 2.0 × typical daily move
+//    (typical daily move = 14-day mean |close/open − 1| × price). Flat at 15:55. One trade a day.
+strategy("NA-FVG Scalp [NQ]", shorttitle = "NA-FVG", overlay = true, pyramiding = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1, initial_capital = 50000,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
+
+lookback = input.int(14, "Noise lookback (sessions)", minval = 5, maxval = 60)
+tpMult   = input.float(0.15, "Target × daily move", step = 0.025)
+slMult   = input.float(2.0, "Stop × daily move", step = 0.25)
+fvgWin   = input.int(60, "FVG window after the break (minutes)", minval = 10, maxval = 240)
+qty      = input.int(1, "Contracts", minval = 1)
+showBand = input.bool(true, "Show noise band")
+
+if timeframe.period != "1"
+    runtime.error("NA-FVG: use a 1-minute chart.")
+
+tz  = "America/New_York"
+tod = hour(time, tz) * 60 + minute(time, tz)
+isRTH = tod >= 570 and tod < 960
+k = isRTH ? tod - 570 : -1                                // minute index of the bar (0 = 09:30)
+
+// ---------------- daily state
+var matrix<float> hist = matrix.new<float>(0, 12, na)     // |move| at the 12 half-hour marks of past sessions
+var array<float> dayMove = array.new<float>()             // |close16:00/open09:30 − 1| of past sessions
+var array<float> today = array.new<float>(12, na)
+var float open930 = na
+var float prevClose = na
+var float lastClose = na
+var int dir = 0
+var int breakK = na
+var float gapLvl = na
+var int gapK = na
+var bool traded = false
+
+if k == 0
+    open930 := open
+    prevClose := lastClose
+    array.fill(today, na)
+    dir := 0
+    breakK := na
+    gapLvl := na
+    gapK := na
+    traded := false
+
+bool isMark = k >= 29 and k <= 359 and (k + 1) % 30 == 0
+int slot = isMark ? int((k + 1) / 30) - 1 : -1
+if isMark and not na(open930)
+    array.set(today, slot, math.abs(close / open930 - 1))
+
+// band at this mark
+float ub = na
+float lb = na
+if isMark and matrix.rows(hist) >= lookback and not na(prevClose)
+    int n = matrix.rows(hist)
+    float s = 0.0
+    for r = n - lookback to n - 1
+        s += matrix.get(hist, r, slot)
+    float sig = s / lookback
+    ub := math.max(open930, prevClose) * (1 + sig)
+    lb := math.min(open930, prevClose) * (1 - sig)
+
+// typical daily move
+float dSig = na
+if array.size(dayMove) >= 14
+    float t = 0.0
+    for v in array.slice(dayMove, array.size(dayMove) - 14, array.size(dayMove))
+        t += v
+    dSig := t / 14
+
+// 1) direction from the first band break
+if isMark and dir == 0 and not na(ub)
+    if close > ub
+        dir := 1
+        breakK := k + 1
+    else if close < lb
+        dir := -1
+        breakK := k + 1
+
+// 2) first FVG in that direction (bars breakK … breakK+window)
+bool inWin = dir != 0 and not na(breakK) and k >= breakK and k < breakK + fvgWin and k < 385
+if inWin and na(gapLvl) and not traded and k >= breakK + 2
+    if dir == 1 and high[2] < low
+        gapLvl := low
+        gapK := k
+    else if dir == -1 and low[2] > high
+        gapLvl := high
+        gapK := k
+
+// 3) limit order at the gap edge while the window is open
+bool canOrder = inWin and not na(gapLvl) and k > gapK and not traded and strategy.position_size == 0 and not na(dSig)
+if canOrder
+    float sc = dSig * gapLvl
+    if dir == 1
+        strategy.entry("L", strategy.long, qty = qty, limit = gapLvl, comment = "FVG long")
+        strategy.exit("Lx", "L", limit = gapLvl + tpMult * sc, stop = gapLvl - slMult * sc)
+    else
+        strategy.entry("S", strategy.short, qty = qty, limit = gapLvl, comment = "FVG short")
+        strategy.exit("Sx", "S", limit = gapLvl - tpMult * sc, stop = gapLvl + slMult * sc)
+if not inWin and strategy.position_size == 0
+    strategy.cancel("L")
+    strategy.cancel("S")
+if strategy.position_size != 0
+    traded := true
+
+// 4) flat at 15:55, session bookkeeping at 16:00
+if k == 384 or (isRTH and session.islastbar_regular)
+    strategy.close_all(comment = "15:55")
+    strategy.cancel_all()
+if k == 389
+    lastClose := close
+    if not na(open930)
+        array.push(dayMove, math.abs(close / open930 - 1))
+        if array.size(dayMove) > 60
+            array.shift(dayMove)
+    bool full = true
+    for j = 0 to 11
+        if na(array.get(today, j))
+            full := false
+    if full
+        matrix.add_row(hist, matrix.rows(hist), array.copy(today))
+        if matrix.rows(hist) > 60
+            matrix.remove_row(hist, 0)
+
+// ---------------- visuals
+plot(showBand and isMark ? ub : na, "Upper band", color.teal, 2, plot.style_circles)
+plot(showBand and isMark ? lb : na, "Lower band", color.red, 2, plot.style_circles)
+plot(not na(gapLvl) and inWin ? gapLvl : na, "FVG level", color.orange, 1, plot.style_linebr)
+bgcolor(isRTH and matrix.rows(hist) < lookback ? color.new(color.gray, 92) : na, title = "Warming up")
