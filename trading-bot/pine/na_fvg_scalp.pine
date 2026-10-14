@@ -10,8 +10,10 @@
 //    a limit order waits at the gap's edge (long: the gap top = that bar's low) for up to 60 minutes.
 // 4. Target = 0.15 × typical daily move, stop = 2.0 × typical daily move
 //    (typical daily move = 14-day mean |close/open − 1| × price). Flat at 15:55. One trade a day.
+// margin 1%: Pine v6 defaults to 100%, which silently rejects every MNQ order (1 contract ≈ $62K > $50K capital).
 strategy("NA-FVG Scalp [NQ]", shorttitle = "NA-FVG", overlay = true, pyramiding = 0,
      default_qty_type = strategy.fixed, default_qty_value = 1, initial_capital = 50000,
+     margin_long = 1, margin_short = 1,
      commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
 
 lookback = input.int(14, "Noise lookback (sessions)", minval = 5, maxval = 60)
@@ -142,6 +144,8 @@ if k == 384 or (isRTH and session.islastbar_regular)
 plot(showBand and isRTH ? ub : na, "Upper band (last mark)", color.teal, 1, plot.style_stepline)
 plot(showBand and isRTH ? lb : na, "Lower band (last mark)", color.red, 1, plot.style_stepline)
 plot(not na(gapLvl) and inWin ? gapLvl : na, "FVG level", color.orange, 1, plot.style_linebr)
+plotshape(dir != dir[1] and dir != 0, "Direction set", dir == 1 ? shape.triangleup : shape.triangledown, location.top, dir == 1 ? color.lime : color.red, size = size.tiny)
+plotshape(not na(gapLvl) and na(gapLvl[1]), "FVG found", shape.diamond, location.bottom, color.orange, size = size.tiny)
 bgcolor(isRTH and (na(dSig) or na(ub)) ? color.new(color.gray, 92) : na, title = "Warming up")
 
 // ---------------- status panel (to see why there is or isn't a trade)

@@ -12,7 +12,8 @@ strategy("Noise-Area Momentum [NQ]", shorttitle = "NoiseArea", overlay = true,
      process_orders_on_close = true, pyramiding = 0,
      default_qty_type = strategy.fixed, default_qty_value = 1,
      commission_type = strategy.commission.cash_per_contract, commission_value = 0.75,
-     slippage = 1, initial_capital = 50000)
+     slippage = 1, initial_capital = 50000,
+     margin_long = 1, margin_short = 1)
 
 lookback  = input.int(14, "Noise lookback (sessions)", minval = 5, maxval = 60)
 every     = input.int(30, "Decide every (minutes)", options = [30, 60])
