@@ -1,0 +1,4 @@
+1h: combos evaluated 2,764,800 | TRAIN candidates (win≥70, n≥30, exp>0): 114
+  ... of which planned RR≥2: 0
+  TEST (n≥15): win≥70 & exp>0: 33 | with RR≥2: 0
+  mean TRAIN win 71.6 → mean TEST win 60.7
