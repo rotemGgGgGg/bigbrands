@@ -1,0 +1,7 @@
+tests 1760
+2 34 OOS>0 0.353 base 0.366
+2.5 18 OOS>0 0.389 base 0.366
+3 8 OOS>0 0.5 base 0.366
+         lvl  app      t  play    a    b  nIS  nOOS     IS    OOS  winIS  winOOS   tIS  tOOS
+167   O+1.0s    1  30-90  cont  0.2  2.0  106    82  22.61  29.19   0.89    0.91  3.01  2.63
+1635     PDH    1  30-90  cont  0.1  2.0   51    44  16.07  18.39   0.96    0.95  3.36  1.75

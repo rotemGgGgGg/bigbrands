@@ -1,0 +1,6 @@
+tests: 13148
+IS t>3.5 & OOS t>2: 0
+Empty DataFrame
+Columns: [T, exit, rule, side, nIS, nOOS, IS, tIS, OOS, tOOS, winIS, winOOS, nf]
+Index: []
+IS-pass 22 OOS-confirm rate 0.0 OOS mean of IS-pass 3.82

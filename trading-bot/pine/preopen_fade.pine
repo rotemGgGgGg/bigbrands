@@ -1,0 +1,106 @@
+//@version=6
+// Pre-Open Fade — NQ / MNQ. Research: trading-bot/research/hunt (2020-01 → 2026-10, Databento 1-minute).
+//
+// The 08:30 ET data releases often push NQ too far. When the 08:00 → 08:59 move is unusually large
+// (|z| > 2 versus the same hour over the previous 20 days), fade it at 09:00:
+//   entry  = market at 09:00, against the 08:00–08:59 move
+//   target = 50 % retrace of that move      stop = 100 % of that move beyond the entry      time exit 13:00
+// Tested: 143 trades (≈21 a year), 76 % wins, +0.18 R a trade, 2020–23 and 2024–26 both positive,
+// every year positive in $, max 2 losses in a row. Same days traded the other way: −0.17 R. The same rule at
+// 27 other clock times does NOT work — this is specific to the pre-open.
+//
+// Chart: MNQ1! (or NQ1!) with EXTENDED HOURS ON. Any timeframe that divides an hour: 1, 5, 15, 30 or 60 min.
+// More history = higher timeframe (60 min shows ~1 year). Exits inside a bar are approximated by TradingView
+// on high timeframes; the 5-minute chart is the closest to the research.
+// margin 1 %: Pine v6 defaults to 100 %, which silently rejects every MNQ order at $50K capital.
+strategy("Pre-Open Fade [NQ]", shorttitle = "PreFade", overlay = true, pyramiding = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1, initial_capital = 50000,
+     margin_long = 1, margin_short = 1,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
+
+zThr     = input.float(2.0, "Signal: |z| above", step = 0.25)
+lookback = input.int(20, "z lookback (days)", minval = 10, maxval = 60)
+tpFrac   = input.float(0.5, "Target = retrace × move", step = 0.05)
+slFrac   = input.float(1.0, "Stop = × move", step = 0.1)
+exitHour = input.int(13, "Time exit (hour, NY)", minval = 10, maxval = 15)
+riskUsd  = input.float(500, "Risk per trade $ (0 = fixed contracts)", step = 50)
+fixedQty = input.int(1, "Fixed contracts (when risk = 0)", minval = 1)
+maxQty   = input.int(10, "Max contracts", minval = 1)
+showLv   = input.bool(true, "Show levels")
+
+if timeframe.isdwm or timeframe.in_seconds() > 3600 or 3600 % timeframe.in_seconds() != 0
+    runtime.error("Pre-Open Fade: use a 1, 5, 15, 30 or 60-minute chart with extended hours.")
+
+tz = "America/New_York"
+todOpen  = hour(time, tz) * 60 + minute(time, tz)                 // bar open, minutes after midnight NY
+todClose = hour(time_close, tz) * 60 + minute(time_close, tz)     // bar close
+isWeekday = dayofweek(time, tz) != dayofweek.saturday and dayofweek(time, tz) != dayofweek.sunday
+
+var float o800 = na
+var array<float> rets = array.new<float>()
+var float tpLv = na
+var float slLv = na
+var bool tradedToday = false
+
+if todOpen == 480                                                // the bar that opens at 08:00
+    o800 := open
+    tradedToday := false
+
+float zNow = na
+// decision on the close of the bar that ends at 09:00 → the market order fills at the 09:00 open
+if todClose == 540 and isWeekday and not na(o800)
+    float mv  = close - o800
+    float ret = close / o800 - 1
+    if array.size(rets) >= lookback
+        float sd = array.stdev(rets, false)
+        if sd > 0
+            zNow := ret / sd
+    array.push(rets, ret)
+    if array.size(rets) > lookback
+        array.shift(rets)
+    if not na(zNow) and math.abs(zNow) > zThr and strategy.position_size == 0 and not tradedToday
+        int side   = mv > 0 ? -1 : 1
+        float size = math.abs(mv)
+        float stopPts = slFrac * size
+        int q = fixedQty
+        if riskUsd > 0
+            q := int(math.floor(riskUsd / (stopPts * syminfo.pointvalue)))
+            if q == 0 and stopPts * syminfo.pointvalue <= 1.5 * riskUsd
+                q := 1
+            q := math.min(q, maxQty)
+        if q > 0
+            tpLv := close + side * tpFrac * size
+            slLv := close - side * stopPts
+            tradedToday := true
+            if side == 1
+                strategy.entry("Fade L", strategy.long, qty = q, comment = "PreFade")
+                strategy.exit("Fade L x", "Fade L", limit = tpLv, stop = slLv, comment_profit = "TP", comment_loss = "SL")
+            else
+                strategy.entry("Fade S", strategy.short, qty = q, comment = "PreFade")
+                strategy.exit("Fade S x", "Fade S", limit = tpLv, stop = slLv, comment_profit = "TP", comment_loss = "SL")
+    o800 := na
+
+// time exit: on the close of the bar ending at the exit hour → out at that minute's open
+if strategy.position_size != 0 and todClose >= exitHour * 60 and todClose < 17 * 60
+    strategy.close_all(comment = "Time")
+if strategy.position_size == 0 and todClose >= exitHour * 60
+    tpLv := na
+    slLv := na
+
+plot(showLv and strategy.position_size != 0 ? tpLv : na, "Target", color.lime, 2, plot.style_linebr)
+plot(showLv and strategy.position_size != 0 ? slLv : na, "Stop", color.red, 2, plot.style_linebr)
+bgcolor(todOpen >= 480 and todOpen < 540 ? color.new(color.blue, 93) : na, title = "08:00–09:00 window")
+
+var table st = table.new(position.top_right, 2, 5, bgcolor = color.new(color.black, 20), border_width = 1)
+if barstate.islast
+    int n = strategy.closedtrades
+    table.cell(st, 0, 0, "Pre-Open Fade", text_color = color.white)
+    table.cell(st, 1, 0, "|z| > " + str.tostring(zThr), text_color = color.white)
+    table.cell(st, 0, 1, "Days stored", text_color = color.white)
+    table.cell(st, 1, 1, str.tostring(array.size(rets)) + (array.size(rets) < lookback ? " (need " + str.tostring(lookback) + ")" : ""), text_color = color.white)
+    table.cell(st, 0, 2, "Trades", text_color = color.white)
+    table.cell(st, 1, 2, str.tostring(n), text_color = color.white)
+    table.cell(st, 0, 3, "Win %", text_color = color.white)
+    table.cell(st, 1, 3, n > 0 ? str.tostring(100.0 * strategy.wintrades / n, "#.0") : "-", text_color = color.white)
+    table.cell(st, 0, 4, "Net $", text_color = color.white)
+    table.cell(st, 1, 4, str.tostring(strategy.netprofit, "#,###"), text_color = color.white)
