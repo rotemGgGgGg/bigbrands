@@ -1,0 +1,15 @@
+,0
+AMDX: Q2 swept only Q1 high → Q3 closes down,49.5% of 643 days
+AMDX: Q2 swept only Q1 low → Q3 closes up,52.8% of 583 days
+  baseline: Q3 closes up (all days),51.8%
+TrueOpen true daily open 00:00: below (discount) → up by 12:00,"55.0% (n 784), avg +2.2 pt"
+TrueOpen true daily open 00:00: above (premium) → down by 12:00,"46.1% (n 927), avg +1.8 pt"
+TrueOpen true session open 07:30: below (discount) → up by 12:00,"54.3% (n 877), avg +3.2 pt"
+TrueOpen true session open 07:30: above (premium) → down by 12:00,"45.6% (n 834), avg +0.8 pt"
+Weekly high made on (%),Mon 19 Tue 16 Wed 14 Thu 16 Fri 35
+Weekly low made on (%),Mon 35 Tue 14 Wed 13 Thu 13 Fri 24
+Monthly: avg |open→close| / range by week 1-4,W1 0.50 W2 0.47 W3 0.50 W4 0.45
+Monthly: avg range (pt) by week 1-4,W1 840 W2 758 W3 758 W4 843
+STS long (below all 3 opens) → up by 12:00,"58.5% (n 378), avg +15.1 pt"
+STS short (above all 3 opens) → down by 12:00,"52.2% (n 404), avg -15.1 pt"
+  baseline 09:30→12:00 up,"54.4%, avg +2.0 pt"
