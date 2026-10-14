@@ -31,10 +31,16 @@ from risk import Limits, size
 INSTRUMENT = "XAU_USD"
 
 
-def read_env(path: str = "signals/.env") -> dict:
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def read_env(path: str | None = None) -> dict:
+    # Next to this file rather than relative to wherever it was started from,
+    # and tolerant of the byte-order mark Windows tools put at the top.
+    path = path or os.path.join(HERE, ".env")
     out = {}
     if os.path.exists(path):
-        for line in open(path, encoding="utf-8"):
+        for line in open(path, encoding="utf-8-sig"):
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
@@ -62,7 +68,7 @@ def notify(env: dict, text: str) -> None:
 
 def make_broker(env: dict, live: bool):
     if not live:
-        return PaperBroker(env.get("PAPER_DB", "signals/paper.db"))
+        return PaperBroker(env.get("PAPER_DB") or os.path.join(HERE, "paper.db"))
     token, account = env.get("OANDA_TOKEN"), env.get("OANDA_ACCOUNT")
     if not token or not account:
         raise SystemExit("--live needs OANDA_TOKEN and OANDA_ACCOUNT in signals/.env")
@@ -116,7 +122,7 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
 
 def listen(env: dict, broker, limits: Limits, live: bool) -> None:
     try:
-        from telethon import TelegramClient, events
+        from telethon import TelegramClient, events  # noqa: F401
         from telethon.sessions import StringSession
     except ImportError:
         raise SystemExit("pip install telethon")
@@ -130,12 +136,22 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
 
     client = TelegramClient(StringSession(session),
                             int(env["TG_API_ID"]), env["TG_API_HASH"])
-    target = int(source) if source.lstrip("-").isdigit() else source
+    client.start()
+    if source.lstrip("-").isdigit():
+        target = int(source)
+    elif source.startswith("@"):
+        target = source
+    else:
+        # A title: a channel just created has no ID anyone has looked up yet.
+        target = next((d.id for d in client.iter_dialogs() if d.name == source), None)
+        if target is None:
+            raise SystemExit(f"no channel or group named {source!r} on this account")
 
     @client.on(events.NewMessage(chats=target))
     async def on_message(event):
-        got = time.strftime("%H:%M:%S")
-        print(f"[{got}] message received", flush=True)
+        lag = time.time() - event.message.date.timestamp()
+        print(f"[{time.strftime('%H:%M:%S')}] message received, "
+              f"{lag:.1f}s after it was posted", flush=True)
         try:
             handle(event.raw_text, env, broker, limits, live)
         except Exception as e:
@@ -155,12 +171,19 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                 None, desk.heartbeat, env, "live" if live else "paper", source)
             await asyncio.sleep(60)
 
-    client.start()
     client.loop.create_task(beat())
     client.run_until_disconnected()
 
 
 def main() -> None:
+    # A Windows console defaults to a code page that cannot print emoji, and
+    # every message this bot echoes has them. Without this the first signal
+    # would crash it.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true",
                     help="place real orders instead of recording them")

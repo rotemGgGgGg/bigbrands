@@ -836,7 +836,7 @@ main { padding: 0 var(--gutter) calc(env(safe-area-inset-bottom) + 96px); max-wi
     $("#demo-flag").hidden = !DEMO;
     render();
     clearInterval(state.timer);
-    if (!DEMO) state.timer = setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+    if (!DEMO) state.timer = setInterval(() => { if (!document.hidden) refresh(); }, 10000);
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden && state.data && !DEMO) refresh(); });
   let rt;
