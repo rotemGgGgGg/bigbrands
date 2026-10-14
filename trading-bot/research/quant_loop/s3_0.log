@@ -1,0 +1,7 @@
+worker 0 gen 0: evaluated 20000, best train win-LB 0.530 win 0.667 n 51
+worker 0 gen 1: evaluated 35000, best train win-LB 0.586 win 0.679 n 109
+worker 0 gen 2: evaluated 50000, best train win-LB 0.615 win 0.762 n 42
+worker 0 gen 3: evaluated 65000, best train win-LB 0.662 win 0.786 n 56
+worker 0 gen 4: evaluated 80000, best train win-LB 0.664 win 0.783 n 60
+worker 0 gen 5: evaluated 95000, best train win-LB 0.709 win 0.850 n 40
+worker 0 done, evaluated 95000

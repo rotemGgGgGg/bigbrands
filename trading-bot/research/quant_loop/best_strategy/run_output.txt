@@ -1,0 +1,32 @@
+ALL: {'n': 85, 'win': np.float64(50.6), 'win_ci95': (np.float64(40.0), np.float64(61.2)), 'avg_win_R': np.float64(1.78), 'avg_loss_R': np.float64(-0.92), 'realized_rr': np.float64(1.94), 'exp_R': np.float64(0.449), 'exp_ci95': (np.float64(0.147), np.float64(0.745)), 'pf': np.float64(1.99), 'maxdd_R': np.float64(-6.39), 'max_consec_losses': 6}
+ year 2020 {'n': 9, 'win': np.float64(22.2), 'realized_rr': np.float64(1.85), 'exp_R': np.float64(-0.389)}
+ year 2021 {'n': 14, 'win': np.float64(50.0), 'realized_rr': np.float64(1.63), 'exp_R': np.float64(0.333)}
+ year 2022 {'n': 15, 'win': np.float64(53.3), 'realized_rr': np.float64(2.92), 'exp_R': np.float64(0.709)}
+ year 2023 {'n': 11, 'win': np.float64(54.5), 'realized_rr': np.float64(1.88), 'exp_R': np.float64(0.537)}
+ year 2024 {'n': 15, 'win': np.float64(66.7), 'realized_rr': np.float64(1.79), 'exp_R': np.float64(0.789)}
+ year 2025 {'n': 11, 'win': np.float64(27.3), 'realized_rr': np.float64(2.06), 'exp_R': np.float64(-0.155)}
+ year 2026 {'n': 10, 'win': np.float64(70.0), 'realized_rr': np.float64(2.28), 'exp_R': np.float64(1.031)}
+TRAIN 2020-23 {'n': 49, 'win': np.float64(46.9), 'win_ci95': (np.float64(32.7), np.float64(61.2)), 'avg_win_R': np.float64(1.81), 'avg_loss_R': np.float64(-0.92), 'realized_rr': np.float64(1.96), 'exp_R': np.float64(0.361), 'exp_ci95': (np.float64(-0.039), np.float64(0.769)), 'pf': np.float64(1.74), 'maxdd_R': np.float64(-6.39), 'max_consec_losses': 6}
+VAL 2024-25H1 {'n': 20, 'win': np.float64(55.0), 'win_ci95': (np.float64(35.0), np.float64(75.0)), 'avg_win_R': np.float64(1.67), 'avg_loss_R': np.float64(-0.89), 'realized_rr': np.float64(1.88), 'exp_R': np.float64(0.517), 'exp_ci95': (np.float64(-0.075), np.float64(1.104)), 'pf': np.float64(2.3), 'maxdd_R': np.float64(-2.09), 'max_consec_losses': 3}
+TEST 2025H2-26 {'n': 16, 'win': np.float64(56.2), 'win_ci95': (np.float64(31.2), np.float64(81.2)), 'avg_win_R': np.float64(1.85), 'avg_loss_R': np.float64(-0.93), 'realized_rr': np.float64(1.98), 'exp_R': np.float64(0.63), 'exp_ci95': (np.float64(-0.08), np.float64(1.307)), 'pf': np.float64(2.54), 'maxdd_R': np.float64(-4.15), 'max_consec_losses': 4}
+direction long : {'n': 45, 'win': np.float64(51.1), 'win_ci95': (np.float64(37.8), np.float64(66.7)), 'avg_win_R': np.float64(1.82), 'avg_loss_R': np.float64(-0.95), 'realized_rr': np.float64(1.92), 'exp_R': np.float64(0.467), 'exp_ci95': (np.float64(0.061), np.float64(0.879)), 'pf': np.float64(2.01), 'maxdd_R': np.float64(-3.21), 'max_consec_losses': 4}
+direction short: {'n': 40, 'win': np.float64(50.0), 'win_ci95': (np.float64(35.0), np.float64(65.0)), 'avg_win_R': np.float64(1.74), 'avg_loss_R': np.float64(-0.88), 'realized_rr': np.float64(1.97), 'exp_R': np.float64(0.428), 'exp_ci95': (np.float64(0.012), np.float64(0.852)), 'pf': np.float64(1.97), 'maxdd_R': np.float64(-5.99), 'max_consec_losses': 5}
+extra cost 0.0 pt: {'win': np.float64(50.6), 'exp_R': np.float64(0.465)}
+extra cost 2.0 pt: {'win': np.float64(50.6), 'exp_R': np.float64(0.432)}
+extra cost 4.0 pt: {'win': np.float64(50.6), 'exp_R': np.float64(0.4)}
+neighbourhood (z, tp, sl=tp/2):
+  z2.0 tp0.75: n 143 win 40.6 exp +0.156R
+  z2.0 tp1.0: n 143 win 44.1 exp +0.234R
+  z2.0 tp1.25: n 143 win 47.6 exp +0.280R
+  z2.25 tp0.75: n 110 win 45.5 exp +0.318R
+  z2.25 tp1.0: n 110 win 50.0 exp +0.416R
+  z2.25 tp1.25: n 110 win 53.6 exp +0.456R
+  z2.5 tp0.75: n 85 win 47.1 exp +0.376R
+  z2.5 tp1.0: n 85 win 50.6 exp +0.449R
+  z2.5 tp1.25: n 85 win 54.1 exp +0.464R
+  z2.75 tp0.75: n 64 win 48.4 exp +0.412R
+  z2.75 tp1.0: n 64 win 53.1 exp +0.521R
+  z2.75 tp1.25: n 64 win 59.4 exp +0.611R
+  z3.0 tp0.75: n 50 win 52.0 exp +0.524R
+  z3.0 tp1.0: n 50 win 58.0 exp +0.660R
+  z3.0 tp1.25: n 50 win 60.0 exp +0.622R

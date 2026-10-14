@@ -1,0 +1,4 @@
+{"name": "Pre-Open Fade 1:2", "instrument": "MNQ (NQ) futures, continuous front month", "data": "Databento MNQ.c.0 1-minute OHLCV 2020-01-01..2026-10-06",
+ "signal_window_et": ["08:00", "08:59"], "z_lookback_days": 20, "z_threshold": 2.5, "entry": "market at 09:00 ET open, against the 08:00-08:59 move",
+ "target_x_move": 1.0, "stop_x_move": 0.5, "planned_rr": 2.0, "time_exit_et": "13:00",
+ "costs": "1.25 pt per MNQ round trip ($1.50 commission + 1 tick slippage each side) + 1 pt extra stress", "ties": "stop first"}

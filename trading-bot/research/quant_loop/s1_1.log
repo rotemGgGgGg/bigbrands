@@ -1,0 +1,37 @@
+renko {'k': 0.05, 'run': 2, 'mode': 'rev_fade'} events=39378 promoted=0 best_val=None 7s
+renko {'k': 0.05, 'run': 3, 'mode': 'pullback'} events=6326 promoted=0 best_val=None 2s
+renko {'k': 0.05, 'run': 6, 'mode': 'rev_follow'} events=15476 promoted=0 best_val=None 4s
+renko {'k': 0.08, 'run': 2, 'mode': 'rev_fade'} events=20595 promoted=0 best_val=None 4s
+renko {'k': 0.08, 'run': 3, 'mode': 'pullback'} events=3812 promoted=0 best_val=None 1s
+renko {'k': 0.08, 'run': 6, 'mode': 'rev_follow'} events=6715 promoted=0 best_val=None 2s
+renko {'k': 0.12, 'run': 2, 'mode': 'rev_fade'} events=10894 promoted=0 best_val=None 2s
+renko {'k': 0.12, 'run': 3, 'mode': 'pullback'} events=1956 promoted=3 best_val={'n': 29, 'win': np.float64(34.5), 'avg_win_R': np.float64(0.988), 'avg_loss_R': np.float64(-0.722), 'realized_rr': np.float64(1.37), 'exp_R': np.float64(-0.132), 'exp_R_stress': np.float64(-0.132), 'pf': np.float64(0.72), 'ci_win_lo': np.float64(19.9), 'ci_win_hi': np.float64(52.7), 't': np.float64(-0.71)} 1s
+renko {'k': 0.12, 'run': 6, 'mode': 'rev_follow'} events=3103 promoted=0 best_val=None 1s
+renko {'k': 0.18, 'run': 2, 'mode': 'rev_fade'} events=5285 promoted=0 best_val=None 1s
+renko {'k': 0.18, 'run': 3, 'mode': 'pullback'} events=956 promoted=1 best_val={'n': 26, 'win': np.float64(46.2), 'avg_win_R': np.float64(1.561), 'avg_loss_R': np.float64(-0.962), 'realized_rr': np.float64(1.62), 'exp_R': np.float64(0.202), 'exp_R_stress': np.float64(0.202), 'pf': np.float64(1.39), 'ci_win_lo': np.float64(28.8), 'ci_win_hi': np.float64(64.5), 't': np.float64(0.74)} 0s
+renko {'k': 0.18, 'run': 6, 'mode': 'rev_follow'} events=1251 promoted=3 best_val={'n': 20, 'win': np.float64(35.0), 'avg_win_R': np.float64(0.992), 'avg_loss_R': np.float64(-0.622), 'realized_rr': np.float64(1.59), 'exp_R': np.float64(-0.057), 'exp_R_stress': np.float64(-0.057), 'pf': np.float64(0.86), 'ci_win_lo': np.float64(18.1), 'ci_win_hi': np.float64(56.7), 't': np.float64(-0.27)} 1s
+heikin {'n': 1, 'run': 3, 'mode': 'strong_cont'} events=7257 promoted=0 best_val=None 4s
+heikin {'n': 1, 'run': 8, 'mode': 'strong_cont'} events=380 promoted=0 best_val=None 1s
+heikin {'n': 3, 'run': 5, 'mode': 'strong_cont'} events=738 promoted=3 best_val={'n': 23, 'win': np.float64(30.4), 'avg_win_R': np.float64(1.106), 'avg_loss_R': np.float64(-0.909), 'realized_rr': np.float64(1.22), 'exp_R': np.float64(-0.296), 'exp_R_stress': np.float64(-0.296), 'pf': np.float64(0.53), 'ci_win_lo': np.float64(15.6), 'ci_win_hi': np.float64(50.9), 't': np.float64(-1.36)} 1s
+heikin {'n': 5, 'run': 3, 'mode': 'strong_cont'} events=1519 promoted=1 best_val={'n': 43, 'win': np.float64(32.6), 'avg_win_R': np.float64(1.296), 'avg_loss_R': np.float64(-0.904), 'realized_rr': np.float64(1.43), 'exp_R': np.float64(-0.188), 'exp_R_stress': np.float64(-0.188), 'pf': np.float64(0.69), 'ci_win_lo': np.float64(20.5), 'ci_win_hi': np.float64(47.5), 't': np.float64(-1.08)} 1s
+heikin {'n': 5, 'run': 8, 'mode': 'strong_cont'} events=80 promoted=4 best_val={'n': 14, 'win': np.float64(35.7), 'avg_win_R': np.float64(1.668), 'avg_loss_R': np.float64(-1.032), 'realized_rr': np.float64(1.62), 'exp_R': np.float64(-0.067), 'exp_R_stress': np.float64(-0.067), 'pf': np.float64(0.9), 'ci_win_lo': np.float64(16.3), 'ci_win_hi': np.float64(61.2), 't': np.float64(-0.18)} 0s
+heikin {'n': 15, 'run': 5, 'mode': 'strong_cont'} events=197 promoted=26 best_val={'n': 15, 'win': np.float64(46.7), 'avg_win_R': np.float64(1.72), 'avg_loss_R': np.float64(-1.029), 'realized_rr': np.float64(1.67), 'exp_R': np.float64(0.254), 'exp_R_stress': np.float64(0.254), 'pf': np.float64(1.46), 'ci_win_lo': np.float64(24.8), 'ci_win_hi': np.float64(69.9), 't': np.float64(0.66)} 0s
+rangebar {'k': 0.05, 'run': 3, 'mode': 'exhaust_fade'} events=27222 promoted=0 best_val=None 6s
+rangebar {'k': 0.1, 'run': 5, 'mode': 'exhaust_fade'} events=3808 promoted=0 best_val=None 1s
+rangebar {'k': 0.25, 'run': 2, 'mode': 'exhaust_fade'} events=8098 promoted=0 best_val=None 2s
+rangebar {'k': 0.1, 'run': 3, 'mode': 'three_push'} events=18152 promoted=0 best_val=None 4s
+volbar {'q': 40, 'z': 0.5, 'mode': 'absorb_fade'} events=137 promoted=0 best_val=None 1s
+volbar {'q': 160, 'z': 0.5, 'mode': 'absorb_fade'} events=517 promoted=0 best_val=None 4s
+volbar {'q': 80, 'z': 3.0, 'mode': 'ignite_follow'} events=50 promoted=0 best_val=None 3s
+profile {'mode': 'eighty', 'accept_min': 30} events=344 promoted=1 best_val={'n': 24, 'win': np.float64(45.8), 'avg_win_R': np.float64(1.965), 'avg_loss_R': np.float64(-0.962), 'realized_rr': np.float64(2.04), 'exp_R': np.float64(0.38), 'exp_R_stress': np.float64(0.38), 'pf': np.float64(1.73), 'ci_win_lo': np.float64(27.9), 'ci_win_hi': np.float64(64.9), 't': np.float64(1.24)} 0s
+profile {'mode': 'reject', 'accept_min': 30} events=368 promoted=0 best_val=None 0s
+pnf {'k': 0.06, 'mode': 'triple_break'} events=1563 promoted=0 best_val=None 1s
+pnf {'k': 0.15, 'mode': 'triple_break'} events=213 promoted=0 best_val=None 1s
+3linebreak {'n': 3, 'run': 3} events=7546 promoted=0 best_val=None 2s
+3linebreak {'n': 5, 'run': 5} events=2696 promoted=0 best_val=None 1s
+3linebreak {'n': 15, 'run': 7} events=262 promoted=0 best_val=None 0s
+delta_approx {'n': 3, 'look': 6} events=36880 promoted=0 best_val=None 8s
+delta_approx {'n': 5, 'look': 12} events=14678 promoted=0 best_val=None 3s
+delta_approx {'n': 15, 'look': 24} events=0 promoted=0 best_val=None 0s
+entropy {'win': 20, 'thr': 0.8, 'mode': 'fade'} events=5238 promoted=0 best_val=None 5s
+entropy {'win': 40, 'thr': 0.8, 'mode': 'fade'} events=409 promoted=0 best_val=None 7s

@@ -1,0 +1,37 @@
+renko {'k': 0.05, 'run': 2, 'mode': 'rev_follow'} events=39378 promoted=0 best_val=None 9s
+renko {'k': 0.05, 'run': 3, 'mode': 'rev_fade'} events=31121 promoted=0 best_val=None 6s
+renko {'k': 0.05, 'run': 4, 'mode': 'pullback'} events=5011 promoted=0 best_val=None 2s
+renko {'k': 0.08, 'run': 2, 'mode': 'rev_follow'} events=20595 promoted=0 best_val=None 4s
+renko {'k': 0.08, 'run': 3, 'mode': 'rev_fade'} events=15670 promoted=0 best_val=None 3s
+renko {'k': 0.08, 'run': 4, 'mode': 'pullback'} events=2889 promoted=0 best_val=None 1s
+renko {'k': 0.12, 'run': 2, 'mode': 'rev_follow'} events=10894 promoted=0 best_val=None 3s
+renko {'k': 0.12, 'run': 3, 'mode': 'rev_fade'} events=7864 promoted=0 best_val=None 2s
+renko {'k': 0.12, 'run': 4, 'mode': 'pullback'} events=1443 promoted=0 best_val=None 1s
+renko {'k': 0.18, 'run': 2, 'mode': 'rev_follow'} events=5285 promoted=0 best_val=None 1s
+renko {'k': 0.18, 'run': 3, 'mode': 'rev_fade'} events=3692 promoted=0 best_val=None 1s
+renko {'k': 0.18, 'run': 4, 'mode': 'pullback'} events=685 promoted=0 best_val=None 1s
+heikin {'n': 1, 'run': 3, 'mode': 'flip_follow'} events=14817 promoted=0 best_val=None 4s
+heikin {'n': 1, 'run': 8, 'mode': 'flip_follow'} events=3311 promoted=0 best_val=None 2s
+heikin {'n': 3, 'run': 5, 'mode': 'flip_follow'} events=2586 promoted=0 best_val=None 1s
+heikin {'n': 5, 'run': 3, 'mode': 'flip_follow'} events=2561 promoted=0 best_val=None 1s
+heikin {'n': 5, 'run': 8, 'mode': 'flip_follow'} events=577 promoted=0 best_val=None 0s
+heikin {'n': 15, 'run': 5, 'mode': 'flip_follow'} events=402 promoted=0 best_val=None 0s
+rangebar {'k': 0.05, 'run': 2, 'mode': 'exhaust_fade'} events=55700 promoted=0 best_val=None 12s
+rangebar {'k': 0.1, 'run': 3, 'mode': 'exhaust_fade'} events=15971 promoted=0 best_val=None 4s
+rangebar {'k': 0.15, 'run': 5, 'mode': 'exhaust_fade'} events=2218 promoted=0 best_val=None 1s
+rangebar {'k': 0.05, 'run': 3, 'mode': 'three_push'} events=27936 promoted=0 best_val=None 6s
+volbar {'q': 40, 'z': 0.3, 'mode': 'absorb_fade'} events=0 promoted=0 best_val=None 1s
+volbar {'q': 160, 'z': 0.3, 'mode': 'absorb_fade'} events=1 promoted=0 best_val=None 4s
+volbar {'q': 80, 'z': 2.0, 'mode': 'ignite_follow'} events=518 promoted=0 best_val=None 3s
+profile {'mode': 'eighty', 'accept_min': 15} events=439 promoted=0 best_val=None 0s
+profile {'mode': 'reject', 'accept_min': 15} events=321 promoted=0 best_val=None 0s
+pnf {'k': 0.06, 'mode': 'double_break'} events=10861 promoted=0 best_val=None 3s
+pnf {'k': 0.15, 'mode': 'double_break'} events=1959 promoted=3 best_val={'n': 93, 'win': np.float64(37.6), 'avg_win_R': np.float64(1.07), 'avg_loss_R': np.float64(-0.907), 'realized_rr': np.float64(1.18), 'exp_R': np.float64(-0.163), 'exp_R_stress': np.float64(-0.163), 'pf': np.float64(0.71), 'ci_win_lo': np.float64(28.5), 'ci_win_hi': np.float64(47.8), 't': np.float64(-1.48)} 1s
+3linebreak {'n': 1, 'run': 7} events=9100 promoted=0 best_val=None 2s
+3linebreak {'n': 5, 'run': 3} events=4218 promoted=0 best_val=None 1s
+3linebreak {'n': 15, 'run': 5} events=539 promoted=0 best_val=None 0s
+delta_approx {'n': 1, 'look': 24} events=60968 promoted=0 best_val=None 14s
+delta_approx {'n': 5, 'look': 6} events=21334 promoted=0 best_val=None 4s
+delta_approx {'n': 15, 'look': 12} events=2668 promoted=0 best_val=None 1s
+entropy {'win': 20, 'thr': 0.8, 'mode': 'follow'} events=5238 promoted=0 best_val=None 5s
+entropy {'win': 40, 'thr': 0.8, 'mode': 'follow'} events=409 promoted=0 best_val=None 7s

@@ -1,0 +1,36 @@
+renko{"k": 0.05, "mode": "pullback", "run": 2}
+renko{"k": 0.05, "mode": "rev_follow", "run": 4}
+renko{"k": 0.05, "mode": "rev_fade", "run": 6}
+renko{"k": 0.08, "mode": "pullback", "run": 2}
+renko{"k": 0.08, "mode": "rev_follow", "run": 4}
+renko{"k": 0.08, "mode": "rev_fade", "run": 6}
+renko{"k": 0.12, "mode": "pullback", "run": 2}
+renko{"k": 0.12, "mode": "rev_follow", "run": 4}
+renko{"k": 0.12, "mode": "rev_fade", "run": 6}
+renko{"k": 0.18, "mode": "pullback", "run": 2}
+renko{"k": 0.18, "mode": "rev_follow", "run": 4}
+renko{"k": 0.18, "mode": "rev_fade", "run": 6}
+heikin{"mode": "flip_follow", "n": 1, "run": 5}
+heikin{"mode": "flip_follow", "n": 3, "run": 3}
+heikin{"mode": "flip_follow", "n": 3, "run": 8}
+heikin{"mode": "flip_follow", "n": 5, "run": 5}
+heikin{"mode": "flip_follow", "n": 15, "run": 3}
+heikin{"mode": "flip_follow", "n": 15, "run": 8}
+rangebar{"k": 0.05, "mode": "exhaust_fade", "run": 5}
+rangebar{"k": 0.15, "mode": "exhaust_fade", "run": 2}
+rangebar{"k": 0.25, "mode": "exhaust_fade", "run": 3}
+rangebar{"k": 0.15, "mode": "three_push", "run": 3}
+volbar{"mode": "absorb_fade", "q": 80, "z": 0.3}
+volbar{"mode": "ignite_follow", "q": 40, "z": 2.0}
+volbar{"mode": "ignite_follow", "q": 160, "z": 2.0}
+profile{"accept_min": 60, "mode": "eighty"}
+pnf{"k": 0.04, "mode": "double_break"}
+pnf{"k": 0.1, "mode": "double_break"}
+3linebreak{"n": 1, "run": 3}
+3linebreak{"n": 3, "run": 5}
+3linebreak{"n": 5, "run": 7}
+delta_approx{"look": 6, "n": 1}
+delta_approx{"look": 12, "n": 3}
+delta_approx{"look": 24, "n": 5}
+entropy{"mode": "follow", "thr": 0.7, "win": 20}
+entropy{"mode": "follow", "thr": 0.7, "win": 40}

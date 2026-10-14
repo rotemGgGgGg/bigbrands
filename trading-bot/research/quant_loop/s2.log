@@ -1,0 +1,72 @@
+day 200 7 s
+day 400 16 s
+day 600 24 s
+day 800 33 s
+day 1000 42 s
+day 1200 51 s
+day 1400 60 s
+day 1600 68 s
+rows 206080 features 39
+stop 0.1σ base win TRAIN 32.9% VAL 32.8%
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 4255, 'win': np.float64(34.6), 'realized_rr': np.float64(1.74), 'exp_R': np.float64(-0.053), 'ci_win_lo': np.float64(33.2), 'ci_win_hi': np.float64(36.1)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 1061, 'win': np.float64(37.6), 'realized_rr': np.float64(1.77), 'exp_R': np.float64(0.044), 'ci_win_lo': np.float64(34.7), 'ci_win_hi': np.float64(40.6)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 271, 'win': np.float64(33.9), 'realized_rr': np.float64(1.78), 'exp_R': np.float64(-0.061), 'ci_win_lo': np.float64(28.6), 'ci_win_hi': np.float64(39.8)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 21, 'win': np.float64(57.1), 'realized_rr': np.float64(1.8), 'exp_R': np.float64(0.638), 'ci_win_lo': np.float64(36.5), 'ci_win_hi': np.float64(75.5)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 6, 'win': np.float64(66.7), 'realized_rr': np.float64(1.83), 'exp_R': np.float64(0.941), 'ci_win_lo': np.float64(30.0), 'ci_win_hi': np.float64(90.3)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 3042, 'win': np.float64(36.1), 'realized_rr': np.float64(1.75), 'exp_R': np.float64(-0.01), 'ci_win_lo': np.float64(34.4), 'ci_win_hi': np.float64(37.8)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 574, 'win': np.float64(41.1), 'realized_rr': np.float64(1.84), 'exp_R': np.float64(0.174), 'ci_win_lo': np.float64(37.2), 'ci_win_hi': np.float64(45.2)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 111, 'win': np.float64(40.5), 'realized_rr': np.float64(1.95), 'exp_R': np.float64(0.194), 'ci_win_lo': np.float64(31.9), 'ci_win_hi': np.float64(49.8)}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.1, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.1, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.9, 'rr': 2.0} {'n': 2705, 'win': np.float64(35.0), 'realized_rr': np.float64(1.75), 'exp_R': np.float64(-0.043), 'ci_win_lo': np.float64(33.2), 'ci_win_hi': np.float64(36.8)}
+{'stop_sig': 0.1, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.97, 'rr': 2.0} {'n': 356, 'win': np.float64(39.6), 'realized_rr': np.float64(1.75), 'exp_R': np.float64(0.092), 'ci_win_lo': np.float64(34.7), 'ci_win_hi': np.float64(44.8)}
+{'stop_sig': 0.1, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.99, 'rr': 2.0} {'n': 35, 'win': np.float64(28.6), 'realized_rr': np.float64(1.73), 'exp_R': np.float64(-0.237), 'ci_win_lo': np.float64(16.3), 'ci_win_hi': np.float64(45.1)}
+{'stop_sig': 0.1, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.997, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.1, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.999, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.1, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.9, 'rr': 2.0} {'n': 3481, 'win': np.float64(34.9), 'realized_rr': np.float64(1.74), 'exp_R': np.float64(-0.048), 'ci_win_lo': np.float64(33.3), 'ci_win_hi': np.float64(36.5)}
+{'stop_sig': 0.1, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.97, 'rr': 2.0} {'n': 840, 'win': np.float64(36.5), 'realized_rr': np.float64(1.75), 'exp_R': np.float64(0.006), 'ci_win_lo': np.float64(33.4), 'ci_win_hi': np.float64(39.9)}
+{'stop_sig': 0.1, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.99, 'rr': 2.0} {'n': 168, 'win': np.float64(44.6), 'realized_rr': np.float64(1.87), 'exp_R': np.float64(0.286), 'ci_win_lo': np.float64(37.3), 'ci_win_hi': np.float64(52.2)}
+{'stop_sig': 0.1, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.997, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.1, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.999, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+stop 0.2σ base win TRAIN 34.5% VAL 34.2%
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 3620, 'win': np.float64(38.6), 'realized_rr': np.float64(1.65), 'exp_R': np.float64(0.024), 'ci_win_lo': np.float64(37.0), 'ci_win_hi': np.float64(40.2)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 834, 'win': np.float64(36.9), 'realized_rr': np.float64(1.52), 'exp_R': np.float64(-0.064), 'ci_win_lo': np.float64(33.7), 'ci_win_hi': np.float64(40.3)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 279, 'win': np.float64(31.9), 'realized_rr': np.float64(1.22), 'exp_R': np.float64(-0.266), 'ci_win_lo': np.float64(26.7), 'ci_win_hi': np.float64(37.6)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 78, 'win': np.float64(38.5), 'realized_rr': np.float64(0.73), 'exp_R': np.float64(-0.319), 'ci_win_lo': np.float64(28.4), 'ci_win_hi': np.float64(49.6)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 8, 'win': np.float64(62.5), 'realized_rr': np.float64(0.38), 'exp_R': np.float64(-0.14), 'ci_win_lo': np.float64(30.6), 'ci_win_hi': np.float64(86.3)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 1764, 'win': np.float64(35.8), 'realized_rr': np.float64(1.6), 'exp_R': np.float64(-0.064), 'ci_win_lo': np.float64(33.6), 'ci_win_hi': np.float64(38.1)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 350, 'win': np.float64(34.9), 'realized_rr': np.float64(1.3), 'exp_R': np.float64(-0.164), 'ci_win_lo': np.float64(30.1), 'ci_win_hi': np.float64(40.0)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 80, 'win': np.float64(41.2), 'realized_rr': np.float64(1.37), 'exp_R': np.float64(-0.015), 'ci_win_lo': np.float64(31.1), 'ci_win_hi': np.float64(52.2)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 18, 'win': np.float64(22.2), 'realized_rr': np.float64(0.68), 'exp_R': np.float64(-0.456), 'ci_win_lo': np.float64(9.0), 'ci_win_hi': np.float64(45.2)}
+{'stop_sig': 0.2, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 1, 'win': np.float64(100.0), 'realized_rr': nan, 'exp_R': np.float64(0.781), 'ci_win_lo': np.float64(20.7), 'ci_win_hi': np.float64(100.0)}
+{'stop_sig': 0.2, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.9, 'rr': 2.0} {'n': 1847, 'win': np.float64(39.3), 'realized_rr': np.float64(1.55), 'exp_R': np.float64(0.001), 'ci_win_lo': np.float64(37.1), 'ci_win_hi': np.float64(41.5)}
+{'stop_sig': 0.2, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.97, 'rr': 2.0} {'n': 260, 'win': np.float64(35.4), 'realized_rr': np.float64(1.07), 'exp_R': np.float64(-0.217), 'ci_win_lo': np.float64(29.8), 'ci_win_hi': np.float64(41.4)}
+{'stop_sig': 0.2, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.99, 'rr': 2.0} {'n': 23, 'win': np.float64(26.1), 'realized_rr': np.float64(1.09), 'exp_R': np.float64(-0.264), 'ci_win_lo': np.float64(12.5), 'ci_win_hi': np.float64(46.5)}
+{'stop_sig': 0.2, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.997, 'rr': 2.0} {'n': 1, 'win': np.float64(0.0), 'realized_rr': nan, 'exp_R': np.float64(-0.273), 'ci_win_lo': np.float64(0.0), 'ci_win_hi': np.float64(79.3)}
+{'stop_sig': 0.2, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.999, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.2, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.9, 'rr': 2.0} {'n': 2528, 'win': np.float64(39.8), 'realized_rr': np.float64(1.59), 'exp_R': np.float64(0.03), 'ci_win_lo': np.float64(37.9), 'ci_win_hi': np.float64(41.7)}
+{'stop_sig': 0.2, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.97, 'rr': 2.0} {'n': 434, 'win': np.float64(42.6), 'realized_rr': np.float64(1.47), 'exp_R': np.float64(0.046), 'ci_win_lo': np.float64(38.1), 'ci_win_hi': np.float64(47.3)}
+{'stop_sig': 0.2, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.99, 'rr': 2.0} {'n': 113, 'win': np.float64(54.0), 'realized_rr': np.float64(1.67), 'exp_R': np.float64(0.304), 'ci_win_lo': np.float64(44.8), 'ci_win_hi': np.float64(62.9)}
+{'stop_sig': 0.2, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.997, 'rr': 2.0} {'n': 49, 'win': np.float64(73.5), 'realized_rr': np.float64(1.96), 'exp_R': np.float64(0.515), 'ci_win_lo': np.float64(59.7), 'ci_win_hi': np.float64(83.8)}
+{'stop_sig': 0.2, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.999, 'rr': 2.0} {'n': 35, 'win': np.float64(74.3), 'realized_rr': np.float64(1.84), 'exp_R': np.float64(0.414), 'ci_win_lo': np.float64(57.9), 'ci_win_hi': np.float64(85.8)}
+stop 0.3σ base win TRAIN 37.5% VAL 37.4%
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 3255, 'win': np.float64(44.3), 'realized_rr': np.float64(1.3), 'exp_R': np.float64(0.018), 'ci_win_lo': np.float64(42.6), 'ci_win_hi': np.float64(46.0)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 761, 'win': np.float64(41.4), 'realized_rr': np.float64(1.01), 'exp_R': np.float64(-0.12), 'ci_win_lo': np.float64(37.9), 'ci_win_hi': np.float64(44.9)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 211, 'win': np.float64(40.3), 'realized_rr': np.float64(1.0), 'exp_R': np.float64(-0.138), 'ci_win_lo': np.float64(33.9), 'ci_win_hi': np.float64(47.0)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 82, 'win': np.float64(48.8), 'realized_rr': np.float64(0.76), 'exp_R': np.float64(-0.108), 'ci_win_lo': np.float64(38.3), 'ci_win_hi': np.float64(59.4)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 3, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 16, 'win': np.float64(68.8), 'realized_rr': np.float64(0.24), 'exp_R': np.float64(-0.152), 'ci_win_lo': np.float64(44.4), 'ci_win_hi': np.float64(85.8)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.9, 'rr': 2.0} {'n': 1181, 'win': np.float64(36.3), 'realized_rr': np.float64(1.07), 'exp_R': np.float64(-0.196), 'ci_win_lo': np.float64(33.6), 'ci_win_hi': np.float64(39.1)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.97, 'rr': 2.0} {'n': 189, 'win': np.float64(63.5), 'realized_rr': np.float64(1.02), 'exp_R': np.float64(0.171), 'ci_win_lo': np.float64(56.4), 'ci_win_hi': np.float64(70.0)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.99, 'rr': 2.0} {'n': 71, 'win': np.float64(83.1), 'realized_rr': np.float64(0.72), 'exp_R': np.float64(0.417), 'ci_win_lo': np.float64(72.7), 'ci_win_hi': np.float64(90.1)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.997, 'rr': 2.0} {'n': 28, 'win': np.float64(100.0), 'realized_rr': nan, 'exp_R': np.float64(0.494), 'ci_win_lo': np.float64(87.9), 'ci_win_hi': np.float64(100.0)}
+{'stop_sig': 0.3, 'lr': 0.05, 'depth': 6, 'leaf': 200, 'top_q': 0.999, 'rr': 2.0} {'n': 0, 'win': None, 'realized_rr': None, 'exp_R': None, 'ci_win_lo': None, 'ci_win_hi': None}
+{'stop_sig': 0.3, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.9, 'rr': 2.0} {'n': 1335, 'win': np.float64(45.0), 'realized_rr': np.float64(1.02), 'exp_R': np.float64(-0.066), 'ci_win_lo': np.float64(42.4), 'ci_win_hi': np.float64(47.7)}
+{'stop_sig': 0.3, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.97, 'rr': 2.0} {'n': 175, 'win': np.float64(58.3), 'realized_rr': np.float64(1.07), 'exp_R': np.float64(0.156), 'ci_win_lo': np.float64(50.9), 'ci_win_hi': np.float64(65.3)}
+{'stop_sig': 0.3, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.99, 'rr': 2.0} {'n': 83, 'win': np.float64(94.0), 'realized_rr': np.float64(0.75), 'exp_R': np.float64(0.659), 'ci_win_lo': np.float64(86.7), 'ci_win_hi': np.float64(97.4)}
+{'stop_sig': 0.3, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.997, 'rr': 2.0} {'n': 34, 'win': np.float64(100.0), 'realized_rr': nan, 'exp_R': np.float64(0.501), 'ci_win_lo': np.float64(89.8), 'ci_win_hi': np.float64(100.0)}
+{'stop_sig': 0.3, 'lr': 0.03, 'depth': None, 'leaf': 500, 'top_q': 0.999, 'rr': 2.0} {'n': 16, 'win': np.float64(100.0), 'realized_rr': nan, 'exp_R': np.float64(0.555), 'ci_win_lo': np.float64(80.6), 'ci_win_hi': np.float64(100.0)}
+{'stop_sig': 0.3, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.9, 'rr': 2.0} {'n': 2340, 'win': np.float64(36.8), 'realized_rr': np.float64(1.21), 'exp_R': np.float64(-0.159), 'ci_win_lo': np.float64(34.9), 'ci_win_hi': np.float64(38.8)}
+{'stop_sig': 0.3, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.97, 'rr': 2.0} {'n': 423, 'win': np.float64(39.2), 'realized_rr': np.float64(1.0), 'exp_R': np.float64(-0.171), 'ci_win_lo': np.float64(34.7), 'ci_win_hi': np.float64(44.0)}
+{'stop_sig': 0.3, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.99, 'rr': 2.0} {'n': 155, 'win': np.float64(46.5), 'realized_rr': np.float64(1.0), 'exp_R': np.float64(-0.058), 'ci_win_lo': np.float64(38.8), 'ci_win_hi': np.float64(54.3)}
+{'stop_sig': 0.3, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.997, 'rr': 2.0} {'n': 63, 'win': np.float64(77.8), 'realized_rr': np.float64(1.0), 'exp_R': np.float64(0.382), 'ci_win_lo': np.float64(66.1), 'ci_win_hi': np.float64(86.3)}
+{'stop_sig': 0.3, 'lr': 0.1, 'depth': 4, 'leaf': 1000, 'top_q': 0.999, 'rr': 2.0} {'n': 41, 'win': np.float64(100.0), 'realized_rr': nan, 'exp_R': np.float64(0.595), 'ci_win_lo': np.float64(91.4), 'ci_win_hi': np.float64(100.0)}
