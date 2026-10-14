@@ -26,3 +26,20 @@ Target 50 % retrace, stop 100 % of the move, time exit 13:00.
 LucidFlex 50K (prop_combo.py, $500–700 risk per trade): eval passed in 100 % of historical start dates,
 but slowly — median 16–22 months (only ~20 trading days a year). EV ≈ +$1.4–1.6K per account after the fee.
 Adding NA-FVG (2 MNQ) is faster but drops the pass rate to 74 %.
+
+## Round 2 — creative batch + what practitioners actually do
+creative.py: news windows (08:30–08:45, 10:00, 14:00 Fed, 14:30 presser), Asia/London fades, last-30-min momentum,
+month-end rebalancing, turn of month, weekend gap, opex pin. **None** is positive in both periods except the 09:00 pre-open fade.
+Practitioner lesson (Robot Wealth/Longmore, Unger, Crabel): the edge is "who pays me", and the real advantage is running several
+small uncorrelated edges together. portfolio.py, 1 MNQ each:
+
+| edge | trades/yr | win | $/trade | IS | OOS |
+|---|---|---|---|---|---|
+| NA-FVG | 120 | 88 % | 9.3 | 5.3 | 15.4 |
+| Afternoon momentum | 72 | 57 % | 23.7 | 36.9 | 3.6 |
+| Rebound after −1 % day | 45 | 56 % | 29.0 | 15.3 | 54.4 |
+| Pre-open fade | 21 | 78 % | 60.5 | 56.2 | 66.1 |
+
+Daily correlations −0.27 … 0.13. Portfolio: 162 trading days/yr, 70 % winning days, $5.4K/yr (IS 5.2K, OOS 5.6K), 7/7 years,
+76 % of months positive, max DD −$3.7K, worst day −$2.1K (rebound has no stop — needs one before live).
+LucidFlex 50K: ×1 → pass 86 %, median 5.7 months, EV $2.3K; ×2 → pass 74 %, 2.4 months, EV $2.6K.
