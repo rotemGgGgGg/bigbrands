@@ -1,0 +1,13 @@
+tf,corr,q,sess,bias,size,disp,dir,entry,stop,rr,after_q,alive,n_tr,win_tr,R_tr,n_te,win_te,R_te
+null2_15m,all,Q4,any,none,any,any,short,market,atr05,1.0,False,True,30,70.0,0.291,16,43.8,-0.164
+null2_15m,all,Q4,any,ema,any,any,short,market,atr05,1.0,False,False,32,71.9,0.326,10,20.0,-0.637
+null2_15m,all,Q4,any,dopen,any,any,short,market,atr05,1.0,False,False,30,70.0,0.284,10,30.0,-0.444
+null2_15m,any,any,any,ema,g50,d1,short,near,atr1,1.0,False,False,37,70.3,0.34,24,50.0,-0.054
+null2_15m,any,any,any,both,g50,d1,short,near,atr1,1.0,False,False,30,70.0,0.332,20,50.0,-0.056
+null2_15m,any,any,any,both,g50,d1,short,ce,atr1,1.0,False,False,30,70.0,0.332,20,55.0,0.044
+null2_15m,both,any,any,none,g25,d1,both,near,atr1,1.0,False,True,30,70.0,0.336,36,61.1,0.167
+null2_15m,both,any,asia,dopen,any,any,both,near,atr05,1.0,False,True,31,74.2,0.406,20,50.0,-0.077
+null2_15m,both,any,asia,dopen,any,any,both,near,atr05,1.5,False,True,31,71.0,0.697,20,45.0,0.048
+null2_15m,both,any,asia,dopen,any,any,both,near,atr1,1.0,False,True,31,71.0,0.356,20,60.0,0.139
+null2_15m,ym,any,any,none,g25,d1,both,near,atr1,1.0,False,True,31,71.0,0.356,36,61.1,0.167
+null2_15m,ym,any,asia,dopen,any,any,both,near,atr05,1.0,False,True,33,72.7,0.375,21,52.4,-0.028

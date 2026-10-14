@@ -1,0 +1,12 @@
+tf,corr,q,sess,bias,size,disp,dir,entry,stop,rr,after_q,alive,n_tr,win_tr,R_tr,n_te,win_te,R_te
+null1_15m,all,any,london,none,g25,any,both,near,atr1,1.0,False,False,37,73.0,0.397,27,55.6,0.053
+null1_15m,all,any,london,ema,g25,any,both,near,atr1,1.0,False,False,34,73.5,0.408,24,58.3,0.109
+null1_15m,all,Q2,any,ema,g25,any,long,near,atr1,1.0,False,False,30,73.3,0.398,24,50.0,-0.055
+null1_15m,all,Q2,any,dopen,g25,any,both,near,atr1,1.0,False,True,34,70.6,0.349,23,52.2,-0.014
+null1_15m,all,Q2,any,dopen,g25,any,both,ce,atr1,1.0,False,True,32,71.9,0.374,19,52.6,-0.006
+null1_15m,all,Q2,any,both,g25,any,both,near,atr1,1.0,False,True,34,70.6,0.349,22,50.0,-0.057
+null1_15m,all,Q2,any,both,g25,any,both,ce,atr1,1.0,False,True,32,71.9,0.374,19,52.6,-0.006
+null1_15m,all,Q2,london,none,g25,any,both,near,atr1,1.0,False,False,37,73.0,0.397,27,55.6,0.053
+null1_15m,all,Q2,london,ema,g25,any,both,near,atr1,1.0,False,False,34,73.5,0.408,24,58.3,0.109
+null1_15m,not,any,any,dopen,g25,any,both,near,atr1,1.0,False,False,30,70.0,0.332,17,70.6,0.347
+null1_15m,not,any,any,both,g25,any,both,near,atr1,1.0,False,False,30,70.0,0.332,16,68.8,0.31
