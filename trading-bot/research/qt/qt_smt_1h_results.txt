@@ -1,0 +1,32 @@
+daily cycle NQ/ES wick SSMT              SMT   n 1073 | 1h win 50.1% avg   +1.7 | 3h win 48.7% avg   -1.0 | to cycle end win 45.9% avg   -1.7
+daily cycle NQ/ES wick SSMT              both  n 1506 | 1h win 49.3% avg   -2.5 | 3h win 48.7% avg   -0.5 | to cycle end win 49.6% avg   -0.9
+daily cycle NQ/ES hidden (close) SSMT    SMT   n 1029 | 1h win 49.9% avg   +0.5 | 3h win 49.3% avg   +0.3 | to cycle end win 48.6% avg   +2.0
+daily cycle NQ/ES hidden (close) SSMT    both  n 1610 | 1h win 51.2% avg   -1.5 | 3h win 49.3% avg   +0.1 | to cycle end win 48.5% avg   -0.7
+daily cycle NQ/YM wick SSMT              SMT   n 1938 | 1h win 48.8% avg   -1.7 | 3h win 49.0% avg   -1.2 | to cycle end win 47.5% avg   -0.7
+daily cycle NQ/YM wick SSMT              both  n  955 | 1h win 50.3% avg   -3.2 | 3h win 49.6% avg   +1.5 | to cycle end win 50.7% avg   -1.5
+daily cycle ES/YM wick SSMT (YM rule)    SMT   n 1526 | 1h win 50.7% avg   -1.1 | 3h win 50.4% avg   +0.9 | to cycle end win 48.8% avg   +1.7
+daily cycle ES/YM wick SSMT (YM rule)    both  n 1203 | 1h win 49.5% avg   -3.0 | 3h win 47.7% avg   +0.1 | to cycle end win 48.5% avg   -3.8
+weekly cycle NQ/ES wick SSMT             SMT   n  392 | 1h win 49.2% avg   -0.1 | 3h win 50.0% avg   +4.9 | to cycle end win 48.2% avg   +2.6
+weekly cycle NQ/ES wick SSMT             both  n  302 | 1h win 51.0% avg   -4.6 | 3h win 54.0% avg   +8.8 | to cycle end win 52.0% avg  +23.4
+weekly cycle NQ/ES hidden (close) SSMT   SMT   n  404 | 1h win 48.0% avg   -1.9 | 3h win 51.0% avg   +4.5 | to cycle end win 47.8% avg   +2.9
+weekly cycle NQ/ES hidden (close) SSMT   both  n  295 | 1h win 50.5% avg   +1.4 | 3h win 53.6% avg   +7.8 | to cycle end win 50.2% avg  +15.4
+weekly cycle NQ/YM wick SSMT             SMT   n  637 | 1h win 46.9% avg   -4.5 | 3h win 44.6% avg   -8.0 | to cycle end win 48.0% avg   +3.7
+weekly cycle NQ/YM wick SSMT             both  n  151 | 1h win 51.7% avg   -7.8 | 3h win 57.0% avg  +13.5 | to cycle end win 48.3% avg   +2.4
+weekly cycle ES/YM wick SSMT (YM rule)   SMT   n  537 | 1h win 51.0% avg   +0.4 | 3h win 49.3% avg   +1.7 | to cycle end win 49.2% avg   +7.6
+weekly cycle ES/YM wick SSMT (YM rule)   both  n  200 | 1h win 52.5% avg   -2.7 | 3h win 55.5% avg  +15.0 | to cycle end win 50.5% avg  +23.0
+PSP 1h PSP high → short                 n  419 +1 bars win 45.3% avg   +2.2
+PSP 1h PSP high → short                 n  419 +3 bars win 42.7% avg   -3.4
+PSP 1h PSP low → long                   n  344 +1 bars win 55.2% avg   +4.7
+PSP 1h PSP low → long                   n  344 +3 bars win 59.0% avg   +7.6
+PSP 1h swing high, same colour → short  n 2800 +1 bars win 47.1% avg   -0.4
+PSP 1h swing high, same colour → short  n 2800 +3 bars win 47.1% avg   -1.9
+PSP 1h swing low, same colour → long    n 2817 +1 bars win 50.6% avg   +1.1
+PSP 1h swing low, same colour → long    n 2817 +3 bars win 52.5% avg   +2.1
+PSP 4h PSP high → short                 n  111 +1 bars win 45.9% avg   -2.2
+PSP 4h PSP high → short                 n  111 +3 bars win 42.3% avg  -14.2
+PSP 4h PSP low → long                   n   80 +1 bars win 48.8% avg   +1.8
+PSP 4h PSP low → long                   n   80 +3 bars win 45.0% avg  -18.7
+PSP 4h swing high, same colour → short  n  727 +1 bars win 45.0% avg   -5.4
+PSP 4h swing high, same colour → short  n  727 +3 bars win 42.9% avg  -10.1
+PSP 4h swing low, same colour → long    n  730 +1 bars win 53.6% avg   -0.1
+PSP 4h swing low, same colour → long    n  730 +3 bars win 52.2% avg   +3.7

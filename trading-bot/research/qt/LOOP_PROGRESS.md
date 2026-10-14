@@ -22,3 +22,16 @@
 | Monthly week 3 = trend week | W3 trend ratio 0.50 = W1 | ❌ |
 | STS long (below weekly+daily+session opens) | 58.5 % up, +15.1 pt to 12:00 (n 378) vs +2.0 base | ⚠️ candidate |
 | STS short (above all three) | avg −15.1 pt to 12:00 (n 404) | ⚠️ candidate |
+
+## Iteration 2 — SMT family on Yahoo 1h NQ/ES/YM (May 2024 → Oct 2026), STS re-test
+- ⚠️ Correction: iteration-1 STS used the Monday 18:00 weekly open on Monday mornings (look-ahead). Fixed.
+| Test | Result | Verdict |
+|---|---|---|
+| Daily-cycle SSMT NQ/ES (wick) | 50 % 1h, 46 % to session end (n 1,073) | ❌ |
+| Daily-cycle hidden SSMT (closes) | 49–50 % | ❌ |
+| Daily-cycle NQ/YM, ES/YM ("YM rule") | 49–51 % | ❌ |
+| Weekly-cycle SSMT (days) | 48–51 % | ❌ |
+| PSP 1h low → long | 59 % at +3h, +7.6 pt (n 344) vs same-colour swing 52.5 % / +2.1 | ⚠️ candidate (long only; PSP high → short fails) |
+| PSP 4h | 42–49 % | ❌ |
+| STS (look-ahead fixed) | ≈ +$6/trade, 4/7 years | ❌ (was an artefact of my bug) |
+Files: qt_smt_1h.py (+results), qt_sts.py (+results).

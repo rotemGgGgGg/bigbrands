@@ -1,0 +1,27 @@
+/home/user/bigbrands/trading-bot/research/qt/qt_sts.py:8: UserWarning: Converting to Period representation will drop timezone information.
+  wto = f[(T.weekday == 0) & (T.hour == 18) & (T.minute == 0)].open; wto.index = wto.index.map(lambda t: (t + pd.Timedelta(hours=6)).to_period("W-SUN"))
+STS long → exit 1030                         n  315 win  53.7% avg $  +6.6/MNQ  IS $  +3.8 OOS $ +10.9  yrs+ 5/7
+STS short → exit 1030                        n  354 win  52.3% avg $  +2.8/MNQ  IS $  +4.4 OOS $  +0.5  yrs+ 4/7
+STS long → exit 1200                         n  315 win  53.0% avg $  +6.3/MNQ  IS $  +6.7 OOS $  +5.6  yrs+ 4/7
+STS short → exit 1200                        n  354 win  47.7% avg $  +6.9/MNQ  IS $  -0.9 OOS $ +17.3  yrs+ 5/7
+STS long → exit 1600                         n  315 win  48.9% avg $ -13.3/MNQ  IS $  +2.8 OOS $ -38.0  yrs+ 3/7
+STS short → exit 1600                        n  354 win  45.2% avg $  +1.7/MNQ  IS $ -13.1 OOS $ +21.6  yrs+ 3/7
+baseline: always long 09:30→12:00            n 1713 win  53.5% avg $  +1.5/MNQ  IS $  +4.9 OOS $  -3.4  yrs+ 4/7
+daily+session only, long → 12:00             n  582 win  54.0% avg $  +3.1/MNQ  IS $  -3.3 OOS $ +12.5  yrs+ 3/7
+daily+session only, short → 12:00            n  628 win  45.2% avg $  -3.8/MNQ  IS $  -6.3 OOS $  -0.7  yrs+ 3/7
+control: overnight down >0.3% → long 12:00   n  435 win  52.2% avg $  +7.4/MNQ  IS $  +3.7 OOS $ +13.5  yrs+ 4/7
+control: overnight up >0.3% → short 12:00    n  495 win  47.9% avg $  +3.2/MNQ  IS $  +7.4 OOS $  -3.5  yrs+ 4/7
+--- robustness
+weekly open only, long → 12:00               n  634 win  53.2% avg $  +0.4/MNQ  IS $  +7.8 OOS $ -10.9  yrs+ 4/7
+weekly open only, short → 12:00              n  730 win  46.8% avg $  +9.1/MNQ  IS $  +1.5 OOS $ +19.4  yrs+ 4/7
+STS long & >0.0% below weekly open           n  315 win  53.0% avg $  +6.3/MNQ  IS $  +6.7 OOS $  +5.6  yrs+ 4/7
+STS short & >0.0% above weekly open          n  354 win  47.7% avg $  +6.9/MNQ  IS $  -0.9 OOS $ +17.3  yrs+ 5/7
+STS long & >0.5% below weekly open           n  214 win  51.4% avg $  +2.6/MNQ  IS $ +17.0 OOS $ -18.9  yrs+ 3/7
+STS short & >0.5% above weekly open          n  237 win  48.1% avg $ +13.0/MNQ  IS $  +2.8 OOS $ +28.9  yrs+ 4/7
+STS long & >1.0% below weekly open           n  153 win  53.6% avg $ +28.2/MNQ  IS $ +48.3 OOS $  -4.7  yrs+ 5/7
+STS short & >1.0% above weekly open          n  165 win  47.3% avg $ +21.8/MNQ  IS $  +2.9 OOS $ +49.4  yrs+ 4/7
+STS both sides on Mon: n 0 avg $+nan
+STS both sides on Tue: n 209 avg $+11.2
+STS both sides on Wed: n 173 avg $-15.6
+STS both sides on Thu: n 164 avg $+19.2
+STS both sides on Fri: n 123 avg $+13.5
