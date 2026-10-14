@@ -42,12 +42,13 @@ def signal(env: dict, sig, status: str, reason: str | None = None) -> int | None
     return (got or {}).get("id")
 
 
-def opened(env: dict, signal_id: int | None, sig, units: int, mode: str) -> int | None:
+def opened(env: dict, signal_id: int | None, sig, units: int, mode: str,
+           fill_price: float | None = None) -> int | None:
     got = _post(env, {
         "type": "open", "ts": int(time.time()), "signal_id": signal_id,
         "side": sig.side, "order_type": getattr(sig, "order", None) or "market",
-        "units": abs(units), "entry": sig.entry, "sl": sig.stop, "tp": sig.targets[0],
-        "mode": mode,
+        "units": abs(units), "entry": fill_price or sig.entry, "sl": sig.stop,
+        "tp": sig.targets[0], "mode": mode,
     })
     return (got or {}).get("id")
 
@@ -60,3 +61,8 @@ def closed(env: dict, trade_id: int, exit_price: float, outcome: str) -> None:
 
 def heartbeat(env: dict, mode: str, source: str | None) -> None:
     _post(env, {"type": "heartbeat", "ts": int(time.time()), "mode": mode, "source": source})
+
+
+def event(env: dict, ev: dict) -> None:
+    """Passes a broker event (fill, expire, close) straight through."""
+    _post(env, ev)

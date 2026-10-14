@@ -78,6 +78,9 @@ class OandaBroker:
                                 f"?instruments={instrument}")
         return bool(got.get("instruments"))
 
+    def place(self, sig, units: int) -> Fill:
+        return self.market("XAU_USD", units, sig.stop, sig.targets[0])
+
     def market(self, instrument: str, units: int, stop: float,
                target: float, digits: int = 3) -> Fill:
         """A market order with its stop and target attached to the fill."""
@@ -138,6 +141,9 @@ class PaperBroker:
 
     def tradeable(self, instrument: str = "XAU_USD") -> bool:
         return True
+
+    def place(self, sig, units: int) -> Fill:
+        return self.market("XAU_USD", units, sig.stop, sig.targets[0])
 
     def market(self, instrument: str, units: int, stop: float,
                target: float, digits: int = 3) -> Fill:

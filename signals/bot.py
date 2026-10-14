@@ -69,6 +69,11 @@ def notify(env: dict, text: str) -> None:
 def make_broker(env: dict, live: bool):
     if not live:
         return PaperBroker(env.get("PAPER_DB") or os.path.join(HERE, "paper.db"))
+    if env.get("BROKER", "").lower() == "mt5":
+        from broker_mt5 import Mt5Broker
+        return Mt5Broker(symbol=env.get("MT5_SYMBOL") or None,
+                         allow_real=env.get("ALLOW_REAL", "").lower() == "yes",
+                         track_path=os.path.join(HERE, "tracked.json"))
     token, account = env.get("OANDA_TOKEN"), env.get("OANDA_ACCOUNT")
     if not token or not account:
         raise SystemExit("--live needs OANDA_TOKEN and OANDA_ACCOUNT in signals/.env")
@@ -107,11 +112,15 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
         notify(env, f"{head}\n\n⛔️ <b>not placed</b>: {decision.detail}")
         return
 
-    fill = broker.market(INSTRUMENT, decision.units, sig.stop, sig.targets[0])
+    fill = broker.place(sig, decision.units)
     mode = "LIVE" if live else "PAPER"
     if fill.ok:
         sid = desk.signal(env, sig, "taken", decision.detail)
-        desk.opened(env, sid, sig, decision.units, "live" if live else "paper")
+        tid = desk.opened(env, sid, sig, decision.units, "live" if live else "paper",
+                          fill_price=fill.price if (getattr(sig, "order", None) or "market") == "market" else None)
+        if tid and fill.order_id and hasattr(broker, "track"):
+            broker.track(tid, fill.order_id,
+                         pending=(getattr(sig, "order", None) or "market") != "market")
         at = f" at {fill.price}" if fill.price else ""
         notify(env, f"{head}\n\n✅ <b>{mode}</b> {decision.units} units{at}\n"
                     f"{decision.detail}\n{fill.detail}")
@@ -172,6 +181,29 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             await asyncio.sleep(60)
 
     client.loop.create_task(beat())
+
+    if hasattr(broker, "poll"):
+        async def follow():
+            # The broker closes positions at their stop or target on its own;
+            # this notices, and tells the desk and the owner what happened.
+            import asyncio
+            loop = asyncio.get_running_loop()
+            while True:
+                try:
+                    for ev in await loop.run_in_executor(None, broker.poll):
+                        desk.event(env, ev)
+                        if ev["type"] == "close":
+                            notify(env, f"{'✅' if ev['outcome'] == 'tp' else '🛑' if ev['outcome'] == 'sl' else '✋'} "
+                                        f"<b>closed</b> at {ev['exit']} ({ev['outcome']}), "
+                                        f"{ev.get('profit', 0):+.2f}")
+                        elif ev["type"] == "fill":
+                            notify(env, f"📥 <b>pending order filled</b> at {ev['entry']}")
+                        elif ev["type"] == "expire":
+                            notify(env, "⌛ <b>pending order expired</b> without filling")
+                except Exception as e:
+                    print(f"[follow error: {e}]", flush=True)
+                await asyncio.sleep(15)
+        client.loop.create_task(follow())
     client.run_until_disconnected()
 
 
@@ -225,8 +257,9 @@ def main() -> None:
     if args.live:
         if not broker.tradeable(INSTRUMENT):
             raise SystemExit(f"this account cannot trade {INSTRUMENT}")
-        where = "practice" if broker.practice else "REAL MONEY"
-        print(f"live mode on the {where} account", file=sys.stderr)
+        where = broker.describe() if hasattr(broker, "describe") else \
+            ("practice account" if broker.practice else "REAL MONEY account")
+        print(f"live mode: {where}", flush=True)
 
     if args.replay:
         handle(open(args.replay, encoding="utf-8").read(), env, broker, limits, args.live)

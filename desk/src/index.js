@@ -68,9 +68,9 @@ async function ingest(req, env) {
     }
     const order = ev.order_type || "market";
     // A market order is in the moment it is sent; anything else waits for
-    // price to come to it.
+    // price to come to it, on paper and at a broker alike.
     const live = ev.mode === "live";
-    const state = order === "market" || live ? "open" : "pending";
+    const state = order === "market" ? "open" : "pending";
     const r = await env.DB.prepare(
       `INSERT INTO trades (signal_id, mode, side, order_type, units, entry, sl, tp,
                            created_at, opened_at, state)
@@ -80,10 +80,25 @@ async function ingest(req, env) {
     return json({ ok: true, id: r.meta.last_row_id });
   }
 
+  if (ev.type === "fill") {
+    await env.DB.prepare("UPDATE trades SET state='open', opened_at=?, entry=COALESCE(?, entry) WHERE id = ?")
+      .bind(ts, ev.entry ?? null, ev.trade_id).run();
+    return json({ ok: true });
+  }
+
+  if (ev.type === "expire") {
+    await env.DB.prepare("UPDATE trades SET state='expired', closed_at=? WHERE id = ?")
+      .bind(ts, ev.trade_id).run();
+    return json({ ok: true });
+  }
+
   if (ev.type === "close") {
     const t = await env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(ev.trade_id).first();
     if (!t) return json({ error: "no such trade" }, 404);
     const s = settle(t, Number(ev.exit), ev.outcome || "manual", ts, ev.note ?? null);
+    // A broker knows the real result, after spread and commission; when it
+    // reports one, that is the number kept.
+    if (typeof ev.profit === "number") s.pnl = Math.round(ev.profit * 100) / 100;
     await env.DB.prepare(
       `UPDATE trades SET state='closed', exit=?, outcome=?, closed_at=?, pips=?, pnl=?, note=?
        WHERE id = ?`,
