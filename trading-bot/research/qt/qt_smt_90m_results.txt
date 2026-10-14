@@ -1,0 +1,7 @@
+data 2026-08-05 00:05:00-04:00 → 2026-10-14 12:40:00-04:00
+90m SSMT NQ/ES wick (all quarters)         n 516 | to quarter end win 51.9% avg  +1.2pt | trade 2R: win 30.4% avg -0.461R $-1,450/MNQ
+90m SSMT NQ/ES hidden (closes)             n 513 | to quarter end win 51.1% avg  +1.9pt | trade 2R: win 26.1% avg -0.769R $-1,860/MNQ
+90m SSMT NQ/YM wick                        n 773 | to quarter end win 49.2% avg  -2.4pt | trade 2R: win 31.2% avg -0.468R $-2,448/MNQ
+90m SSMT ES/YM wick (YM rule)              n 625 | to quarter end win 47.5% avg  -5.0pt | trade 2R: win 28.3% avg -0.538R $-3,950/MNQ
+90m SSMT NQ/ES wick, 09:00–10:30 quarter only n  42 | to quarter end win 47.6% avg -11.3pt | trade 2R: win 35.7% avg -0.082R $+680/MNQ
+90m SSMT NQ/ES wick, NY AM session 06:00–12:00 n 162 | to quarter end win 54.3% avg  +7.0pt | trade 2R: win 32.7% avg -0.297R $+428/MNQ

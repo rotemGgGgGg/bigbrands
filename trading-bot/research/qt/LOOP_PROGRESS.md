@@ -35,3 +35,14 @@
 | PSP 4h | 42–49 % | ❌ |
 | STS (look-ahead fixed) | ≈ +$6/trade, 4/7 years | ❌ (was an artefact of my bug) |
 Files: qt_smt_1h.py (+results), qt_sts.py (+results).
+
+## Iteration 3 — 90-minute-quarter SSMT on Yahoo 5m NQ/ES/YM (Aug 5 → Oct 14 2026)
+| Test | n | To quarter end | 2R trade |
+|---|---|---|---|
+| NQ/ES wick SSMT, all quarters | 516 | 51.9 % | 30 % win, −0.46R |
+| NQ/ES hidden (closes) | 513 | 51.1 % | −0.77R |
+| NQ/YM | 773 | 49.2 % | −0.47R |
+| ES/YM (YM rule) | 625 | 47.5 % | −0.54R |
+| NQ/ES, 09:00–10:30 quarter only | 42 | 47.6 % | −0.08R |
+| NQ/ES, NY AM session | 162 | 54.3 % | −0.30R |
+Verdict: ❌ no edge at the 90-minute level either. (Dukascopy 1-min ES download died at 68 days; restarted.)
