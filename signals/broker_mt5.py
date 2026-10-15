@@ -289,7 +289,6 @@ class Mt5Broker:
         """
         mt5 = self.mt5
         events = self._break_even()
-        since = time.time() - 14 * 86400
         for ticket, t in list(self.tracked.items()):
             tk = int(ticket)
             if t["pending"]:
@@ -313,7 +312,11 @@ class Mt5Broker:
 
             if mt5.positions_get(ticket=tk):
                 continue                          # still open
-            deals = mt5.history_deals_get(since, time.time() + 60, position=tk) or []
+            # By position only: given dates as well, the terminal ignores the
+            # position and returns every deal in the range, the deposit
+            # included, which once reported a whole balance as one trade's profit.
+            deals = [d for d in (mt5.history_deals_get(position=tk) or [])
+                     if d.position_id == tk and d.type != getattr(mt5, "DEAL_TYPE_BALANCE", 2)]
             out = [d for d in deals if d.entry == mt5.DEAL_ENTRY_OUT]
             if not out:
                 continue
