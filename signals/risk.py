@@ -35,6 +35,7 @@ class Limits:
     daily_stop_usd: float | None = None   # stop for the day past this loss
     total_stop_usd: float | None = None   # stop for good past this drawdown
     max_open: int = 2
+    max_trades_day: int | None = None  # new trades per broker day, then stop
     min_stop_dollars: float = 2.0
     max_units: int = 100              # one lot of gold, as a hard ceiling
     max_daily_loss: float = 0.02      # fraction fallback when no dollar cap is set
@@ -51,6 +52,7 @@ class AccountState:
     total_loss: float = 0.0        # below the starting balance
     open_risk: float = 0.0         # what open positions lose if every stop fills
     open_count: int = 0
+    trades_today: int = 0          # orders this bot placed since the day began
 
 
 @dataclass
@@ -74,6 +76,13 @@ def size(balance: float, entry: float, stop: float, side: str,
         balance, open_positions, loss_today = state.balance, state.open_count, state.day_loss
     if balance <= 0:
         return Decision(0, "no balance")
+
+    if (limits.max_trades_day is not None and state is not None
+            and state.trades_today >= limits.max_trades_day):
+        # A fail stop, not a forecast: the channel rarely sends this many in a
+        # day, so a day that does is either a bad day or something misread.
+        return Decision(0, f"day limit: {state.trades_today} trades already placed "
+                           f"today, the most is {limits.max_trades_day}")
 
     if open_positions >= limits.max_open:
         return Decision(0, f"already holding {open_positions} positions")

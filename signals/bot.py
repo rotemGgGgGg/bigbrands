@@ -194,6 +194,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
         snap = {"rules": {
             "risk_usd": limits.risk_usd, "daily_stop_usd": limits.daily_stop_usd,
             "total_stop_usd": limits.total_stop_usd, "max_open": limits.max_open,
+            "max_trades_day": limits.max_trades_day,
             "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
         }}
         if hasattr(broker, "state"):
@@ -203,7 +204,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                 snap["account"] = {
                     "balance": st.balance, "equity": st.equity, "day_loss": st.day_loss,
                     "total_loss": st.total_loss, "open_risk": st.open_risk,
-                    "open_count": st.open_count, "start": broker.start_balance,
+                    "open_count": st.open_count, "trades_today": st.trades_today, "start": broker.start_balance,
                     "login": str(acc.login), "server": acc.server, "demo": broker.demo,
                     "name": getattr(acc, "name", ""), "firm": env.get("ACCOUNT_LABEL", ""),
                 }
@@ -281,7 +282,8 @@ def main() -> None:
                     risk_usd=num("RISK_USD"),
                     daily_stop_usd=num("DAILY_STOP_USD"),
                     total_stop_usd=num("TOTAL_STOP_USD"),
-                    max_open=int(env.get("MAX_OPEN", "2")))
+                    max_open=int(env.get("MAX_OPEN", "2")),
+                    max_trades_day=int(env["MAX_TRADES_DAY"]) if env.get("MAX_TRADES_DAY") else None)
 
     if args.check:
         have = lambda k: "set" if env.get(k) else "MISSING"
@@ -298,6 +300,7 @@ def main() -> None:
         print(f"daily stop        : " + (f"${limits.daily_stop_usd:.2f}" if limits.daily_stop_usd else "not set"))
         print(f"total stop        : " + (f"${limits.total_stop_usd:.2f}" if limits.total_stop_usd else "not set"))
         print(f"max open at once  : {limits.max_open}")
+        print(f"max trades a day  : {limits.max_trades_day or 'no limit'}")
         print(f"break-even        : at {env.get('BE_AT_R', '1.5')}R, stop to entry + ${env.get('BE_PLUS_USD', '1')}")
         if env.get("OANDA_TOKEN") and env.get("OANDA_ACCOUNT"):
             b = make_broker(env, live=True)

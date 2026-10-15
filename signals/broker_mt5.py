@@ -224,6 +224,13 @@ class Mt5Broker:
         risk += sum(at_risk(o.price_open, o.sl, o.volume_current,
                             o.type in (mt5.ORDER_TYPE_BUY_STOP, mt5.ORDER_TYPE_BUY_LIMIT))
                     for o in orders)
+        # Every order this bot placed today, whether it filled, is pending,
+        # closed or expired. Stop and target closes are the broker's orders,
+        # not the bot's, so only orders it sent itself are counted.
+        placed = {o.ticket for o in (mt5.history_orders_get(day_start, now + 60) or [])
+                  if o.magic == MAGIC and o.time_setup >= day_start
+                  and o.reason == getattr(mt5, "ORDER_REASON_EXPERT", 3)}
+        placed |= {o.ticket for o in orders if o.magic == MAGIC and o.time_setup >= day_start}
         return AccountState(
             balance=acc.balance,
             equity=acc.equity,
@@ -231,6 +238,7 @@ class Mt5Broker:
             total_loss=max(0.0, self.start_balance - acc.equity),
             open_risk=risk,
             open_count=len(positions) + len(orders),
+            trades_today=len(placed),
         )
 
     def _break_even(self) -> list[dict]:
