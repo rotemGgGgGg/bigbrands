@@ -226,6 +226,7 @@ class Mt5Broker:
                     for o in orders)
         return AccountState(
             balance=acc.balance,
+            equity=acc.equity,
             day_loss=max(0.0, -(realized + floating)),
             total_loss=max(0.0, self.start_balance - acc.equity),
             open_risk=risk,

@@ -59,8 +59,12 @@ def closed(env: dict, trade_id: int, exit_price: float, outcome: str) -> None:
                 "exit": exit_price, "outcome": outcome})
 
 
-def heartbeat(env: dict, mode: str, source: str | None) -> None:
-    _post(env, {"type": "heartbeat", "ts": int(time.time()), "mode": mode, "source": source})
+def heartbeat(env: dict, mode: str, source: str | None, extra: dict | None = None) -> dict:
+    """Says the bot is alive, with the account as it stands, and returns what
+    the desk wants of it: at present only whether copying is paused."""
+    got = _post(env, {"type": "heartbeat", "ts": int(time.time()), "mode": mode,
+                      "source": source, **(extra or {})})
+    return got or {}
 
 
 def event(env: dict, ev: dict) -> None:

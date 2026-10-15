@@ -94,9 +94,19 @@ def balance_of(broker) -> float:
     return float(s["account"]["balance"])
 
 
+# Set from the desk: a paused bot still reads and records every signal, it
+# just places nothing. Reading on is what lets the record show what a pause
+# cost or saved.
+CONTROL = {"paused": False}
+
+
 def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
     """One message, start to finish."""
     sig = parse(text)
+    if sig.tradeable and CONTROL["paused"]:
+        desk.signal(env, sig, "skipped", "copying paused from the desk")
+        notify(env, "⏸ <b>signal skipped</b>: copying is paused from the desk")
+        return
     if not sig.tradeable:
         desk.signal(env, sig, "skipped", "; ".join(sig.problems))
         notify(env, "⏭ <b>skipped</b>\n" + "\n".join(f"• {p}" for p in sig.problems))
@@ -180,14 +190,42 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
     mode = "LIVE, real orders" if live else "PAPER, nothing sent"
     notify(env, f"👂 <b>listening</b> to {source}\nmode: {mode}")
 
+    def account_snapshot() -> dict:
+        snap = {"rules": {
+            "risk_usd": limits.risk_usd, "daily_stop_usd": limits.daily_stop_usd,
+            "total_stop_usd": limits.total_stop_usd, "max_open": limits.max_open,
+            "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
+        }}
+        if hasattr(broker, "state"):
+            try:
+                st = broker.state()
+                acc = broker.account
+                snap["account"] = {
+                    "balance": st.balance, "equity": st.equity, "day_loss": st.day_loss,
+                    "total_loss": st.total_loss, "open_risk": st.open_risk,
+                    "open_count": st.open_count, "start": broker.start_balance,
+                    "login": str(acc.login), "server": acc.server, "demo": broker.demo,
+                    "name": getattr(acc, "name", ""), "firm": env.get("ACCOUNT_LABEL", ""),
+                }
+            except Exception as e:
+                print(f"[account snapshot failed: {e}]", flush=True)
+        return snap
+
     async def beat():
         # The desk shows the bot as listening only while this keeps arriving,
-        # so a bot that died says so instead of looking merely quiet.
+        # so a bot that died says so instead of looking merely quiet. Each
+        # beat carries the account and brings back the desk's instructions.
         import asyncio
+        loop = asyncio.get_running_loop()
         while True:
-            await asyncio.get_running_loop().run_in_executor(
-                None, desk.heartbeat, env, "live" if live else "paper", source)
-            await asyncio.sleep(60)
+            got = await loop.run_in_executor(
+                None, lambda: desk.heartbeat(env, "live" if live else "paper", source,
+                                             account_snapshot()))
+            if "paused" in got and bool(got["paused"]) != CONTROL["paused"]:
+                CONTROL["paused"] = bool(got["paused"])
+                notify(env, "⏸ <b>copying paused</b> from the desk" if CONTROL["paused"]
+                       else "▶️ <b>copying resumed</b> from the desk")
+            await asyncio.sleep(30)
 
     client.loop.create_task(beat())
 

@@ -113,24 +113,31 @@ async function ingest(req, env) {
   }
 
   if (ev.type === "heartbeat") {
+    const payload = { mode: ev.mode || "paper", source: ev.source || null,
+                      account: ev.account || null, rules: ev.rules || null };
     await env.DB.prepare(
       "INSERT INTO meta (k, v, ts) VALUES ('bot', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
-    ).bind(JSON.stringify({ mode: ev.mode || "paper", source: ev.source || null }), ts).run();
-    return json({ ok: true });
+    ).bind(JSON.stringify(payload), ts).run();
+    // The answer carries the desk's instructions, so a pause pressed on a
+    // phone reaches the bot within one heartbeat.
+    const ctl = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();
+    return json({ ok: true, ...(ctl ? JSON.parse(ctl.v) : { paused: false }) });
   }
 
   return json({ error: `unknown type ${ev.type}` }, 400);
 }
 
 async function data(env) {
-  const [signals, trades, bot] = await Promise.all([
+  const [signals, trades, bot, ctl] = await Promise.all([
     env.DB.prepare("SELECT * FROM signals ORDER BY ts DESC LIMIT 300").all(),
     env.DB.prepare("SELECT * FROM trades ORDER BY created_at DESC LIMIT 1000").all(),
     env.DB.prepare("SELECT v, ts FROM meta WHERE k = 'bot'").first(),
+    env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first(),
   ]);
   return json({
     now: now(),
     bot: bot ? { ...JSON.parse(bot.v), ts: bot.ts } : null,
+    control: ctl ? JSON.parse(ctl.v) : { paused: false },
     signals: signals.results || [],
     trades: trades.results || [],
   });
@@ -312,6 +319,17 @@ export default {
     if (path === "/api/data" && req.method === "GET") {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
       return data(env);
+    }
+    if (path === "/api/control" && req.method === "POST") {
+      // The one thing a viewer may change: whether the bot copies. Reading
+      // and recording go on regardless.
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      const body = await req.json().catch(() => ({}));
+      const v = JSON.stringify({ paused: Boolean(body.paused), at: now() });
+      await env.DB.prepare(
+        "INSERT INTO meta (k, v, ts) VALUES ('control', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
+      ).bind(v, now()).run();
+      return json(JSON.parse(v));
     }
     if (path === "/api/resolve" && req.method === "POST") {
       if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);

@@ -46,6 +46,7 @@ class AccountState:
     positive numbers; floating losses on open positions are included, as a
     funded account counts them."""
     balance: float
+    equity: float | None = None
     day_loss: float = 0.0          # since the start of the broker's day
     total_loss: float = 0.0        # below the starting balance
     open_risk: float = 0.0         # what open positions lose if every stop fills
