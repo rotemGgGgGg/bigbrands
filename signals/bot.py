@@ -378,7 +378,22 @@ def main() -> None:
         handle(open(args.replay, encoding="utf-8").read(), env, broker, limits, args.live)
         return
 
+    single_instance()
     listen(env, broker, limits, args.live)
+
+
+def single_instance() -> None:
+    """Refuses to start a second copy. Two copies on one account would place
+    every signal twice, at twice the risk. Holding a local port is the lock:
+    the system frees it the moment this process ends, however it ends."""
+    import socket
+    global _LOCK
+    _LOCK = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        _LOCK.bind(("127.0.0.1", 47321))
+    except OSError:
+        print("another copy of the bot is already running; this one stops", flush=True)
+        sys.exit(3)
 
 
 if __name__ == "__main__":
