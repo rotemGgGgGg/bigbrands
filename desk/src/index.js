@@ -86,6 +86,12 @@ async function ingest(req, env) {
     return json({ ok: true });
   }
 
+  if (ev.type === "be") {
+    await env.DB.prepare("UPDATE trades SET sl=?, note=? WHERE id = ?")
+      .bind(ev.sl, `stop moved to break-even +$1 at ${new Date(ts * 1000).toISOString().slice(11, 16)}Z`, ev.trade_id).run();
+    return json({ ok: true });
+  }
+
   if (ev.type === "expire") {
     await env.DB.prepare("UPDATE trades SET state='expired', closed_at=? WHERE id = ?")
       .bind(ts, ev.trade_id).run();
@@ -244,6 +250,39 @@ async function resolvePaper(env) {
   return { checked: results.length, changed, window: [fmt(from), fmt(reached)], bars: bars.length };
 }
 
+/**
+ * The watchdog. It runs here and not in the bot, because a bot that has
+ * crashed cannot report that it crashed. If the bot has not been heard from
+ * in a few minutes, its owner's phone hears about it, once, and hears again
+ * when it comes back.
+ */
+const SILENT_AFTER_S = 180;
+
+async function telegram(env, text) {
+  if (!env.ALERT_BOT_TOKEN || !env.ALERT_CHAT_ID) return;
+  await fetch(`https://api.telegram.org/bot${env.ALERT_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: env.ALERT_CHAT_ID, text, parse_mode: "HTML" }),
+  }).catch(() => {});
+}
+
+async function watchdog(env) {
+  const bot = await env.DB.prepare("SELECT v, ts FROM meta WHERE k = 'bot'").first();
+  if (!bot) return { watching: false };
+  const flag = await env.DB.prepare("SELECT v FROM meta WHERE k = 'alarm'").first();
+  const silent = now() - bot.ts;
+  const raised = flag && flag.v === "on";
+  if (silent > SILENT_AFTER_S && !raised) {
+    await telegram(env, `\u26A0\uFE0F <b>Tape bot is silent</b>\nNo sign of life for ${Math.round(silent / 60)} minutes. Trades are not being copied.`);
+    await env.DB.prepare("INSERT INTO meta (k, v, ts) VALUES ('alarm', 'on', ?) ON CONFLICT(k) DO UPDATE SET v='on', ts=excluded.ts").bind(now()).run();
+  } else if (silent <= SILENT_AFTER_S && raised) {
+    await telegram(env, "\u2705 <b>Tape bot is back</b> and listening again.");
+    await env.DB.prepare("UPDATE meta SET v='off', ts=? WHERE k='alarm'").bind(now()).run();
+  }
+  return { silent, raised };
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -282,6 +321,11 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(resolvePaper(env).then((r) => console.log("resolve", JSON.stringify(r))));
+    // The watchdog every minute; paper settlement every fifth, which keeps
+    // the free price allowance far from its daily limit.
+    ctx.waitUntil(watchdog(env).then((r) => console.log("watchdog", JSON.stringify(r))));
+    if (new Date(event.scheduledTime).getUTCMinutes() % 5 === 0) {
+      ctx.waitUntil(resolvePaper(env).then((r) => console.log("resolve", JSON.stringify(r))));
+    }
   },
 };

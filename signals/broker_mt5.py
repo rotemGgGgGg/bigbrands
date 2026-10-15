@@ -41,7 +41,8 @@ class Fill:
 
 class Mt5Broker:
     def __init__(self, symbol: str | None = None, allow_real: bool = False,
-                 track_path: str | None = None):
+                 track_path: str | None = None, start_balance: float | None = None,
+                 be_at_r: float | None = 1.5, be_plus_usd: float = 1.0):
         try:
             import MetaTrader5 as mt5
         except ImportError:
@@ -63,6 +64,11 @@ class Mt5Broker:
                              "press the Algo Trading button so it turns green")
         self.practice = self.demo
         self.account = acc
+        # The firm measures drawdown from where the account started, not from
+        # wherever it happens to be today.
+        self.start_balance = start_balance or acc.balance
+        self.be_at_r = be_at_r
+        self.be_plus = be_plus_usd
         self.symbol = self._find_symbol(symbol)
         # Which desk trade each terminal ticket belongs to, kept on disk so a
         # restart does not forget positions that are still running.
@@ -179,9 +185,88 @@ class Mt5Broker:
 
     # -- following positions to their end ---------------------------------
 
-    def track(self, trade_id: int, order_id: str, pending: bool) -> None:
-        self.tracked[str(order_id)] = {"trade": trade_id, "pending": pending}
+    def track(self, trade_id: int, order_id: str, pending: bool,
+              side: str | None = None, stop: float | None = None) -> None:
+        self.tracked[str(order_id)] = {"trade": trade_id, "pending": pending,
+                                       "side": side, "stop": stop, "be": False}
         self._save()
+
+    # -- the account, as the guard needs to see it --------------------------
+
+    def state(self):
+        """Losses today and overall, open risk and position count.
+
+        Floating losses count, because a funded account counts them. Pending
+        orders count as open risk, because any of them may fill.
+        """
+        from risk import AccountState
+        mt5 = self.mt5
+        acc = mt5.account_info()
+        info = mt5.symbol_info(self.symbol)
+        size = info.trade_contract_size or 100.0
+        now = mt5.symbol_info_tick(self.symbol).time      # broker's clock
+        day_start = now - now % 86400
+        deals = mt5.history_deals_get(day_start, now + 60) or []
+        realized = sum(d.profit + d.commission + d.swap for d in deals
+                       if d.type != getattr(mt5, "DEAL_TYPE_BALANCE", 2))
+        positions = mt5.positions_get() or []
+        floating = sum(p.profit + p.swap for p in positions)
+
+        def at_risk(open_price, sl, volume, buy):
+            if not sl:
+                return open_price * volume * size        # no stop: everything
+            loss = (open_price - sl) if buy else (sl - open_price)
+            return max(0.0, loss) * volume * size
+
+        risk = sum(at_risk(p.price_open, p.sl, p.volume, p.type == mt5.POSITION_TYPE_BUY)
+                   for p in positions)
+        orders = mt5.orders_get() or []
+        risk += sum(at_risk(o.price_open, o.sl, o.volume_current,
+                            o.type in (mt5.ORDER_TYPE_BUY_STOP, mt5.ORDER_TYPE_BUY_LIMIT))
+                    for o in orders)
+        return AccountState(
+            balance=acc.balance,
+            day_loss=max(0.0, -(realized + floating)),
+            total_loss=max(0.0, self.start_balance - acc.equity),
+            open_risk=risk,
+            open_count=len(positions) + len(orders),
+        )
+
+    def _break_even(self) -> list[dict]:
+        """Moves a stop to entry plus a dollar once price has gone far enough.
+
+        Plus a dollar, not to the entry itself: a stop at the entry closes
+        the trade at a small loss once spread and commission are paid.
+        """
+        if not self.be_at_r:
+            return []
+        mt5 = self.mt5
+        events = []
+        for ticket, t in self.tracked.items():
+            if t.get("pending") or t.get("be") or t.get("stop") is None:
+                continue
+            pos = mt5.positions_get(ticket=int(ticket))
+            if not pos:
+                continue
+            p = pos[0]
+            buy = p.type == mt5.POSITION_TYPE_BUY
+            risk = abs(p.price_open - t["stop"])
+            tick = mt5.symbol_info_tick(p.symbol)
+            gained = (tick.bid - p.price_open) if buy else (p.price_open - tick.ask)
+            if risk <= 0 or gained < self.be_at_r * risk:
+                continue
+            digits = mt5.symbol_info(p.symbol).digits
+            new_sl = round(p.price_open + self.be_plus if buy else p.price_open - self.be_plus, digits)
+            if (buy and p.sl and p.sl >= new_sl) or (not buy and p.sl and p.sl <= new_sl):
+                t["be"] = True                        # already at least this safe
+                continue
+            res = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket,
+                                  "symbol": p.symbol, "sl": new_sl, "tp": p.tp})
+            if res is not None and res.retcode == mt5.TRADE_RETCODE_DONE:
+                t["be"] = True
+                events.append({"type": "be", "trade_id": t["trade"], "sl": new_sl,
+                               "ts": int(time.time())})
+        return events
 
     def _save(self) -> None:
         if self.track_path:
@@ -194,7 +279,7 @@ class Mt5Broker:
         cancelled, and a position closing at its stop, its target or by hand.
         """
         mt5 = self.mt5
-        events = []
+        events = self._break_even()
         since = time.time() - 14 * 86400
         for ticket, t in list(self.tracked.items()):
             tk = int(ticket)

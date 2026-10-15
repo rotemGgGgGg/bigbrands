@@ -73,7 +73,10 @@ def make_broker(env: dict, live: bool):
         from broker_mt5 import Mt5Broker
         return Mt5Broker(symbol=env.get("MT5_SYMBOL") or None,
                          allow_real=env.get("ALLOW_REAL", "").lower() == "yes",
-                         track_path=os.path.join(HERE, "tracked.json"))
+                         track_path=os.path.join(HERE, "tracked.json"),
+                         start_balance=float(env["ACCOUNT_START"]) if env.get("ACCOUNT_START") else None,
+                         be_at_r=float(env.get("BE_AT_R", "1.5")) or None,
+                         be_plus_usd=float(env.get("BE_PLUS_USD", "1")))
     token, account = env.get("OANDA_TOKEN"), env.get("OANDA_ACCOUNT")
     if not token or not account:
         raise SystemExit("--live needs OANDA_TOKEN and OANDA_ACCOUNT in signals/.env")
@@ -100,8 +103,13 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
         return
 
     rr = risk_reward(sig)
-    balance = balance_of(broker)
-    decision = size(balance, sig.entry, sig.stop, sig.side, limits)
+    if hasattr(broker, "state"):
+        # The account as it stands, so the caps see today's losses and
+        # everything already open before adding to it.
+        state = broker.state()
+        decision = size(state.balance, sig.entry, sig.stop, sig.side, limits, state=state)
+    else:
+        decision = size(balance_of(broker), sig.entry, sig.stop, sig.side, limits)
     head = (f"{'🟢' if sig.side == 'buy' else '🔴'} <b>{sig.side.upper()} "
             f"{INSTRUMENT}</b>\n"
             f"entry {sig.entry} · SL {sig.stop} · TP {sig.targets[0]}\n"
@@ -120,7 +128,8 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
                           fill_price=fill.price if (getattr(sig, "order", None) or "market") == "market" else None)
         if tid and fill.order_id and hasattr(broker, "track"):
             broker.track(tid, fill.order_id,
-                         pending=(getattr(sig, "order", None) or "market") != "market")
+                         pending=(getattr(sig, "order", None) or "market") != "market",
+                         side=sig.side, stop=sig.stop)
         at = f" at {fill.price}" if fill.price else ""
         notify(env, f"{head}\n\n✅ <b>{mode}</b> {decision.units} units{at}\n"
                     f"{decision.detail}\n{fill.detail}")
@@ -200,6 +209,8 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                             notify(env, f"📥 <b>pending order filled</b> at {ev['entry']}")
                         elif ev["type"] == "expire":
                             notify(env, "⌛ <b>pending order expired</b> without filling")
+                        elif ev["type"] == "be":
+                            notify(env, f"🔒 <b>stop moved to break-even</b> ({ev['sl']})")
                 except Exception as e:
                     print(f"[follow error: {e}]", flush=True)
                 await asyncio.sleep(15)
@@ -227,7 +238,12 @@ def main() -> None:
     args = ap.parse_args()
 
     env = read_env()
-    limits = Limits(risk_per_trade=args.risk)
+    num = lambda k: float(env[k]) if env.get(k) else None
+    limits = Limits(risk_per_trade=args.risk,
+                    risk_usd=num("RISK_USD"),
+                    daily_stop_usd=num("DAILY_STOP_USD"),
+                    total_stop_usd=num("TOTAL_STOP_USD"),
+                    max_open=int(env.get("MAX_OPEN", "2")))
 
     if args.check:
         have = lambda k: "set" if env.get(k) else "MISSING"
@@ -239,9 +255,12 @@ def main() -> None:
         print("oanda token       :", have("OANDA_TOKEN"))
         print("oanda account     :", env.get("OANDA_ACCOUNT") or "MISSING")
         print("spot price key    :", have("TWELVEDATA_KEY"))
-        print(f"\nrisk per trade    : {100 * limits.risk_per_trade:.2f}% of balance")
-        print(f"daily loss cap    : {100 * limits.max_daily_loss:.2f}%")
+        print(f"\nrisk per trade    : " + (f"${limits.risk_usd:.2f}" if limits.risk_usd
+                                         else f"{100 * limits.risk_per_trade:.2f}% of balance"))
+        print(f"daily stop        : " + (f"${limits.daily_stop_usd:.2f}" if limits.daily_stop_usd else "not set"))
+        print(f"total stop        : " + (f"${limits.total_stop_usd:.2f}" if limits.total_stop_usd else "not set"))
         print(f"max open at once  : {limits.max_open}")
+        print(f"break-even        : at {env.get('BE_AT_R', '1.5')}R, stop to entry + ${env.get('BE_PLUS_USD', '1')}")
         if env.get("OANDA_TOKEN") and env.get("OANDA_ACCOUNT"):
             b = make_broker(env, live=True)
             s = b.summary()
