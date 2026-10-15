@@ -308,7 +308,28 @@ a { color: inherit; text-decoration: none; }
 .cta.paused { background: linear-gradient(90deg, #fcd34d, #fb923c); box-shadow: 0 10px 24px rgba(251, 146, 60, .25); }
 .cta-note { text-align: center; font-size: 11px; color: var(--ink-3); margin-top: 10px; min-height: 1.4em; }
 
-.demo-flag { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 20; background: #11142d; color: #fff; font-size: 11px; padding: 6px 14px; border-radius: 0 0 10px 10px; letter-spacing: .04em; }
+.demo-flag { pointer-events: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 20; background: #11142d; color: #fff; font-size: 11px; padding: 6px 14px; border-radius: 0 0 10px 10px; letter-spacing: .04em; }
+
+/* ---------- black and white switch ---------- */
+.head-tools { display: flex; align-items: center; gap: 12px; }
+.tswitch {
+  position: relative; width: 64px; height: 32px; border-radius: 999px; border: 0; cursor: pointer; padding: 0;
+  background: #0b0d18; display: flex; align-items: center; justify-content: space-between;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 6px 16px rgba(17,20,45,.12); flex: none;
+}
+.tswitch > span:not(.knob) { width: 32px; display: grid; place-items: center; position: relative; z-index: 1; transition: color .25s ease; }
+.tswitch .t-sun { color: #0b0d18; }
+.tswitch .t-moon { color: #6b7086; }
+.tswitch .knob {
+  position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+}
+:root[data-theme="night"] .tswitch { background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+:root[data-theme="night"] .tswitch .knob { transform: translateX(32px); background: #0b0d18; }
+:root[data-theme="night"] .tswitch .t-sun { color: #9aa0b6; }
+:root[data-theme="night"] .tswitch .t-moon { color: #fff; }
+.m-avatar { display: none; }
+.more { display: block; width: 100%; margin-top: 14px; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* ---------- lock ---------- */
 .lock { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
@@ -340,6 +361,17 @@ a { color: inherit; text-decoration: none; }
   .head { margin: 0 -16px; padding: 0 16px; height: 72px; }
   .head h1 { font-size: 24px; }
   .search { display: none; }
+  .head { position: sticky; top: 0; z-index: 9; background: var(--main); padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top)); }
+  .m-avatar {
+    position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(140deg, #fbcfe8, #f9a8d4); color: #831843; font-weight: 600; font-size: 14px;
+  }
+  .live-dot { position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; background: #9aa0b6; border: 2px solid var(--main); }
+  .live-dot.on { background: var(--green); }
+  .main { padding-bottom: 96px; }
+  body:not([data-view="dashboard"]) .right { display: none; }
+  body[data-view="dashboard"] .main { padding-bottom: 8px; }
+  .demo-flag { top: auto; bottom: calc(env(safe-area-inset-bottom) + 74px); border-radius: 8px; font-size: 10px; padding: 4px 10px; }
   .balance-row { flex-direction: column; gap: 10px; }
   .tabs { margin-top: 0; }
   .below { grid-template-columns: 1fr; }
@@ -351,13 +383,35 @@ a { color: inherit; text-decoration: none; }
   .right { padding: 0 16px 110px; }
   .acct-wrap { margin-top: 20px; }
   .tr { grid-template-columns: 1fr auto; gap: 4px 10px; padding: 12px 16px; }
-  .tr.h { display: none; }
   .tr > :nth-child(3) { grid-column: 1 / -1; }
-  .sig { grid-template-columns: 1fr auto; }
-  .sig .body { grid-column: 1 / -1; }
+  .tr.h { display: none; }
+  .tr.trade { grid-template-areas: "side pnl" "price pips" "when pill"; gap: 6px 12px; padding: 14px 16px; align-items: center; }
+  .tr.trade > :nth-child(1) { grid-area: when; font-size: 12px; white-space: nowrap; }
+  .tr.trade > :nth-child(1) br { display: none; }
+  .tr.trade > :nth-child(2) { grid-area: side; }
+  .tr.trade > :nth-child(3) { grid-area: price; grid-column: auto; font-size: 13px; }
+  .tr.trade > :nth-child(4) { grid-area: pips; font-size: 12px; }
+  .tr.trade > :nth-child(5) { grid-area: pnl; font-size: 16px; font-weight: 600; }
+  .tr.trade > :nth-child(6) { grid-area: pill; justify-self: end; }
+  .view-title h2 { display: none; }
+  .view-title { justify-content: flex-end; margin-top: 14px; }
+  .sig { grid-template-columns: 1fr auto; grid-template-areas: "body pill" "why why" "when det"; padding: 14px 16px; gap: 8px 12px; align-items: center; }
+  .sig .body { grid-area: body; line-height: 1.6; }
+  .sig > .pill { grid-area: pill; }
+  .sig .why { grid-area: why; }
+  .sig .when { grid-area: when; font-size: 12px; white-space: nowrap; }
+  .sig .when br { display: none; }
+  .sig details { grid-area: det; justify-self: end; text-align: right; }
+  .sig details[open] { grid-column: 1 / -1; justify-self: stretch; text-align: left; }
+  .tr.day { grid-template-areas: "date pnl" "wins pill"; align-items: center; }
+  .tr.day > :nth-child(1) { grid-area: date; font-weight: 500; }
+  .tr.day > :nth-child(2), .tr.day > :nth-child(4) { display: none; }
+  .tr.day > :nth-child(3) { grid-area: wins; grid-column: auto; font-size: 12px; color: var(--ink-3); }
+  .tr.day > :nth-child(5) { grid-area: pnl; font-size: 16px; font-weight: 600; }
+  .tr.day > :nth-child(6) { grid-area: pill; justify-self: end; }
   .kv { grid-template-columns: 1fr; }
   .bottom-nav {
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(6, 1fr);
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
     background: var(--card); border-top: 1px solid var(--line);
     padding: 8px 6px calc(env(safe-area-inset-bottom) + 8px);
@@ -405,6 +459,14 @@ a { color: inherit; text-decoration: none; }
     <header class="head">
       <h1 id="title">Dashboard</h1>
       <label class="search"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.5"/></svg><input id="search" type="search" placeholder="Search trades and signals"></label>
+      <div class="head-tools">
+        <button type="button" class="tswitch" data-theme-toggle role="switch" aria-checked="false" aria-label="Night mode">
+          <span class="t-sun"><svg width="14" height="14" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M4 16l1.4-1.4M14.6 5.4 16 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="t-moon"><svg width="14" height="14" viewBox="0 0 20 20"><path d="M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z" fill="currentColor"/></svg></span>
+          <span class="knob"></span>
+        </button>
+        <a class="m-avatar" href="#account" aria-label="Account"><span id="m-dot" class="live-dot"></span>Y</a>
+      </div>
     </header>
     <div id="view"></div>
   </main>
@@ -414,7 +476,7 @@ a { color: inherit; text-decoration: none; }
       <div class="icons">
         <button type="button" data-go="signals" aria-label="Signals"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2.5a5 5 0 0 0-5 5v3.3L3.5 14h13L15 10.8V7.5a5 5 0 0 0-5-5zM8 16.5a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span class="dot" id="bell-dot" hidden></span></button>
         <button type="button" data-go="account" aria-label="Account"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M7 2.5h6l-1.5 3h-3zM5.5 9c0-2 2-3.5 4.5-3.5S14.5 7 14.5 9l1 5.5c.3 1.7-1 3-2.7 3H7.2c-1.7 0-3-1.3-2.7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 9v5M8.5 10.2h2.2a1 1 0 0 1 0 2H9.3a1 1 0 0 0 0 2h2.2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
-        <button type="button" id="theme" aria-label="Day or night"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6 16 16M4 16l1.4-1.4M14.6 5.4 16 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        
       </div>
       <div class="me"><div class="avatar" id="avatar">Y</div><svg width="10" height="16" viewBox="0 0 10 16"><path d="M2 6 5 3l3 3M2 10l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div>
     </div>
@@ -471,7 +533,7 @@ a { color: inherit; text-decoration: none; }
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MINUS = "−";
-  const S = { data: null, view: "dashboard", mode: "all", range: "1m", pairA: "equity", pairB: "peak", side: "buy", q: "", timer: null };
+  const S = { data: null, view: "dashboard", mode: "all", range: "1m", pairA: "equity", pairB: "peak", side: "buy", q: "", timer: null, limit: 25 };
 
   /* ---------- icons, in the design's thin line style ---------- */
   const I = {
@@ -484,19 +546,26 @@ a { color: inherit; text-decoration: none; }
     account: '<svg viewBox="0 0 20 20"><path d="M3.5 6.5c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2v7c0 1.1-.9 2-2 2h-9c-1.1 0-2-.9-2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12.5 10h4" stroke="currentColor" stroke-width="1.6"/></svg>',
   };
   const NAV = [["dashboard", "Dashboard"], ["trades", "Trades"], ["signals", "Signals"], ["reports", "Reports"], ["bot", "Bot"], ["rules", "Rules"], ["account", "Account"]];
-  const MOBILE = ["dashboard", "trades", "signals", "reports", "account"];
+  const MOBILE = ["dashboard", "trades", "signals", "reports", "bot", "rules"];
   $("#nav").innerHTML = NAV.map(([k, l]) => `<a href="#${k}" data-k="${k}">${I[k]}${l}</a>`).join("");
-  $("#bottom-nav").innerHTML = NAV.filter(([k]) => MOBILE.includes(k)).map(([k, l]) => `<a href="#${k}" data-k="${k}">${I[k]}${l}</a>`).join("");
+  $("#bottom-nav").innerHTML = NAV.filter(([k]) => MOBILE.includes(k)).map(([k, l]) => `<a href="#${k}" data-k="${k}">${I[k]}${k === "dashboard" ? "Home" : l}</a>`).join("");
 
   /* ---------- theme ---------- */
   const root = document.documentElement;
+  const paintTheme = () => {
+    const night = root.dataset.theme === "night";
+    document.querySelectorAll("[data-theme-toggle]").forEach((b) => b.setAttribute("aria-checked", String(night)));
+    document.querySelector('meta[name="theme-color"]').content = night ? "#12152a" : "#eef1fb";
+  };
   try { if (localStorage.getItem(THEME) === "night") root.dataset.theme = "night"; } catch (_) {}
-  $("#theme").addEventListener("click", () => {
+  paintTheme();
+  document.querySelectorAll("[data-theme-toggle]").forEach((b) => b.addEventListener("click", () => {
     const night = root.dataset.theme !== "night";
     if (night) root.dataset.theme = "night"; else delete root.dataset.theme;
     try { localStorage.setItem(THEME, night ? "night" : "day"); } catch (_) {}
+    paintTheme();
     if (S.data) render();
-  });
+  }));
 
   /* ---------- formatting ---------- */
   const money = (v, signed = false, dp = 2) => {
@@ -704,35 +773,43 @@ a { color: inherit; text-decoration: none; }
     svg.onpointerleave = () => { tip.hidden = true; cx.setAttribute("visibility", "hidden"); };
   }
 
+  const PAGE = 25;
+  const moreBtn = (n) => n > S.limit ? `<button class="more" type="button" id="more">Show ${Math.min(PAGE, n - S.limit)} more</button>` : "";
+  document.addEventListener("click", (e) => {
+    if (e.target.id === "more") { S.limit += PAGE; VIEWS[S.view](); }
+  });
+
   function renderTrades() {
     const q = S.q.toLowerCase();
-    const rows = scope(S.data.trades).filter((t) => !q || `${t.side} ${t.order_type} ${t.entry} ${t.state} ${t.outcome || ""} ${t.mode}`.toLowerCase().includes(q));
-    $("#view").innerHTML = `<div class="view-title"><h2>Trades</h2><span>${rows.length} shown</span></div>
+    const all = scope(S.data.trades).filter((t) => !q || `${t.side} ${t.order_type} ${t.entry} ${t.state} ${t.outcome || ""} ${t.mode}`.toLowerCase().includes(q));
+    const rows = all.slice(0, S.limit);
+    $("#view").innerHTML = `<div class="view-title"><h2>Trades</h2><span>${all.length} in all</span></div>
       <div class="table">${rows.length ? `<div class="tr h"><span>When</span><span>Side</span><span>Entry → Exit</span><span class="num">Pips</span><span class="num">P&amp;L</span><span class="num">Result</span></div>` +
         rows.map((t) => {
           const ts = t.closed_at || t.opened_at || t.created_at, closed = t.state === "closed";
           const res = closed ? (t.outcome === "tp" ? "tp" : t.outcome === "sl" ? "sl" : "manual") : t.state;
           const word = { tp: "Target", sl: "Stopped", manual: "Closed", open: "Open", pending: "Waiting", expired: "Expired" }[res];
-          return `<div class="tr"><span class="muted">${esc(dayName(ts))}<br>${esc(hhmm(ts))}</span>
+          return `<div class="tr trade"><span class="muted">${esc(dayName(ts))}<br> ${esc(hhmm(ts))}</span>
             <span class="side-tag ${t.side === "buy" ? "up" : "down"}">${t.side.toUpperCase()}<small>${esc(t.order_type)} · ${t.units} oz · ${esc(t.mode)}</small></span>
             <span>${price(t.entry)} → ${closed ? price(t.exit) : `<span class="muted">SL ${price(t.sl)} · TP ${price(t.tp)}</span>`}${t.note ? `<br><small class="muted">${esc(t.note)}</small>` : ""}</span>
             <span class="num ${closed ? tone(t.pips) : "muted"}">${closed ? (t.pips > 0 ? "+" : "") + t.pips : "–"}</span>
             <span class="num ${closed ? tone(t.pnl) : "muted"}">${closed ? money(t.pnl, true) : "–"}</span>
             <span class="pill ${res}">${word}</span></div>`;
-        }).join("") : `<div class="empty"><b>No trades yet</b>Every trade the bot places shows up here.</div>`}</div>`;
+        }).join("") : `<div class="empty"><b>No trades yet</b>Every trade the bot places shows up here.</div>`}</div>${moreBtn(all.length)}`;
   }
 
   function renderSignals() {
     const q = S.q.toLowerCase();
-    const rows = S.data.signals.filter((s) => !q || `${s.side} ${s.status} ${s.reason || ""} ${s.raw || ""}`.toLowerCase().includes(q));
-    $("#view").innerHTML = `<div class="view-title"><h2>Signals</h2><span>${rows.length} read</span></div>
+    const all = S.data.signals.filter((s) => !q || `${s.side} ${s.status} ${s.reason || ""} ${s.raw || ""}`.toLowerCase().includes(q));
+    const rows = all.slice(0, S.limit);
+    $("#view").innerHTML = `<div class="view-title"><h2>Signals</h2><span>${all.length} read</span></div>
       <div class="table">${rows.length ? rows.map((s) => `<div class="sig">
-        <span class="muted">${esc(dayName(s.ts))}<br>${esc(hhmm(s.ts))}</span>
-        <div class="body">${s.side ? `<b class="${s.side === "buy" ? "up" : "down"}">${s.side.toUpperCase()}${s.order_type && s.order_type !== "market" ? " " + esc(s.order_type.toUpperCase()) : ""}</b> &nbsp;${price(s.entry)} &nbsp;<span class="muted">SL</span> ${price(s.sl)} &nbsp;<span class="muted">TP</span> ${price(s.tp)}` : `<span class="muted">Not read as a signal</span>`}</div>
+        <span class="muted when">${esc(dayName(s.ts))}<br> ${esc(hhmm(s.ts))}</span>
+        <div class="body">${s.side ? `<b class="${s.side === "buy" ? "up" : "down"}">${s.side.toUpperCase()}${s.order_type && s.order_type !== "market" ? " " + esc(s.order_type.toUpperCase()) : ""}</b> &nbsp;${price(s.entry)} &nbsp;<span class="muted">SL</span>&nbsp;${price(s.sl)} &nbsp;<span class="muted">TP</span>&nbsp;${price(s.tp)}` : `<span class="muted">Not read as a signal</span>`}</div>
         <span class="pill ${esc(s.status)}">${esc(s.status)}</span>
         ${s.reason ? `<div class="why">${esc(s.reason)}</div>` : ""}
         ${s.raw ? `<details><summary>Message</summary><pre>${esc(s.raw)}</pre></details>` : ""}
-      </div>`).join("") : `<div class="empty"><b>No signals yet</b>Each message the bot reads appears here, with what it did.</div>`}</div>`;
+      </div>`).join("") : `<div class="empty"><b>No signals yet</b>Each message the bot reads appears here, with what it did.</div>`}</div>${moreBtn(all.length)}`;
   }
 
   function renderReports() {
@@ -746,7 +823,7 @@ a { color: inherit; text-decoration: none; }
     const rows = [...days.values()].sort((a, b) => b.ts - a.ts);
     $("#view").innerHTML = `<div class="view-title"><h2>Reports</h2><span>by day</span></div>
       <div class="table">${rows.length ? `<div class="tr h"><span>Day</span><span>Trades</span><span>Won</span><span class="num">Pips</span><span class="num">P&amp;L</span><span class="num">Result</span></div>` +
-        rows.map((r) => `<div class="tr"><span>${esc(dayName(r.ts))}</span><span>${r.n}</span><span>${r.w} of ${r.n}</span>
+        rows.map((r) => `<div class="tr day"><span>${esc(dayName(r.ts))}</span><span>${r.n}</span><span>${r.w} of ${r.n}</span>
           <span class="num ${tone(r.pips)}">${(r.pips > 0 ? "+" : "") + r.pips.toFixed(0)}</span>
           <span class="num ${tone(r.pnl)}">${money(r.pnl, true)}</span>
           <span class="pill ${r.pnl >= 0 ? "tp" : "sl"}">${r.pnl >= 0 ? "Green" : "Red"}</span></div>`).join("")
@@ -802,6 +879,7 @@ a { color: inherit; text-decoration: none; }
     const age = b ? Math.max(0, data.now - b.ts) : null;
     const live = b && age < 180;
     $("#status-badge").classList.toggle("off", !live);
+    $("#m-dot").classList.toggle("on", Boolean(live));
     $("#status-title").textContent = !b ? "Bot offline" : live ? (b.mode === "live" ? "MT5 connected" : "Paper mode") : "Bot silent";
     $("#status-sub").textContent = !b ? "start it to connect" : live ? `listening · ${ago(age)} ago` : `last heard ${ago(age)} ago`;
     $("#acct-login").textContent = a ? String(a.login).slice(-4) : "0000";
@@ -844,7 +922,10 @@ a { color: inherit; text-decoration: none; }
   const VIEWS = { dashboard: renderDashboard, trades: renderTrades, signals: renderSignals, reports: renderReports, bot: renderBot, rules: renderRules, account: renderAccount };
   function render() {
     const v = (location.hash || "#dashboard").slice(1);
-    S.view = VIEWS[v] ? v : "dashboard";
+    const next = VIEWS[v] ? v : "dashboard";
+    if (next !== S.view) S.limit = PAGE;
+    S.view = next;
+    document.body.dataset.view = S.view;
     $("#title").textContent = NAV.find(([k]) => k === S.view)[1];
     document.querySelectorAll("[data-k]").forEach((a) => {
       if (a.dataset.k === S.view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
