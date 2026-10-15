@@ -118,6 +118,13 @@ async function ingest(req, env) {
     await env.DB.prepare(
       "INSERT INTO meta (k, v, ts) VALUES ('bot', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
     ).bind(JSON.stringify(payload), ts).run();
+    // A limit the bot reached pauses copying here, where only the owner's
+    // resume lifts it.
+    if (ev.halt) {
+      await env.DB.prepare(
+        "INSERT INTO meta (k, v, ts) VALUES ('control', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
+      ).bind(JSON.stringify({ paused: true, at: ts, reason: String(ev.halt).slice(0, 300) }), ts).run();
+    }
     // The answer carries the desk's instructions, so a pause pressed on a
     // phone reaches the bot within one heartbeat.
     const ctl = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();

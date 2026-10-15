@@ -22,6 +22,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 import desk
 from broker import OandaBroker, PaperBroker
@@ -97,15 +98,50 @@ def balance_of(broker) -> float:
 # Set from the desk: a paused bot still reads and records every signal, it
 # just places nothing. Reading on is what lets the record show what a pause
 # cost or saved.
-CONTROL = {"paused": False}
+CONTROL = {"paused": False, "halt": None}
+
+# A limit reached stops copying until the owner presses resume on the desk:
+# the guard alone would start again by itself the next day. Each limit stops
+# it once per day (the account limit once for good), so a resume is not undone
+# by the next signal that runs into the same, already acknowledged, limit.
+LATCH_PATH = Path(__file__).with_name("latch.json")
+
+
+def _latched() -> set:
+    try:
+        return set(json.loads(LATCH_PATH.read_text()))
+    except Exception:
+        return set()
+
+
+def halt(env: dict, key: str, why: str) -> None:
+    seen = _latched()
+    if key in seen:
+        return
+    LATCH_PATH.write_text(json.dumps(sorted(seen | {key})))
+    CONTROL["paused"] = True
+    CONTROL["halt"] = why          # carried by the heartbeats until the desk has it
+    print(f"STOPPED: {why}", flush=True)
+    notify(env, f"🛑 <b>STOPPED</b>: {why}\nNothing more is placed until you press "
+                f"<b>Resume copying</b> on the desk.")
+
+
+def limit_key(detail: str) -> str | None:
+    """Which limit a refusal ran into, as a latch key, or None for any other."""
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    for prefix, key in (("daily cap", f"daily:{day}"), ("day limit", f"trades:{day}"),
+                        ("total cap", "total")):
+        if detail.startswith(prefix):
+            return key
+    return None
 
 
 def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
     """One message, start to finish."""
     sig = parse(text)
     if sig.tradeable and CONTROL["paused"]:
-        desk.signal(env, sig, "skipped", "copying paused from the desk")
-        notify(env, "⏸ <b>signal skipped</b>: copying is paused from the desk")
+        desk.signal(env, sig, "skipped", "copying paused")
+        notify(env, "⏸ <b>signal skipped</b>: copying is paused; Resume copying on the desk starts it again")
         return
     if not sig.tradeable:
         desk.signal(env, sig, "skipped", "; ".join(sig.problems))
@@ -128,6 +164,9 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
     if not decision.allowed:
         desk.signal(env, sig, "skipped", decision.detail)
         notify(env, f"{head}\n\n⛔️ <b>not placed</b>: {decision.detail}")
+        key = limit_key(decision.detail)
+        if key:
+            halt(env, key, decision.detail)
         return
 
     fill = broker.place(sig, decision.units)
@@ -208,6 +247,15 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                     "login": str(acc.login), "server": acc.server, "demo": broker.demo,
                     "name": getattr(acc, "name", ""), "firm": env.get("ACCOUNT_LABEL", ""),
                 }
+                # Losses that reach a limit stop copying even with no new
+                # signal to run into it, floating losses included.
+                day = time.strftime("%Y-%m-%d", time.gmtime())
+                if limits.daily_stop_usd and st.day_loss >= limits.daily_stop_usd:
+                    halt(env, f"daily:{day}", f"daily stop: ${st.day_loss:.2f} lost today, "
+                                              f"the limit is ${limits.daily_stop_usd:.2f}")
+                if limits.total_stop_usd and st.total_loss >= limits.total_stop_usd:
+                    halt(env, "total", f"account stop: ${st.total_loss:.2f} below the start, "
+                                       f"the limit is ${limits.total_stop_usd:.2f}")
             except Exception as e:
                 print(f"[account snapshot failed: {e}]", flush=True)
         return snap
@@ -219,9 +267,14 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
         import asyncio
         loop = asyncio.get_running_loop()
         while True:
-            got = await loop.run_in_executor(
-                None, lambda: desk.heartbeat(env, "live" if live else "paper", source,
-                                             account_snapshot()))
+            def send():
+                snap = account_snapshot()
+                if CONTROL["halt"]:
+                    snap["halt"] = CONTROL["halt"]
+                return desk.heartbeat(env, "live" if live else "paper", source, snap)
+            got = await loop.run_in_executor(None, send)
+            if CONTROL["halt"] and got.get("paused"):
+                CONTROL["halt"] = None    # the desk has it, and shows it
             if "paused" in got and bool(got["paused"]) != CONTROL["paused"]:
                 CONTROL["paused"] = bool(got["paused"])
                 notify(env, "⏸ <b>copying paused</b> from the desk" if CONTROL["paused"]

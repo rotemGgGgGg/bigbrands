@@ -820,7 +820,7 @@ a { color: inherit; text-decoration: none; }
     const btn = $("#pause");
     btn.textContent = paused ? "Resume copying" : "Pause copying";
     btn.classList.toggle("paused", Boolean(paused));
-    $("#pause-note").textContent = paused ? "Paused: signals are recorded, nothing is placed" : (live ? "Copying every signal" : "");
+    $("#pause-note").textContent = paused ? (data.control.reason ? `Stopped by the bot: ${data.control.reason}` : "Paused: signals are recorded, nothing is placed") : (live ? "Copying every signal" : "");
     $("#bell-dot").hidden = !data.signals.some((s) => data.now - s.ts < 3600);
   }
 
