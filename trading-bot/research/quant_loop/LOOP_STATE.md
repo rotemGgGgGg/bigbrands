@@ -154,6 +154,8 @@ All negative in 2012–19 and 2020–23; win 29–43 % at 1:2 ≈ random-entry b
 ### Iter 37 — lunar cycle (Dichev-Janes new-moon effect), placebo by random phase shifts → FAIL (null as expected)
 New-minus-full spread +0.01 / +0.03 / −0.08 σ, placebo p 0.42 / 0.32 / 0.81; 1:2 brackets 32–37 % wins.
 ## Queue
-40. Month-end / quarter-end pension rebalancing conditioned on month-to-date equity return (and vs 10-y yield change):
+40. (done, iter 38) Month-end / quarter-end pension rebalancing conditioned on month-to-date equity return (and vs 10-y yield change):
     large MTD gains → sell into the last 1–3 sessions (15:00–16:00 MOC window), large MTD losses → buy. At 1:2.
 41. Other HistData cross-asset leads not yet used: USDJPY (risk-on/off carry), XAGUSD, BCOUSD → NQ open.
+### Iter 38 — month/quarter-end rebalancing conditioned on MTD move (126 configs) → FAIL
+3/126 positive in all periods (≈ chance); quarter-end variants n = 13–42 per period; max min-win 42 %.
