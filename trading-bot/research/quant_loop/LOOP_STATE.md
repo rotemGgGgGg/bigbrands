@@ -21,13 +21,19 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 6. ~~Intraday volatility contraction~~ (done, iter 6) (NR-n bars inside the day) → breakout 1:2.
 7. ~~Overnight inventory~~ (done, iter 7) (ON range position + gap) → first-hour continuation/reversal at 1:2.
 
-8. CPI / NFP days — pre-open move fade/follow at 1:2 (dates: BLS schedule; NFP ≈ first Friday).
-9. Leveraged-ETF rebalancing flow (Cheng & Madhavan): |day move| > k σ at 15:30 → continuation to the close, 1:2.
-10. Gap fill: gap size buckets, target = prior close, stop sized for ≥ 1:2.
-11. Failed opening-range breakout: first OR break that closes back inside → fade to the other side (≥ 1:2).
-12. Liquidity-spike fade: 1-minute bar with range > k × average and long wick → fade, 1:2.
-13. Turn-of-month / pre-holiday intraday long with 1:2 brackets.
-14. Monday / weekly-open behaviour (Sunday gap, Monday range vs Friday) at 1:2.
+8. (done, iter 8) CPI / NFP days — pre-open move fade/follow at 1:2 (dates: BLS schedule; NFP ≈ first Friday).
+9. (done, iter 9) Leveraged-ETF rebalancing flow (Cheng & Madhavan): |day move| > k σ at 15:30 → continuation to the close, 1:2.
+10. (done, iter 10) Gap fill: gap size buckets, target = prior close, stop sized for ≥ 1:2.
+11. (done, iter 11) Failed opening-range breakout: first OR break that closes back inside → fade to the other side (≥ 1:2).
+12. (done, iter 12) Liquidity-spike fade: 1-minute bar with range > k × average and long wick → fade, 1:2.
+13. (done, iter 13) Turn-of-month / pre-holiday intraday long with 1:2 brackets.
+14. (done, iter 14) Monday / weekly-open behaviour (Sunday gap, Monday range vs Friday) at 1:2.
+
+15. Free long-history data: Dukascopy USATECH/USA500/USA30 1-minute (CFD proxies of NQ/ES/YM) 2015–2026 — background download.
+16. Cross-asset lead-lag at 1 minute (ES/YM leading NQ) at 1:2 — needs 15.
+17. SMT/PSP on long 1-minute history with structural targets — needs 15.
+18. Pre-2020 out-of-sample check of the provisional candidates (Pre-Open Fade, Monday London) — needs 15.
+19. (done, iter 19) VIX / 10-year yield daily regime (FRED, free) as a filter for the validated edges at 1:2.
 
 ## Iterations
 ### Iter 1 — edge stacking (24 configs) → FAIL
@@ -44,3 +50,11 @@ that extreme gets run more often than it reverses.
 Best TRAIN win 65.7 % (Afternoon, mid vol) → TEST 41.5 %. High-TRAIN rows are late-day time exits, not 2R hits. No row ≥ 60 % in TEST.
 ### Iter 6 — intraday NR-n squeeze breakout (24 configs) → FAIL. Best 42 % / 42 % at 1:2, ≈ 0 R.
 ### Iter 7 — overnight inventory at the open (8 configs with n ≥ 40) → FAIL. ≤ 38 % at 1:2.
+### Iters 8–14 — CPI/NFP, close flow, gap fill, failed OR breakout, spike fade, turn-of-month/pre-holiday, Monday (85 configs) → all FAIL
+Best TEST wins: NFP fade 53 % (TRAIN 34 %), Monday break 40 %, all others ≤ 42 %. None ≥ 50 % in both halves at 1:2.
+### Iter 19 — VIX / 10-year-yield regime filters (FRED) on validated edges (270 configs) → FAIL
+Best: Afternoon long after 10y −5 bp: 64 % / 62 % (n = 44), mostly time exits; nothing ≥ 70 % in both halves.
+### Iter 20 — liquidity magnets / rejections at PDH, PDL, PDC, ONH, ONL, weekly open, round 100/500 (128 configs) → FAIL
+Best 44 % / 46 % at 1:2 (PDL rejection), ≈ 0 R.
+### Data: Dukascopy blocks this container (HTTP 429 / reset). Switched to HistData.com free 1-minute NSXUSD (Nasdaq-100 CFD),
+SPXUSD, UDXUSD (dollar index) 2012–2025 → unlocks queue 16–18 with 8 extra pre-2020 years (true out-of-sample).

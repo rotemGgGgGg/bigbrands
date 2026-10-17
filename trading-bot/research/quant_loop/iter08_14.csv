@@ -1,0 +1,86 @@
+iter,cfg,n,win_tr,win_te,R_tr,R_te,realized
+8,CPI 08:30→09:30 fade stop0.5×move rr2.0 exit+59,76,31.8,40.6,-0.233,0.022,1.48
+8,CPI 08:30→09:30 fade stop0.5×move rr2.0 exit+179,76,29.5,40.6,-0.184,-0.011,1.62
+8,CPI 08:30→09:30 fade stop0.5×move rr3.0 exit+59,76,29.5,34.4,-0.353,0.084,1.66
+8,CPI 08:30→09:30 fade stop0.5×move rr3.0 exit+179,76,22.7,34.4,-0.267,0.052,2.16
+8,CPI 08:30→09:30 fade stop1.0×move rr2.0 exit+59,76,50.0,37.5,0.078,-0.182,1.15
+8,CPI 08:30→09:30 fade stop1.0×move rr2.0 exit+179,76,52.3,43.8,0.185,-0.06,1.24
+8,CPI 08:30→09:30 fade stop1.0×move rr3.0 exit+59,76,50.0,31.2,0.164,-0.307,1.28
+8,CPI 08:30→09:30 fade stop1.0×move rr3.0 exit+179,76,52.3,37.5,0.219,-0.179,1.29
+8,CPI 08:30→09:30 follow stop0.5×move rr2.0 exit+59,76,25.0,31.2,-0.511,-0.225,1.32
+8,CPI 08:30→09:30 follow stop0.5×move rr2.0 exit+179,76,20.5,31.2,-0.583,-0.211,1.42
+8,CPI 08:30→09:30 follow stop0.5×move rr3.0 exit+59,76,22.7,21.9,-0.519,-0.406,1.54
+8,CPI 08:30→09:30 follow stop0.5×move rr3.0 exit+179,76,18.2,21.9,-0.603,-0.376,1.7
+8,CPI 08:30→09:30 follow stop1.0×move rr2.0 exit+59,76,38.6,31.2,-0.163,-0.315,1.11
+8,CPI 08:30→09:30 follow stop1.0×move rr2.0 exit+179,76,29.5,28.1,-0.287,-0.307,1.37
+8,CPI 08:30→09:30 follow stop1.0×move rr3.0 exit+59,76,36.4,25.0,-0.197,-0.44,1.14
+8,CPI 08:30→09:30 follow stop1.0×move rr3.0 exit+179,76,25.0,21.9,-0.413,-0.432,1.35
+8,NFP 08:30→09:30 fade stop0.5×move rr2.0 exit+59,71,36.6,40.0,-0.108,-0.051,1.44
+8,NFP 08:30→09:30 fade stop0.5×move rr2.0 exit+179,71,36.6,36.7,-0.131,-0.048,1.51
+8,NFP 08:30→09:30 fade stop0.5×move rr3.0 exit+59,71,31.7,40.0,-0.123,0.123,1.79
+8,NFP 08:30→09:30 fade stop0.5×move rr3.0 exit+179,71,31.7,33.3,-0.043,0.087,2.12
+8,NFP 08:30→09:30 fade stop1.0×move rr2.0 exit+59,71,41.5,53.3,-0.104,0.268,1.27
+8,NFP 08:30→09:30 fade stop1.0×move rr2.0 exit+179,71,39.0,53.3,-0.065,0.324,1.44
+8,NFP 08:30→09:30 fade stop1.0×move rr3.0 exit+59,71,34.1,53.3,-0.28,0.462,1.45
+8,NFP 08:30→09:30 fade stop1.0×move rr3.0 exit+179,71,31.7,50.0,-0.185,0.534,1.83
+8,NFP 08:30→09:30 follow stop0.5×move rr2.0 exit+59,71,26.8,23.3,-0.377,-0.41,1.54
+8,NFP 08:30→09:30 follow stop0.5×move rr2.0 exit+179,71,26.8,26.7,-0.362,-0.427,1.48
+8,NFP 08:30→09:30 follow stop0.5×move rr3.0 exit+59,71,26.8,23.3,-0.235,-0.21,2.14
+8,NFP 08:30→09:30 follow stop0.5×move rr3.0 exit+179,71,26.8,26.7,-0.117,-0.237,2.2
+8,NFP 08:30→09:30 follow stop1.0×move rr2.0 exit+59,71,46.3,33.3,0.136,-0.072,1.57
+8,NFP 08:30→09:30 follow stop1.0×move rr2.0 exit+179,71,48.8,33.3,0.252,-0.137,1.57
+8,NFP 08:30→09:30 follow stop1.0×move rr3.0 exit+59,71,41.5,26.7,0.198,-0.101,2.05
+8,NFP 08:30→09:30 follow stop1.0×move rr3.0 exit+179,71,43.9,26.7,0.318,-0.137,2.07
+9,close flow |move|>1.0σ stop0.1σ rr2.0,663,33.7,28.9,-0.242,-0.336,1.41
+9,close flow |move|>1.0σ stop0.1σ rr3.0,663,28.0,24.2,-0.233,-0.319,1.92
+9,close flow |move|>1.0σ stop0.2σ rr2.0,663,38.6,34.7,-0.142,-0.198,1.24
+9,close flow |move|>1.0σ stop0.2σ rr3.0,663,37.6,32.5,-0.122,-0.204,1.36
+9,close flow |move|>1.5σ stop0.1σ rr2.0,366,30.7,29.9,-0.311,-0.289,1.47
+9,close flow |move|>1.5σ stop0.1σ rr3.0,366,26.7,23.8,-0.247,-0.262,2.1
+9,close flow |move|>1.5σ stop0.2σ rr2.0,366,34.7,34.1,-0.215,-0.176,1.33
+9,close flow |move|>1.5σ stop0.2σ rr3.0,366,34.2,30.5,-0.161,-0.223,1.49
+9,close flow |move|>2.0σ stop0.1σ rr2.0,190,28.8,27.9,-0.38,-0.347,1.46
+9,close flow |move|>2.0σ stop0.1σ rr3.0,190,23.1,19.8,-0.356,-0.414,2.16
+9,close flow |move|>2.0σ stop0.2σ rr2.0,190,29.8,30.2,-0.277,-0.223,1.52
+9,close flow |move|>2.0σ stop0.2σ rr3.0,190,28.8,26.7,-0.251,-0.254,1.7
+10,gap fill size 0.1-0.3σ rr2.0,312,31.0,32.8,-0.292,-0.177,1.51
+10,gap fill size 0.1-0.3σ rr3.0,312,20.1,25.8,-0.528,-0.211,2.1
+10,gap fill size 0.1-0.6σ rr2.0,681,32.5,33.1,-0.174,-0.129,1.64
+10,gap fill size 0.1-0.6σ rr3.0,681,22.6,23.4,-0.322,-0.239,2.32
+10,gap fill size 0.1-1.5σ rr2.0,1235,33.2,35.4,-0.119,-0.058,1.68
+10,gap fill size 0.1-1.5σ rr3.0,1235,24.1,25.8,-0.2,-0.123,2.43
+10,gap fill size 0.3-0.6σ rr2.0,369,33.8,33.3,-0.08,-0.085,1.75
+10,gap fill size 0.3-0.6σ rr3.0,369,24.6,21.3,-0.157,-0.264,2.54
+10,gap fill size 0.3-1.5σ rr2.0,923,34.0,36.3,-0.062,-0.016,1.75
+10,gap fill size 0.3-1.5σ rr3.0,923,25.4,25.8,-0.093,-0.092,2.58
+10,gap fill size 0.6-1.5σ rr2.0,554,34.1,38.2,-0.049,0.028,1.75
+10,gap fill size 0.6-1.5σ rr3.0,554,26.0,28.6,-0.05,0.018,2.61
+11,failed OR15 breakout fade (only trades with ≥1:2 to far side),378,27.1,26.1,-0.028,-0.079,2.58
+11,failed OR30 breakout fade (only trades with ≥1:2 to far side),648,24.7,24.7,-0.066,-0.065,2.81
+11,failed OR60 breakout fade (only trades with ≥1:2 to far side),834,22.9,29.1,-0.105,-0.011,2.69
+12,spike fade k4 wick0.5 rr2.0,116,24.5,41.8,-0.386,-0.005,1.45
+12,spike fade k4 wick0.5 rr3.0,116,22.4,35.8,-0.243,-0.12,1.78
+12,spike fade k4 wick0.65 rr2.0,42,15.8,39.1,-0.668,-0.283,1.0
+12,spike fade k4 wick0.65 rr3.0,42,15.8,39.1,-0.563,-0.299,1.13
+12,spike fade k6 wick0.5 rr2.0,40,20.8,25.0,-0.496,-0.312,1.64
+12,spike fade k6 wick0.5 rr3.0,40,20.8,18.8,-0.329,-0.375,2.33
+13,turn-of-month long stop0.2σ rr2.0,158,34.4,30.8,-0.068,-0.162,1.74
+13,turn-of-month long stop0.2σ rr3.0,158,26.9,29.2,-0.022,0.084,2.66
+13,turn-of-month long stop0.3σ rr2.0,158,35.5,36.9,0.003,0.051,1.83
+13,turn-of-month long stop0.3σ rr3.0,158,24.7,23.1,-0.117,-0.134,2.67
+13,turn-of-month long stop0.5σ rr2.0,158,34.4,30.8,-0.057,-0.113,1.79
+13,turn-of-month long stop0.5σ rr3.0,158,31.2,26.2,-0.083,-0.111,2.11
+13,pre-holiday long stop0.2σ rr2.0,52,28.6,16.7,-0.242,-0.577,1.75
+13,pre-holiday long stop0.2σ rr3.0,52,21.4,16.7,-0.257,-0.41,2.63
+13,pre-holiday long stop0.3σ rr2.0,52,35.7,20.8,-0.034,-0.426,1.76
+13,pre-holiday long stop0.3σ rr3.0,52,35.7,16.7,0.24,-0.385,2.54
+13,pre-holiday long stop0.5σ rr2.0,52,39.3,25.0,0.012,-0.287,1.67
+13,pre-holiday long stop0.5σ rr3.0,52,35.7,25.0,0.035,-0.21,1.99
+14,Monday Friday-level break cont stop0.2σ rr2.0,246,43.2,40.0,0.151,0.128,1.7
+14,Monday Friday-level break cont stop0.2σ rr3.0,246,36.3,31.0,0.249,0.128,2.47
+14,Monday Friday-level break cont stop0.3σ rr2.0,246,45.2,37.0,0.22,0.039,1.72
+14,Monday Friday-level break cont stop0.3σ rr3.0,246,37.7,33.0,0.233,0.163,2.34
+14,Monday Friday-level break fade stop0.2σ rr2.0,246,29.5,26.0,-0.23,-0.298,1.72
+14,Monday Friday-level break fade stop0.2σ rr3.0,246,24.7,25.0,-0.17,-0.125,2.47
+14,Monday Friday-level break fade stop0.3σ rr2.0,246,30.1,33.0,-0.207,-0.107,1.69
+14,Monday Friday-level break fade stop0.3σ rr3.0,246,26.0,28.0,-0.145,-0.147,2.21
