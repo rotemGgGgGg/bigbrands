@@ -14,8 +14,8 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 
 ## Queue (next first)
 1. ~~Edge stacking~~ (done, iter 1)
-2. Meta-labelling — ML filter trained on events of validated edges only (not raw bars) to lift win rate at 1:2.
-3. Economic calendar — FOMC/CPI/NFP days: pre-open fade + 14:00 FOMC drift at 1:2.
+2. ~~Meta-labelling~~ (done, iter 2)
+3. Economic calendar — FOMC done (iter 3, fail); CPI/NFP pre-open still open
 4. Cross-asset SMT/PSP (Yahoo NQ/ES/YM 1h, 2.4 y) — divergence at swing points → reversal at 1:2.
 5. Volatility-regime conditioning (ATR / range percentile) of the validated edges at 1:2.
 6. Intraday volatility contraction (NR-n bars inside the day) → breakout 1:2.
@@ -25,3 +25,7 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 ### Iter 1 — edge stacking (24 configs) → FAIL
 ≥2 or ≥3 agreeing validated signals, 1:2–1:3 brackets. Best: k=3, stop 0.5σ: 55 % / 48 % wins (TRAIN/TEST), +0.15/+0.07 R.
 Stacking adds ~5–10 pts of win rate, nowhere near 70 % at 1:2. Queue item 1 closed.
+### Iter 2 — meta-labelling on validated-edge events (60 configs) → FAIL
+1,223 first-of-day events (NA, WVB, PM). Best TEST win 59 % (n = 27, realised RR 0.91); at n ≥ 60 ≤ 51 %. Base 39–42 %. ML lifts ~10 pts, not 30.
+### Iter 3 — FOMC days (53 days; 105 configs) → FAIL
+Pre-FOMC drift, 14:00 spike follow/fade, presser reversal at 1:2–1:3. Nothing ≥ 50 % in TRAIN; TEST all negative. (CPI/NFP still open → iter 3b.)
