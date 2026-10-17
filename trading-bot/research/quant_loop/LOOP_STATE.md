@@ -16,10 +16,18 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 1. ~~Edge stacking~~ (done, iter 1)
 2. ~~Meta-labelling~~ (done, iter 2)
 3. Economic calendar — FOMC done (iter 3, fail); CPI/NFP pre-open still open
-4. Cross-asset SMT/PSP (Yahoo NQ/ES/YM 1h, 2.4 y) — divergence at swing points → reversal at 1:2.
-5. Volatility-regime conditioning (ATR / range percentile) of the validated edges at 1:2.
-6. Intraday volatility contraction (NR-n bars inside the day) → breakout 1:2.
-7. Overnight inventory (ON range position + gap) → first-hour continuation/reversal at 1:2.
+4. ~~Cross-asset SMT/PSP~~ (done, iter 4)
+5. ~~Volatility-regime conditioning~~ (done, iter 5)
+6. ~~Intraday volatility contraction~~ (done, iter 6) (NR-n bars inside the day) → breakout 1:2.
+7. ~~Overnight inventory~~ (done, iter 7) (ON range position + gap) → first-hour continuation/reversal at 1:2.
+
+8. CPI / NFP days — pre-open move fade/follow at 1:2 (dates: BLS schedule; NFP ≈ first Friday).
+9. Leveraged-ETF rebalancing flow (Cheng & Madhavan): |day move| > k σ at 15:30 → continuation to the close, 1:2.
+10. Gap fill: gap size buckets, target = prior close, stop sized for ≥ 1:2.
+11. Failed opening-range breakout: first OR break that closes back inside → fade to the other side (≥ 1:2).
+12. Liquidity-spike fade: 1-minute bar with range > k × average and long wick → fade, 1:2.
+13. Turn-of-month / pre-holiday intraday long with 1:2 brackets.
+14. Monday / weekly-open behaviour (Sunday gap, Monday range vs Friday) at 1:2.
 
 ## Iterations
 ### Iter 1 — edge stacking (24 configs) → FAIL
@@ -29,3 +37,10 @@ Stacking adds ~5–10 pts of win rate, nowhere near 70 % at 1:2. Queue item 1 cl
 1,223 first-of-day events (NA, WVB, PM). Best TEST win 59 % (n = 27, realised RR 0.91); at n ≥ 60 ≤ 51 %. Base 39–42 %. ML lifts ~10 pts, not 30.
 ### Iter 3 — FOMC days (53 days; 105 configs) → FAIL
 Pre-FOMC drift, 14:00 spike follow/fade, presser reversal at 1:2–1:3. Nothing ≥ 50 % in TRAIN; TEST all negative. (CPI/NFP still open → iter 3b.)
+### Iter 4 — SMT / PSP across NQ-ES-YM (Yahoo 1h 2.4 y + 5m 70 d; 48 configs) → FAIL
+Every config negative in TRAIN and TEST (best −0.10 R; wins 20–36 % at 1:2–1:3). Divergence at a fresh extreme with the stop at
+that extreme gets run more often than it reverses.
+### Iter 5 — regime conditioning of validated edges (156 configs) → FAIL
+Best TRAIN win 65.7 % (Afternoon, mid vol) → TEST 41.5 %. High-TRAIN rows are late-day time exits, not 2R hits. No row ≥ 60 % in TEST.
+### Iter 6 — intraday NR-n squeeze breakout (24 configs) → FAIL. Best 42 % / 42 % at 1:2, ≈ 0 R.
+### Iter 7 — overnight inventory at the open (8 configs with n ≥ 40) → FAIL. ≤ 38 % at 1:2.
