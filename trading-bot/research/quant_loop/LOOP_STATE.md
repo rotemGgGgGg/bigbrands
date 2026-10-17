@@ -176,6 +176,8 @@ target; OPEN-DRIVE FOLLOW is a second weak, robust survivor
 Agreement does NOT raise the win rate: OD alone (k0.4: 42–43 %, +0.11…+0.18 R) is the best robust row; 'OD & POC agree' flips
 negative in 2024–26; score ≥ 3 has n = 10–27 per period. Opex works only at the 09:30 entry, not at 10:00.
 ## Queue (new free data families)
-44. VIX term structure (CBOE VIX9D / VIX / VIX3M daily CSVs, free): contango/backwardation & 9-day/30-day ratio → next-day
+44. (done, iter 42) VIX term structure (CBOE VIX9D / VIX / VIX3M daily CSVs, free): contango/backwardation & 9-day/30-day ratio → next-day
     intraday direction / range at 1:2.
 45. CBOE daily put/call ratios (equity / index / total, free archive) — sentiment extremes → next-day NQ at 1:2.
+### Iter 42 — VIX term structure (CBOE VIX9D/VIX, VIX/VIX3M: deciles, jumps, backwardation, deep contango; 294 configs) → FAIL
+8/294 positive in all periods (baseline 0/42), max min-win 47 %, no row near 70 % at 1:2.

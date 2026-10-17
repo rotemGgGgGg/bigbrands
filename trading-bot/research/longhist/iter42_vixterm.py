@@ -1,0 +1,59 @@
+"""Iter 42 (queue 44) — VIX term structure (CBOE VIX9D / VIX / VIX3M daily closes, free CSVs; previous day's value only):
+VIX9D/VIX top/bottom decile or jump/drop ≥ 0.08, VIX/VIX3M ≥ 1 (backwardation) or ≤ 0.85 (deep contango) → next-day NQ, same trade
+grid as iter 30/32 (entry 09:30/10:00/13:30/15:00 × long/short/follow/fade × stop k·σ, target 2×, exit close). Three periods."""
+import sys; sys.path[:0] = [".", "..", "../influencers"]
+import numpy as np, pandas as pd, itertools
+exec(open("iter26_web.py").read().split("res = []")[0])
+
+CB = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/cboe/"
+rd = lambda n: pd.read_csv(CB + n + ".csv", parse_dates=["DATE"]).set_index("DATE").CLOSE
+TS = pd.concat(dict(v9=rd("VIX9D"), v=rd("VIX"), v3=rd("VIX3M")), axis=1, sort=True).dropna()
+r9 = TS.v9 / TS.v; r3 = TS.v / TS.v3
+def cal(days):
+    d = pd.DatetimeIndex(days)
+    def prev(x):
+        s = x.reindex(x.index.union(d)).ffill().shift(1); return s.reindex(d).values
+    a9, a3 = prev(r9), prev(r3); d9 = prev(r9.diff())
+    q9 = np.nanpercentile(r9.values, [10, 90])
+    return dict(r9_hi=a9 >= q9[1], r9_lo=a9 <= q9[0], backward=a3 >= 1.0, deep_contango=a3 <= 0.85, r9_jump=d9 >= 0.08,
+                r9_drop=d9 <= -0.08, all_days=np.ones(len(d), bool))
+
+res = []
+P = {}
+for per, o, h, l, c, dow in grids():
+    if per == "2012-19":
+        f0 = frame("NSXUSD"); days = RTH(f0[f0.index.notna()][:"2019-12-31"]).days
+    else:
+        import lib; days = lib.DAYS[(lib.YR < 2024) if per == "2020-23" else (lib.YR >= 2024)]
+    assert len(days) == len(o)
+    C = cal(days); N = len(o)
+    full = np.isfinite(c[:, 389]) & np.isfinite(o[:, 0])
+    mv = np.abs(c[:, 389] / o[:, 0] - 1); sig = pd.Series(mv).rolling(14).mean().shift().values
+    for cn, mask in C.items():
+        for em, side, k in itertools.product((0, 30, 240, 330), ("long", "short", "follow", "fade"), (0.15, 0.25, 0.4)):
+            if em == 0 and side in ("follow", "fade"): continue
+            R = []
+            for i in np.nonzero(mask & full)[0]:
+                if i < 15 or not np.isfinite(sig[i]): continue
+                e = o[i, em]
+                if not np.isfinite(e): continue
+                if side == "long": s = 1
+                elif side == "short": s = -1
+                else:
+                    mvv = c[i, em - 1] - o[i, 0]
+                    if mvv == 0: continue
+                    s = int(np.sign(mvv)) * (1 if side == "follow" else -1)
+                st = k * sig[i] * o[i, 0]
+                px, _, _ = walk(o[i], h[i], l[i], c[i], em, s, e, e - s * st, e + s * 2 * st, 389)
+                R.append((s * (px - e) - 2.25 * e / 17000) / st)
+            R = np.array([r for r in R if np.isfinite(r)])
+            if len(R) < 15: continue
+            res.append(dict(per=per, cond=cn, em=em, side=side, k=k, n=len(R), win=round(100 * (R > 0).mean(), 1), R=round(R.mean(), 3)))
+T = pd.DataFrame(res); T.to_csv("iter42_vixterm.csv", index=False)
+W = T.pivot_table(index=["cond", "em", "side", "k"], columns="per", values=["win", "R", "n"])
+W["minR"] = W["R"].min(axis=1); W["minwin"] = W["win"].min(axis=1)
+pd.set_option("display.width", 250)
+print(W.sort_values("minR", ascending=False).head(25).round(3).to_string())
+print("\nmax min-win:", W["minwin"].max(), "  rows with minwin>=70:", (W["minwin"] >= 70).sum())
+base = W.xs("all_days", level="cond")
+print("rows minR>0:", (W["minR"] > 0).sum(), "of", len(W), " | all_days baseline minR>0:", (base["minR"] > 0).sum(), "of", len(base))
