@@ -156,6 +156,11 @@ New-minus-full spread +0.01 / +0.03 / −0.08 σ, placebo p 0.42 / 0.32 / 0.81; 
 ## Queue
 40. (done, iter 38) Month-end / quarter-end pension rebalancing conditioned on month-to-date equity return (and vs 10-y yield change):
     large MTD gains → sell into the last 1–3 sessions (15:00–16:00 MOC window), large MTD losses → buy. At 1:2.
-41. Other HistData cross-asset leads not yet used: USDJPY (risk-on/off carry), XAGUSD, BCOUSD → NQ open.
+41. (done, iter 39) Other HistData cross-asset leads not yet used: USDJPY (risk-on/off carry), XAGUSD, BCOUSD → NQ open.
 ### Iter 38 — month/quarter-end rebalancing conditioned on MTD move (126 configs) → FAIL
 3/126 positive in all periods (≈ chance); quarter-end variants n = 13–42 per period; max min-win 42 %.
+### Iter 39 — cross-asset overnight leads (USDJPY, silver, Brent residual vs NQ overnight; catch-up / fade; composite; 96 configs)
+→ FAIL. 3/96 positive in all periods (≈ chance), max min-win 36 %.
+## Queue
+42. Dalton's four open types (open-drive / open-test-drive / open-rejection-reverse / open-auction) classified at 10:00 from
+    1-minute structure → conditional continuation/reversal at 1:2.
