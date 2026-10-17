@@ -146,8 +146,14 @@ Taylor 3-day cycle; TPO profiles; 24 h data NSXUSD 2012–19 + Databento 2020–
 All 18 negative in every period; win 13–36 % at 1:2 ≈ the random-entry barrier (33 %) minus costs. No round-number effect on NQ.
 ## Queue
 38. (done, iter 36) Ehlers cycle tools (Hilbert sine-wave / MESA cycle mode) on 1–5 min bars — cycle-mode turning points at 1:2.
-39. Lunar / Bradley-siderograph style calendar folklore (cheap placebo-controlled check, expected null).
+39. (done, iter 37) Lunar / Bradley-siderograph style calendar folklore (cheap placebo-controlled check, expected null).
 ### Iter 35 — overseas lead-lag into the NQ open (HistData DAX GRXEUR, Nikkei JPXJPY: residual catch-up vs NQ over the Europe /
 Tokyo windows, three-market agreement follow/fade; 48 configs) → FAIL. 1/48 positive in all periods (+0.03 R), max min-win 37 %.
 ### Iter 36 — Ehlers Hilbert sine-wave (cycle mode) / instantaneous trendline (trend mode), 5 & 15 min, 18 configs → FAIL
 All negative in 2012–19 and 2020–23; win 29–43 % at 1:2 ≈ random-entry barrier.
+### Iter 37 — lunar cycle (Dichev-Janes new-moon effect), placebo by random phase shifts → FAIL (null as expected)
+New-minus-full spread +0.01 / +0.03 / −0.08 σ, placebo p 0.42 / 0.32 / 0.81; 1:2 brackets 32–37 % wins.
+## Queue
+40. Month-end / quarter-end pension rebalancing conditioned on month-to-date equity return (and vs 10-y yield change):
+    large MTD gains → sell into the last 1–3 sessions (15:00–16:00 MOC window), large MTD losses → buy. At 1:2.
+41. Other HistData cross-asset leads not yet used: USDJPY (risk-on/off carry), XAGUSD, BCOUSD → NQ open.
