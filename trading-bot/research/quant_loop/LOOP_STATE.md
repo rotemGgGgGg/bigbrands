@@ -84,3 +84,15 @@ winners do not carry forward.
 ### Iter 24a — gold (XAUUSD ≈ GC, 08:20–13:30, 2012–2025), evolutionary search → FAIL
 Best: 50 % (2012–19) / 54 % (2020–23) → TEST 2024–25 42 %, +0.06 R. Nothing near 70 % at 1:2.
 (Crude: HistData has no 2024–25 WTI files → periods 2012–17 / 2018–20 / TEST 2021–23.)
+### Iter 24b — crude (WTIUSD ≈ CL, 09:00–14:30, 2012–2023; periods 2012–17 / 2018–20 / TEST 2021–23) → FAIL
+Best 50 % / 54 % → TEST 39 %, −0.25 R.
+### Iter 25 — EIA Wednesday 10:30 (crude) and London PM fix 10:00 NY (gold), fade/follow at 1:2–1:3 (24 configs) → FAIL
+All 25–40 % wins, strongly negative after costs.
+
+## Status after 25 iterations
+Free price-only data is exhausted for this target: NQ 2012–2026 (two sources), ES, YM, DXY, gold, crude; ~650 K rule/config tests
+plus 11 M correlated-FVG combinations. Best genuinely out-of-sample results never exceed ~60 % at planned 1:2.
+## Queue (new — data-dependent)
+26. True order-flow (Databento trades / MBP-1 for NQ) — needs the user's Databento key and budget.
+27. Other index CFDs on HistData (DAX GRXEUR, Nikkei JPXJPY, FTSE UKXGBP) to look for structural effects transferable to NQ.
+28. Options-derived data (GEX / 0DTE) — paid sources only.
