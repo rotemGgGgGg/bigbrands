@@ -132,7 +132,7 @@ as the stop). Fixed (entry only from minute T, stop = extreme known at entry): m
 ### Iter 32 — volatility-of-volatility (day after VIX ±10/15/20 % change, VIX z ≥ 2 / ≤ −1.5, VIX top/bottom quintile; 378 configs)
 → FAIL. Baseline 0/42; 30/378 positive in all periods but best min-win ≈ 44 % at 1:2 and min R ≤ +0.09.
 ## Queue
-35. Index CFDs on HistData (DAX GRXEUR, Nikkei JPXJPY, FTSE UKXGBP) — overseas session close → NQ open lead-lag at 1:2 (was item 27).
+35. (done, iter 35) Index CFDs on HistData (DAX GRXEUR, Nikkei JPXJPY, FTSE UKXGBP) — overseas session close → NQ open lead-lag at 1:2 (was item 27).
 36. Opex-Friday short as a filter/overlay on the eval-engine ledger (does it raise pass % without lowering the win rate?).
 ### Iter 33 — old market-profile / pit-era ideas (Dalton overnight inventory, prior/virgin POC magnet, poor high/low repair,
 Taylor 3-day cycle; TPO profiles; 24 h data NSXUSD 2012–19 + Databento 2020–26; 19 rules) → FAIL
@@ -147,3 +147,5 @@ All 18 negative in every period; win 13–36 % at 1:2 ≈ the random-entry barri
 ## Queue
 38. Ehlers cycle tools (Hilbert sine-wave / MESA cycle mode) on 1–5 min bars — cycle-mode turning points at 1:2.
 39. Lunar / Bradley-siderograph style calendar folklore (cheap placebo-controlled check, expected null).
+### Iter 35 — overseas lead-lag into the NQ open (HistData DAX GRXEUR, Nikkei JPXJPY: residual catch-up vs NQ over the Europe /
+Tokyo windows, three-market agreement follow/fade; 48 configs) → FAIL. 1/48 positive in all periods (+0.03 R), max min-win 37 %.
