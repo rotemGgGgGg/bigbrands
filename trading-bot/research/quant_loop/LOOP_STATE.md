@@ -162,5 +162,13 @@ New-minus-full spread +0.01 / +0.03 / −0.08 σ, placebo p 0.42 / 0.32 / 0.81; 
 ### Iter 39 — cross-asset overnight leads (USDJPY, silver, Brent residual vs NQ overnight; catch-up / fade; composite; 96 configs)
 → FAIL. 3/96 positive in all periods (≈ chance), max min-win 36 %.
 ## Queue
-42. Dalton's four open types (open-drive / open-test-drive / open-rejection-reverse / open-auction) classified at 10:00 from
+42. (done, iter 40) Dalton four open types (open-drive / open-test-drive / open-rejection-reverse / open-auction) classified at 10:00 from
     1-minute structure → conditional continuation/reversal at 1:2.
+### Iter 40 — Dalton open types at 10:00 (OD / OTD / ORR / OA; follow & fade; inside/outside prior range; 200 configs) → FAIL for
+target; OPEN-DRIVE FOLLOW is a second weak, robust survivor
+- Open-drive (first-30 extreme at the open, close at 10:00 ≥ 0.2–0.5σ away) → follow at 10:00, 1:2: positive in all three periods
+  across most neighbours: e.g. d0.2 k0.4 +0.14 / +0.18 / +0.11 R, 42–43 % wins, ≈ 40 trades a year. Consistent with iter 27b.
+- OTD / ORR / OA and all fade variants: ≈ zero or negative. Max min-win 42 %.
+## Queue
+43. Confluence of the weak survivors (open-drive follow, POC magnet direction, opex-Friday short, Reddit open-model long):
+    does agreement raise the win rate toward 70 % at 1:2? (expected: only marginally — check with the honest funnel).
