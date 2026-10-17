@@ -96,3 +96,13 @@ plus 11 M correlated-FVG combinations. Best genuinely out-of-sample results neve
 26. True order-flow (Databento trades / MBP-1 for NQ) — needs the user's Databento key and budget.
 27. Other index CFDs on HistData (DAX GRXEUR, Nikkei JPXJPY, FTSE UKXGBP) to look for structural effects transferable to NQ.
 28. Options-derived data (GEX / 0DTE) — paid sources only.
+### Iter 26 — web batch (Yu-Rentzler-Wolf overnight reversal on NQ futures; Reddit 'open model'; fade to NY open; 33 rules,
+three periods 2012–19 / 2020–23 / 2024–26) → FAIL for the target
+- Open model long-only (+kσ above the open → close): positive in all three periods (+0.03 … +0.12 σ, 53–61 % wins) — first rule
+  that survives pre-2020, but vs a same-minute random-day long control the excess is small/inconsistent (control wins at k = 0.5
+  in two periods); at 1:2 brackets it is negative. → weak drift + momentum, not a 70 %/1:2 edge.
+- Overnight reversal: inconsistent sign across periods. Fade to NY open: negative everywhere.
+## Queue (web sources to mine next)
+29. TradingView public strategy scripts tagged NQ/ES with open source (rank by likes) — port rules, three-period test.
+30. Quantpedia free strategy pages on index futures intraday.
+31. Academic: Corte-Kosowski-Wang overnight reversal across futures; Lou-Polk-Skouras intraday/overnight clientele.
