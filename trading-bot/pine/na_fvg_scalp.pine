@@ -8,7 +8,7 @@
 // 2. The first half-hour close (10:00 … 15:30) outside the band sets today's direction.
 // 3. After that, the first 1-minute Fair Value Gap in that direction (long: high[2] < low) marks the level;
 //    a limit order waits at the gap's edge (long: the gap top = that bar's low) for up to 60 minutes.
-// 4. Target = 0.15 × typical daily move, stop = 2.0 × typical daily move
+// 4. Target = 0.10 × typical daily move, stop = 1.5 × typical daily move (92 % wins, both periods; research/winrate/hiwin.py)
 //    (typical daily move = 14-day mean |close/open − 1| × price). Flat at 15:55. One trade a day.
 // margin 1%: Pine v6 defaults to 100%, which silently rejects every MNQ order (1 contract ≈ $62K > $50K capital).
 strategy("NA-FVG Scalp [NQ]", shorttitle = "NA-FVG", overlay = true, pyramiding = 0,
@@ -17,8 +17,8 @@ strategy("NA-FVG Scalp [NQ]", shorttitle = "NA-FVG", overlay = true, pyramiding 
      commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
 
 lookback = input.int(14, "Noise lookback (sessions)", minval = 5, maxval = 60)
-tpMult   = input.float(0.15, "Target × daily move", step = 0.025)
-slMult   = input.float(2.0, "Stop × daily move", step = 0.25)
+tpMult   = input.float(0.10, "Target × daily move", step = 0.025)
+slMult   = input.float(1.5, "Stop × daily move", step = 0.25)
 fvgWin   = input.int(60, "FVG window after the break (minutes)", minval = 10, maxval = 240)
 qty      = input.int(1, "Contracts", minval = 1)
 showBand = input.bool(true, "Show noise band")
