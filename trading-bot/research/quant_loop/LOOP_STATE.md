@@ -81,3 +81,6 @@ winners do not carry forward.
 24. Other markets tradable at Lucid with free long 1-minute history: gold (XAUUSD ≈ GC) and crude (WTIUSD ≈ CL) from HistData —
     same funnel (three periods).
 25. Session-specific structures in those markets (London fix for gold, EIA Wednesday 10:30 for crude).
+### Iter 24a — gold (XAUUSD ≈ GC, 08:20–13:30, 2012–2025), evolutionary search → FAIL
+Best: 50 % (2012–19) / 54 % (2020–23) → TEST 2024–25 42 %, +0.06 R. Nothing near 70 % at 1:2.
+(Crude: HistData has no 2024–25 WTI files → periods 2012–17 / 2018–20 / TEST 2021–23.)

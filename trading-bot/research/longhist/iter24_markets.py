@@ -51,7 +51,8 @@ else:
 print("rows", len(df), flush=True)
 df = df.sort_values(["i", "m", "side"]).reset_index(drop=True)
 FE = [x for x in df.columns if x not in ("i", "m", "yr", "side") and not x.startswith("R")]
-X = df[FE].to_numpy(np.float32); I = df.i.values; yr = df.yr.values; per = np.where(yr < 2020, 0, np.where(yr < 2024, 1, 2)); M = df.m.values; SIDE = df.side.values
+X = df[FE].to_numpy(np.float32); I = df.i.values; yr = df.yr.values; B1, B2 = (2018, 2021) if PAIR == 'WTIUSD' else (2020, 2024)   # crude: HistData has no 2024–25 → periods 2012–17 / 2018–20 / TEST 2021–23
+per = np.where(yr < B1, 0, np.where(yr < B2, 1, 2)); M = df.m.values; SIDE = df.side.values
 Q = {f: np.nanquantile(X[per < 2, k], np.linspace(0.05, 0.95, 19)) for k, f in enumerate(FE)}
 rng = np.random.default_rng(int(sys.argv[1]) if len(sys.argv) > 1 else 0)
 def evaluate(r):
