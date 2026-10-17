@@ -1,0 +1,107 @@
+per,rule,n,win,R,rr_plan
+2012-19,VIX channel W15 f0.5 stop0.5 tgt1.0,1479,46.1,0.021,2.0
+2012-19,VIX channel W15 f0.5 stop0.5 tgt2.0,1479,45.6,0.039,4.0
+2012-19,VIX channel W15 f0.5 stop1.0 tgt1.0,1479,49.2,-0.001,1.0
+2012-19,VIX channel W15 f0.5 stop1.0 tgt2.0,1479,48.7,0.009,2.0
+2012-19,VIX channel W15 f1.0 stop0.5 tgt1.0,591,47.4,0.033,2.0
+2012-19,VIX channel W15 f1.0 stop0.5 tgt2.0,591,46.9,0.068,4.0
+2012-19,VIX channel W15 f1.0 stop1.0 tgt1.0,591,50.6,-0.005,1.0
+2012-19,VIX channel W15 f1.0 stop1.0 tgt2.0,591,50.1,0.012,2.0
+2012-19,VIX channel W30 f0.5 stop0.5 tgt1.0,1473,45.3,-0.009,2.0
+2012-19,VIX channel W30 f0.5 stop0.5 tgt2.0,1473,44.9,0.01,4.0
+2012-19,VIX channel W30 f0.5 stop1.0 tgt1.0,1473,48.7,-0.009,1.0
+2012-19,VIX channel W30 f0.5 stop1.0 tgt2.0,1473,48.3,-0.001,2.0
+2012-19,VIX channel W30 f1.0 stop0.5 tgt1.0,589,47.5,0.028,2.0
+2012-19,VIX channel W30 f1.0 stop0.5 tgt2.0,589,47.0,0.06,4.0
+2012-19,VIX channel W30 f1.0 stop1.0 tgt1.0,589,50.9,-0.005,1.0
+2012-19,VIX channel W30 f1.0 stop1.0 tgt2.0,589,50.4,0.012,2.0
+2012-19,VIX channel W60 f0.5 stop0.5 tgt1.0,1438,46.2,0.003,2.0
+2012-19,VIX channel W60 f0.5 stop0.5 tgt2.0,1438,45.9,0.007,4.0
+2012-19,VIX channel W60 f0.5 stop1.0 tgt1.0,1438,48.8,-0.014,1.0
+2012-19,VIX channel W60 f0.5 stop1.0 tgt2.0,1438,48.5,-0.012,2.0
+2012-19,VIX channel W60 f1.0 stop0.5 tgt1.0,575,48.3,0.056,2.0
+2012-19,VIX channel W60 f1.0 stop0.5 tgt2.0,575,47.7,0.067,4.0
+2012-19,VIX channel W60 f1.0 stop1.0 tgt1.0,575,51.0,0.001,1.0
+2012-19,VIX channel W60 f1.0 stop1.0 tgt2.0,575,50.3,0.004,2.0
+2012-19,Opening drive first5m body≥2.0×avg 25/38,60,43.3,0.078,1.52
+2012-19,Opening drive first5m body≥2.0×avg 1:2,60,36.7,-inf,2.0
+2012-19,Opening drive first5m body≥3.0×avg 25/38,14,57.1,0.646,1.52
+2012-19,Opening drive first5m body≥3.0×avg 1:2,14,42.9,-inf,2.0
+2012-19,Opening drive first15m body≥2.0×avg 25/38,232,42.2,-0.002,1.52
+2012-19,Opening drive first15m body≥2.0×avg 1:2,232,34.9,-inf,2.0
+2012-19,Opening drive first15m body≥3.0×avg 25/38,46,52.2,0.322,1.52
+2012-19,Opening drive first15m body≥3.0×avg 1:2,46,45.7,-inf,2.0
+2012-19,Opening drive first30m body≥2.0×avg 25/38,412,41.0,-0.045,1.52
+2012-19,Opening drive first30m body≥2.0×avg 1:2,412,33.5,-inf,2.0
+2012-19,Opening drive first30m body≥3.0×avg 25/38,68,48.5,0.202,1.52
+2012-19,Opening drive first30m body≥3.0×avg 1:2,68,42.6,-inf,2.0
+2020-23,VIX channel W15 f0.5 stop0.5 tgt1.0,801,47.8,0.041,2.0
+2020-23,VIX channel W15 f0.5 stop0.5 tgt2.0,801,46.8,0.045,4.0
+2020-23,VIX channel W15 f0.5 stop1.0 tgt1.0,801,54.9,0.021,1.0
+2020-23,VIX channel W15 f0.5 stop1.0 tgt2.0,801,54.2,0.025,2.0
+2020-23,VIX channel W15 f1.0 stop0.5 tgt1.0,355,50.1,0.082,2.0
+2020-23,VIX channel W15 f1.0 stop0.5 tgt2.0,355,49.0,0.062,4.0
+2020-23,VIX channel W15 f1.0 stop1.0 tgt1.0,355,54.6,0.032,1.0
+2020-23,VIX channel W15 f1.0 stop1.0 tgt2.0,355,53.5,0.021,2.0
+2020-23,VIX channel W30 f0.5 stop0.5 tgt1.0,794,48.1,0.052,2.0
+2020-23,VIX channel W30 f0.5 stop0.5 tgt2.0,794,47.4,0.058,4.0
+2020-23,VIX channel W30 f0.5 stop1.0 tgt1.0,794,55.4,0.035,1.0
+2020-23,VIX channel W30 f0.5 stop1.0 tgt2.0,794,54.8,0.04,2.0
+2020-23,VIX channel W30 f1.0 stop0.5 tgt1.0,353,51.0,0.093,2.0
+2020-23,VIX channel W30 f1.0 stop0.5 tgt2.0,353,50.1,0.082,4.0
+2020-23,VIX channel W30 f1.0 stop1.0 tgt1.0,353,55.2,0.041,1.0
+2020-23,VIX channel W30 f1.0 stop1.0 tgt2.0,353,54.4,0.034,2.0
+2020-23,VIX channel W60 f0.5 stop0.5 tgt1.0,779,51.0,0.068,2.0
+2020-23,VIX channel W60 f0.5 stop0.5 tgt2.0,779,50.4,0.074,4.0
+2020-23,VIX channel W60 f0.5 stop1.0 tgt1.0,779,57.0,0.032,1.0
+2020-23,VIX channel W60 f0.5 stop1.0 tgt2.0,779,56.7,0.038,2.0
+2020-23,VIX channel W60 f1.0 stop0.5 tgt1.0,347,51.3,0.081,2.0
+2020-23,VIX channel W60 f1.0 stop0.5 tgt2.0,347,50.7,0.078,4.0
+2020-23,VIX channel W60 f1.0 stop1.0 tgt1.0,347,55.6,0.038,1.0
+2020-23,VIX channel W60 f1.0 stop1.0 tgt2.0,347,55.0,0.037,2.0
+2020-23,Opening drive first5m body≥2.0×avg 25/38,14,50.0,0.181,1.52
+2020-23,Opening drive first5m body≥2.0×avg 1:2,14,50.0,0.402,2.0
+2020-23,Opening drive first5m body≥3.0×avg 25/38,2,100.0,1.441,1.52
+2020-23,Opening drive first5m body≥3.0×avg 1:2,2,100.0,1.922,2.0
+2020-23,Opening drive first15m body≥2.0×avg 25/38,80,48.8,0.149,1.52
+2020-23,Opening drive first15m body≥2.0×avg 1:2,80,37.5,0.025,2.0
+2020-23,Opening drive first15m body≥3.0×avg 25/38,11,63.6,0.524,1.52
+2020-23,Opening drive first15m body≥3.0×avg 1:2,11,54.5,0.57,2.0
+2020-23,Opening drive first30m body≥2.0×avg 25/38,135,45.2,0.059,1.52
+2020-23,Opening drive first30m body≥2.0×avg 1:2,135,39.3,0.063,2.0
+2020-23,Opening drive first30m body≥3.0×avg 25/38,13,53.8,0.278,1.52
+2020-23,Opening drive first30m body≥3.0×avg 1:2,13,46.2,0.318,2.0
+2024-26,VIX channel W15 f0.5 stop0.5 tgt1.0,559,47.2,0.045,2.0
+2024-26,VIX channel W15 f0.5 stop0.5 tgt2.0,559,45.8,0.035,4.0
+2024-26,VIX channel W15 f0.5 stop1.0 tgt1.0,559,54.0,0.035,1.0
+2024-26,VIX channel W15 f0.5 stop1.0 tgt2.0,559,52.8,0.031,2.0
+2024-26,VIX channel W15 f1.0 stop0.5 tgt1.0,234,44.0,0.043,2.0
+2024-26,VIX channel W15 f1.0 stop0.5 tgt2.0,234,41.9,0.039,4.0
+2024-26,VIX channel W15 f1.0 stop1.0 tgt1.0,234,45.3,-0.003,1.0
+2024-26,VIX channel W15 f1.0 stop1.0 tgt2.0,234,43.6,-0.001,2.0
+2024-26,VIX channel W30 f0.5 stop0.5 tgt1.0,557,46.1,-0.001,2.0
+2024-26,VIX channel W30 f0.5 stop0.5 tgt2.0,557,45.2,-0.005,4.0
+2024-26,VIX channel W30 f0.5 stop1.0 tgt1.0,557,53.1,0.023,1.0
+2024-26,VIX channel W30 f0.5 stop1.0 tgt2.0,557,52.2,0.023,2.0
+2024-26,VIX channel W30 f1.0 stop0.5 tgt1.0,234,42.7,0.004,2.0
+2024-26,VIX channel W30 f1.0 stop0.5 tgt2.0,234,41.0,0.011,4.0
+2024-26,VIX channel W30 f1.0 stop1.0 tgt1.0,234,44.4,-0.017,1.0
+2024-26,VIX channel W30 f1.0 stop1.0 tgt2.0,234,42.7,-0.013,2.0
+2024-26,VIX channel W60 f0.5 stop0.5 tgt1.0,551,46.3,-0.011,2.0
+2024-26,VIX channel W60 f0.5 stop0.5 tgt2.0,551,46.1,0.006,4.0
+2024-26,VIX channel W60 f0.5 stop1.0 tgt1.0,551,51.4,-0.004,1.0
+2024-26,VIX channel W60 f0.5 stop1.0 tgt2.0,551,51.2,0.008,2.0
+2024-26,VIX channel W60 f1.0 stop0.5 tgt1.0,228,40.4,-0.017,2.0
+2024-26,VIX channel W60 f1.0 stop0.5 tgt2.0,228,39.9,0.029,4.0
+2024-26,VIX channel W60 f1.0 stop1.0 tgt1.0,228,42.5,-0.025,1.0
+2024-26,VIX channel W60 f1.0 stop1.0 tgt2.0,228,42.1,-0.002,2.0
+2024-26,Opening drive first5m body≥2.0×avg 25/38,5,60.0,0.433,1.52
+2024-26,Opening drive first5m body≥2.0×avg 1:2,5,20.0,-0.532,2.0
+2024-26,Opening drive first15m body≥2.0×avg 25/38,46,54.3,0.29,1.52
+2024-26,Opening drive first15m body≥2.0×avg 1:2,46,45.7,0.242,2.0
+2024-26,Opening drive first15m body≥3.0×avg 25/38,10,60.0,0.433,1.52
+2024-26,Opening drive first15m body≥3.0×avg 1:2,10,50.0,0.417,2.0
+2024-26,Opening drive first30m body≥2.0×avg 25/38,74,45.9,0.078,1.52
+2024-26,Opening drive first30m body≥2.0×avg 1:2,74,40.5,0.086,2.0
+2024-26,Opening drive first30m body≥3.0×avg 25/38,16,56.2,0.338,1.52
+2024-26,Opening drive first30m body≥3.0×avg 1:2,16,43.8,0.23,2.0

@@ -103,6 +103,11 @@ three periods 2012–19 / 2020–23 / 2024–26) → FAIL for the target
   in two periods); at 1:2 brackets it is negative. → weak drift + momentum, not a 70 %/1:2 edge.
 - Overnight reversal: inconsistent sign across periods. Fade to NY open: negative everywhere.
 ## Queue (web sources to mine next)
-29. TradingView public strategy scripts tagged NQ/ES with open source (rank by likes) — port rules, three-period test.
+29. (done, iter 27) TradingView public strategy scripts tagged NQ/ES with open source (rank by likes) — port rules, three-period test.
 30. Quantpedia free strategy pages on index futures intraday.
 31. Academic: Corte-Kosowski-Wang overnight reversal across futures; Lou-Polk-Skouras intraday/overnight clientele.
+### Iter 27 — TradingView scripts (NY VIX Channel Trend; Opening Drive Continuation NQ; 75+48 configs, three periods) → FAIL for target
+- VIX channel: ≈ 0 to +0.08 R, 40–55 % wins.
+- Opening drive (1-minute candle body ≥ k × 20-bar avg range between 09:50 and 10:20, follow, bracket ≈ 1:1.5 scaled to price):
+  31/75 variants positive in all three periods incl. 2012–19; most robust k 2.5, window 09:50–10:20, 30/45: +0.21/+0.22/+0.26 R,
+  49–53 % wins, but only 6–12 trades a year. Weak, rare — PROVISIONAL (not 70 %/1:2).
