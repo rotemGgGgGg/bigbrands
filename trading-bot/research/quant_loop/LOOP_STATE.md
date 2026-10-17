@@ -170,5 +170,12 @@ target; OPEN-DRIVE FOLLOW is a second weak, robust survivor
   across most neighbours: e.g. d0.2 k0.4 +0.14 / +0.18 / +0.11 R, 42–43 % wins, ≈ 40 trades a year. Consistent with iter 27b.
 - OTD / ORR / OA and all fade variants: ≈ zero or negative. Max min-win 42 %.
 ## Queue
-43. Confluence of the weak survivors (open-drive follow, POC magnet direction, opex-Friday short, Reddit open-model long):
+43. (done, iter 41) Confluence of the weak survivors (open-drive follow, POC magnet direction, opex-Friday short, Reddit open-model long):
     does agreement raise the win rate toward 70 % at 1:2? (expected: only marginally — check with the honest funnel).
+### Iter 41 — confluence of the weak survivors (OD, POC magnet, open-model, opex) at 10:00 → FAIL
+Agreement does NOT raise the win rate: OD alone (k0.4: 42–43 %, +0.11…+0.18 R) is the best robust row; 'OD & POC agree' flips
+negative in 2024–26; score ≥ 3 has n = 10–27 per period. Opex works only at the 09:30 entry, not at 10:00.
+## Queue (new free data families)
+44. VIX term structure (CBOE VIX9D / VIX / VIX3M daily CSVs, free): contango/backwardation & 9-day/30-day ratio → next-day
+    intraday direction / range at 1:2.
+45. CBOE daily put/call ratios (equity / index / total, free archive) — sentiment extremes → next-day NQ at 1:2.
