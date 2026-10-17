@@ -140,5 +140,10 @@ Taylor 3-day cycle; TPO profiles; 24 h data NSXUSD 2012–19 + Databento 2020–
   periods but tiny: +0.04 / +0.09 / +0.09…+0.12 R, 39–45 % wins. A real but small magnet — nowhere near 70 % at 1:2.
 - Overnight inventory, poor highs/lows, Taylor buy/short-day violations: negative or inconsistent.
 ## Queue
-37. Osler (2003, FX) round-number order clustering: take-profits at round numbers → reversal on first touch; stops just beyond →
+37. (done, iter 34) Osler (2003, FX) round-number order clustering: take-profits at round numbers → reversal on first touch; stops just beyond →
     acceleration after the cross. NQ 100/50-pt levels at 1:2.
+### Iter 34 — Osler round-number order clustering (NQ 100/50/25-pt levels, fade first touch / break-out, 18 configs) → FAIL
+All 18 negative in every period; win 13–36 % at 1:2 ≈ the random-entry barrier (33 %) minus costs. No round-number effect on NQ.
+## Queue
+38. Ehlers cycle tools (Hilbert sine-wave / MESA cycle mode) on 1–5 min bars — cycle-mode turning points at 1:2.
+39. Lunar / Bradley-siderograph style calendar folklore (cheap placebo-controlled check, expected null).
