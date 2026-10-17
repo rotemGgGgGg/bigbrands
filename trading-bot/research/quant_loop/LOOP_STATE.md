@@ -74,3 +74,10 @@ All portfolio edges are 2020+ only on this data (caveat: CFD bid quotes hurt tin
 expected 13–30 days and $360–450 to the first pass.
 ### Iter 22 — cross-asset on 14 years (NQ−ES spread, SMT at day extremes, dollar shocks; 56 configs) → FAIL
 All 28–42 % wins at 1:2 in every period; SMT strongly negative (−0.4 … −1.1 R).
+### Iter 23 — evolutionary search on 14 years (63,000 rules, fitness = worse of 2012–19 / 2020–23) → FAIL
+Best rule: 58 % (2012–19) / 63 % (2020–23) at 1:2 → untouched TEST 2024–25: 39 %, −0.15 R. Even with a two-period filter the
+winners do not carry forward.
+## Queue (new)
+24. Other markets tradable at Lucid with free long 1-minute history: gold (XAUUSD ≈ GC) and crude (WTIUSD ≈ CL) from HistData —
+    same funnel (three periods).
+25. Session-specific structures in those markets (London fix for gold, EIA Wednesday 10:30 for crude).
