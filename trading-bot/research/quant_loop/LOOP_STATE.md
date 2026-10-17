@@ -30,8 +30,8 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 14. (done, iter 14) Monday / weekly-open behaviour (Sunday gap, Monday range vs Friday) at 1:2.
 
 15. (done via HistData) long-history data NSX/SPX/DXY 1-minute 2012–2025
-16. Cross-asset lead-lag at 1 minute (ES/YM leading NQ) at 1:2 — needs 15.
-17. SMT/PSP on long 1-minute history with structural targets — needs 15.
+16. (done, iter 22) Cross-asset lead-lag at 1 minute (ES/YM leading NQ) at 1:2 — needs 15.
+17. (done, iter 22) SMT/PSP on long 1-minute history with structural targets — needs 15.
 18. (done, iter 18 — candidates fail pre-2020) Pre-2020 out-of-sample check of the provisional candidates (Pre-Open Fade, Monday London) — needs 15.
 19. (done, iter 19) VIX / 10-year yield daily regime (FRED, free) as a filter for the validated edges at 1:2.
 
@@ -72,3 +72,5 @@ Noise-Area +0.004 σ (5/8 yrs), NA-FVG 92 % −0.059 σ (t −4.7, 0/8), Afterno
 All portfolio edges are 2020+ only on this data (caveat: CFD bid quotes hurt tiny-target variants most).
 ### Side study — fastest eval pass (fastpass/): big size ≈ coin-flip barrier odds (34–42 % per attempt, 5–16 days);
 expected 13–30 days and $360–450 to the first pass.
+### Iter 22 — cross-asset on 14 years (NQ−ES spread, SMT at day extremes, dollar shocks; 56 configs) → FAIL
+All 28–42 % wins at 1:2 in every period; SMT strongly negative (−0.4 … −1.1 R).
