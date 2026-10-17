@@ -1,0 +1,8 @@
+strategy,n,per_yr,win_tr,win_te,R_tr,R_te,plan_rr,real_rr
+A 9AM model target=candle,1527,226,28.3,31.5,-0.291,0.026,2.91,1.9
+A 9AM model target=rr2,1593,236,31.0,34.5,-0.246,-0.096,2.0,1.58
+A 9AM model target=rr1,1593,236,48.0,47.6,-0.196,-0.159,1.0,0.76
+B SPONSORED 5m FVG target=liq,1068,158,32.9,28.5,-0.049,-0.252,2.59,1.8
+B SPONSORED 5m FVG target=rr2,1217,180,36.3,33.9,-0.082,-0.162,2.0,1.51
+B unsponsored 5m FVG target=liq,496,73,33.9,41.8,-0.11,0.036,1.92,1.56
+B unsponsored 5m FVG target=rr2,1084,161,40.0,45.0,0.001,0.053,2.0,1.44
