@@ -181,3 +181,7 @@ negative in 2024–26; score ≥ 3 has n = 10–27 per period. Opex works only a
 45. CBOE daily put/call ratios (equity / index / total, free archive) — sentiment extremes → next-day NQ at 1:2.
 ### Iter 42 — VIX term structure (CBOE VIX9D/VIX, VIX/VIX3M: deciles, jumps, backwardation, deep contango; 294 configs) → FAIL
 8/294 positive in all periods (baseline 0/42), max min-win 47 %, no row near 70 % at 1:2.
+45. (skipped) CBOE free put/call archive ends 2019-10 → no 2020+ out-of-sample possible; not testable under the funnel.
+46. Lucca-Moench pre-FOMC drift (equities rise into the 14:00 announcement): FOMC-day 09:30→13:59 long and day-before variants at
+    1:2; dates from federalreserve.gov calendars (fetched, not typed from memory).
+47. 'Turnaround Tuesday' / Monday-range weekly structure at 1:2.
