@@ -145,7 +145,9 @@ Taylor 3-day cycle; TPO profiles; 24 h data NSXUSD 2012–19 + Databento 2020–
 ### Iter 34 — Osler round-number order clustering (NQ 100/50/25-pt levels, fade first touch / break-out, 18 configs) → FAIL
 All 18 negative in every period; win 13–36 % at 1:2 ≈ the random-entry barrier (33 %) minus costs. No round-number effect on NQ.
 ## Queue
-38. Ehlers cycle tools (Hilbert sine-wave / MESA cycle mode) on 1–5 min bars — cycle-mode turning points at 1:2.
+38. (done, iter 36) Ehlers cycle tools (Hilbert sine-wave / MESA cycle mode) on 1–5 min bars — cycle-mode turning points at 1:2.
 39. Lunar / Bradley-siderograph style calendar folklore (cheap placebo-controlled check, expected null).
 ### Iter 35 — overseas lead-lag into the NQ open (HistData DAX GRXEUR, Nikkei JPXJPY: residual catch-up vs NQ over the Europe /
 Tokyo windows, three-market agreement follow/fade; 48 configs) → FAIL. 1/48 positive in all periods (+0.03 R), max min-win 37 %.
+### Iter 36 — Ehlers Hilbert sine-wave (cycle mode) / instantaneous trendline (trend mode), 5 & 15 min, 18 configs → FAIL
+All negative in 2012–19 and 2020–23; win 29–43 % at 1:2 ≈ random-entry barrier.
