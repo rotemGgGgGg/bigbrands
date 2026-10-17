@@ -29,10 +29,10 @@ alt charts 25,740 · ML 360 · evolutionary 380,000 · influencers 46 · DFR 3,7
 13. (done, iter 13) Turn-of-month / pre-holiday intraday long with 1:2 brackets.
 14. (done, iter 14) Monday / weekly-open behaviour (Sunday gap, Monday range vs Friday) at 1:2.
 
-15. Free long-history data: Dukascopy USATECH/USA500/USA30 1-minute (CFD proxies of NQ/ES/YM) 2015–2026 — background download.
+15. (done via HistData) long-history data NSX/SPX/DXY 1-minute 2012–2025
 16. Cross-asset lead-lag at 1 minute (ES/YM leading NQ) at 1:2 — needs 15.
 17. SMT/PSP on long 1-minute history with structural targets — needs 15.
-18. Pre-2020 out-of-sample check of the provisional candidates (Pre-Open Fade, Monday London) — needs 15.
+18. (done, iter 18 — candidates fail pre-2020) Pre-2020 out-of-sample check of the provisional candidates (Pre-Open Fade, Monday London) — needs 15.
 19. (done, iter 19) VIX / 10-year yield daily regime (FRED, free) as a filter for the validated edges at 1:2.
 
 ## Iterations
@@ -58,3 +58,12 @@ Best: Afternoon long after 10y −5 bp: 64 % / 62 % (n = 44), mostly time exits;
 Best 44 % / 46 % at 1:2 (PDL rejection), ≈ 0 R.
 ### Data: Dukascopy blocks this container (HTTP 429 / reset). Switched to HistData.com free 1-minute NSXUSD (Nasdaq-100 CFD),
 SPXUSD, UDXUSD (dollar index) 2012–2025 → unlocks queue 16–18 with 8 extra pre-2020 years (true out-of-sample).
+### Iter 18 — TRUE out-of-sample 2012–2019 (HistData NSXUSD, never used for selection; cost scaled to price) → candidates DOWNGRADED
+| candidate | n | win | realised RR | exp | years + |
+|---|---|---|---|---|---|
+| Pre-Open Fade 76 % version | 153 | 67.3 % | 0.49 | +0.003 R | 4/8 |
+| Pre-Open Fade 1:2 | 90 | 31.1 % | 1.81 | −0.131 R | 3/8 |
+| Monday London sweep | 51 | 41.2 % | 0.99 | −0.133 R | 2/8 |
+| Williams volatility breakout | 1,251 | 45.1 % | 1.37 | +0.054 R (t 1.56) | 5/8 |
+Pre-Open Fade and Monday London did not exist before 2020 → regime-specific, not structural. (Caveat: CFD pre-market quotes.)
+Lesson for the loop: every future candidate must also pass 2012–2019.
