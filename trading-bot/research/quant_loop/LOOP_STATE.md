@@ -182,6 +182,12 @@ negative in 2024–26; score ≥ 3 has n = 10–27 per period. Opex works only a
 ### Iter 42 — VIX term structure (CBOE VIX9D/VIX, VIX/VIX3M: deciles, jumps, backwardation, deep contango; 294 configs) → FAIL
 8/294 positive in all periods (baseline 0/42), max min-win 47 %, no row near 70 % at 1:2.
 45. (skipped) CBOE free put/call archive ends 2019-10 → no 2020+ out-of-sample possible; not testable under the funnel.
-46. Lucca-Moench pre-FOMC drift (equities rise into the 14:00 announcement): FOMC-day 09:30→13:59 long and day-before variants at
+46. (done, iter 3) Lucca-Moench pre-FOMC drift (equities rise into the 14:00 announcement): FOMC-day 09:30→13:59 long and day-before variants at
     1:2; dates from federalreserve.gov calendars (fetched, not typed from memory).
-47. 'Turnaround Tuesday' / Monday-range weekly structure at 1:2.
+47. (done, iter 43) Turnaround Tuesday' / Monday-range weekly structure at 1:2.
+### Iter 43 — weekly-structure folklore (Turnaround Tuesday, Monday after down Friday, etc.; 336 configs) → FAIL
+6/336 positive in all periods (≈ chance), max min-win 47 %. (Queue 46 pre-FOMC drift was already tested in iter 3 → fail.)
+## Status after 43 iterations
+Free data is exhausted for the 70 % / 1:2 target. Robust (all-period) survivors are all weak, 40–60 % wins at ~1:2:
+open-drive follow (+0.1–0.2 R), opex-Friday short at 09:30 (+0.1–0.7 R, 12/yr), POC magnet (+0.04–0.12 R), Reddit open model.
+Remaining untested families need paid / user-supplied data: 26 order flow (Databento MBP-1/trades), 28 options GEX / 0DTE.
