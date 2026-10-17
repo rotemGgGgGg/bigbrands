@@ -1,0 +1,54 @@
+per,rule,n,win,R
+2012-19,A ON inventory q0.8 → on_mid,763,35.8,-0.045
+2012-19,A ON inventory q0.8 → prev_close,741,37.9,-0.018
+2012-19,A ON inventory q0.9 → on_mid,378,34.9,-0.061
+2012-19,A ON inventory q0.9 → prev_close,372,39.5,0.008
+2012-19,A ON inventory q1.0 → on_mid,34,32.4,-0.124
+2012-19,A ON inventory q1.0 → prev_close,34,32.4,-0.208
+2012-19,B prior POC dist≥0.1σ,1769,38.3,-0.026
+2012-19,B2 virgin POC (10d) dist≥0.1σ,1728,37.5,-0.04
+2012-19,B prior POC dist≥0.25σ,1564,38.9,0.011
+2012-19,B2 virgin POC (10d) dist≥0.25σ,1464,38.5,0.015
+2012-19,B prior POC dist≥0.5σ,1207,39.8,0.036
+2012-19,B2 virgin POC (10d) dist≥0.5σ,1006,39.0,0.037
+2012-19,B prior POC dist≥0.75σ,916,40.6,0.042
+2012-19,B2 virgin POC (10d) dist≥0.75σ,700,39.0,0.025
+2012-19,C poor high/low repair dist≥0.1σ,414,34.1,-0.171
+2012-19,C poor high/low repair dist≥0.25σ,377,33.2,-0.186
+2012-19,C poor high/low repair dist≥0.5σ,318,35.8,-0.108
+2012-19,D Taylor buy-day violation reclaim,225,43.1,0.053
+2012-19,D Taylor short-day violation reclaim,213,42.3,0.045
+2020-23,A ON inventory q0.8 → on_mid,401,32.9,-0.079
+2020-23,A ON inventory q0.8 → prev_close,391,32.5,-0.099
+2020-23,A ON inventory q0.9 → on_mid,172,32.0,-0.096
+2020-23,A ON inventory q0.9 → prev_close,168,32.7,-0.084
+2020-23,B prior POC dist≥0.1σ,885,36.9,-0.016
+2020-23,B2 virgin POC (10d) dist≥0.1σ,859,35.6,-0.043
+2020-23,B prior POC dist≥0.25σ,752,38.6,0.047
+2020-23,B2 virgin POC (10d) dist≥0.25σ,693,36.7,0.008
+2020-23,B prior POC dist≥0.5σ,589,40.2,0.09
+2020-23,B2 virgin POC (10d) dist≥0.5σ,495,39.4,0.087
+2020-23,B prior POC dist≥0.75σ,431,40.8,0.079
+2020-23,B2 virgin POC (10d) dist≥0.75σ,323,40.6,0.093
+2020-23,C poor high/low repair dist≥0.1σ,217,33.2,-0.129
+2020-23,C poor high/low repair dist≥0.25σ,191,34.6,-0.075
+2020-23,C poor high/low repair dist≥0.5σ,156,35.9,-0.041
+2020-23,D Taylor buy-day violation reclaim,125,39.2,0.034
+2020-23,D Taylor short-day violation reclaim,104,36.5,-0.017
+2024-26,A ON inventory q0.8 → on_mid,255,34.1,-0.062
+2024-26,A ON inventory q0.8 → prev_close,245,43.3,0.097
+2024-26,A ON inventory q0.9 → on_mid,138,37.7,0.051
+2024-26,A ON inventory q0.9 → prev_close,134,51.5,0.271
+2024-26,B prior POC dist≥0.1σ,607,39.9,-0.007
+2024-26,B2 virgin POC (10d) dist≥0.1σ,591,38.2,-0.032
+2024-26,B prior POC dist≥0.25σ,516,40.5,0.02
+2024-26,B2 virgin POC (10d) dist≥0.25σ,477,38.6,-0.006
+2024-26,B prior POC dist≥0.5σ,405,43.7,0.092
+2024-26,B2 virgin POC (10d) dist≥0.5σ,335,43.3,0.115
+2024-26,B prior POC dist≥0.75σ,306,44.8,0.085
+2024-26,B2 virgin POC (10d) dist≥0.75σ,227,44.9,0.121
+2024-26,C poor high/low repair dist≥0.1σ,139,38.1,-0.088
+2024-26,C poor high/low repair dist≥0.25σ,131,39.7,-0.045
+2024-26,C poor high/low repair dist≥0.5σ,101,39.6,-0.09
+2024-26,D Taylor buy-day violation reclaim,72,38.9,-0.088
+2024-26,D Taylor short-day violation reclaim,68,33.8,-0.078

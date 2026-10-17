@@ -134,3 +134,11 @@ as the stop). Fixed (entry only from minute T, stop = extreme known at entry): m
 ## Queue
 35. Index CFDs on HistData (DAX GRXEUR, Nikkei JPXJPY, FTSE UKXGBP) — overseas session close → NQ open lead-lag at 1:2 (was item 27).
 36. Opex-Friday short as a filter/overlay on the eval-engine ledger (does it raise pass % without lowering the win rate?).
+### Iter 33 — old market-profile / pit-era ideas (Dalton overnight inventory, prior/virgin POC magnet, poor high/low repair,
+Taylor 3-day cycle; TPO profiles; 24 h data NSXUSD 2012–19 + Databento 2020–26; 19 rules) → FAIL
+- POC magnet (open ≥ 0.5σ from the prior / nearest virgin POC → trade toward it, stop half the distance): positive in all three
+  periods but tiny: +0.04 / +0.09 / +0.09…+0.12 R, 39–45 % wins. A real but small magnet — nowhere near 70 % at 1:2.
+- Overnight inventory, poor highs/lows, Taylor buy/short-day violations: negative or inconsistent.
+## Queue
+37. Osler (2003, FX) round-number order clustering: take-profits at round numbers → reversal on first touch; stops just beyond →
+    acceleration after the cross. NQ 100/50-pt levels at 1:2.
