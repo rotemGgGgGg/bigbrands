@@ -116,6 +116,12 @@ three periods 2012–19 / 2020–23 / 2024–26) → FAIL for the target
 ### Iter 29 — minute-of-day seasonality (450 slot × condition tests, three periods) → FAIL
 124 same-sign-in-all-periods vs ≈ 112 expected by chance; best min |t| 1.48 (15:00 continuation on down days). No tradable drift.
 ## Queue
-32. Calendar microstructure: monthly opex / quad witching / half-days / index-rebalance days at 1:2.
+32. (done, iter 30) Calendar microstructure.
 33. Daily-bar exhaustion: N-day extremes + intraday reversal trigger at 1:2.
 34. Volatility-of-volatility: days after VIX spikes/crushes — intraday range expansion plays at 1:2.
+### Iter 30 — calendar microstructure (opex, quad witching, Monday after opex, opex week, month turn, pre-holiday; 420 configs,
+three periods) → FAIL for the target, one PROVISIONAL calendar effect
+- Max min-win across periods 52.8 %; nothing near 70 % at 1:2. Baseline (all days) 0/42 configs positive in all periods; 29/420 overall.
+- Opex Friday SHORT at the 09:30 open, stop 0.25σ / target 0.5σ, exit close: positive in all 9 (k × period) cells.
+  2012–19 +0.13 R (41 % win, placebo p 0.03) · 2020–23 +0.09 R (38 %, p 0.07) · 2024–26 +0.71 R (61 %, p 0.00); other Fridays −0.18…−0.31 R.
+  12 trades a year, uneven by year (2014/15/17/18/21/23 slightly negative). Real-looking but weak → candidate filter, not a strategy.
