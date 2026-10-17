@@ -67,3 +67,8 @@ SPXUSD, UDXUSD (dollar index) 2012–2025 → unlocks queue 16–18 with 8 extra
 | Williams volatility breakout | 1,251 | 45.1 % | 1.37 | +0.054 R (t 1.56) | 5/8 |
 Pre-Open Fade and Monday London did not exist before 2020 → regime-specific, not structural. (Caveat: CFD pre-market quotes.)
 Lesson for the loop: every future candidate must also pass 2012–2019.
+### Iter 21 — whole portfolio on TRUE out-of-sample 2012–2019 → FAIL
+Noise-Area +0.004 σ (5/8 yrs), NA-FVG 92 % −0.059 σ (t −4.7, 0/8), Afternoon −0.007 σ, Rebound +0.004 σ, Rebound-95 % −0.088 σ.
+All portfolio edges are 2020+ only on this data (caveat: CFD bid quotes hurt tiny-target variants most).
+### Side study — fastest eval pass (fastpass/): big size ≈ coin-flip barrier odds (34–42 % per attempt, 5–16 days);
+expected 13–30 days and $360–450 to the first pass.

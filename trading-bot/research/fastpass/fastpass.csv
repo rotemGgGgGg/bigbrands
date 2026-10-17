@@ -1,0 +1,54 @@
+approach,cfg,pass_pct,days_pass,days_fail,exp_days_to_pass,exp_cost
+A coin flip,stop 20 / tgt 30 pts × 5 MNQ,5.7,55.6,44.8,979.7,3195.3
+A coin flip,stop 20 / tgt 30 pts × 10 MNQ,13.1,21.5,14.7,132.3,1255.7
+A coin flip,stop 20 / tgt 30 pts × 20 MNQ,23.7,7.4,6.0,27.2,646.3
+A coin flip,stop 20 / tgt 60 pts × 5 MNQ,11.4,46.1,28.2,266.6,1324.0
+A coin flip,stop 20 / tgt 60 pts × 10 MNQ,20.8,10.9,10.2,49.8,723.3
+A coin flip,stop 20 / tgt 120 pts × 5 MNQ,23.8,22.7,17.8,79.8,630.7
+A coin flip,stop 40 / tgt 30 pts × 5 MNQ,14.1,42.1,30.4,231.4,1088.0
+A coin flip,stop 40 / tgt 30 pts × 10 MNQ,24.2,13.2,10.2,46.6,640.3
+A coin flip,stop 40 / tgt 30 pts × 20 MNQ,34.0,4.9,3.9,12.6,442.3
+A coin flip,stop 40 / tgt 60 pts × 5 MNQ,22.6,24.6,17.4,90.4,710.3
+A coin flip,stop 40 / tgt 60 pts × 10 MNQ,27.6,7.5,6.1,23.6,548.0
+A coin flip,stop 40 / tgt 120 pts × 5 MNQ,26.6,12.6,10.9,42.8,566.7
+A coin flip,stop 75 / tgt 30 pts × 5 MNQ,20.7,28.3,17.6,96.1,727.3
+A coin flip,stop 75 / tgt 30 pts × 10 MNQ,29.8,9.8,6.7,25.8,505.7
+A coin flip,stop 75 / tgt 60 pts × 5 MNQ,23.4,14.7,10.6,50.6,656.3
+A coin flip,stop 75 / tgt 60 pts × 10 MNQ,35.7,5.2,4.3,13.1,423.7
+A coin flip,stop 75 / tgt 120 pts × 5 MNQ,28.3,8.9,6.7,26.1,531.7
+B Williams VB,1 MNQ cap None,81.6,195.4,61.1,209.2,184.0
+B Williams VB,1 MNQ cap 1500,81.1,188.8,57.2,202.2,185.0
+B Williams VB,2 MNQ cap None,61.5,76.0,41.1,101.8,244.0
+B Williams VB,2 MNQ cap 1500,61.5,69.5,37.9,93.3,244.0
+B Williams VB,3 MNQ cap None,48.9,43.5,26.8,71.6,307.0
+B Williams VB,3 MNQ cap 1500,48.6,37.3,22.7,61.2,308.0
+B Williams VB,5 MNQ cap None,35.8,27.0,13.9,52.0,419.0
+B Williams VB,5 MNQ cap 1500,32.5,17.4,12.5,43.3,462.0
+B Williams VB,8 MNQ cap None,27.0,21.5,9.2,46.4,555.0
+B Williams VB,8 MNQ cap 1500,23.8,10.9,7.2,34.0,630.0
+B Williams VB,10 MNQ cap None,25.3,21.1,7.6,43.7,593.0
+B Williams VB,10 MNQ cap 1500,21.1,8.3,6.0,30.8,711.0
+C Noise-Area break,1 MNQ cap None,74.8,161.8,87.1,191.1,201.0
+C Noise-Area break,1 MNQ cap 1500,73.9,159.6,89.2,191.0,203.0
+C Noise-Area break,2 MNQ cap None,58.7,57.4,37.3,83.7,256.0
+C Noise-Area break,2 MNQ cap 1500,55.6,52.1,37.4,82.0,270.0
+C Noise-Area break,3 MNQ cap None,49.9,33.4,18.0,51.5,300.0
+C Noise-Area break,3 MNQ cap 1500,48.0,29.5,18.5,49.5,312.0
+C Noise-Area break,5 MNQ cap None,43.0,22.1,10.0,35.3,349.0
+C Noise-Area break,5 MNQ cap 1500,41.7,16.3,9.9,30.2,359.0
+C Noise-Area break,8 MNQ cap None,39.3,18.3,7.3,29.6,382.0
+C Noise-Area break,8 MNQ cap 1500,37.3,10.6,6.8,21.9,402.0
+C Noise-Area break,10 MNQ cap None,35.0,17.4,6.7,29.8,429.0
+C Noise-Area break,10 MNQ cap 1500,33.6,8.5,5.7,19.7,447.0
+D WVB + NA,1 MNQ cap None,74.9,87.0,40.2,100.4,200.0
+D WVB + NA,1 MNQ cap 1500,72.1,83.5,38.5,98.4,208.0
+D WVB + NA,2 MNQ cap None,42.0,34.4,20.5,62.8,357.0
+D WVB + NA,2 MNQ cap 1500,39.4,25.8,19.9,56.3,381.0
+D WVB + NA,3 MNQ cap None,36.7,26.4,13.0,48.7,409.0
+D WVB + NA,3 MNQ cap 1500,35.1,16.4,11.5,37.7,428.0
+D WVB + NA,5 MNQ cap None,27.3,20.3,8.6,43.3,550.0
+D WVB + NA,5 MNQ cap 1500,23.8,8.6,6.8,30.5,630.0
+D WVB + NA,8 MNQ cap None,23.3,19.4,6.2,39.6,643.0
+D WVB + NA,8 MNQ cap 1500,19.9,5.6,4.4,23.5,755.0
+D WVB + NA,10 MNQ cap None,21.7,18.9,5.6,38.8,690.0
+D WVB + NA,10 MNQ cap 1500,19.4,4.7,3.8,20.7,774.0
