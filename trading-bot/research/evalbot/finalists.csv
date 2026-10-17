@@ -1,0 +1,7 @@
+policy,tr_pass_pct,tr_days_pass,tr_days_fail,tr_exp_days,tr_exp_cost,tr_trade_win,tr_day_win,tr_n_attempts,te_pass_pct,te_days_pass,te_days_fail,te_exp_days,te_exp_cost,te_trade_win,te_day_win,te_n_attempts
+"{""edges"": [""FVG"", ""NA"", ""PF"", ""PM""], ""base"": 10, ""press_at"": 500, ""mult"": 1.5, ""cap"": 600, ""stop"": null, ""max_trades"": 2}",22.1,6.8,2.9,17.1,680,62.8,59.8,195,11.1,6.7,2.2,24.3,1350.0,49.7,48.6,117.0
+"{""edges"": [""FVG"", ""NA"", ""PF"", ""PM""], ""base"": 10, ""press_at"": null, ""mult"": 1.5, ""cap"": 900, ""stop"": 1000, ""max_trades"": 2}",22.6,6.4,3.4,17.9,665,62.3,57.1,195,12.8,9.1,2.7,27.1,1170.0,51.8,48.9,117.0
+"{""edges"": [""FVG"", ""NA"", ""PF"", ""PM""], ""base"": 10, ""press_at"": 500, ""mult"": 1.5, ""cap"": 1200, ""stop"": 400, ""max_trades"": 2}",21.0,6.3,3.1,17.9,713,62.4,57.1,195,11.1,11.8,2.5,31.8,1350.0,51.7,48.4,117.0
+"{""edges"": [""FVG"", ""NA"", ""PF"", ""PM"", ""WVB""], ""base"": 1, ""press_at"": null, ""mult"": 2.0, ""cap"": null, ""stop"": 400, ""max_trades"": 5}",78.5,49.1,38.7,59.7,191,64.6,53.8,195,50.4,42.3,23.9,65.8,297.0,59.9,47.4,117.0
+"{""edges"": [""PF"", ""PM""], ""base"": 8, ""press_at"": 500, ""mult"": 0.5, ""cap"": 600, ""stop"": 1000, ""max_trades"": 3}",76.4,51.6,23.7,59.0,196,61.1,61.3,195,32.5,34.9,18.3,73.1,462.0,50.5,50.2,117.0
+"{""edges"": [""PF"", ""PM"", ""WVB""], ""base"": 3, ""press_at"": 500, ""mult"": 0.5, ""cap"": null, ""stop"": 700, ""max_trades"": 3}",75.9,53.5,20.2,59.9,198,54.2,53.7,195,45.7,40.2,13.9,56.7,328.0,49.9,48.7,116.0
