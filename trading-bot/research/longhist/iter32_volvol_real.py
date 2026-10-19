@@ -1,0 +1,63 @@
+"""Iter 32 — volatility-of-volatility: the day AFTER a VIX spike / crush / extreme level (FRED VIXCLS close, known the evening
+before) — same trade grid as iter 30 (entry 09:30/10:00/13:30/15:00 × long/short/follow/fade × stop k·σ, target 2×, exit close)."""
+import sys; sys.path[:0] = [".", "..", "../influencers"]
+import numpy as np, pandas as pd, itertools
+exec(open("iter26_web.py").read().split("res = []")[0])
+sys.path.insert(0, "../gapfb")
+from sess24 import build, t2m
+_S = build(); _R0 = t2m("09:30")
+def grids():
+    for nm, key, msk in (("2010-19", "A", None), ("2020-23", "B", "lt"), ("2024-26", "B", "ge")):
+        days, X = _S[key]
+        if msk: m = (days.year < 2024) if msk == "lt" else (days.year >= 2024); days, X = days[m], X[m]
+        R = X[:, _R0:_R0 + 390]; _DAYS[nm] = days
+        yield nm, R[:, :, 0], R[:, :, 1], R[:, :, 2], R[:, :, 3], days.weekday.values
+_DAYS = {}
+
+V = pd.read_csv("../quant_loop/vix.csv"); V.columns = ["date", "vix"]; V["date"] = pd.to_datetime(V.date)
+V = V.set_index("date").vix.apply(pd.to_numeric, errors="coerce").dropna()
+chg = V.pct_change(); z = (V - V.rolling(20).mean()) / V.rolling(20).std()
+def cal(days):
+    d = pd.DatetimeIndex(days)
+    def prev(x):      # value of the last VIX close strictly before each trading day
+        s = x.reindex(x.index.union(d)).ffill().shift(1); return s.reindex(d).values
+    c1, z1, v1 = prev(chg), prev(z), prev(V)
+    q = np.nanpercentile(V.values, [20, 80])
+    return dict(spike20=c1 >= 0.20, spike10=c1 >= 0.10, crush10=c1 <= -0.10, crush15=c1 <= -0.15, z_hi2=z1 >= 2, z_lo15=z1 <= -1.5,
+                vix_hi=v1 >= q[1], vix_lo=v1 <= q[0], all_days=np.ones(len(d), bool))
+
+res = []
+P = {}
+for per, o, h, l, c, dow in grids():
+    days = _DAYS[per]
+    C = cal(days); N = len(o)
+    full = np.isfinite(c[:, 389]) & np.isfinite(o[:, 0])
+    mv = np.abs(c[:, 389] / o[:, 0] - 1); sig = pd.Series(mv).rolling(14).mean().shift().values
+    for cn, mask in C.items():
+        for em, side, k in itertools.product((0, 30, 240, 330), ("long", "short", "follow", "fade"), (0.15, 0.25, 0.4)):
+            if em == 0 and side in ("follow", "fade"): continue
+            R = []
+            for i in np.nonzero(mask & full)[0]:
+                if i < 15 or not np.isfinite(sig[i]): continue
+                e = o[i, em]
+                if not np.isfinite(e): continue
+                if side == "long": s = 1
+                elif side == "short": s = -1
+                else:
+                    mvv = c[i, em - 1] - o[i, 0]
+                    if mvv == 0: continue
+                    s = int(np.sign(mvv)) * (1 if side == "follow" else -1)
+                st = k * sig[i] * o[i, 0]
+                px, _, _ = walk(o[i], h[i], l[i], c[i], em, s, e, e - s * st, e + s * 2 * st, 389)
+                R.append((s * (px - e) - 2.25 * e / 17000) / st)
+            R = np.array([r for r in R if np.isfinite(r)])
+            if len(R) < 15: continue
+            res.append(dict(per=per, cond=cn, em=em, side=side, k=k, n=len(R), win=round(100 * (R > 0).mean(), 1), R=round(R.mean(), 3)))
+T = pd.DataFrame(res); T.to_csv("iter32_volvol_real.csv", index=False)
+W = T.pivot_table(index=["cond", "em", "side", "k"], columns="per", values=["win", "R", "n"])
+W["minR"] = W["R"].min(axis=1); W["minwin"] = W["win"].min(axis=1)
+pd.set_option("display.width", 250)
+print(W.sort_values("minR", ascending=False).head(25).round(3).to_string())
+print("\nmax min-win:", W["minwin"].max(), "  rows with minwin>=70:", (W["minwin"] >= 70).sum())
+base = W.xs("all_days", level="cond")
+print("rows minR>0:", (W["minR"] > 0).sum(), "of", len(W), " | all_days baseline minR>0:", (base["minR"] > 0).sum(), "of", len(base))

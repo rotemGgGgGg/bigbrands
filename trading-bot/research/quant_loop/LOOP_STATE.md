@@ -281,4 +281,8 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 74. (done, iter 74) Event days and GapFB-score / Pre-Fade: CPI, NFP, FOMC days (dates from official calendars) — include or skip?
 ### Iter 74 — event days: GapFB-score better on NFP/CPI/FOMC days (small n) → keep trading them; Pre-Fade unaffected.
 ## Queue
-76. Real-data re-runs of iter32 (vol-of-vol) and iter42 (VIX term structure) — cheap, expected same as CFD.
+76. (done, iter 75) Real-data re-runs of iter32 (vol-of-vol) and iter42 (VIX term structure) — cheap, expected same as CFD.
+### Iter 75 — real-data re-runs of vol-of-vol (32/378) and VIX term structure (8/294): same as CFD → no edge.
+## Queue
+77. Pre-Fade refinement with the funnel on real data: window (60/90/120 min), z (1.5–3), TP/SL multiples, exit time — train 2010–19, validate 2020–23, test once.
+78. Opex short refinement: entry 09:30 vs 09:35/10:00, stop k grid, exit time — same funnel.
