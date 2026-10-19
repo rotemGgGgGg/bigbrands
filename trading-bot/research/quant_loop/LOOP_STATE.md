@@ -195,3 +195,9 @@ Remaining untested families need paid / user-supplied data: 26 order flow (Datab
 Real NQ 2010–26 (user's Databento file). Gap ≥ 0.3 % + 5-min OR stop entry, stop 3×ATR(1m), no target, exit 15:55:
 24–27 % wins, R:R 1:3.0–3.7, +0.14 / +0.19 / +0.08 R, 15/17 years positive; placebo (non-gap days) negative. Max DD 51 R.
 The posted 2:1-target version loses (34 % ≈ random barrier). See research/gapfb/README.md.
+### Iter 45 — GapFB improvement funnel (7,776 configs train → validate → test) + pre-entry filters
+Best family: 15-min OR, gap direction only, 2×ATR stop (+5×ATR trail), entry ≤10:30, exit 15:55: +0.32/+0.32/+0.13 R
+(train/val/TEST), ~33 % win at 1:3. Filters: 'yesterday against gap' strong in train+val, fails TEST. TEST edge weak (t ≈ 1).
+## Queue
+48. GapFB-C as a multi-market portfolio (ES via SPXUSD CFD 2012–25, gold XAUUSD; ES/YM futures if the user uploads them).
+49. Eval sizing for GapFB-C (Lucid 50K: $2K EOD trailing, 50 % consistency) — pass %, days, with 1–3 MNQ and daily caps.

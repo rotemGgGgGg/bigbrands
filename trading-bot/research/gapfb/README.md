@@ -44,3 +44,10 @@ entries until 10:30, exit 15:55, gap ≥ 0.3 %, 1 trade a day.**
 | B + BE at 2R | 24.3 %, 1:4.87, +0.38 R | 23.9 %, 1:5.13, +0.39 R | 19.4 %, 1:4.42, +0.04 R | +433 R, DD 50 R, 14/17 yrs |
 | C + 5×ATR trail | 33.5 %, 1:2.94, +0.32 R | 32.8 %, 1:3.09, +0.32 R | 27.8 %, 1:3.07, +0.13 R (t 0.9) | +385 R, DD 34 R, streak 12, 14/17 yrs |
 ~80–90 trades a year. TEST is still positive but much weaker and not significant on its own; 2025 and 2026 YTD negative.
+
+## Pre-entry filters on config C (gapfb3.py; judged on 2010–19 and 2020–23 separately)
+Helped in both: yesterday's candle AGAINST the gap (+0.54 / +0.44 R vs +0.08 / +0.17 R) and first 15 min closing in the gap
+direction (+0.35 / +0.41 vs +0.25 / +0.14). Noisy / inconsistent: gap size in σ, outside yesterday's range, 20-day trend,
+OR location/width, weekday, VIX.
+TEST 2024–26 (opened once for C + yesterday-against): +0.12 R vs the complement +0.22 R → the filter does NOT hold in TEST.
+Over 2010–26 it halves drawdown (21.6 R vs 33.8 R, 16/17 years positive) but its TEST evidence is negative → not adopted.
