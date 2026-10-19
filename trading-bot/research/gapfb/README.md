@@ -194,3 +194,8 @@ Logistic re-fit every 2 years on ALL earlier trades only, keep days above the tr
 | 2024–25 | +0.28 | +0.51 | +0.53 |
 | 2026 | −0.09 | +0.22 | +0.18 |
 Trade-weighted: all +0.29 R (7/8 windows +) · walk-forward +0.38 R (8/8) · fixed rule +0.43 R (8/8; rule found with hindsight).
+
+## On the Nasdaq-100 CFD (NSXUSD, HistData) — works
+GapFB-C all: +0.44 / +0.34 / +0.21 R (2012–19 / 2020–23 / 2024–25); score ≥ 2: +0.59 / +0.40 / +0.36 R (38 / 32 / 31 % win).
+→ An MT5 / CFD implementation (NAS100, 0.01-lot sizing) is viable for small accounts; times must be converted from broker
+server time to New York time.
