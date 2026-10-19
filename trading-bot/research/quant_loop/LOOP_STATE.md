@@ -256,5 +256,10 @@ NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
 ### Iter 67 — earlier edges on REAL NQ 2010–19: Pre-Fade +0.06/+0.18/+0.15 R (70–77 % win), WVB +0.03/+0.08/+0.10, open-drive
 +0.07/+0.13/+0.08 → all positive in all periods; the CFD 2012–19 'fails' were data artefacts for these rules.
 ## Queue
-69. Multi-edge NQ portfolio on real data 2010–26: GapFB-C (+score) + Pre-Fade + WVB + open-drive; daily R, DD, correlation.
-70. Re-test Noise-Area and NA-FVG (92 % win scalp) on real NQ 2010–19.
+69. (done, iter 69) Multi-edge NQ portfolio on real data 2010–26: GapFB-C (+score) + Pre-Fade + WVB + open-drive; daily R, DD, correlation.
+70. (done, iter 68) Re-test Noise-Area and NA-FVG (92 % win scalp) on real NQ 2010–19.
+### Iter 68 — NA / NA-FVG on real NQ 2010–19: fail (≈0 / negative) — CFD verdict confirmed for those.
+### Iter 69 — real-data NQ portfolio: best risk-adjusted = GapFB score≥2 + Pre-Fade (+368 R, DD 20 R, 17/17 years);
+most profit = GapFB + PF + WVB + OD (+599 R, DD 48 R).
+## Queue
+71. Pine: add Pre-Fade to the GapFB script (or run pine/preopen_fade.pine alongside) — check order overlap 09:00–13:00.

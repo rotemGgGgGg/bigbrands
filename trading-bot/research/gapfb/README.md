@@ -131,3 +131,14 @@ Alert bot 2:1: −0.04 / +0.04 / +0.05 R with score ≥ 2 (vs −0.04 / −0.04 
 | Williams VB (0.6×range, stop 0.5×range, close) | 1571, 43.7 %, +0.03 R | 647, 48.8 %, +0.08 R | 427, 45.4 %, +0.10 R |
 | Open-drive follow (1:2) | 328, 39.6 %, +0.07 R | 128, 41.4 %, +0.13 R | 106, 40.6 %, +0.08 R |
 All positive in all three periods on real futures (on the HistData CFD 2012–19 they were flat/negative).
+
+## NQ multi-edge portfolio on real data 2010–26 (portfolio.py; 1 R per trade per edge)
+Daily-R correlations are low (GapFB vs PF −0.04, vs WVB 0.23, vs OD 0.12). NA / NA-FVG fail on real 2010–19 (retest_na.py).
+| portfolio | total | max DD | return/DD | years + | R per year 2010–19 / 2020–23 / 2024–26 |
+|---|---|---|---|---|---|
+| GapFB-C | +385 | 33.8 | 11.4 | 14/17 | +31 / +37 / +14 |
+| GapFB-C score ≥ 2 | +335 | 22.6 | 14.8 | 17/17 | +24 / +29 / +29 |
+| **GapFB score + Pre-Fade** | +368 | 20.0 | **18.4** | **17/17** | +25 / +33 / +34 |
+| GapFB + PF + WVB | +555 | 40.0 | 13.9 | 14/17 | +39 / +56 / +37 |
+| GapFB + PF + WVB + OD | +599 | 47.9 | 12.5 | 15/17 | +42 / +61 / +40 |
+| GapFB score + PF + WVB + OD | +550 | 41.4 | 13.3 | 15/17 | +34 / +53 / +55 |
