@@ -33,3 +33,14 @@ Same entries (gap ≥ 0.3 %, 5-min OR stop entries), stop 3 × ATR(14, 1-min) at
 - 15 of 17 calendar years positive (2015 −31 R, 2025 −9 R). Total +336 R over 2,287 trades.
 - Risk: max drawdown 50.7 R, longest losing streak 31 trades. On a $2K trailing-drawdown eval that means ≤ ~$40 risk per trade,
   below 1 MNQ at a 3×ATR stop (~60 NQ pts ≈ $120) — fine for a personal account sized for 50 R, hard for a prop eval.
+
+## Improvement search (gapfb2*.py) — strict funnel
+7,776 configs chosen on TRAIN 2010–19 only → top 300 by t → VALIDATE 2020–23 (252 pass t > 1.5) → TEST 2024–26 opened once
+for 3 configs fixed in advance. Dominant family: **15-minute OR, trade only in the gap's direction, stop 2×ATR(1m),
+entries until 10:30, exit 15:55, gap ≥ 0.3 %, 1 trade a day.**
+| config | 2010–19 | 2020–23 | 2024–26 (TEST) | all 2010–26 |
+|---|---|---|---|---|
+| A simple | 26.8 % win, 1:3.95, +0.35 R | 28.5 %, 1:3.86, +0.40 R | 24.6 %, 1:3.44, +0.10 R (t 0.7) | +431 R, DD 38 R, streak 15, 15/17 yrs |
+| B + BE at 2R | 24.3 %, 1:4.87, +0.38 R | 23.9 %, 1:5.13, +0.39 R | 19.4 %, 1:4.42, +0.04 R | +433 R, DD 50 R, 14/17 yrs |
+| C + 5×ATR trail | 33.5 %, 1:2.94, +0.32 R | 32.8 %, 1:3.09, +0.32 R | 27.8 %, 1:3.07, +0.13 R (t 0.9) | +385 R, DD 34 R, streak 12, 14/17 yrs |
+~80–90 trades a year. TEST is still positive but much weaker and not significant on its own; 2025 and 2026 YTD negative.
