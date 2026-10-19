@@ -210,5 +210,11 @@ Best family: 15-min OR, gap direction only, 2×ATR stop (+5×ATR trail), entry �
 Best t per anchor (train): 09:30 4.1, 10:00 2.4, 15:00 2.0, 11:30 1.5, London 03:00 0.7, Asia/Tokyo/Frankfurt/08:30/13:00/14:00 ≤ 0.1.
 Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 2024-26 +0.02 R → FAIL.
 ## Queue
-52. Personal account: hold GapFB-C winners overnight (exit next 09:29 / next 15:55, trail continues) — swing extension.
-53. Failed-breakout reversal: GapFB OR break that closes back inside the OR within N minutes → reverse.
+52. (done, iter 50) Personal account: hold GapFB-C winners overnight (exit next 09:29 / next 15:55, trail continues) — swing extension.
+53. (done, iter 51) Failed-breakout reversal: GapFB OR break that closes back inside the OR within N minutes → reverse.
+### Iter 50 — GapFB-C held overnight (next open / next close / multi-session trail) → no gain (2024-26 +0.04…+0.07 vs +0.11 R same day)
+### Iter 51 — failed-breakout reversal (OR break closes back inside within 5/15/30 min → reverse; 1:2, 1:3, trail) → FAIL (negative almost everywhere)
+## Queue
+54. Zone breakouts at the open: overnight high/low and prior-day high/low as the trigger (instead of the 15-min OR), gap direction.
+55. Day-2 continuation: the session after a qualifying GapFB-C winner — same direction OR break.
+56. Intraday 'second leg': after GapFB-C entry reaches +1R, add a second unit on the first 1-min pullback to the 20-EMA.
