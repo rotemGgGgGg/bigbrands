@@ -278,4 +278,7 @@ Pine for the opex short: pine/opex_short.pine.
 ### Iter 73 — real-data re-runs of the calendar grid (iter30_calendar_real.py: 26/420 positive in all periods ≈ CFD's 29;
 nothing beyond the opex short) and the web batch (iter26_web_real.py: same picture as CFD — open-model long weak +0.05 σ).
 ## Queue
-74. Event days and GapFB-score / Pre-Fade: CPI, NFP, FOMC days (dates from official calendars) — include or skip?
+74. (done, iter 74) Event days and GapFB-score / Pre-Fade: CPI, NFP, FOMC days (dates from official calendars) — include or skip?
+### Iter 74 — event days: GapFB-score better on NFP/CPI/FOMC days (small n) → keep trading them; Pre-Fade unaffected.
+## Queue
+76. Real-data re-runs of iter32 (vol-of-vol) and iter42 (VIX term structure) — cheap, expected same as CFD.

@@ -158,3 +158,7 @@ Daily-R correlations are low (GapFB vs PF −0.04, vs WVB 0.23, vs OD 0.12). NA 
 | GapFB-score + PF + Opex + WVB | +596 | 32.3 | 18.4 | 15/17 | +36 / +53 / +64 |
 | GapFB + PF + Opex + WVB + OD | +690 | 46.2 | 14.9 | 16/17 | +47 / +66 / +52 |
 Pine: pine/gapfb_nq.pine, pine/preopen_fade.pine, pine/opex_short.pine (run on separate charts / accounts).
+
+## Event days (events.py) — do NOT skip them
+GapFB-score: NFP (first Friday, 2010–26) +1.08 R (n 47) vs +0.37 R; CPI (2020+) +0.65 vs +0.40; FOMC days (2020+) +0.74 vs +0.40.
+Pre-Fade: NFP +0.14 vs +0.10, CPI +0.18 vs +0.17 (no difference; FOMC n = 4).
