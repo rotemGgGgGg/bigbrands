@@ -191,3 +191,7 @@ negative in 2024–26; score ≥ 3 has n = 10–27 per period. Opex works only a
 Free data is exhausted for the 70 % / 1:2 target. Robust (all-period) survivors are all weak, 40–60 % wins at ~1:2:
 open-drive follow (+0.1–0.2 R), opex-Friday short at 09:30 (+0.1–0.7 R, 12/yr), POC magnet (+0.04–0.12 R), Reddit open model.
 Remaining untested families need paid / user-supplied data: 26 order flow (Databento MBP-1/trades), 28 options GEX / 0DTE.
+### Iter 44 — GapFB (author 'Ace Trades') reconstructed from alerts; no-TP time-exit variant → BEST ROBUST EDGE SO FAR (not 70 %)
+Real NQ 2010–26 (user's Databento file). Gap ≥ 0.3 % + 5-min OR stop entry, stop 3×ATR(1m), no target, exit 15:55:
+24–27 % wins, R:R 1:3.0–3.7, +0.14 / +0.19 / +0.08 R, 15/17 years positive; placebo (non-gap days) negative. Max DD 51 R.
+The posted 2:1-target version loses (34 % ≈ random barrier). See research/gapfb/README.md.

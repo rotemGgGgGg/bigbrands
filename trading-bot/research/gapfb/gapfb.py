@@ -61,3 +61,8 @@ if __name__ == "__main__":
             T = run(dd, thr, cut, tlast); summ(T, f"gap≥{thr*100:.1f}% cut{cut} exit{tlast}")
         T = run(dd); summ(T[T.n == 1], "  base: trade #1 only"); summ(T[T.n == 2], "  base: trade #2 only")
         T.to_csv(f"trades_{nm.split()[0]}_{nm.split()[-1]}.csv", index=False)
+
+def periods():
+    """2010-19 from the user's Databento NQ 1-minute file (front month by prior-session volume), 2020-23 / 2024-26 MNQ."""
+    nq = pd.read_pickle(SP + "nq16.pkl"); D = prep(full := pd.read_pickle(SP + "full1m.pkl"))
+    return {"2010-19": prep(nq[:"2019-12-31"]), "2020-23": [x for x in D if x[0].year < 2024], "2024-26": [x for x in D if x[0].year >= 2024]}
