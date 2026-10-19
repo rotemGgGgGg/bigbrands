@@ -229,7 +229,12 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 59. (done: stats iter 58, Pine pine/gapfb_nq.pine — needs a TradingView compile check) Combine OR-width filter + add-on; full stats and Pine port of the final rules.
 ### Iter 58 — final GapFB-NQ table (final.py): C + OR≥3.5–4 ATR (+ add-on) best; see gapfb/README.md
 ## Queue
-60. GapFB-NQ on MNQ vs NQ costs / 1-contract granularity; Monte-Carlo of yearly outcomes for a personal account (risk 1 % per R).
-61. New families for the NY open: first-hour VWAP reclaim after GapFB stop-out; gap-fill vs gap-and-go classifier (pre-entry features → logistic, train 2010-19).
+60. (done, iter 61) GapFB-NQ on MNQ vs NQ costs / 1-contract granularity; Monte-Carlo of yearly outcomes for a personal account (risk 1 % per R).
+61. (done, iters 59–60) New families for the NY open: first-hour VWAP reclaim after GapFB stop-out; gap-fill vs gap-and-go classifier (pre-entry features → logistic, train 2010-19).
 ### Iter 59 — quality score for GapFB-C (yday against + outside range + first-15 with gap ≥ 2) → BEST: +0.40/+0.41/+0.42 R,
 17/17 years positive, DD 22.6 R; with add-on +0.67/+0.72/+0.67 R. Pine updated (minScore input, add-on optional).
+### Iter 60–61 — re-entry at the OR after stop-out (weak +0.05/+0.16/+0.33, optional); Monte-Carlo personal account
+(score ≥ 2, 1 % per R: median year +23 %, 10 % losing years, 95th pct DD 16 %).
+## Queue
+62. Out-of-market check of the score rule: GapFB-C + score ≥ 2 on SPX and gold CFDs (no re-fitting) — does the score generalise?
+63. Score rule on the original 5-min OR GapFB (the alert bot) and on the 1:2 target version.

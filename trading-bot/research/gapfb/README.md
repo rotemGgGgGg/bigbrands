@@ -104,3 +104,14 @@ simple facts, turned into a points rule (+1 each): yesterday's RTH candle AGAINS
 | C + score ≥ 2 + add-on | ~55 | 25–29 % | 1:4.3–5.2 | +0.67 / +0.72 / +0.67 | +561 R | 38.3 R | 15/17 |
 Caveat: TEST 2024–26 had already been looked at for earlier variants; the score was built from train-period features and the
 logit cut chosen on train, but the family was explored with knowledge of earlier TEST results.
+
+## Re-entry and personal-account Monte-Carlo (reentry.py, montecarlo.py)
+- Re-entry after a stop-out before 12:00, on the first close back beyond the OR level: +0.05 / +0.16 / +0.33 R (weak in
+  2010–19) — optional. Re-entry on the session average price: negative.
+- 10,000 resampled years of 55 trades (score ≥ 2, assumes the 2010–26 edge persists):
+  | version | risk per R | losing years | median year | 5th pct | 95th pct | median max DD | 95th pct DD |
+  |---|---|---|---|---|---|---|---|
+  | no add-on | 1 % | 10 % | +23 % | −5 % | +65 % | 9 % | 16 % |
+  | no add-on | 2 % | 11 % | +46 % | −12 % | +158 % | 17 % | 30 % |
+  | add-on | 1 % | 11 % | +37 % | −9 % | +126 % | 13 % | 24 % |
+  | add-on | 2 % | 13 % | +77 % | −20 % | +361 % | 24 % | 43 % |
