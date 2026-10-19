@@ -206,3 +206,9 @@ Best family: 15-min OR, gap direction only, 2×ATR stop (+5×ATR trail), entry �
 50. (done, iter 48) GapFB-C execution sensitivity: entry 1–2 minutes late / extra slippage (the author says late entry kills it).
 51. GapFB-C + eval-engine edges (WVB, Noise-Area, Pre-Fade) as one eval policy (research/evalbot/sim.py).
 ### Iter 48 — GapFB-C latency: 1 min late kills 2024–26 (+0.13 → −0.01 R) → resting stop order at 09:45 required
+### Iter 49 — 24 h session anchors (gap/pre-move + OR breakout at 18:00…15:00; 2,184 configs, train 2010-19) → only the NY open works
+Best t per anchor (train): 09:30 4.1, 10:00 2.4, 15:00 2.0, 11:30 1.5, London 03:00 0.7, Asia/Tokyo/Frankfurt/08:30/13:00/14:00 ≤ 0.1.
+Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 2024-26 +0.02 R → FAIL.
+## Queue
+52. Personal account: hold GapFB-C winners overnight (exit next 09:29 / next 15:55, trail continues) — swing extension.
+53. Failed-breakout reversal: GapFB OR break that closes back inside the OR within N minutes → reverse.
