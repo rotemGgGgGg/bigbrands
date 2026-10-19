@@ -247,5 +247,9 @@ NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
 ### Iter 64 — low-score gap days, trade against the gap: noisy (score 0: n 11–49), score ≤1 inconsistent → FAIL
 ### Iter 65 — afternoon (13:30–13:44) range-break continuation on gap days: −0.31/−0.03/−0.30 R → FAIL (afternoon breaks churn)
 ## Queue
-66. Overnight-path shape on gap days: does a gap built late (08:00–09:29) vs early (18:00–02:00) change GapFB-C? (pre-entry feature)
+66. (done, iter 66) Overnight-path shape on gap days: does a gap built late (08:00–09:29) vs early (18:00–02:00) change GapFB-C? (pre-entry feature)
 67. GapFB-C on real ES / YM futures once the user uploads them (out-of-market check with futures, not CFDs).
+### Iter 66 — overnight path shape (share of gap built late / early) on GapFB-C days → no monotone or consistent effect → FAIL
+## Queue
+68. Re-test the earlier 2020+ edges (Pre-Open Fade, Noise-Area, Williams VB, NA-FVG, opex short, open-drive) on REAL NQ futures
+    2010–19 (user's Databento file) — they failed on the CFD, which may have distorted pre-market/overnight prices.
