@@ -174,3 +174,6 @@ train and validate. TEST: base (09:30, 0.4σ, 1:2, 15:55) +0.85 R beats the refi
 
 ## Volume filters (rvol.py) — inconsistent, not adopted
 RVOL of the first 15 minutes and pre-market volume quartiles: no monotone or consistent pattern across periods.
+
+## Prior-day volume profile (vprofile.py) — inconsistent, not adopted
+Open beyond yesterday's value area vs inside, and |open − POC| quartiles: no pattern that holds in all periods.

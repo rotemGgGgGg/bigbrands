@@ -293,4 +293,7 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
     volume as GapFB-C filters — train 2010–19 / validate 2020–23 / test.
 ### Iter 78 — volume filters (RVOL15, pre-market volume) for GapFB-C: inconsistent → FAIL.
 ## Queue
-80. Volume-profile context (real volume): prior-day volume POC / value area vs the gap open as a GapFB filter.
+80. (done, iter 79) Volume-profile context (real volume): prior-day volume POC / value area vs the gap open as a GapFB filter.
+### Iter 79 — prior-day volume profile (VA / POC) as a GapFB filter: inconsistent → FAIL.
+## Queue
+82. Cost stress for the portfolio: 2× and 3× costs (4.5 / 6.75 NQ pt) — does GapFB-score + PF + Opex survive?
