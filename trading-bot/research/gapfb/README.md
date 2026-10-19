@@ -142,3 +142,9 @@ Daily-R correlations are low (GapFB vs PF −0.04, vs WVB 0.23, vs OD 0.12). NA 
 | GapFB + PF + WVB | +555 | 40.0 | 13.9 | 14/17 | +39 / +56 / +37 |
 | GapFB + PF + WVB + OD | +599 | 47.9 | 12.5 | 15/17 | +42 / +61 / +40 |
 | GapFB score + PF + WVB + OD | +550 | 41.4 | 13.3 | 15/17 | +34 / +53 / +55 |
+
+## Other CFD-era verdicts re-tested on real NQ 2010–19
+- WhatsApp Monday London-sweep rule (qt_london/london_sweep_real1019.py): 2010–19 −0.06 R, 46 % win → the failure stands.
+- **Opex-Friday short at 09:30** (opex_real.py), stop 0.4σ, target 0.8σ (1:2), exit 15:55, ~12 trades a year:
+  2010–19 +0.39 R (49 % win) · 2020–23 +0.43 R (49 %) · 2024–26 +0.85 R (64 %); other Fridays −0.12 / −0.10 / −0.42 R.
+  Positive at k 0.25 as well (+0.30 / +0.02 / +0.64). A real calendar edge on futures.

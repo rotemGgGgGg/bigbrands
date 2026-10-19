@@ -267,5 +267,9 @@ most profit = GapFB + PF + WVB + OD (+599 R, DD 48 R).
 gap is only known at 09:30; filtering PF by the 08:59 overnight move is inconsistent (n tiny) → run both independently (~4–5
 overlap days a year; use separate accounts or accept netting).
 ## Queue
-72. Real-data re-test (2010–19 NQ futures) of other rules that failed only on the CFD: Monday London-sweep rule (qt_london),
+72. (done, iter 71) Real-data re-test of other rules that failed only on the CFD: Monday London-sweep rule (qt_london),
     overnight reversal (Yu-Rentzler-Wolf), opex-Friday short, Reddit open model.
+### Iter 71 — real-data re-tests: London Monday rule fails (−0.06 R); OPEX-Friday short at 09:30 (0.4σ stop, 1:2):
++0.39 / +0.43 / +0.85 R, 49–64 % win, other Fridays negative → adopted as a portfolio edge (~12 trades/yr).
+## Queue
+73. Portfolio v2 on real data: GapFB-score + Pre-Fade + opex short (+ WVB/OD optional); Pine for the opex short.
