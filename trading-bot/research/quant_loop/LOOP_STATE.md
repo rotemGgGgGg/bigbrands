@@ -324,3 +324,7 @@ lifts 2024–26 +0.13 → +0.16/+0.21/+0.24 R (N 20/40/60) — mild, not adopted
 ## Queue
 89. (done, iter 89) Lunch-hour compression → 13:30 expansion break on GapFB days that have not triggered (no morning trade).
 ### Iter 89 — lunch-range (12:00–13:29) break on untriggered gap days: ≈ 0 / negative → FAIL.
+### Iter 90 — GapFB-score by weekday: all weekdays positive in all periods; Friday strongest (+0.78/+0.61/+0.52 R) → no filter
+needed (possible Friday size-up, but that is selection on seen data — not adopted).
+## Queue
+91. (needs user) ES / YM real futures for out-of-market validation; TradingView compile check of the three Pine scripts.
