@@ -162,3 +162,8 @@ Pine: pine/gapfb_nq.pine, pine/preopen_fade.pine, pine/opex_short.pine (run on s
 ## Event days (events.py) — do NOT skip them
 GapFB-score: NFP (first Friday, 2010–26) +1.08 R (n 47) vs +0.37 R; CPI (2020+) +0.65 vs +0.40; FOMC days (2020+) +0.74 vs +0.40.
 Pre-Fade: NFP +0.14 vs +0.10, CPI +0.18 vs +0.17 (no difference; FOMC n = 4).
+
+## Pre-Fade refinement (pf_grid.py; train 2010–19 → validate 2020–23 → test)
+Best train/validate family: 60-min window, |z| > 2.5, TP 0.5× move, SL 1.5× move: 79 % / 81 % / 81 % wins, +0.11 / +0.17 /
++0.13 R (R:R ≈ 1:0.33). TEST is not better than the base (z 2, SL 1.0×: +0.15 R, 75 %) → keep the base; the z2.5/SL1.5
+version is an option for an ~80 % win rate at the same expectancy.
