@@ -236,5 +236,7 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 ### Iter 60–61 — re-entry at the OR after stop-out (weak +0.05/+0.16/+0.33, optional); Monte-Carlo personal account
 (score ≥ 2, 1 % per R: median year +23 %, 10 % losing years, 95th pct DD 16 %).
 ## Queue
-62. Out-of-market check of the score rule: GapFB-C + score ≥ 2 on SPX and gold CFDs (no re-fitting) — does the score generalise?
+62. (done, iter 62) Out-of-market check of the score rule: GapFB-C + score ≥ 2 on SPX and gold CFDs (no re-fitting) — does the score generalise?
 63. Score rule on the original 5-min OR GapFB (the alert bot) and on the 1:2 target version.
+### Iter 62 — score rule out-of-market (SPX, gold CFD): does not generalise (SPX worse in 2 of 3 periods) → treat the score as
+NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.

@@ -115,3 +115,7 @@ logit cut chosen on train, but the family was explored with knowledge of earlier
   | no add-on | 2 % | 11 % | +46 % | −12 % | +158 % | 17 % | 30 % |
   | add-on | 1 % | 11 % | +37 % | −9 % | +126 % | 13 % | 24 % |
   | add-on | 2 % | 13 % | +77 % | −20 % | +361 % | 24 % | 43 % |
+
+## Out-of-market check of the score (score_oom.py) — does NOT generalise
+Unchanged rules on CFDs: SPX score ≥ 2 −0.16 / +0.27 / −0.18 R (vs all +0.07 / +0.26 / −0.09); gold +0.13 / +0.11 / −0.02 R
+(vs +0.10 / +0.08 / −0.05). → The score is either NQ-specific or partly fitted to NQ history. Paper/sim trade before real money.
