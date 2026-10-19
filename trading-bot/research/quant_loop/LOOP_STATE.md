@@ -262,4 +262,10 @@ NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
 ### Iter 69 — real-data NQ portfolio: best risk-adjusted = GapFB score≥2 + Pre-Fade (+368 R, DD 20 R, 17/17 years);
 most profit = GapFB + PF + WVB + OD (+599 R, DD 48 R).
 ## Queue
-71. Pine: add Pre-Fade to the GapFB script (or run pine/preopen_fade.pine alongside) — check order overlap 09:00–13:00.
+71. (done, iter 70: run pine/preopen_fade.pine alongside) Pine: add Pre-Fade to the GapFB script (or run pine/preopen_fade.pine alongside) — check order overlap 09:00–13:00.
+### Iter 70 — PF vs GapFB overlap: 73 of 309 PF days are GapFB-score days (PF −0.31 R there, +0.23 R elsewhere) but the
+gap is only known at 09:30; filtering PF by the 08:59 overnight move is inconsistent (n tiny) → run both independently (~4–5
+overlap days a year; use separate accounts or accept netting).
+## Queue
+72. Real-data re-test (2010–19 NQ futures) of other rules that failed only on the CFD: Monday London-sweep rule (qt_london),
+    overnight reversal (Yu-Rentzler-Wolf), opex-Friday short, Reddit open model.
