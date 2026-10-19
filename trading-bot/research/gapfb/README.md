@@ -65,3 +65,7 @@ Adding them triples drawdown (NQ 19.8 R → NQ+SPX+GOLD 66.9 R). Trade NQ only.
 | $400 | 42 % | 46 |
 | $600 | 30 % | 41 |
 Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster than the earlier eval-engine policies.
+
+## Execution sensitivity (gapfb6_latency.py)
+2024–26: on time +0.13 R → 1 min late −0.01 R, 2 min +0.03 R; +2 pt extra slippage +0.07 R, +4 pt +0.01 R.
+→ Must be a RESTING stop order placed at 09:45 at the OR level (as the author does), not a market order after a bar-close alert.
