@@ -303,3 +303,6 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
     out-of-sample estimate than the fixed train/test split.
 ### Iter 81 — walk-forward score (refit every 2 years on past only): +0.38 R vs +0.29 R for all trades, 8/8 windows positive
 → the quality-score improvement is genuine out-of-sample, not hindsight.
+### Iter 82 — GapFB at the 18:00 Globex open (incl. Sunday open): 2010–19 strongly negative (−0.3…−0.8 R), small n → FAIL.
+## Queue
+84. Walk-forward quality model for Pre-Fade (features at 08:59: move size z, overnight trend, yesterday's candle, VIX) — small n, check.
