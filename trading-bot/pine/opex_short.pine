@@ -1,0 +1,55 @@
+//@version=6
+// Opex-Friday short — research: trading-bot/research/gapfb/opex_real.py (real NQ futures 2010–19 + MNQ 2020–26).
+// Rule: on the monthly options-expiration Friday (3rd Friday; if that Friday is a holiday, the Thursday before), SHORT at the
+// 09:30 open; stop 0.4 × σ above, target 0.8 × σ below (1:2); flat at 15:55. σ = 14-day mean of |RTH close / RTH open − 1| × price.
+// Research (R per trade): 2010–19 +0.39 (49 % win) · 2020–23 +0.43 (49 %) · 2024–26 +0.85 (64 %); other Fridays −0.12 / −0.10 / −0.42.
+// ~12 trades a year, uncorrelated with GapFB and Pre-Open Fade.
+// Chart: NQ1! / MNQ1!, 1-minute, extended hours ON. Holiday shift: tick "Today is opex" manually on those rare Thursdays.
+strategy("Opex Friday Short", shorttitle = "OpexShort", overlay = true, pyramiding = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1, initial_capital = 50000,
+     margin_long = 1, margin_short = 1,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
+
+kStop    = input.float(0.4, "Stop (× σ)", step = 0.05)
+rr       = input.float(2.0, "Target / stop", step = 0.25)
+riskUsd  = input.float(0, "Risk per trade $ (0 = fixed contracts)", step = 50)
+fixedQty = input.int(1, "Contracts", minval = 1)
+manual   = input.bool(false, "Today is opex (holiday-shifted Thursday)")
+
+if timeframe.period != "1"
+    runtime.error("Opex Short: use a 1-minute chart with extended hours ON.")
+
+tz  = "America/New_York"
+tod = hour(time, tz) * 60 + minute(time, tz)
+dow = dayofweek(time, tz)
+dom = dayofmonth(time, tz)
+isOpex = (dow == dayofweek.friday and dom >= 15 and dom <= 21) or manual
+
+var float rthOpen = na
+var array<float> moves = array.new<float>()
+var float sl = na
+var float tp = na
+if tod == 570
+    rthOpen := open
+if tod == 959 and not na(rthOpen)
+    array.push(moves, math.abs(close / rthOpen - 1))
+    if array.size(moves) > 14
+        array.shift(moves)
+
+// decide on the close of the 09:29 bar → the market order fills at the 09:30 open
+if tod == 569 and isOpex and array.size(moves) == 14 and strategy.position_size == 0
+    sigPts = array.avg(moves) * close
+    stopPts = kStop * sigPts
+    q = riskUsd > 0 ? math.max(1, int(math.floor(riskUsd / (stopPts * syminfo.pointvalue)))) : fixedQty
+    sl := close + stopPts
+    tp := close - rr * stopPts
+    strategy.entry("Opex S", strategy.short, qty = q, comment = "Opex short")
+if strategy.position_size < 0
+    e = strategy.opentrades.entry_price(0)
+    stopPts = sl - tp > 0 ? (sl - tp) / (1 + rr) : na
+    strategy.exit("Opex x", "Opex S", stop = e + stopPts, limit = e - rr * stopPts, comment = "Opex exit")
+if tod == 955 and strategy.position_size != 0
+    strategy.close_all(comment = "Opex 15:55")
+
+plot(strategy.position_size < 0 ? strategy.opentrades.entry_price(0) + (sl - tp) / (1 + rr) : na, "Stop", color.red, 2, plot.style_linebr)
+plot(strategy.position_size < 0 ? strategy.opentrades.entry_price(0) - rr * (sl - tp) / (1 + rr) : na, "Target", color.lime, 2, plot.style_linebr)

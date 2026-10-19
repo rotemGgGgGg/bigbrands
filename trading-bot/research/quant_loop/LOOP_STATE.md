@@ -272,4 +272,6 @@ overlap days a year; use separate accounts or accept netting).
 ### Iter 71 — real-data re-tests: London Monday rule fails (−0.06 R); OPEX-Friday short at 09:30 (0.4σ stop, 1:2):
 +0.39 / +0.43 / +0.85 R, 49–64 % win, other Fridays negative → adopted as a portfolio edge (~12 trades/yr).
 ## Queue
-73. Portfolio v2 on real data: GapFB-score + Pre-Fade + opex short (+ WVB/OD optional); Pine for the opex short.
+73. (done, iter 72) Portfolio v2 on real data: GapFB-score + Pre-Fade + opex short (+ WVB/OD optional); Pine for the opex short.
+### Iter 72 — portfolio v2: GapFB-score + Pre-Fade + Opex short = +459 R, DD 21 R, return/DD 21.7, 17/17 years → BEST PORTFOLIO.
+Pine for the opex short: pine/opex_short.pine.

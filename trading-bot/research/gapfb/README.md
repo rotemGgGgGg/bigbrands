@@ -148,3 +148,13 @@ Daily-R correlations are low (GapFB vs PF −0.04, vs WVB 0.23, vs OD 0.12). NA 
 - **Opex-Friday short at 09:30** (opex_real.py), stop 0.4σ, target 0.8σ (1:2), exit 15:55, ~12 trades a year:
   2010–19 +0.39 R (49 % win) · 2020–23 +0.43 R (49 %) · 2024–26 +0.85 R (64 %); other Fridays −0.12 / −0.10 / −0.42 R.
   Positive at k 0.25 as well (+0.30 / +0.02 / +0.64). A real calendar edge on futures.
+
+## Portfolio v2 on real data (portfolio2.py) — opex short is uncorrelated (corr 0.00 with every edge)
+| portfolio | total | max DD | return/DD | years + | R per year 2010–19 / 2020–23 / 2024–26 |
+|---|---|---|---|---|---|
+| Opex short alone | +91 | 6.9 | 13.1 | 15/17 | +6 / +6 / +12 |
+| GapFB-score + PF | +368 | 20.0 | 18.4 | 17/17 | +25 / +33 / +33 |
+| **GapFB-score + PF + Opex** | **+459** | **21.2** | **21.7** | **17/17** | **+30 / +39 / +45** |
+| GapFB-score + PF + Opex + WVB | +596 | 32.3 | 18.4 | 15/17 | +36 / +53 / +64 |
+| GapFB + PF + Opex + WVB + OD | +690 | 46.2 | 14.9 | 16/17 | +47 / +66 / +52 |
+Pine: pine/gapfb_nq.pine, pine/preopen_fade.pine, pine/opex_short.pine (run on separate charts / accounts).
