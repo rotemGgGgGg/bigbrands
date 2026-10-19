@@ -171,3 +171,6 @@ version is an option for an ~80 % win rate at the same expectancy.
 ## Opex short refinement (opex_grid.py)
 Every top train config enters at 09:30 (later entries lose the edge); k 0.4–0.8, r 1–3, exit 12:00 / 15:55 all positive in
 train and validate. TEST: base (09:30, 0.4σ, 1:2, 15:55) +0.85 R beats the refined picks (+0.38…+0.43 R) → keep the base.
+
+## Volume filters (rvol.py) — inconsistent, not adopted
+RVOL of the first 15 minutes and pre-market volume quartiles: no monotone or consistent pattern across periods.

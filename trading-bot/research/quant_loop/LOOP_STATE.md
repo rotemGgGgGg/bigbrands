@@ -289,5 +289,8 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 ### Iter 76 — Pre-Fade grid (real data, funnel): z2.5 / SL 1.5× gives ~80 % wins in all periods but same R as base → keep base.
 ### Iter 77 — opex short grid: edge lives at the 09:30 entry; whole neighbourhood positive; base kept.
 ## Queue
-79. Volume (real NQ has volume): relative volume of the first 15 minutes (vs the same window over 20 days) and pre-market
+79. (done, iter 78) Volume (real NQ has volume): relative volume of the first 15 minutes (vs the same window over 20 days) and pre-market
     volume as GapFB-C filters — train 2010–19 / validate 2020–23 / test.
+### Iter 78 — volume filters (RVOL15, pre-market volume) for GapFB-C: inconsistent → FAIL.
+## Queue
+80. Volume-profile context (real volume): prior-day volume POC / value area vs the gap open as a GapFB filter.
