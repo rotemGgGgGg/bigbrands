@@ -285,5 +285,9 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 ### Iter 75 — real-data re-runs of vol-of-vol (32/378) and VIX term structure (8/294): same as CFD → no edge.
 ## Queue
 77. (done, iter 76) Pre-Fade refinement with the funnel on real data: window (60/90/120 min), z (1.5–3), TP/SL multiples, exit time — train 2010–19, validate 2020–23, test once.
-78. Opex short refinement: entry 09:30 vs 09:35/10:00, stop k grid, exit time — same funnel.
+78. (done, iter 77) Opex short refinement: entry 09:30 vs 09:35/10:00, stop k grid, exit time — same funnel.
 ### Iter 76 — Pre-Fade grid (real data, funnel): z2.5 / SL 1.5× gives ~80 % wins in all periods but same R as base → keep base.
+### Iter 77 — opex short grid: edge lives at the 09:30 entry; whole neighbourhood positive; base kept.
+## Queue
+79. Volume (real NQ has volume): relative volume of the first 15 minutes (vs the same window over 20 days) and pre-market
+    volume as GapFB-C filters — train 2010–19 / validate 2020–23 / test.

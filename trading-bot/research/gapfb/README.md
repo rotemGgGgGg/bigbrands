@@ -167,3 +167,7 @@ Pre-Fade: NFP +0.14 vs +0.10, CPI +0.18 vs +0.17 (no difference; FOMC n = 4).
 Best train/validate family: 60-min window, |z| > 2.5, TP 0.5× move, SL 1.5× move: 79 % / 81 % / 81 % wins, +0.11 / +0.17 /
 +0.13 R (R:R ≈ 1:0.33). TEST is not better than the base (z 2, SL 1.0×: +0.15 R, 75 %) → keep the base; the z2.5/SL1.5
 version is an option for an ~80 % win rate at the same expectancy.
+
+## Opex short refinement (opex_grid.py)
+Every top train config enters at 09:30 (later entries lose the edge); k 0.4–0.8, r 1–3, exit 12:00 / 15:55 all positive in
+train and validate. TEST: base (09:30, 0.4σ, 1:2, 15:55) +0.85 R beats the refined picks (+0.38…+0.43 R) → keep the base.
