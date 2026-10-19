@@ -240,3 +240,7 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 63. Score rule on the original 5-min OR GapFB (the alert bot) and on the 1:2 target version.
 ### Iter 62 — score rule out-of-market (SPX, gold CFD): does not generalise (SPX worse in 2 of 3 periods) → treat the score as
 NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
+### Iter 63 — score on the alert-bot GapFB versions: no effect 2010-19, helps 2020+ → weak.
+## Queue
+64. Low-score gap days (score 0–1): trade the OPPOSITE OR break (gap-fill side) at 1:2 / trail.
+65. Afternoon continuation on GapFB-C winner days: 13:30–14:00 range break in the morning direction.
