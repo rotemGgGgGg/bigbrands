@@ -3,5 +3,7 @@
   "account_id": "101-004-XXXXXXX-001",
   "token": "PASTE-YOUR-OANDA-API-TOKEN-HERE",
   "instrument": "NAS100_USD",
-  "risk_pct": 1.0
+  "risk_pct": 1.0,
+  "strategies": {"gapfb": true, "prefade": true, "opex": true, "close_prefade": true, "flatten": true, "journal": true},
+  "telegram": {"bot_token": "", "chat_id": ""}
 }

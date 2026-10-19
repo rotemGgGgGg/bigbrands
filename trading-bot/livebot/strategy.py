@@ -93,3 +93,62 @@ def evaluate(candles: list[Candle], today: date) -> tuple[Signal | None, str]:
         return None, "ATR is zero"
     level = or_high if s == 1 else or_low
     return Signal(today, s, level, atr, gap, score, or_high, or_low), "armed"
+
+
+# ---------------------------------------------------------------- Pre-Open Fade and Opex short (STRATEGY_NQ.md §2, §3)
+# Both use 30-minute candles (bar open time): 08:00 and 08:30 bars give the 08:00→08:59 move, 09:30 and 15:30 bars give
+# the RTH open→close used for σ.
+
+@dataclass
+class MarketOrder:
+    name: str            # "prefade" / "opex"
+    side: int
+    stop_distance: float
+    target_distance: float
+    exit_hhmm: tuple[int, int]
+    info: str
+
+
+def _bars_by_day(c30: list[Candle]) -> dict[date, dict[int, Candle]]:
+    out: dict[date, dict[int, Candle]] = {}
+    for c in c30:
+        out.setdefault(c.t.astimezone(NY).date(), {})[_ny_minute(c)] = c
+    return out
+
+
+def prefade(c30: list[Candle], today: date, z_min: float = 2.0) -> tuple[MarketOrder | None, str]:
+    days = _bars_by_day(c30)
+    moves = []
+    for d in sorted(days):
+        b = days[d]
+        if 480 in b and 510 in b:
+            moves.append((d, b[480].o, b[510].c))
+    if not moves or moves[-1][0] != today:
+        return None, "no 08:00–08:59 bars today"
+    hist = [c / o - 1 for d, o, c in moves[:-1]][-20:]
+    if len(hist) < 20:
+        return None, "less than 20 days of history"
+    mean = sum(hist) / len(hist); sd = (sum((x - mean) ** 2 for x in hist) / (len(hist) - 1)) ** 0.5
+    _, o8, c859 = moves[-1]; ret = c859 / o8 - 1
+    z = ret / sd if sd > 0 else 0.0
+    if abs(z) <= z_min:
+        return None, f"pre-open move z {z:+.2f} (needs |z| > {z_min})"
+    size = abs(c859 - o8)
+    return MarketOrder("prefade", -1 if ret > 0 else 1, size, 0.5 * size, (13, 0),
+                       f"move {c859 - o8:+.2f} pts z {z:+.2f}"), "armed"
+
+
+def is_opex(d: date) -> bool:
+    return d.weekday() == 4 and 15 <= d.day <= 21
+
+
+def opex(c30: list[Candle], today: date, k: float = 0.4, rr: float = 2.0) -> tuple[MarketOrder | None, str]:
+    if not is_opex(today):
+        return None, "not the monthly opex Friday"
+    days = _bars_by_day(c30)
+    hist = [abs(b[930].c / b[570].o - 1) for d, b in sorted(days.items()) if d < today and 570 in b and 930 in b][-14:]
+    if len(hist) < 14:
+        return None, "less than 14 days of history"
+    last_close = c30[-1].c
+    sigma_pts = sum(hist) / 14 * last_close
+    return MarketOrder("opex", -1, k * sigma_pts, rr * k * sigma_pts, (15, 55), f"σ {sigma_pts:.1f} pts"), "armed"

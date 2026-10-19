@@ -53,7 +53,10 @@ class Oanda:
 
     # ---- data ----
     def candles_m1(self, count: int = 5000) -> list[Candle]:
-        j = self._get(f"/v3/instruments/{self.instrument}/candles", granularity="M1", count=count, price="M")
+        return self.candles("M1", count)
+
+    def candles(self, granularity: str, count: int = 5000) -> list[Candle]:
+        j = self._get(f"/v3/instruments/{self.instrument}/candles", granularity=granularity, count=count, price="M")
         out = []
         for k in j["candles"]:
             if not k["complete"]:
@@ -75,8 +78,32 @@ class Oanda:
             "stopLossOnFill": {"distance": self.price_str(stop_distance), "timeInForce": "GTC"},
             "trailingStopLossOnFill": {"distance": self.price_str(trail_distance), "timeInForce": "GTC"},
             "clientExtensions": {"tag": "gapfb", "comment": "GapFB-NQ"},
+            "tradeClientExtensions": {"tag": "gapfb"},
         }
         return self._send("POST", f"/v3/accounts/{self.account}/orders", {"order": order})
+
+    def market_bracket(self, tag: str, side: int, units: float, stop_distance: float, target_distance: float) -> dict:
+        prec = int(self.spec()["tradeUnitsPrecision"])
+        order = {"type": "MARKET", "instrument": self.instrument, "units": f"{side * units:.{prec}f}", "timeInForce": "FOK",
+                 "positionFill": "DEFAULT",
+                 "stopLossOnFill": {"distance": self.price_str(stop_distance), "timeInForce": "GTC"},
+                 "takeProfitOnFill": {"distance": self.price_str(target_distance), "timeInForce": "GTC"},
+                 "tradeClientExtensions": {"tag": tag}}
+        return self._send("POST", f"/v3/accounts/{self.account}/orders", {"order": order})
+
+    def open_trades(self) -> list[dict]:
+        return [t for t in self._get(f"/v3/accounts/{self.account}/openTrades")["trades"] if t["instrument"] == self.instrument]
+
+    def close_tagged(self, tag: str) -> int:
+        n = 0
+        for t in self.open_trades():
+            if t.get("clientExtensions", {}).get("tag") == tag:
+                self._send("PUT", f"/v3/accounts/{self.account}/trades/{t['id']}/close", {"units": "ALL"}); n += 1
+        return n
+
+    def net_side(self) -> int:
+        u = sum(float(t["currentUnits"]) for t in self.open_trades())
+        return 0 if u == 0 else (1 if u > 0 else -1)
 
     def cancel_pending(self) -> int:
         n = 0
