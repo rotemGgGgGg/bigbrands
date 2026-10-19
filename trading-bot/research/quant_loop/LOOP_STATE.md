@@ -237,10 +237,15 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 (score ≥ 2, 1 % per R: median year +23 %, 10 % losing years, 95th pct DD 16 %).
 ## Queue
 62. (done, iter 62) Out-of-market check of the score rule: GapFB-C + score ≥ 2 on SPX and gold CFDs (no re-fitting) — does the score generalise?
-63. Score rule on the original 5-min OR GapFB (the alert bot) and on the 1:2 target version.
+63. (done, iter 63) Score rule on the original 5-min OR GapFB (the alert bot) and on the 1:2 target version.
 ### Iter 62 — score rule out-of-market (SPX, gold CFD): does not generalise (SPX worse in 2 of 3 periods) → treat the score as
 NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
 ### Iter 63 — score on the alert-bot GapFB versions: no effect 2010-19, helps 2020+ → weak.
 ## Queue
-64. Low-score gap days (score 0–1): trade the OPPOSITE OR break (gap-fill side) at 1:2 / trail.
-65. Afternoon continuation on GapFB-C winner days: 13:30–14:00 range break in the morning direction.
+64. (done, iter 64) Low-score gap days (score 0–1): trade the OPPOSITE OR break (gap-fill side) at 1:2 / trail.
+65. (done, iter 65) Afternoon continuation on GapFB-C winner days: 13:30–14:00 range break in the morning direction.
+### Iter 64 — low-score gap days, trade against the gap: noisy (score 0: n 11–49), score ≤1 inconsistent → FAIL
+### Iter 65 — afternoon (13:30–13:44) range-break continuation on gap days: −0.31/−0.03/−0.30 R → FAIL (afternoon breaks churn)
+## Queue
+66. Overnight-path shape on gap days: does a gap built late (08:00–09:29) vs early (18:00–02:00) change GapFB-C? (pre-entry feature)
+67. GapFB-C on real ES / YM futures once the user uploads them (out-of-market check with futures, not CFDs).
