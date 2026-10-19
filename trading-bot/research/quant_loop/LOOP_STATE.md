@@ -308,4 +308,7 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 84. (done, iter 83) Walk-forward quality model for Pre-Fade (features at 08:59: move size z, overnight trend, yesterday's candle, VIX) — small n, check.
 ### Iter 83 — Pre-Fade walk-forward quality model: +0.16 R vs +0.11 R (6/7 vs 5/7 windows), n 5–27 per window → marginal, not adopted.
 ## Queue
-85. Non-gap days (|gap| < 0.3 %): fade the first 15-min OR break (range-day hypothesis) at 1:1 / 1:2 with OR-mid target.
+85. (done, iter 84) Non-gap days: fade the first 15-min OR break (range-day hypothesis) at 1:1 / 1:2 with OR-mid target.
+### Iter 84 — non-gap days, fade the 15-min OR break (stops 1–3 ATR, targets mid / 1R / 2R): negative everywhere → FAIL.
+## Queue
+86. Non-gap days, FOLLOW the 15-min OR break (GapFB-C mechanics without the gap) — control for how much the gap filter adds.
