@@ -45,11 +45,12 @@ const I = {
   cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><circle cx="12" cy="15" r="2.5"/></svg>',
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H8l-4 4V4z"/></svg>',
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-11 11"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>',
   bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/></svg>',
 };
 
 const PAGES = [
-  ["dashboard", "Live Dashboard", I.dash], ["connections", "Connections", I.plug], ["risk", "Risk Management", I.shield],
+  ["dashboard", "Live Dashboard", I.dash], ["performance", "Performance", I.chart, "16Y"], ["connections", "Connections", I.plug], ["risk", "Risk Management", I.shield],
   ["journal", "Trade Journal", I.book], ["news", "News Alerts", I.cal, "PRO"], ["feedback", "Feedback", I.chat], ["snapshot", "Share a Snapshot", I.share],
 ];
 $("#nav").innerHTML = PAGES.map(([id, label, icon, badge]) => `<button data-page="${id}">${icon}<span>${label}</span>${badge ? `<em class="badge">${badge}</em>` : ""}</button>`).join("");
@@ -417,6 +418,7 @@ async function render() {
     const html = await v();
     $("#main").innerHTML = html;
     if (page === "snapshot") drawSnapshot();
+    if (page === "performance") drawPerf();
   } catch (e) { $("#main").innerHTML = `<div class="panel empty">${esc(e.message)}</div>`; }
 }
 

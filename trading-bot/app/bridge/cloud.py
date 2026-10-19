@@ -173,6 +173,9 @@ def create_cloud_app(data_dir: str | None = None, bridge_kwargs: dict | None = N
     def signup(c: Credentials, req: Request, resp: Response):
         limiter.check(req.client.host if req.client else "?")
         email, pw = clean(c)
+        cap = int(os.environ.get("BRIDGE_MAX_USERS", "0") or 0)          # 0 = open sign-up; 1 = private (owner only)
+        if cap and len(users.ids()) >= cap:
+            raise HTTPException(403, "Sign-up is closed on this server")
         uid = users.create(email, pw)
         bridge_for(uid)
         set_cookie(req, resp, users.new_session(uid))

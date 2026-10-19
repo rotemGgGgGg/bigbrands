@@ -1,6 +1,6 @@
 // App shell offline, live data always from the network.
-const CACHE = "tb-shell-v1";
-const SHELL = ["/", "/static/app.css", "/static/app.js", "/static/ribbon.svg", "/static/icon-192.png", "/manifest.webmanifest"];
+const CACHE = "tb-shell-v2";
+const SHELL = ["/", "/static/app.css", "/static/app.js", "/static/perf.js", "/static/perf.json", "/static/ribbon.svg", "/static/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

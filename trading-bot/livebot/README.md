@@ -23,3 +23,12 @@ Replay checks: GapFB 256/265 days identical to the research; Pre-Fade 21/21 rese
 5. `cd ~/bigbrands/trading-bot/livebot && .venv/bin/python bot.py --check` → must print the balance.
 6. `sudo systemctl enable --now gapfb` → the bot runs 24/7 and restarts itself. Logs: `journalctl -u gapfb -f`.
 Live money later: change `"environment": "live"` and the live account id/token, then `sudo systemctl restart gapfb`.
+
+## The website / phone app (same look as the .exe, + 16-year Performance page)
+Same server, free HTTPS (needed for "Add to Home Screen"):
+1. duckdns.org → log in → create a name (e.g. `rotem-nq`) → copy the token.
+2. Oracle Cloud → your instance → Subnet → Security List → Add Ingress Rules: source `0.0.0.0/0`, TCP, ports `80` and `443`.
+3. On the server: `bash ~/bigbrands/trading-bot/livebot/deploy/web_install.sh rotem-nq.duckdns.org <TOKEN>`
+4. Phone: open `https://rotem-nq.duckdns.org` → Sign up (the first account is the owner; sign-up then closes) →
+   iPhone: Share → Add to Home Screen · Android: ⋮ → Install app. Performance page: chart with 1M/3M/YTD/1Y/2Y/5Y/ALL,
+   per-strategy, risk % and account size.
