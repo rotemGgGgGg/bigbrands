@@ -322,4 +322,5 @@ the gap filter carries the edge historically; in 2024–26 OR momentum works on 
 lifts 2024–26 +0.13 → +0.16/+0.21/+0.24 R (N 20/40/60) — mild, not adopted (TEST already seen).
 ### Iter 88 — closing drift / MOC proxy (15:30 / 15:45, follow or fade strong days, hold or 1:2): ≈ 0 to negative everywhere → FAIL.
 ## Queue
-89. Lunch-hour (12:00–13:30) compression → 13:30 expansion break on GapFB days that have not triggered (no morning trade).
+89. (done, iter 89) Lunch-hour compression → 13:30 expansion break on GapFB days that have not triggered (no morning trade).
+### Iter 89 — lunch-range (12:00–13:29) break on untriggered gap days: ≈ 0 / negative → FAIL.
