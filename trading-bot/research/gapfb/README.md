@@ -51,3 +51,17 @@ direction (+0.35 / +0.41 vs +0.25 / +0.14). Noisy / inconsistent: gap size in σ
 OR location/width, weekday, VIX.
 TEST 2024–26 (opened once for C + yesterday-against): +0.12 R vs the complement +0.22 R → the filter does NOT hold in TEST.
 Over 2010–26 it halves drawdown (21.6 R vs 33.8 R, 16/17 years positive) but its TEST evidence is negative → not adopted.
+
+## Other markets (gapfb4_multi.py) — NQ-specific
+GapFB-C on SPX CFD: +0.07 / +0.26 / −0.09 R; gold: +0.10 / +0.08 / −0.05 R; NQ: +0.34 / +0.32 / +0.22 R (2012–25).
+Adding them triples drawdown (NQ 19.8 R → NQ+SPX+GOLD 66.9 R). Trade NQ only.
+
+## Lucid 50K eval (gapfb5_eval.py; attempts started every 5th day 2020–26, EOD trailing $2K, consistency 50 %)
+| risk/trade | pass % | median trading days to pass |
+|---|---|---|
+| $100 (1 MNQ) | 75 % | 295 |
+| $200 | 54 % | 95 |
+| $300 | 46 % | 59 |
+| $400 | 42 % | 46 |
+| $600 | 30 % | 41 |
+Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster than the earlier eval-engine policies.

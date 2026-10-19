@@ -201,3 +201,7 @@ Best family: 15-min OR, gap direction only, 2×ATR stop (+5×ATR trail), entry �
 ## Queue
 48. GapFB-C as a multi-market portfolio (ES via SPXUSD CFD 2012–25, gold XAUUSD; ES/YM futures if the user uploads them).
 49. Eval sizing for GapFB-C (Lucid 50K: $2K EOD trailing, 50 % consistency) — pass %, days, with 1–3 MNQ and daily caps.
+### Iter 46–47 — GapFB-C multi-market (NQ-specific; SPX/gold add drawdown) and Lucid eval sizing ($200 risk → 54 % pass, ~95 days)
+## Queue
+50. GapFB-C execution sensitivity: entry 1–2 minutes late / extra slippage (the author says late entry kills it).
+51. GapFB-C + eval-engine edges (WVB, Noise-Area, Pre-Fade) as one eval policy (research/evalbot/sim.py).
