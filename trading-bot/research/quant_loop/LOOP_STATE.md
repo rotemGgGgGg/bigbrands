@@ -251,5 +251,10 @@ NQ-specific / possibly partly fitted; base GapFB-C remains the robust core.
 67. GapFB-C on real ES / YM futures once the user uploads them (out-of-market check with futures, not CFDs).
 ### Iter 66 — overnight path shape (share of gap built late / early) on GapFB-C days → no monotone or consistent effect → FAIL
 ## Queue
-68. Re-test the earlier 2020+ edges (Pre-Open Fade, Noise-Area, Williams VB, NA-FVG, opex short, open-drive) on REAL NQ futures
+68. (done, iter 67) Re-test the earlier 2020+ edges (Pre-Open Fade, Noise-Area, Williams VB, NA-FVG, opex short, open-drive) on REAL NQ futures
     2010–19 (user's Databento file) — they failed on the CFD, which may have distorted pre-market/overnight prices.
+### Iter 67 — earlier edges on REAL NQ 2010–19: Pre-Fade +0.06/+0.18/+0.15 R (70–77 % win), WVB +0.03/+0.08/+0.10, open-drive
++0.07/+0.13/+0.08 → all positive in all periods; the CFD 2012–19 'fails' were data artefacts for these rules.
+## Queue
+69. Multi-edge NQ portfolio on real data 2010–26: GapFB-C (+score) + Pre-Fade + WVB + open-drive; daily R, DD, correlation.
+70. Re-test Noise-Area and NA-FVG (92 % win scalp) on real NQ 2010–19.

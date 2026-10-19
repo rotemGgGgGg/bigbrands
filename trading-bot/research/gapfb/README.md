@@ -123,3 +123,11 @@ Unchanged rules on CFDs: SPX score ≥ 2 −0.16 / +0.27 / −0.18 R (vs all +0.
 ## Score on the original alert-bot versions (score_orig.py; OR-direction point from the first 5 minutes)
 Alert bot 2:1: −0.04 / +0.04 / +0.05 R with score ≥ 2 (vs −0.04 / −0.04 / −0.06). No-TP 3×ATR: +0.14 / +0.21 / +0.23 R
 (vs +0.14 / +0.19 / +0.08). Helps only after 2020 → weak evidence.
+
+## Re-test of earlier edges on REAL NQ 2010–19 (retest_real.py) — the CFD verdicts were wrong
+| edge | 2010–19 (real NQ) | 2020–23 | 2024–26 |
+|---|---|---|---|
+| Pre-Open Fade (|z|>2, TP 0.5×, SL 1.0×, exit 13:00) | 173 tr, 70.5 % win, +0.06 R | 78, 76.9 %, +0.18 R | 57, 75.4 %, +0.15 R |
+| Williams VB (0.6×range, stop 0.5×range, close) | 1571, 43.7 %, +0.03 R | 647, 48.8 %, +0.08 R | 427, 45.4 %, +0.10 R |
+| Open-drive follow (1:2) | 328, 39.6 %, +0.07 R | 128, 41.4 %, +0.13 R | 106, 40.6 %, +0.08 R |
+All positive in all three periods on real futures (on the HistData CFD 2012–19 they were flat/negative).
