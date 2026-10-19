@@ -311,4 +311,9 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 85. (done, iter 84) Non-gap days: fade the first 15-min OR break (range-day hypothesis) at 1:1 / 1:2 with OR-mid target.
 ### Iter 84 — non-gap days, fade the 15-min OR break (stops 1–3 ATR, targets mid / 1R / 2R): negative everywhere → FAIL.
 ## Queue
-86. Non-gap days, FOLLOW the 15-min OR break (GapFB-C mechanics without the gap) — control for how much the gap filter adds.
+86. (done, iter 85) Non-gap days, FOLLOW the 15-min OR break (GapFB-C mechanics without the gap) — control for how much the gap filter adds.
+### Iter 85 — control: same OR-break-follow on NON-gap days: −0.14 / +0.02 / +0.15 R (gap days +0.32 / +0.32 / +0.13) →
+the gap filter carries the edge historically; in 2024–26 OR momentum works on non-gap days too (regime shift worth watching).
+## Queue
+87. 2024–26 regime: OR-follow on all days with the quality score (non-gap version: yesterday against first-15 direction, first-15
+    beyond yesterday's range) — train 2010–19 / validate 2020–23 / test.
