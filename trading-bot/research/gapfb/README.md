@@ -93,3 +93,14 @@ Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster t
 | C + OR ≥ 4 ATR | ~38 | 30–36 % | 1:3.3 | +0.35 / +0.49 / +0.37 | +234 R | 27 R | 15/17 |
 | C + OR ≥ 4 ATR + add-on | ~38 | 25–31 % | 1:4.6 | +0.61 / +0.72 / +0.65 | +387 R | 46 R | 13/17 |
 (R = units of the base trade's initial risk; with the add-on a day can risk up to 2 R.)
+
+## Quality score (clf.py → simple rule) — best and most stable result
+Logistic regression on 09:45 features (train 2010–19) keeps the top 50 % → +0.53 / +0.46 / +0.40 R; it is driven by three
+simple facts, turned into a points rule (+1 each): yesterday's RTH candle AGAINST the gap, open OUTSIDE yesterday's RTH range,
+09:30–09:44 closes IN the gap direction. **Score ≥ 2:**
+| version | trades/yr | win | R:R | R/trade 2010–19 / 2020–23 / 2024–26 | total | max DD | years + |
+|---|---|---|---|---|---|---|---|
+| C + score ≥ 2 | ~55 | 33–36 % | 1:2.9–3.4 | +0.40 / +0.41 / +0.42 | +335 R | 22.6 R | **17/17** |
+| C + score ≥ 2 + add-on | ~55 | 25–29 % | 1:4.3–5.2 | +0.67 / +0.72 / +0.67 | +561 R | 38.3 R | 15/17 |
+Caveat: TEST 2024–26 had already been looked at for earlier variants; the score was built from train-period features and the
+logit cut chosen on train, but the family was explored with knowledge of earlier TEST results.

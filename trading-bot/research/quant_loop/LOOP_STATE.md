@@ -231,3 +231,5 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 ## Queue
 60. GapFB-NQ on MNQ vs NQ costs / 1-contract granularity; Monte-Carlo of yearly outcomes for a personal account (risk 1 % per R).
 61. New families for the NY open: first-hour VWAP reclaim after GapFB stop-out; gap-fill vs gap-and-go classifier (pre-entry features → logistic, train 2010-19).
+### Iter 59 — quality score for GapFB-C (yday against + outside range + first-15 with gap ≥ 2) → BEST: +0.40/+0.41/+0.42 R,
+17/17 years positive, DD 22.6 R; with add-on +0.67/+0.72/+0.67 R. Pine updated (minScore input, add-on optional).
