@@ -320,3 +320,6 @@ the gap filter carries the edge historically; in 2024–26 OR momentum works on 
 ### Iter 86 — scored OR-follow on non-gap days: 2010–19 negative at every score → FAIL (works only in 2024–26).
 ### Iter 87 — trailing-performance regime switch (past N trades mean > 0): no help for non-gap; for GapFB-C keeps 2010–23 and
 lifts 2024–26 +0.13 → +0.16/+0.21/+0.24 R (N 20/40/60) — mild, not adopted (TEST already seen).
+### Iter 88 — closing drift / MOC proxy (15:30 / 15:45, follow or fade strong days, hold or 1:2): ≈ 0 to negative everywhere → FAIL.
+## Queue
+89. Lunch-hour (12:00–13:30) compression → 13:30 expansion break on GapFB days that have not triggered (no morning trade).
