@@ -296,4 +296,8 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 80. (done, iter 79) Volume-profile context (real volume): prior-day volume POC / value area vs the gap open as a GapFB filter.
 ### Iter 79 — prior-day volume profile (VA / POC) as a GapFB filter: inconsistent → FAIL.
 ## Queue
-82. Cost stress for the portfolio: 2× and 3× costs (4.5 / 6.75 NQ pt) — does GapFB-score + PF + Opex survive?
+82. (done, iter 80) Cost stress for the portfolio: 2× and 3× costs (4.5 / 6.75 NQ pt) — does GapFB-score + PF + Opex survive?
+### Iter 80 — cost stress: GapFB-score still +0.24…+0.31 R at 3× costs (6.75 pt per round trip).
+## Queue
+83. Walk-forward re-fit of the GapFB score (refit the logistic every 2 years on all prior data, apply to the next 2) — a fairer
+    out-of-sample estimate than the fixed train/test split.

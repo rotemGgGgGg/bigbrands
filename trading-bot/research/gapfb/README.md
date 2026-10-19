@@ -177,3 +177,6 @@ RVOL of the first 15 minutes and pre-market volume quartiles: no monotone or con
 
 ## Prior-day volume profile (vprofile.py) — inconsistent, not adopted
 Open beyond yesterday's value area vs inside, and |open − POC| quartiles: no pattern that holds in all periods.
+
+## Cost stress (GapFB-score)
+2.25 pt: +0.40 / +0.41 / +0.42 R · 4.5 pt: +0.32 / +0.36 / +0.35 R · 6.75 pt: +0.24 / +0.31 / +0.28 R → survives 3× costs.
