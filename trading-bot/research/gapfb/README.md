@@ -180,3 +180,17 @@ Open beyond yesterday's value area vs inside, and |open − POC| quartiles: no p
 
 ## Cost stress (GapFB-score)
 2.25 pt: +0.40 / +0.41 / +0.42 R · 4.5 pt: +0.32 / +0.36 / +0.35 R · 6.75 pt: +0.24 / +0.31 / +0.28 R → survives 3× costs.
+
+## Walk-forward score (walkforward.py) — the fairest out-of-sample test
+Logistic re-fit every 2 years on ALL earlier trades only, keep days above the training median, apply to the next 2 years:
+| window | all trades R | walk-forward R | fixed 3-point rule R |
+|---|---|---|---|
+| 2012–13 | +0.21 | +0.11 | +0.40 |
+| 2014–15 | +0.39 | +0.49 | +0.54 |
+| 2016–17 | +0.44 | +0.11 | +0.45 |
+| 2018–19 | +0.33 | +0.50 | +0.44 |
+| 2020–21 | +0.40 | +0.71 | +0.56 |
+| 2022–23 | +0.19 | +0.26 | +0.30 |
+| 2024–25 | +0.28 | +0.51 | +0.53 |
+| 2026 | −0.09 | +0.22 | +0.18 |
+Trade-weighted: all +0.29 R (7/8 windows +) · walk-forward +0.38 R (8/8) · fixed rule +0.43 R (8/8; rule found with hindsight).

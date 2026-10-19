@@ -299,5 +299,7 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 82. (done, iter 80) Cost stress for the portfolio: 2× and 3× costs (4.5 / 6.75 NQ pt) — does GapFB-score + PF + Opex survive?
 ### Iter 80 — cost stress: GapFB-score still +0.24…+0.31 R at 3× costs (6.75 pt per round trip).
 ## Queue
-83. Walk-forward re-fit of the GapFB score (refit the logistic every 2 years on all prior data, apply to the next 2) — a fairer
+83. (done, iter 81) Walk-forward re-fit of the GapFB score (refit the logistic every 2 years on all prior data, apply to the next 2) — a fairer
     out-of-sample estimate than the fixed train/test split.
+### Iter 81 — walk-forward score (refit every 2 years on past only): +0.38 R vs +0.29 R for all trades, 8/8 windows positive
+→ the quality-score improvement is genuine out-of-sample, not hindsight.
