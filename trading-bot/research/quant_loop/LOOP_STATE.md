@@ -315,5 +315,8 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 ### Iter 85 — control: same OR-break-follow on NON-gap days: −0.14 / +0.02 / +0.15 R (gap days +0.32 / +0.32 / +0.13) →
 the gap filter carries the edge historically; in 2024–26 OR momentum works on non-gap days too (regime shift worth watching).
 ## Queue
-87. 2024–26 regime: OR-follow on all days with the quality score (non-gap version: yesterday against first-15 direction, first-15
+87. (done, iters 86–87) 2024–26 regime: OR-follow on all days with the quality score (non-gap version: yesterday against first-15 direction, first-15
     beyond yesterday's range) — train 2010–19 / validate 2020–23 / test.
+### Iter 86 — scored OR-follow on non-gap days: 2010–19 negative at every score → FAIL (works only in 2024–26).
+### Iter 87 — trailing-performance regime switch (past N trades mean > 0): no help for non-gap; for GapFB-C keeps 2010–23 and
+lifts 2024–26 +0.13 → +0.16/+0.21/+0.24 R (N 20/40/60) — mild, not adopted (TEST already seen).
