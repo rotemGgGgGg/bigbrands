@@ -215,6 +215,11 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 ### Iter 50 — GapFB-C held overnight (next open / next close / multi-session trail) → no gain (2024-26 +0.04…+0.07 vs +0.11 R same day)
 ### Iter 51 — failed-breakout reversal (OR break closes back inside within 5/15/30 min → reverse; 1:2, 1:3, trail) → FAIL (negative almost everywhere)
 ## Queue
-54. Zone breakouts at the open: overnight high/low and prior-day high/low as the trigger (instead of the 15-min OR), gap direction.
-55. Day-2 continuation: the session after a qualifying GapFB-C winner — same direction OR break.
-56. Intraday 'second leg': after GapFB-C entry reaches +1R, add a second unit on the first 1-min pullback to the 20-EMA.
+54. (done, iter 52) Zone breakouts at the open: overnight high/low and prior-day high/low as the trigger (instead of the 15-min OR), gap direction.
+55. (done, iter 54) Day-2 continuation: the session after a qualifying GapFB-C winner — same direction OR break.
+56. (done, iter 55) Intraday second leg: after GapFB-C entry reaches +1R, add a second unit on the first 1-min pullback to the 20-EMA.
+### Iter 52–55 — zones (ON/PD high-low breakouts and fades: negative), day-2 continuation (fail), ADD-ON to GapFB-C winners
+(+0.49/+0.21/+0.34 R per add-on unit, robust to arm level and EMA length) → adopted: GapFB-C + add-on = best so far.
+## Queue
+57. GapFB-C exit refinements: trail tightening after 14:00 / at +3 R, and partial (½ at +2 R).
+58. GapFB-C entry refinements: stop-limit vs stop, 1-tick buffer above the OR, skip if OR width > k×ATR.

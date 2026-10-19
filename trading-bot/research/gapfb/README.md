@@ -69,3 +69,11 @@ Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster t
 ## Execution sensitivity (gapfb6_latency.py)
 2024–26: on time +0.13 R → 1 min late −0.01 R, 2 min +0.03 R; +2 pt extra slippage +0.07 R, +4 pt +0.01 R.
 → Must be a RESTING stop order placed at 09:45 at the OR level (as the author does), not a market order after a bar-close alert.
+
+## More families (zones.py, zones_fade.py, day2.py, addon.py)
+- Overnight / prior-day high-low breakouts at the open: negative in every period (ON-HL −0.27/−0.23/−0.46 R); fading them also
+  negative → churn zone, both sides lose.
+- Day-2 continuation after a GapFB trade: negative 2010–19 → fail.
+- **Add-on (pyramid):** after the base trade reaches +1 R, add a 2nd unit on the first 1-min close back to the 20-EMA (own 2×ATR
+  stop, shares the 5×ATR trail). Add-on alone: +0.49 / +0.21 / +0.34 R (2010–19 / 2020–23 / 2024–26), positive for arm at
+  +1/+2/+3 R and EMA 10/20/50. Combined 2010–26: +665 R vs +385 R, max DD 55 R vs 34 R, return/DD 12.2 vs 11.4.
