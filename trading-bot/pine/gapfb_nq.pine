@@ -1,0 +1,117 @@
+//@version=6
+// GapFB-NQ — research: trading-bot/research/gapfb (NQ 1-minute 2010-06 → 2026-10, final.py).
+// Rules
+//   gap      = 09:30 open vs the prior 15:59 close, |gap| ≥ 0.3 %
+//   range    = 09:30–09:44 high / low; skip the day if (high − low) < W × ATR(14, 1-min) at 09:45
+//   entry    = resting stop order at the range level, in the gap direction only, valid 09:45 → 10:30
+//   stop     = 2 × ATR at the fill, then a 5 × ATR trailing stop (from the best price since the fill)
+//   add-on   = after +1 R, add one unit at the first 1-minute close back to the 20-EMA (own 2 × ATR stop, shares the trail)
+//   exit     = trail / stop, or flat at 15:55
+// Research (R per trading day, 2010–19 / 2020–23 / 2024–26): W 3.5 + add-on +0.54 / +0.61 / +0.40, W 4 no add-on +0.35 / +0.49 / +0.37.
+// Late entry kills it: a market order 1 minute after the break turned 2024–26 to ≈ 0 R. Keep the stop order resting.
+// Chart: NQ1! or MNQ1!, 1-MINUTE, extended hours ON (the prior 15:59 close and the ATR need every minute).
+// TRADEBRIDGE: alert on "Order fills" with the JSON template from the app (uses {{strategy.order.comment}} / action / contracts).
+strategy("GapFB NQ", shorttitle = "GapFB", overlay = true, pyramiding = 1,
+     default_qty_type = strategy.fixed, default_qty_value = 1, initial_capital = 50000,
+     margin_long = 1, margin_short = 1,
+     commission_type = strategy.commission.cash_per_contract, commission_value = 0.75, slippage = 1)
+
+gapMin   = input.float(0.30, "Min gap %", step = 0.05) / 100
+orW      = input.float(3.5, "Min range width (× ATR)", step = 0.5)
+slATR    = input.float(2.0, "Initial stop (× ATR)", step = 0.5)
+trATR    = input.float(5.0, "Trailing stop (× ATR)", step = 0.5)
+useAdd   = input.bool(true, "Add-on after +1 R at the 20-EMA")
+riskUsd  = input.float(0, "Risk per unit $ (0 = fixed contracts)", step = 50)
+fixedQty = input.int(1, "Contracts per unit", minval = 1)
+maxQty   = input.int(10, "Max contracts per unit", minval = 1)
+
+if timeframe.period != "1"
+    runtime.error("GapFB NQ: use a 1-minute chart with extended hours ON.")
+
+tz  = "America/New_York"
+tod = hour(time, tz) * 60 + minute(time, tz)                 // bar open, minutes after midnight NY
+atr = ta.sma(ta.tr(true), 14)[1]                               // ATR of the previous 14 closed minutes (as researched)
+ema = ta.ema(close, 20)
+
+var float prevClose = na
+var float gap = na
+var float orH = na
+var float orL = na
+var int   dir = 0
+var bool  armed = false
+var float atrFill = na
+var float best = na
+var float trail = na
+var float stop1 = na
+var float stopAdd = na
+var bool  addDone = false
+var bool  reached1R = false
+
+if tod == 959                                                    // 15:59 bar: remember the RTH close
+    prevClose := close
+if tod == 570                                                    // 09:30 bar: new day
+    gap := na(prevClose) ? na : open / prevClose - 1
+    orH := high
+    orL := low
+    dir := 0, armed := false, addDone := false, reached1R := false
+    atrFill := na, best := na, trail := na, stop1 := na, stopAdd := na
+else if tod > 570 and tod < 585
+    orH := math.max(orH, high)
+    orL := math.min(orL, low)
+
+qtyFor(float stopPts) =>
+    int q = fixedQty
+    if riskUsd > 0
+        q := math.max(1, math.min(maxQty, int(math.floor(riskUsd / (stopPts * syminfo.pointvalue)))))
+    q
+
+// 09:44 bar close → arm the resting stop order for 09:45 → 10:30
+if tod == 584 and not na(gap) and math.abs(gap) >= gapMin and (orH - orL) >= orW * atr
+    dir := gap > 0 ? 1 : -1
+    armed := true
+    q = qtyFor(slATR * atr)
+    if dir == 1
+        strategy.entry("GapFB L", strategy.long, qty = q, stop = orH, comment = "GapFB long")
+    else
+        strategy.entry("GapFB S", strategy.short, qty = q, stop = orL, comment = "GapFB short")
+if armed and tod >= 630 and strategy.position_size == 0
+    strategy.cancel("GapFB L")
+    strategy.cancel("GapFB S")
+    armed := false
+
+// position management (base + add-on)
+inPos = strategy.position_size != 0
+if inPos and na(atrFill)
+    atrFill := atr
+    entryPx = strategy.opentrades.entry_price(0)
+    stop1 := entryPx - dir * slATR * atrFill
+    best := entryPx
+    trail := stop1
+if inPos
+    entryPx = strategy.opentrades.entry_price(0)
+    best := dir == 1 ? math.max(best, high) : math.min(best, low)
+    trail := dir == 1 ? math.max(trail, best - trATR * atrFill) : math.min(trail, best + trATR * atrFill)
+    if dir * (best - entryPx) >= slATR * atrFill
+        reached1R := true
+    if useAdd and reached1R and not addDone and tod < 955 and (dir == 1 ? close <= ema : close >= ema)
+        addDone := true
+        stopAdd := close - dir * slATR * atr
+        qa = qtyFor(slATR * atr)
+        if dir == 1
+            strategy.entry("Add L", strategy.long, qty = qa, comment = "GapFB add long")
+        else
+            strategy.entry("Add S", strategy.short, qty = qa, comment = "GapFB add short")
+    baseStop = dir == 1 ? math.max(stop1, trail) : math.min(stop1, trail)
+    strategy.exit("Base x", dir == 1 ? "GapFB L" : "GapFB S", stop = baseStop, comment = "GapFB exit")
+    if addDone
+        addStop = dir == 1 ? math.max(stopAdd, trail) : math.min(stopAdd, trail)
+        strategy.exit("Add x", dir == 1 ? "Add L" : "Add S", stop = addStop, comment = "GapFB add exit")
+
+if tod == 955 and strategy.position_size != 0
+    strategy.close_all(comment = "GapFB 15:55")
+if tod >= 955 and strategy.position_size == 0
+    atrFill := na
+
+plot(armed or inPos ? (dir == 1 ? orH : orL) : na, "Entry level", color.yellow, 2, plot.style_linebr)
+plot(inPos ? (dir == 1 ? math.max(stop1, trail) : math.min(stop1, trail)) : na, "Stop / trail", color.red, 2, plot.style_linebr)
+bgcolor(tod >= 570 and tod < 585 ? color.new(color.blue, 92) : na, title = "Opening range")

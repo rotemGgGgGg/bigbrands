@@ -226,5 +226,8 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 ### Iter 56–57 — GapFB-C exits (none beat the 5×ATR trail) and entries: OR-width ≥ 3.5–4×ATR filter improves every period
 (w4: +0.35/+0.49/+0.37 R, ~37 trades/yr). Current best = GapFB-C + OR-width ≥ 3.5–4 ATR + add-on.
 ## Queue
-59. (stats done, iter 58; Pine pending) Combine OR-width filter + add-on; full stats and Pine port of the final rules.
+59. (done: stats iter 58, Pine pine/gapfb_nq.pine — needs a TradingView compile check) Combine OR-width filter + add-on; full stats and Pine port of the final rules.
 ### Iter 58 — final GapFB-NQ table (final.py): C + OR≥3.5–4 ATR (+ add-on) best; see gapfb/README.md
+## Queue
+60. GapFB-NQ on MNQ vs NQ costs / 1-contract granularity; Monte-Carlo of yearly outcomes for a personal account (risk 1 % per R).
+61. New families for the NY open: first-hour VWAP reclaim after GapFB stop-out; gap-fill vs gap-and-go classifier (pre-entry features → logistic, train 2010-19).
