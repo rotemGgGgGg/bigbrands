@@ -305,4 +305,7 @@ nothing beyond the opex short) and the web batch (iter26_web_real.py: same pictu
 → the quality-score improvement is genuine out-of-sample, not hindsight.
 ### Iter 82 — GapFB at the 18:00 Globex open (incl. Sunday open): 2010–19 strongly negative (−0.3…−0.8 R), small n → FAIL.
 ## Queue
-84. Walk-forward quality model for Pre-Fade (features at 08:59: move size z, overnight trend, yesterday's candle, VIX) — small n, check.
+84. (done, iter 83) Walk-forward quality model for Pre-Fade (features at 08:59: move size z, overnight trend, yesterday's candle, VIX) — small n, check.
+### Iter 83 — Pre-Fade walk-forward quality model: +0.16 R vs +0.11 R (6/7 vs 5/7 windows), n 5–27 per window → marginal, not adopted.
+## Queue
+85. Non-gap days (|gap| < 0.3 %): fade the first 15-min OR break (range-day hypothesis) at 1:1 / 1:2 with OR-mid target.
