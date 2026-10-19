@@ -77,3 +77,9 @@ Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster t
 - **Add-on (pyramid):** after the base trade reaches +1 R, add a 2nd unit on the first 1-min close back to the 20-EMA (own 2×ATR
   stop, shares the 5×ATR trail). Add-on alone: +0.49 / +0.21 / +0.34 R (2010–19 / 2020–23 / 2024–26), positive for arm at
   +1/+2/+3 R and EMA 10/20/50. Combined 2010–26: +665 R vs +385 R, max DD 55 R vs 34 R, return/DD 12.2 vs 11.4.
+
+## Exit and entry refinements (exits.py, entries.py)
+- Exits: base 5×ATR trail is best; trail 4/6, tighten after 14:00 / +3 R, partial ½ at +2 R, BE at +1 R all ≤ base in TEST.
+- Entries: buffers beyond the OR and later cut-offs hurt. **OR width filter helps monotonically**: skip days whose 15-min OR is
+  narrower than w×ATR(1m). w = 3 / 3.5 / 4 / 5 → TEST 2024–26 +0.17 / +0.22 / +0.37 / +0.47 R (train/val also ≥ base).
+  w = 4: 342 / 156 / 104 trades, +0.35 / +0.49 / +0.37 R, ~37 trades a year.

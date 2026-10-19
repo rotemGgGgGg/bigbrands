@@ -221,5 +221,9 @@ Validate 2020-23: only 10:00 'with' 5-min OR survived (+0.25 R, t 2.0) → TEST 
 ### Iter 52–55 — zones (ON/PD high-low breakouts and fades: negative), day-2 continuation (fail), ADD-ON to GapFB-C winners
 (+0.49/+0.21/+0.34 R per add-on unit, robust to arm level and EMA length) → adopted: GapFB-C + add-on = best so far.
 ## Queue
-57. GapFB-C exit refinements: trail tightening after 14:00 / at +3 R, and partial (½ at +2 R).
-58. GapFB-C entry refinements: stop-limit vs stop, 1-tick buffer above the OR, skip if OR width > k×ATR.
+57. (done, iter 56) GapFB-C exit refinements: trail tightening after 14:00 / at +3 R, and partial (½ at +2 R).
+58. (done, iter 57) GapFB-C entry refinements: stop-limit vs stop, 1-tick buffer above the OR, skip if OR width > k×ATR.
+### Iter 56–57 — GapFB-C exits (none beat the 5×ATR trail) and entries: OR-width ≥ 3.5–4×ATR filter improves every period
+(w4: +0.35/+0.49/+0.37 R, ~37 trades/yr). Current best = GapFB-C + OR-width ≥ 3.5–4 ATR + add-on.
+## Queue
+59. Combine OR-width filter + add-on; full stats (years, DD, streak) and Pine port of the final rules.
