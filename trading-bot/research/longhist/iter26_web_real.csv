@@ -1,0 +1,100 @@
+per,rule,n,win,rr,R
+2010-19,1 overnight reversal all |ov|>0.0σ → close (σ units),2379,48.4,0.99,-0.04
+2010-19,1 overnight reversal all |ov|>0.0σ 1:2 (R),2379,34.5,1.69,-0.077
+2010-19,1 overnight reversal all |ov|>0.5σ → close (σ units),1283,48.6,1.05,-0.005
+2010-19,1 overnight reversal all |ov|>0.5σ 1:2 (R),1283,34.8,1.69,-0.068
+2010-19,1 overnight reversal all |ov|>1.0σ → close (σ units),643,49.0,1.08,0.025
+2010-19,1 overnight reversal all |ov|>1.0σ 1:2 (R),643,34.4,1.68,-0.086
+2010-19,1 overnight reversal yday_same |ov|>0.0σ → close (σ units),1204,49.8,1.07,0.032
+2010-19,1 overnight reversal yday_same |ov|>0.0σ 1:2 (R),1204,35.0,1.69,-0.064
+2010-19,1 overnight reversal yday_same |ov|>0.5σ → close (σ units),649,50.7,1.12,0.086
+2010-19,1 overnight reversal yday_same |ov|>0.5σ 1:2 (R),649,34.5,1.69,-0.081
+2010-19,1 overnight reversal yday_same |ov|>1.0σ → close (σ units),328,53.7,1.22,0.232
+2010-19,1 overnight reversal yday_same |ov|>1.0σ 1:2 (R),328,33.8,1.68,-0.103
+2010-19,1 overnight reversal yday_opp |ov|>0.0σ → close (σ units),1175,47.0,0.91,-0.113
+2010-19,1 overnight reversal yday_opp |ov|>0.0σ 1:2 (R),1175,34.0,1.7,-0.091
+2010-19,1 overnight reversal yday_opp |ov|>0.5σ → close (σ units),634,46.4,0.98,-0.098
+2010-19,1 overnight reversal yday_opp |ov|>0.5σ 1:2 (R),634,35.2,1.7,-0.055
+2010-19,1 overnight reversal yday_opp |ov|>1.0σ → close (σ units),315,44.1,0.95,-0.19
+2010-19,1 overnight reversal yday_opp |ov|>1.0σ 1:2 (R),315,34.9,1.69,-0.069
+2010-19,1 overnight reversal monday |ov|>0.0σ → close (σ units),463,49.5,0.98,-0.022
+2010-19,1 overnight reversal monday |ov|>0.0σ 1:2 (R),463,31.1,1.69,-0.179
+2010-19,1 overnight reversal monday |ov|>0.5σ → close (σ units),253,47.8,1.12,0.014
+2010-19,1 overnight reversal monday |ov|>0.5σ 1:2 (R),253,28.1,1.69,-0.272
+2010-19,1 overnight reversal monday |ov|>1.0σ → close (σ units),133,51.1,1.04,0.061
+2010-19,1 overnight reversal monday |ov|>1.0σ 1:2 (R),133,21.8,1.7,-0.459
+2010-19,2 open model long-only +0.25σ → close (σ units),1948,54.0,0.92,0.035
+2010-19,2 open model long-only +0.5σ → close (σ units),1558,54.3,0.91,0.038
+2010-19,2 open model long-only +1.0σ → close (σ units),887,53.2,0.99,0.052
+2010-19,3 fade to NY open |dev|≥0.5σ tp_open_sl2x (R),2125,59.0,0.5699999928474426,-0.061000000685453415
+2010-19,3 fade to NY open |dev|≥0.5σ rr2 (R),2125,31.9,1.7200000286102295,-0.14499999582767487
+2010-19,3 fade to NY open |dev|≥0.75σ tp_open_sl2x (R),1679,53.5,0.6600000262260437,-0.07100000232458115
+2010-19,3 fade to NY open |dev|≥0.75σ rr2 (R),1679,30.8,1.690000057220459,-0.1809999942779541
+2010-19,3 fade to NY open |dev|≥1.0σ tp_open_sl2x (R),1248,51.0,0.75,-0.05700000002980232
+2010-19,3 fade to NY open |dev|≥1.0σ rr2 (R),1248,31.6,1.600000023841858,-0.1850000023841858
+2020-23,1 overnight reversal all |ov|>0.0σ → close (σ units),999,47.2,1.06,-0.028
+2020-23,1 overnight reversal all |ov|>0.0σ 1:2 (R),999,33.2,1.8,-0.073
+2020-23,1 overnight reversal all |ov|>0.5σ → close (σ units),530,47.4,1.13,0.009
+2020-23,1 overnight reversal all |ov|>0.5σ 1:2 (R),530,33.4,1.81,-0.066
+2020-23,1 overnight reversal all |ov|>1.0σ → close (σ units),250,44.8,1.24,0.002
+2020-23,1 overnight reversal all |ov|>1.0σ 1:2 (R),250,36.0,1.82,0.015
+2020-23,1 overnight reversal yday_same |ov|>0.0σ → close (σ units),505,48.9,1.16,0.053
+2020-23,1 overnight reversal yday_same |ov|>0.0σ 1:2 (R),505,35.8,1.79,0.0
+2020-23,1 overnight reversal yday_same |ov|>0.5σ → close (σ units),263,48.3,1.27,0.103
+2020-23,1 overnight reversal yday_same |ov|>0.5σ 1:2 (R),263,36.9,1.8,0.035
+2020-23,1 overnight reversal yday_same |ov|>1.0σ → close (σ units),121,47.1,1.45,0.178
+2020-23,1 overnight reversal yday_same |ov|>1.0σ 1:2 (R),121,35.5,1.82,0.001
+2020-23,1 overnight reversal yday_opp |ov|>0.0σ → close (σ units),494,45.5,0.97,-0.11
+2020-23,1 overnight reversal yday_opp |ov|>0.0σ 1:2 (R),494,30.6,1.82,-0.148
+2020-23,1 overnight reversal yday_opp |ov|>0.5σ → close (σ units),267,46.4,1.0,-0.083
+2020-23,1 overnight reversal yday_opp |ov|>0.5σ 1:2 (R),267,30.0,1.82,-0.166
+2020-23,1 overnight reversal yday_opp |ov|>1.0σ → close (σ units),129,42.6,1.03,-0.162
+2020-23,1 overnight reversal yday_opp |ov|>1.0σ 1:2 (R),129,36.4,1.82,0.028
+2020-23,1 overnight reversal monday |ov|>0.0σ → close (σ units),201,45.8,0.93,-0.112
+2020-23,1 overnight reversal monday |ov|>0.0σ 1:2 (R),201,30.3,1.77,-0.167
+2020-23,1 overnight reversal monday |ov|>0.5σ → close (σ units),107,45.8,0.92,-0.133
+2020-23,1 overnight reversal monday |ov|>0.5σ 1:2 (R),107,26.2,1.77,-0.293
+2020-23,1 overnight reversal monday |ov|>1.0σ → close (σ units),48,47.9,1.18,0.045
+2020-23,1 overnight reversal monday |ov|>1.0σ 1:2 (R),48,20.8,1.82,-0.437
+2020-23,2 open model long-only +0.25σ → close (σ units),828,55.3,0.85,0.027
+2020-23,2 open model long-only +0.5σ → close (σ units),648,56.9,0.81,0.035
+2020-23,2 open model long-only +1.0σ → close (σ units),362,61.0,0.87,0.122
+2020-23,3 fade to NY open |dev|≥0.5σ tp_open_sl2x (R),869,58.2,0.6100000143051147,-0.04800000041723251
+2020-23,3 fade to NY open |dev|≥0.5σ rr2 (R),869,32.8,1.7899999618530273,-0.09099999815225601
+2020-23,3 fade to NY open |dev|≥0.75σ tp_open_sl2x (R),676,50.7,0.7599999904632568,-0.061000000685453415
+2020-23,3 fade to NY open |dev|≥0.75σ rr2 (R),676,34.0,1.7799999713897705,-0.05400000140070915
+2020-23,3 fade to NY open |dev|≥1.0σ tp_open_sl2x (R),463,45.1,0.8700000047683716,-0.06700000166893005
+2020-23,3 fade to NY open |dev|≥1.0σ rr2 (R),463,32.8,1.649999976158142,-0.125
+2024-26,1 overnight reversal all |ov|>0.0σ → close (σ units),686,49.7,1.0,-0.005
+2024-26,1 overnight reversal all |ov|>0.0σ 1:2 (R),686,33.8,1.74,-0.078
+2024-26,1 overnight reversal all |ov|>0.5σ → close (σ units),380,50.3,1.02,0.016
+2024-26,1 overnight reversal all |ov|>0.5σ 1:2 (R),380,33.2,1.75,-0.097
+2024-26,1 overnight reversal all |ov|>1.0σ → close (σ units),221,51.6,1.04,0.064
+2024-26,1 overnight reversal all |ov|>1.0σ 1:2 (R),221,33.9,1.74,-0.077
+2024-26,1 overnight reversal yday_same |ov|>0.0σ → close (σ units),333,49.5,0.96,-0.03
+2024-26,1 overnight reversal yday_same |ov|>0.0σ 1:2 (R),333,30.9,1.73,-0.166
+2024-26,1 overnight reversal yday_same |ov|>0.5σ → close (σ units),177,50.3,0.89,-0.059
+2024-26,1 overnight reversal yday_same |ov|>0.5σ 1:2 (R),177,25.4,1.75,-0.327
+2024-26,1 overnight reversal yday_same |ov|>1.0σ → close (σ units),106,52.8,0.86,-0.027
+2024-26,1 overnight reversal yday_same |ov|>1.0σ 1:2 (R),106,23.6,1.74,-0.386
+2024-26,1 overnight reversal yday_opp |ov|>0.0σ → close (σ units),353,49.9,1.04,0.019
+2024-26,1 overnight reversal yday_opp |ov|>0.0σ 1:2 (R),353,36.5,1.75,0.006
+2024-26,1 overnight reversal yday_opp |ov|>0.5σ → close (σ units),203,50.2,1.15,0.081
+2024-26,1 overnight reversal yday_opp |ov|>0.5σ 1:2 (R),203,39.9,1.75,0.105
+2024-26,1 overnight reversal yday_opp |ov|>1.0σ → close (σ units),115,50.4,1.25,0.147
+2024-26,1 overnight reversal yday_opp |ov|>1.0σ 1:2 (R),115,43.5,1.74,0.207
+2024-26,1 overnight reversal monday |ov|>0.0σ → close (σ units),141,52.5,1.13,0.108
+2024-26,1 overnight reversal monday |ov|>0.0σ 1:2 (R),141,30.5,1.74,-0.177
+2024-26,1 overnight reversal monday |ov|>0.5σ → close (σ units),83,53.0,1.27,0.203
+2024-26,1 overnight reversal monday |ov|>0.5σ 1:2 (R),83,32.5,1.76,-0.111
+2024-26,1 overnight reversal monday |ov|>1.0σ → close (σ units),57,54.4,1.4,0.322
+2024-26,1 overnight reversal monday |ov|>1.0σ 1:2 (R),57,33.3,1.76,-0.088
+2024-26,2 open model long-only +0.25σ → close (σ units),539,54.9,0.94,0.063
+2024-26,2 open model long-only +0.5σ → close (σ units),432,56.0,0.9,0.061
+2024-26,2 open model long-only +1.0σ → close (σ units),249,56.6,0.93,0.079
+2024-26,3 fade to NY open |dev|≥0.5σ tp_open_sl2x (R),616,56.8,0.5799999833106995,-0.08100000023841858
+2024-26,3 fade to NY open |dev|≥0.5σ rr2 (R),616,31.0,1.7400000095367432,-0.16200000047683716
+2024-26,3 fade to NY open |dev|≥0.75σ tp_open_sl2x (R),494,54.3,0.6600000262260437,-0.061000000685453415
+2024-26,3 fade to NY open |dev|≥0.75σ rr2 (R),494,32.6,1.6699999570846558,-0.1340000033378601
+2024-26,3 fade to NY open |dev|≥1.0σ tp_open_sl2x (R),355,47.6,0.7900000214576721,-0.0689999982714653
+2024-26,3 fade to NY open |dev|≥1.0σ rr2 (R),355,31.8,1.5399999618530273,-0.1899999976158142

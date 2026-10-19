@@ -275,3 +275,7 @@ overlap days a year; use separate accounts or accept netting).
 73. (done, iter 72) Portfolio v2 on real data: GapFB-score + Pre-Fade + opex short (+ WVB/OD optional); Pine for the opex short.
 ### Iter 72 — portfolio v2: GapFB-score + Pre-Fade + Opex short = +459 R, DD 21 R, return/DD 21.7, 17/17 years → BEST PORTFOLIO.
 Pine for the opex short: pine/opex_short.pine.
+### Iter 73 — real-data re-runs of the calendar grid (iter30_calendar_real.py: 26/420 positive in all periods ≈ CFD's 29;
+nothing beyond the opex short) and the web batch (iter26_web_real.py: same picture as CFD — open-model long weak +0.05 σ).
+## Queue
+74. Event days and GapFB-score / Pre-Fade: CPI, NFP, FOMC days (dates from official calendars) — include or skip?
