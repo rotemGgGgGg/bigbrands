@@ -83,3 +83,13 @@ Slow: ~0.4 trades a day and 25–33 % wins → long flat stretches. Not faster t
 - Entries: buffers beyond the OR and later cut-offs hurt. **OR width filter helps monotonically**: skip days whose 15-min OR is
   narrower than w×ATR(1m). w = 3 / 3.5 / 4 / 5 → TEST 2024–26 +0.17 / +0.22 / +0.37 / +0.47 R (train/val also ≥ base).
   w = 4: 342 / 156 / 104 trades, +0.35 / +0.49 / +0.37 R, ~37 trades a year.
+
+## Final candidate (final.py) — 2010–26, NQ
+| version | trades/yr | win (per day) | R:R | R per day 2010–19 / 2020–23 / 2024–26 | total | max DD | years + |
+|---|---|---|---|---|---|---|---|
+| C base | ~85 | 28–34 % | 1:3.0 | +0.32 / +0.32 / +0.13 | +385 R | 34 R | 14/17 |
+| C + OR ≥ 3.5 ATR | ~53 | 29–35 % | 1:3.2 | +0.30 / +0.44 / +0.22 | +278 R | 29 R | 15/17 |
+| C + OR ≥ 3.5 ATR + add-on | ~53 | 22–29 % | 1:4.5–4.9 | +0.54 / +0.61 / +0.40 | +458 R | 49 R | 14/17 |
+| C + OR ≥ 4 ATR | ~38 | 30–36 % | 1:3.3 | +0.35 / +0.49 / +0.37 | +234 R | 27 R | 15/17 |
+| C + OR ≥ 4 ATR + add-on | ~38 | 25–31 % | 1:4.6 | +0.61 / +0.72 / +0.65 | +387 R | 46 R | 13/17 |
+(R = units of the base trade's initial risk; with the add-on a day can risk up to 2 R.)
