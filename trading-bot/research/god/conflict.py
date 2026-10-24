@@ -48,12 +48,12 @@ def trades():
                                cfg["rr"], 0, cf, cmin, 0.25, cfg["side"])
     for a, r, x, s, k in zip(ti, R, xi, sd, rk):
         d = pd.Timestamp(A["day"][a]); rows.append(("No-Wick", d + pd.Timedelta(minutes=int(A["mins"][a])),
-                                                  d + pd.Timedelta(minutes=int(A["mins"][x] + cfg["tf"])), s, r * k * 2))
+                                                  d + pd.Timedelta(minutes=int(A["mins"][x] + cfg["tf"])), s, r * k * 2, k * 2))
     d, g, O, H, L, C, AA, score = K.gfb_arrays(); c = K.GFB_CFGS[GFB_ID]
     ii, R, xi, sd, rk = gfb_sim(g, O, H, L, C, AA, score, c["orm"], c["stopk"], c["trail"], c["be"], c["cut"], c["gmin"], c["smin"], 1.0)
     for i, r, x, s, k in zip(ii, R, xi, sd, rk):
         j = c["orm"] + int(np.argmax((H[i, c["orm"]:] >= H[i, :c["orm"]].max()) if s == 1 else (L[i, c["orm"]:] <= L[i, :c["orm"]].min())))
-        rows.append(("GapFB", d[i] + pd.Timedelta(minutes=570 + j), d[i] + pd.Timedelta(minutes=570 + int(x) + 1), s, r * k * 2))
+        rows.append(("GapFB", d[i] + pd.Timedelta(minutes=570 + j), d[i] + pd.Timedelta(minutes=570 + int(x) + 1), s, r * k * 2, k * 2))
     d, X = K.x24(); o, h, l, cc = (X[:, :, q] for q in range(4))
     p = [dict(zip(K.PFG, v)) for v in itertools.product(*K.PFG.values())][PF_ID]; t0 = t2m(p["w0"]); t859, t9 = t2m("08:59"), t2m("09:00")
     pre = cc[:, t859] / o[:, t0] - 1; sdv = pd.Series(pre).rolling(20).std().shift().values
@@ -63,15 +63,15 @@ def trades():
         if abs(mv / o[i, t0] / sdv[i]) <= p["z"]: continue
         s = -1 if mv > 0 else 1; e = o[i, t9]; size = abs(mv); risk = p["sl"] * size
         px, k = walk_i(o[i], h[i], l[i], cc[i], t9, s, e, e - s * risk, e + s * p["tp"] * size, t2m(p["ex"]) - 1)
-        rows.append(("Pre-Fade", clock(d[i], t9), clock(d[i], k + 1), s, (s * (px - e) - 2.25 * e / 17000) * 2))
+        rows.append(("Pre-Fade", clock(d[i], t9), clock(d[i], k + 1), s, (s * (px - e) - 2.25 * e / 17000) * 2, risk * 2))
     q = [dict(zip(K.OPXG, v)) for v in itertools.product(*K.OPXG.values())][OPX_ID]
     opex = np.array([(x.weekday() == 4) and (15 <= x.day <= 21) for x in d])
     sig = pd.Series(np.abs(cc[:, t2m("15:55")] / o[:, t2m("09:30")] - 1)).rolling(14).mean().shift().values; te = t2m(q["te"])
     for i in np.nonzero(opex & (sig > 0))[0]:
         e = o[i, te]; st = q["sl"] * sig[i] * e
         px, k = walk_i(o[i], h[i], l[i], cc[i], te, -1, e, e + st, e - q["tpm"] * st, t2m(q["ex"]) - 1)
-        rows.append(("Opex", clock(d[i], te), clock(d[i], k + 1), -1, (e - px - 2.25 * e / 17000) * 2))
-    T = pd.DataFrame(rows, columns=["comp", "entry", "exit", "side", "usd1"])
+        rows.append(("Opex", clock(d[i], te), clock(d[i], k + 1), -1, (e - px - 2.25 * e / 17000) * 2, st * 2))
+    T = pd.DataFrame(rows, columns=["comp", "entry", "exit", "side", "usd1", "risk1"])
     T["usd"] = T.usd1 * T.comp.map(SIZE); return T.sort_values("entry").reset_index(drop=True)
 
 
