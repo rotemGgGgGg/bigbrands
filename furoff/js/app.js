@@ -46,6 +46,7 @@
     $("#checkoutBtn").href = url;
     $("#checkoutBtn").textContent = `לתשלום מאובטח — ${ils(b.price)}`;
     $("#stickyBtn").href = url;
+    $("#stickyTitle").textContent = b.title;
     $("#stickyPrice").textContent = ils(b.price);
   }
 
@@ -57,15 +58,22 @@
   $("#checkoutBtn").addEventListener("click", trackCheckout);
   $("#stickyBtn").addEventListener("click", () => { if ($("#stickyBtn").href.includes("/cart/")) trackCheckout(); });
 
-  // Gallery
-  $$(".thumb[data-src]").forEach((t) => t.addEventListener("click", () => {
-    $$(".thumb").forEach((x) => x.classList.remove("active"));
-    t.classList.add("active");
-    $("#galleryMain").src = t.dataset.src;
+  // Gallery: swipeable track + thumbnail dots
+  const track = $("#gTrack");
+  const slides = $$(".g-slide", track);
+  const dots = $$(".g-dot");
+  const setDot = (i) => dots.forEach((d, k) => d.classList.toggle("active", k === i));
+  dots.forEach((d, i) => d.addEventListener("click", () => {
+    slides[i].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    setDot(i);
   }));
+  const gio = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) setDot(slides.indexOf(e.target));
+  }), { root: track, threshold: 0.6 });
+  slides.forEach((sl) => gio.observe(sl));
 
   // Reviews (real ones only; section stays hidden when empty)
-  if (C.reviews?.length) {
+  if (C.reviews?.length && $("#revGrid")) {
     $("#revGrid").innerHTML = C.reviews.map((r) => `
       <figure class="rev reveal">
         ${r.photo ? `<img src="${r.photo}" alt="" loading="lazy" />` : ""}
@@ -84,12 +92,11 @@
     $("#video").hidden = false;
     // Autoplay muted only while on screen; respect reduced motion
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (still) v.removeAttribute("autoplay");
     new IntersectionObserver(([e]) => { if (still) return; e.isIntersecting ? v.play().catch(() => {}) : v.pause(); }, { threshold: 0.4 }).observe(v);
     $("#videoSound").addEventListener("click", () => {
       v.muted = !v.muted;
       $("#videoSound").textContent = v.muted ? "🔇" : "🔊";
-      $("#videoSound").setAttribute("aria-label", v.muted ? "הפעלת סאונד" : "השתקה");
+      $("#videoSound").setAttribute("aria-label", v.muted ? "הפעלת קול" : "השתקה");
       if (!v.muted) v.play().catch(() => {});
     });
   }

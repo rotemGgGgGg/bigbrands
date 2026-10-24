@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <script>if (location.hostname.endsWith(".pages.dev")) location.replace("https://furoff.site" + location.pathname + location.search + location.hash);</script>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>FurOff — פחות פרווה. יותר חיבוקים.</title>
   <meta name="description" content="FurOff — כלי רב־פעמי שמסיר שיער של כלבים וחתולים מספות, בגדים, מיטות ומושבי רכב. בלי מילויים, בלי סוללות. 99 ₪ עם משלוח חינם." />
   <meta property="og:title" content="FurOff — פחות פרווה. יותר חיבוקים." />
@@ -42,313 +42,192 @@
   <!-- Ticker -->
   <div class="ticker" aria-label="הטבות">
     <div class="ticker-track">
-      <span>משלוח חינם עד הבית</span><span>30 יום להחזרה — בלי שאלות</span><span>זוג ב-178 ₪ במקום 198 ₪</span><span>פחות פרווה. יותר חיבוקים.</span>
-      <span aria-hidden="true">משלוח חינם עד הבית</span><span aria-hidden="true">30 יום להחזרה — בלי שאלות</span><span aria-hidden="true">זוג ב-178 ₪ במקום 198 ₪</span><span aria-hidden="true">פחות פרווה. יותר חיבוקים.</span>
+      <span>משלוח חינם עד הבית</span><span>30 יום להחזר כספי</span><span>זוג ב-178 ₪ במקום 198 ₪</span>
+      <span aria-hidden="true">משלוח חינם עד הבית</span><span aria-hidden="true">30 יום להחזר כספי</span><span aria-hidden="true">זוג ב-178 ₪ במקום 198 ₪</span>
     </div>
   </div>
 
-  <!-- Header -->
   <header class="header">
     <div class="wrap header-in">
-      <a href="#top" class="logo" aria-label="FurOff"><img src="assets/logo.webp" alt="FurOff" width="720" height="294" /></a>
-      <nav class="nav" aria-label="ניווט">
-        <a href="#proof">לפני ואחרי</a>
-        <a href="#how">איך זה עובד</a>
-        <a href="#faq">שאלות</a>
-      </nav>
+      <a href="#top" class="logo" aria-label="FurOff — לראש העמוד"><img src="assets/logo.webp" alt="FurOff" width="720" height="294" /></a>
       <a href="#buy" class="btn btn-sm">להזמנה</a>
     </div>
   </header>
 
   <main id="top">
-    <!-- Hero -->
+    <!-- 1. Hero -->
     <section class="hero">
-      <div class="hero-glow" aria-hidden="true"></div>
       <div class="wrap hero-in">
-        <div class="hero-copy reveal">
+        <div class="hero-copy">
           <p class="rating-pill" data-rating hidden></p>
-          <p class="eyebrow">מסיר שיער רב־פעמי לכלבים ולחתולים</p>
           <h1>פחות פרווה.<br /><span class="grad">יותר חיבוקים.</span></h1>
-          <p class="lead">מעבירים על הספה, על הבגדים או על מושב הרכב — והפרווה נאספת לתוך המיכל. בלי מדבקות, בלי סוללות, ובלי לקנות מילויים שוב ושוב.</p>
-          <p class="hero-price"><strong>99 ₪</strong> ליחידה · <strong>זוג ב-178 ₪</strong> · משלוח חינם</p>
-          <div class="hero-cta">
-            <a href="#buy" class="btn btn-lg">לבחירת חבילה</a>
-          </div>
+          <p class="lead">מעבירים על הספה, הבגדים או מושב הרכב — והפרווה נאספת לתוך המיכל. בלי מדבקות ובלי סוללות.</p>
+        </div>
+        <div class="hero-media">
+          <img src="assets/hero.webp" alt="FurOff על ספה מלאה פרווה, כלב וחתול ברקע" width="953" height="1000" fetchpriority="high" />
+          <span class="hero-badge">99 ₪ <small>· זוג ב-178 ₪</small></span>
+        </div>
+        <div class="hero-actions">
+          <a href="#buy" class="btn btn-lg btn-block hero-cta">אני רוצה FurOff</a>
           <ul class="trust-row">
-            <li><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg><span data-guarantee>30</span> יום החזר כספי</li>
-            <li><svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>משלוח חינם עם מעקב</li>
-            <li><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>תשלום מאובטח</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>משלוח חינם</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg><span data-guarantee>30</span> יום החזר</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>תשלום מאובטח</li>
           </ul>
         </div>
-        <div class="hero-media reveal">
-          <div class="hero-ring" aria-hidden="true"></div>
-          <img src="assets/hero.webp" alt="FurOff על ספה אפורה מלאה פרווה, גולדן רטריבר וחתול ברקע" width="953" height="1000" fetchpriority="high" />
-        </div>
       </div>
     </section>
 
-    <!-- Instant proof -->
-    <section class="proof" id="proof">
+    <!-- 2. Proof -->
+    <section class="sec proof" id="proof">
       <div class="wrap">
-        <figure class="proof-fig reveal">
-          <picture><source media="(max-width: 900px)" srcset="assets/ba-big-m.webp" /><img class="media" src="assets/ba-big.webp" alt="לפני ואחרי: ספה כהה מלאה פרווה מול אותה ספה נקייה אחרי FurOff" width="1536" height="390" /></picture>
-          <figcaption>אותה ספה. <strong>כמה העברות של FurOff.</strong></figcaption>
-        </figure>
+        <h2 class="sec-title">אותה ספה. כמה העברות.</h2>
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/ba-big-m.webp" />
+          <img class="media" src="assets/ba-big.webp" alt="לפני ואחרי: ספה כהה מלאה פרווה, ואותה ספה נקייה אחרי FurOff" width="1536" height="390" loading="lazy" />
+        </picture>
       </div>
     </section>
 
-    <!-- Video (shown only when config.videoUrl is set) -->
-    <section class="video" id="video" hidden>
+    <!-- 3. Video -->
+    <section class="sec video" id="video" hidden>
       <div class="wrap video-in">
-        <div class="video-frame reveal">
-          <video id="demoVideo" playsinline muted loop autoplay preload="metadata"></video>
-          <button class="video-sound" id="videoSound" type="button" aria-label="הפעלת סאונד">🔇</button>
+        <div class="video-frame">
+          <video id="demoVideo" playsinline muted loop preload="none"></video>
+          <button class="video-sound" id="videoSound" type="button" aria-label="הפעלת קול">🔇</button>
         </div>
-        <div class="video-copy reveal">
-          <p class="eyebrow">בפעולה</p>
-          <h2>תראו את הפרווה נעלמת.</h2>
-          <ul class="mini-benefits">
+        <div class="video-copy">
+          <h2 class="sec-title">תראו את זה בפעולה</h2>
+          <ul class="ticks">
             <li>כמה העברות — והספה נקייה</li>
-            <li>הפרווה נאספת לתוך המיכל, לא מתפזרת</li>
+            <li>הפרווה נאספת למיכל ולא מתפזרת</li>
             <li>מרוקנים לפח ומשתמשים שוב</li>
           </ul>
-          <a href="#buy" class="btn btn-lg">אני רוצה את זה</a>
         </div>
       </div>
     </section>
 
-    <!-- Pain points -->
-    <section class="pain">
-      <div class="wrap pain-in reveal">
-        <h2>FurOff נוצר בשבילכם, במיוחד אם…</h2>
-        <ul class="checks">
-          <li>הספה נראית כמו עוד כלב שגר אצלכם</li>
-          <li>אתם יוצאים מהבית עם שיערות על הבגדים הכהים</li>
-          <li>קונים גלילים דביקים שנגמרים תוך שבוע</li>
-          <li>ניקיתם אתמול — והפרווה כבר חזרה</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Buy box -->
-    <section class="buy" id="buy">
-      <div class="wrap buy-in">
-        <div class="gallery reveal">
-          <div class="gallery-main">
-            <img id="galleryMain" src="assets/g-main.webp" alt="FurOff — מסיר פרווה רב־פעמי" width="1400" height="933" />
-          </div>
-          <div class="thumbs" role="list">
-            <button class="thumb active" data-src="assets/g-main.webp" role="listitem" aria-label="המוצר"><img src="assets/g-main.webp" alt="" /></button>
-            <button class="thumb" data-src="assets/g-hand.webp" role="listitem" aria-label="בשימוש"><img src="assets/g-hand.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/g-surfaces.webp" role="listitem" aria-label="ספה, רכב ומיטת כלב"><img src="assets/g-surfaces.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/g-steps.webp" role="listitem" aria-label="איך זה עובד"><img src="assets/g-steps.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/g-bed.webp" role="listitem" aria-label="מיטת חיית מחמד"><img src="assets/g-bed.webp" alt="" loading="lazy" /></button>
-            <button class="thumb" data-src="assets/g-howto.webp" role="listitem" aria-label="לפני ואחרי"><img src="assets/g-howto.webp" alt="" loading="lazy" /></button>
-          </div>
-        </div>
-
-        <div class="buy-info reveal">
-          <p class="eyebrow">FurOff™ Pet Hair Remover</p>
-          <h2 class="buy-title">מסיר הפרווה שעובד שוב ושוב</h2>
-          <p class="rating-pill" data-rating hidden></p>
-          <ul class="mini-benefits">
-            <li>אוסף פרווה מספות, בגדים, רכב, שטיחים ומיטות</li>
-            <li>מיכל איסוף גדול — פותחים, מרוקנים, ממשיכים</li>
-            <li>בלי מדבקות, בלי סוללות, בלי מילויים</li>
+    <!-- 4. Fit -->
+    <section class="sec fit">
+      <div class="wrap">
+        <div class="fit-card">
+          <h2 class="sec-title">FurOff בשבילכם אם…</h2>
+          <ul class="ticks">
+            <li>הספה נראית כאילו עוד כלב גר עליה</li>
+            <li>אתם יוצאים מהבית עם שערות על הבגדים</li>
+            <li>נמאס לכם לקנות גלילים דביקים שנגמרים</li>
+            <li>ניקיתם אתמול — והפרווה כבר חזרה</li>
           </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. How it works (swipe on mobile) -->
+    <section class="sec how" id="how">
+      <div class="wrap">
+        <h2 class="sec-title">איך זה עובד</h2>
+        <ol class="steps">
+          <li class="step"><img src="assets/st1.webp" alt="" width="378" height="248" loading="lazy" /><b aria-hidden="true">1</b><h3>מעבירים</h3><p>קדימה ואחורה על המשטח.</p></li>
+          <li class="step"><img src="assets/st2.webp" alt="" width="363" height="248" loading="lazy" /><b aria-hidden="true">2</b><h3>הפרווה נאספת</h3><p>ישר לתוך המיכל.</p></li>
+          <li class="step"><img src="assets/st3.webp" alt="" width="364" height="248" loading="lazy" /><b aria-hidden="true">3</b><h3>מרוקנים</h3><p>פותחים ומרוקנים לפח.</p></li>
+          <li class="step"><img src="assets/st4.webp" alt="" width="376" height="248" loading="lazy" /><b aria-hidden="true">4</b><h3>שוב ושוב</h3><p>בלי מילויים ובלי עלויות.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 6. Surfaces -->
+    <section class="sec surfaces">
+      <div class="wrap">
+        <h2 class="sec-title">עובד על כל משטח</h2>
+        <div class="surf-grid">
+          <figure><img class="media" src="assets/sf-sofa.webp" alt="לפני ואחרי: ספה" width="518" height="295" loading="lazy" /><figcaption>ספות</figcaption></figure>
+          <figure><img class="media" src="assets/sf-car.webp" alt="לפני ואחרי: מושב רכב" width="494" height="295" loading="lazy" /><figcaption>מושבי רכב</figcaption></figure>
+          <figure><img class="media" src="assets/sf-bed.webp" alt="לפני ואחרי: מיטת כלב" width="497" height="295" loading="lazy" /><figcaption>מיטות של חיות</figcaption></figure>
+          <figure><img class="media" src="assets/sf-clothes.webp" alt="לפני ואחרי: סוודר כהה" width="458" height="325" loading="lazy" /><figcaption>בגדים</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Offer -->
+    <section class="sec buy" id="buy">
+      <div class="wrap buy-in">
+        <div class="gallery">
+          <div class="g-track" id="gTrack" tabindex="0" aria-label="תמונות המוצר">
+              <div class="g-slide"><img src="assets/g-main.webp" alt="FurOff — מסיר פרווה רב־פעמי" width="1400" height="933" /></div>
+              <div class="g-slide"><img src="assets/g-hand.webp" alt="FurOff בשימוש על ספה" width="1400" height="933" loading="lazy" /></div>
+              <div class="g-slide"><img src="assets/g-surfaces.webp" alt="לפני ואחרי על ספה, רכב ומיטת כלב" width="1400" height="933" loading="lazy" /></div>
+              <div class="g-slide"><img src="assets/g-steps.webp" alt="איך משתמשים ב-FurOff" width="1400" height="933" loading="lazy" /></div>
+              <div class="g-slide"><img src="assets/g-bed.webp" alt="FurOff על מיטת כלב" width="1400" height="933" loading="lazy" /></div>
+              <div class="g-slide"><img src="assets/g-howto.webp" alt="לפני ואחרי על ספה, שטיח ובגדים" width="1400" height="933" loading="lazy" /></div>
+          </div>
+          <div class="g-dots" id="gDots">
+              <button class="g-dot active" type="button" data-i="0" aria-label="תמונה 1"><img src="assets/g-main.webp" alt="" loading="lazy" /></button>
+              <button class="g-dot" type="button" data-i="1" aria-label="תמונה 2"><img src="assets/g-hand.webp" alt="" loading="lazy" /></button>
+              <button class="g-dot" type="button" data-i="2" aria-label="תמונה 3"><img src="assets/g-surfaces.webp" alt="" loading="lazy" /></button>
+              <button class="g-dot" type="button" data-i="3" aria-label="תמונה 4"><img src="assets/g-steps.webp" alt="" loading="lazy" /></button>
+              <button class="g-dot" type="button" data-i="4" aria-label="תמונה 5"><img src="assets/g-bed.webp" alt="" loading="lazy" /></button>
+              <button class="g-dot" type="button" data-i="5" aria-label="תמונה 6"><img src="assets/g-howto.webp" alt="" loading="lazy" /></button>
+          </div>
+        </div>
+
+        <div class="buy-info">
+          <p class="rating-pill" data-rating hidden></p>
+          <h2 class="buy-title">FurOff — מסיר הפרווה הרב־פעמי</h2>
 
           <fieldset class="bundles" id="bundles">
             <legend>בחרו כמות</legend>
           </fieldset>
 
           <a id="checkoutBtn" class="btn btn-lg btn-block" href="#">לתשלום מאובטח</a>
-          <ul class="buy-assure">
-            <li><svg viewBox="0 0 24 24"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg><span data-shipping></span></li>
-            <li><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg><span data-guarantee>30</span> יום החזר כספי מלא</li>
-            <li><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>תשלום מאובטח דרך Shopify</li>
+          <ul class="assure">
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg><span data-shipping></span></li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg><span data-guarantee>30</span> יום החזר כספי מלא</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>תשלום מאובטח דרך Shopify</li>
           </ul>
-
-          <div class="acc">
-            <details>
-              <summary>איך משתמשים?</summary>
-              <ol class="steps-list">
-                <li>מעבירים קדימה ואחורה בתנועות קצרות על המשטח.</li>
-                <li>הפרווה נאספת ומצטברת בתוך המיכל.</li>
-                <li>פותחים את המיכל ומרוקנים לפח — ומוכן שוב.</li>
-              </ol>
-            </details>
-            <details>
-              <summary>משלוחים</summary>
-              <p><span data-shipping></span> מספר המעקב נשלח במייל ברגע שההזמנה יוצאת.</p>
-            </details>
-            <details>
-              <summary>אחריות והחזרות</summary>
-              <p>יש לכם <span data-guarantee>30</span> יום לנסות את FurOff בבית. אם הוא לא מתאים לכם — פנו אלינו ונחזיר את הכסף.</p>
-            </details>
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- How it works -->
-    <section class="how" id="how">
+    <!-- 8. Compare -->
+    <section class="sec compare">
       <div class="wrap">
-        <div class="sec-head reveal">
-          <p class="eyebrow">איך זה עובד</p>
-          <h2>ארבעה צעדים. בית בלי פרווה.</h2>
-        </div>
-        <div class="steps">
-          <article class="step reveal">
-            <img class="media" src="assets/st1.webp" alt="מעבירים את FurOff על ספה מלאה פרווה" width="378" height="248" loading="lazy" />
-            <span class="step-n">1</span>
-            <h3>מעבירים</h3>
-            <p>קדימה ואחורה על הספה, הבגדים או המושב.</p>
-          </article>
-          <article class="step reveal">
-            <img class="media" src="assets/st2.webp" alt="הפרווה נאספת לתוך המיכל" width="363" height="248" loading="lazy" />
-            <span class="step-n">2</span>
-            <h3>הפרווה נאספת</h3>
-            <p>הגלגלות מושכות את השיער ישר לתוך המיכל.</p>
-          </article>
-          <article class="step reveal">
-            <img class="media" src="assets/st3.webp" alt="פותחים את המיכל ומרוקנים לפח" width="364" height="248" loading="lazy" />
-            <span class="step-n">3</span>
-            <h3>מרוקנים</h3>
-            <p>פותחים את המיכל, מרוקנים לפח. זהו.</p>
-          </article>
-          <article class="step reveal">
-            <img class="media" src="assets/st4.webp" alt="FurOff נקי ומוכן לשימוש חוזר" width="376" height="248" loading="lazy" />
-            <span class="step-n">4</span>
-            <h3>שוב ושוב</h3>
-            <p>בלי מילויים ובלי עלויות — מוכן לפעם הבאה.</p>
-          </article>
-        </div>
+        <h2 class="sec-title">למה לא גליל דביק?</h2>
+        <table class="cmp">
+          <thead><tr><th scope="col"><span class="sr">תכונה</span></th><th scope="col" class="us">FurOff</th><th scope="col">גליל דביק</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">רב־פעמי</th><td class="us y">✓</td><td class="n">✕</td></tr>
+            <tr><th scope="row">בלי לקנות מילויים</th><td class="us y">✓</td><td class="n">✕</td></tr>
+            <tr><th scope="row">שולף שיער שנתקע בבד</th><td class="us y">✓</td><td class="n">✕</td></tr>
+            <tr><th scope="row">בלי פסולת</th><td class="us y">✓</td><td class="n">✕</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- Surfaces: real before/after -->
-    <section class="surfaces">
+    <!-- 9. Guarantee -->
+    <section class="sec promise">
       <div class="wrap">
-        <div class="sec-head reveal">
-          <p class="eyebrow">לפני ואחרי</p>
-          <h2>כל משטח שהפרווה נתקעת בו.</h2>
-        </div>
-        <div class="surf-grid">
-          <figure class="surf reveal"><img class="media" src="assets/sf-sofa.webp" alt="לפני ואחרי: ספה" width="518" height="295" loading="lazy" /><figcaption>ספות וכורסאות</figcaption></figure>
-          <figure class="surf reveal"><img class="media" src="assets/sf-car.webp" alt="לפני ואחרי: מושב רכב" width="494" height="295" loading="lazy" /><figcaption>מושבי רכב</figcaption></figure>
-          <figure class="surf reveal"><img class="media" src="assets/sf-bed.webp" alt="לפני ואחרי: מיטת חיית מחמד" width="497" height="295" loading="lazy" /><figcaption>המיטה של הכלב</figcaption></figure>
-          <figure class="surf reveal"><img class="media" src="assets/sf-clothes.webp" alt="לפני ואחרי: סוודר כהה" width="458" height="325" loading="lazy" /><figcaption>בגדים ומעילים</figcaption></figure>
-        </div>
-        <p class="surf-more reveal">וגם שמיכות, שטיחים, כריות ומצעים.</p>
-        <div class="mid-cta reveal"><a href="#buy" class="btn btn-lg">אני רוצה בית בלי פרווה</a></div>
-      </div>
-    </section>
-
-
-    <!-- Comparison -->
-    <section class="compare" id="why">
-      <div class="wrap">
-        <div class="sec-head reveal">
-          <p class="eyebrow">למה FurOff</p>
-          <h2>נגמרו הגלילים הדביקים.</h2>
-        </div>
-        <div class="table-wrap reveal">
-          <table class="cmp">
-            <thead>
-              <tr><th scope="col"></th><th scope="col" class="us">FurOff</th><th scope="col">גליל דביק</th><th scope="col">שואב אבק</th></tr>
-            </thead>
-            <tbody>
-              <tr><th scope="row">רב־פעמי</th><td class="us y">✓</td><td class="n">✕</td><td class="y">✓</td></tr>
-              <tr><th scope="row">בלי עלויות המשך</th><td class="us y">✓</td><td class="n">✕</td><td class="y">✓</td></tr>
-              <tr><th scope="row">בלי חשמל ובלי רעש</th><td class="us y">✓</td><td class="y">✓</td><td class="n">✕</td></tr>
-              <tr><th scope="row">מוכן בשנייה</th><td class="us y">✓</td><td class="y">✓</td><td class="n">✕</td></tr>
-              <tr><th scope="row">שולף שיער שנתקע בבד</th><td class="us y">✓</td><td class="n">✕</td><td class="m">חלקית</td></tr>
-              <tr><th scope="row">בלי פסולת פלסטיק</th><td class="us y">✓</td><td class="n">✕</td><td class="y">✓</td></tr>
-            </tbody>
-          </table>
+        <div class="promise-in">
+          <div class="seal" aria-hidden="true"><span data-guarantee>30</span><small>יום</small></div>
+          <h2>נסו בבית. בלי סיכון.</h2>
+          <p>לא מרוצים תוך <span data-guarantee>30</span> יום? מחזירים לכם את הכסף.</p>
+          <a href="#buy" class="btn btn-lg btn-light">לבחירת חבילה</a>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
-    <section class="features">
-      <div class="wrap features-in">
-        <div class="features-media reveal">
-          <img class="media" src="assets/chamber.webp" alt="המיכל של FurOff מלא בפרווה שנאספה" width="550" height="242" loading="lazy" />
-        </div>
-        <div class="features-copy reveal">
-          <p class="eyebrow">מה יש בפנים</p>
-          <h2>פרטים קטנים. הבדל גדול.</h2>
-          <dl class="feat-list">
-            <div><dt>שתי גלגלות אוספות</dt><dd>בד מיוחד שמושך שיער קצר וארוך מתוך הריפוד.</dd></div>
-            <div><dt>מיכל איסוף גדול</dt><dd>אוסף הרבה פרווה לפני שצריך לרוקן.</dd></div>
-            <div><dt>פתיחה קלה</dt><dd>המיכל נפתח ביד אחת — ישר לפח.</dd></div>
-            <div><dt>עדין לבדים</dt><dd>בלי דבק ובלי להבים. עם חור תלייה בידית.</dd></div>
-          </dl>
-        </div>
-      </div>
-    </section>
-
-    <!-- Reviews (rendered from config, hidden when empty) -->
-    <section class="reviews" id="reviews" hidden>
-      <div class="wrap">
-        <div class="sec-head reveal">
-          <p class="eyebrow">בעלי כלבים מספרים</p>
-          <h2>יותר זמן איתו. פחות זמן לנקות.</h2>
-        </div>
-        <div class="rev-grid" id="revGrid"></div>
-      </div>
-    </section>
-
-    <!-- Brand moment -->
-    <section class="cuddle">
-      <img src="assets/cuddle.webp" alt="אישה מחבקת גולדן רטריבר על ספה נקייה" width="980" height="1024" loading="lazy" />
-      <div class="wrap cuddle-in">
-        <div class="cuddle-copy reveal">
-          <h2>הזמן שחסכתם על ניקיון —<br /><span class="grad-light">הולך אליו.</span></h2>
-          <p>פחות גלילים, פחות שאיבות, פחות "רגע, אל תעלה על הספה". יותר ערבים ביחד.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Guarantee -->
-    <section class="promise">
-      <div class="wrap promise-in reveal">
-        <div class="seal" aria-hidden="true"><span data-guarantee>30</span><small>יום</small></div>
-        <div>
-          <h2>נסו אותו בבית. בלי סיכון.</h2>
-          <p>אם FurOff לא עושה לכם סדר בפרווה תוך <span data-guarantee>30</span> יום — מחזירים את הכסף. בלי טפסים מסובכים ובלי שאלות.</p>
-        </div>
-        <a href="#buy" class="btn btn-lg">זוג ב-178 ₪</a>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="faq" id="faq">
+    <!-- 10. FAQ -->
+    <section class="sec faq" id="faq">
       <div class="wrap faq-in">
-        <div class="sec-head reveal">
-          <p class="eyebrow">שאלות נפוצות</p>
-          <h2>כל מה שרציתם לדעת</h2>
+        <h2 class="sec-title">שאלות נפוצות</h2>
+        <div class="acc">
+          <details><summary>זה באמת עובד?</summary><p>כן. הגלגלות עשויות מבד שתופס שיער ומושך אותו לתוך המיכל בכל העברה — כמו בתמונות ובסרטון. ואם זה לא מתאים לכם, יש <span data-guarantee>30</span> יום להחזר כספי.</p></details>
+          <details><summary>תוך כמה זמן זה מגיע?</summary><p><span data-shipping></span> מספר מעקב נשלח אליכם במייל.</p></details>
+          <details><summary>זה מתאים לשיער קצר וגם לארוך?</summary><p>כן, לכלבים ולחתולים. שיער קצר שנתקע עמוק בבד הוא בדיוק המקום שבו FurOff עושה את ההבדל.</p></details>
+          <details><summary>זה פוגע בבד?</summary><p>לא. אין דבק ואין להבים. על בדים עדינים במיוחד כדאי לנסות קודם בפינה נסתרת.</p></details>
+          <details><summary>צריך מילויים או סוללות?</summary><p>לא. מרוקנים את המיכל וממשיכים להשתמש.</p></details>
+          <details><summary>למה לקנות זוג?</summary><p>אחד לבית ואחד לרכב — או מתנה לחברים עם כלב. בזוג כל יחידה יוצאת 89 ₪ במקום 99 ₪.</p></details>
         </div>
-        <div class="acc acc-lg reveal">
-          <details><summary>זה באמת עובד, או עוד גאדג'ט?</summary><p>הגלגלות עשויות מבד שתופס שיער ומושך אותו לתוך המיכל בכל העברה — בדיוק מה שרואים בתמונות הלפני/אחרי. ואם זה לא עובד לכם, יש <span data-guarantee>30</span> יום להחזיר ולקבל את הכסף.</p></details>
-          <details><summary>זה עובד גם על שיער קצר וגם על ארוך?</summary><p>כן. אוסף שיער של כלבים וחתולים משני הסוגים. שיער קצר ודוקרני נוטה להיתקע עמוק בבד — ושם בדיוק FurOff עושה את ההבדל.</p></details>
-          <details><summary>תוך כמה זמן זה מגיע?</summary><p><span data-shipping></span> מספר מעקב נשלח במייל.</p></details>
-          <details><summary>זה פוגע בבד?</summary><p>לא. אין דבק ואין להבים — רק גלגול. מתאים לרוב הבדים והריפודים. על בדים עדינים במיוחד מומלץ לנסות קודם בפינה נסתרת.</p></details>
-          <details><summary>צריך לקנות מילויים או סוללות?</summary><p>לא. FurOff רב־פעמי לגמרי. מרוקנים את המיכל וממשיכים.</p></details>
-          <details><summary>למה לקנות זוג?</summary><p>אחד לבית ואחד לרכב (או מתנה לחבר עם כלב). בזוג כל יחידה יוצאת 89 ₪ במקום 99 ₪.</p></details>
-          <details><summary>ומה אם זה לא מתאים לי?</summary><p>יש לכם <span data-guarantee>30</span> יום לנסות. לא מרוצים? פונים אלינו ומקבלים את הכסף בחזרה.</p></details>
-        </div>
-      </div>
-    </section>
-
-    <!-- Final CTA -->
-    <section class="final">
-      <div class="wrap final-in reveal">
-        <img src="assets/logo.webp" alt="FurOff" width="720" height="294" loading="lazy" />
-        <p class="final-slogan">פחות פרווה. יותר חיבוקים.</p>
-        <a href="#buy" class="btn btn-lg">אני רוצה FurOff</a>
-        <p class="final-note">משלוח חינם · <span data-guarantee>30</span> יום החזר כספי · תשלום מאובטח</p>
       </div>
     </section>
   </main>
@@ -357,16 +236,15 @@
     <div class="wrap footer-in">
       <img src="assets/logo.webp" alt="FurOff" width="720" height="294" loading="lazy" />
       <nav aria-label="מדיניות" class="footer-links" id="policyLinks"></nav>
-      <p class="footer-contact"><a id="contactLink">צרו קשר</a></p>
-      <p class="copy">© <span id="year"></span> FurOff. כל הזכויות שמורות.</p>
+      <p><a id="contactLink">צרו קשר</a></p>
+      <p class="copy">© <span id="year"></span> FurOff</p>
     </div>
   </footer>
 
-  <!-- Sticky buy bar (mobile) -->
   <div class="sticky-bar" id="stickyBar" aria-hidden="true">
     <div class="sticky-info">
-      <strong>FurOff</strong>
-      <span id="stickyPrice">99 ₪</span>
+      <strong id="stickyTitle">זוג FurOff</strong>
+      <span id="stickyPrice">178 ₪</span>
     </div>
     <a class="btn" id="stickyBtn" href="#buy" tabindex="-1">להזמנה</a>
   </div>

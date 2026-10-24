@@ -18,8 +18,8 @@ window.FUROFF = {
   shippingText: "משלוח חינם עד הבית, אספקה תוך 2–3 שבועות.",
 
   // Demo video (mp4 in assets/). Leave empty and the section stays hidden.
-  videoUrl: "assets/demo.mp4",
-  videoPoster: "assets/demo-poster.webp",
+  videoUrl: "assets/demo-he.mp4",
+  videoPoster: "assets/demo-he-poster.webp",
   guaranteeDays: 30,
 
   // Texts to paste into Shopify → Settings → Policies live in furoff-policies/.
@@ -31,7 +31,7 @@ window.FUROFF = {
   ],
 
   // Real figures from the supplier's product listing, always shown with their source.
-  supplierRating: { stars: "4.9", label: "דירוג אצל היצרן", sold: "10,000+ נמכרו" },
+  supplierRating: { stars: "4.9", label: "דירוג אצל היצרן", sold: "יותר מ-10,000 נמכרו" },
 
   // Real reviews only. Leave empty and the section stays hidden.
   // { name: "דנה, תל אביב", dog: "גולדן רטריבר", text: "...", stars: 5, photo: "assets/..." }
