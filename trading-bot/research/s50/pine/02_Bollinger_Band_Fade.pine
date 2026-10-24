@@ -1,0 +1,30 @@
+//@version=6
+strategy("02 Bollinger Band Fade | NQ/MNQ", overlay=true, pyramiding=0, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, commission_type=strategy.commission.cash_per_contract, commission_value=2.5, slippage=2)
+qty = input.int(1, "Contracts", minval=1)
+len = input.int(20, "BB Length")
+mult = input.float(2.2, "BB Deviation", minval=0.5)
+trendLen = input.int(150, "Trend EMA")
+atrLen = input.int(14, "ATR Length")
+slATR = input.float(1.8, "Stop ATR", minval=0.1)
+tpATR = input.float(0.9, "Target ATR", minval=0.1)
+basis = ta.sma(close, len)
+dev = ta.stdev(close, len) * mult
+upper = basis + dev
+lower = basis - dev
+ema = ta.ema(close, trendLen)
+atr = ta.atr(atrLen)
+longSignal = ta.crossover(close, lower) and close > ema
+shortSignal = ta.crossunder(close, upper) and close < ema
+if strategy.position_size == 0
+    if longSignal
+        strategy.entry("L", strategy.long, qty=qty)
+    if shortSignal
+        strategy.entry("S", strategy.short, qty=qty)
+if strategy.position_size > 0
+    strategy.exit("LX", "L", stop=strategy.position_avg_price - atr * slATR, limit=strategy.position_avg_price + atr * tpATR)
+if strategy.position_size < 0
+    strategy.exit("SX", "S", stop=strategy.position_avg_price + atr * slATR, limit=strategy.position_avg_price - atr * tpATR)
+plot(basis, "BB Basis", color=color.gray)
+plot(upper, "BB Upper", color=color.blue)
+plot(lower, "BB Lower", color=color.blue)
+plot(ema, "Trend EMA", color=color.orange)

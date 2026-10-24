@@ -1,0 +1,47 @@
+//@version=6
+strategy("09 Opening Range Breakout Retest | NQ/MNQ", overlay=true, pyramiding=0, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, commission_type=strategy.commission.cash_per_contract, commission_value=2.5, slippage=2)
+qty = input.int(1, "Contracts", minval=1)
+orbSession = input.session("0930-0945", "Opening Range (New York)")
+tradeSession = input.session("0945-1200", "Trade Window (New York)")
+atrLen = input.int(14, "ATR Length")
+slATR = input.float(1.5, "Stop ATR", minval=0.1)
+tpATR = input.float(1.2, "Target ATR", minval=0.1)
+inORB = not na(time(timeframe.period, orbSession, "America/New_York"))
+inTrade = not na(time(timeframe.period, tradeSession, "America/New_York"))
+newDay = ta.change(time("D")) != 0
+var float orbHigh = na
+var float orbLow = na
+var bool rangeReady = false
+var bool brokeUp = false
+var bool brokeDown = false
+if newDay
+    orbHigh := na
+    orbLow := na
+    rangeReady := false
+    brokeUp := false
+    brokeDown := false
+if inORB
+    orbHigh := na(orbHigh) ? high : math.max(orbHigh, high)
+    orbLow := na(orbLow) ? low : math.min(orbLow, low)
+if not inORB and inORB[1]
+    rangeReady := true
+if rangeReady and inTrade and close > orbHigh
+    brokeUp := true
+if rangeReady and inTrade and close < orbLow
+    brokeDown := true
+atr = ta.atr(atrLen)
+longSignal = rangeReady and inTrade and brokeUp and low <= orbHigh and close > orbHigh
+shortSignal = rangeReady and inTrade and brokeDown and high >= orbLow and close < orbLow
+if strategy.position_size == 0
+    if longSignal
+        strategy.entry("L", strategy.long, qty=qty)
+        brokeUp := false
+    if shortSignal
+        strategy.entry("S", strategy.short, qty=qty)
+        brokeDown := false
+if strategy.position_size > 0
+    strategy.exit("LX", "L", stop=strategy.position_avg_price - atr * slATR, limit=strategy.position_avg_price + atr * tpATR)
+if strategy.position_size < 0
+    strategy.exit("SX", "S", stop=strategy.position_avg_price + atr * slATR, limit=strategy.position_avg_price - atr * tpATR)
+plot(orbHigh, "ORB High", color=color.green, linewidth=2)
+plot(orbLow, "ORB Low", color=color.red, linewidth=2)

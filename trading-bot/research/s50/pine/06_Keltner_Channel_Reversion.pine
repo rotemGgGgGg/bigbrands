@@ -1,0 +1,31 @@
+//@version=6
+strategy("06 Keltner Channel Reversion | NQ/MNQ", overlay=true, pyramiding=0, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, commission_type=strategy.commission.cash_per_contract, commission_value=2.5, slippage=2)
+qty = input.int(1, "Contracts", minval=1)
+len = input.int(20, "Keltner EMA Length")
+atrLen = input.int(20, "Channel ATR Length")
+mult = input.float(1.8, "Channel ATR Multiplier")
+trendLen = input.int(200, "Trend EMA")
+riskLen = input.int(14, "Risk ATR Length")
+slATR = input.float(1.7, "Stop ATR", minval=0.1)
+tpATR = input.float(0.8, "Target ATR", minval=0.1)
+basis = ta.ema(close, len)
+width = ta.atr(atrLen) * mult
+upper = basis + width
+lower = basis - width
+trend = ta.ema(close, trendLen)
+atr = ta.atr(riskLen)
+longSignal = ta.crossover(close, lower) and close > trend
+shortSignal = ta.crossunder(close, upper) and close < trend
+if strategy.position_size == 0
+    if longSignal
+        strategy.entry("L", strategy.long, qty=qty)
+    if shortSignal
+        strategy.entry("S", strategy.short, qty=qty)
+if strategy.position_size > 0
+    strategy.exit("LX", "L", stop=strategy.position_avg_price - atr * slATR, limit=strategy.position_avg_price + atr * tpATR)
+if strategy.position_size < 0
+    strategy.exit("SX", "S", stop=strategy.position_avg_price + atr * slATR, limit=strategy.position_avg_price - atr * tpATR)
+plot(basis, "Keltner Basis", color=color.gray)
+plot(upper, "Keltner Upper", color=color.blue)
+plot(lower, "Keltner Lower", color=color.blue)
+plot(trend, "Trend EMA", color=color.orange)

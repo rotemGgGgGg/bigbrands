@@ -1,0 +1,25 @@
+//@version=6
+strategy("05 Supertrend Confirmation | NQ/MNQ", overlay=true, pyramiding=0, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, commission_type=strategy.commission.cash_per_contract, commission_value=2.5, slippage=2)
+qty = input.int(1, "Contracts", minval=1)
+factor = input.float(3.0, "Supertrend Factor", minval=0.1)
+atrLen = input.int(10, "Supertrend ATR")
+emaLen = input.int(100, "Trend EMA")
+riskATR = input.int(14, "Risk ATR Length")
+slATR = input.float(1.8, "Stop ATR", minval=0.1)
+tpATR = input.float(1.2, "Target ATR", minval=0.1)
+[st, direction] = ta.supertrend(factor, atrLen)
+ema = ta.ema(close, emaLen)
+atr = ta.atr(riskATR)
+longSignal = ta.change(direction) < 0 and close > ema
+shortSignal = ta.change(direction) > 0 and close < ema
+if strategy.position_size == 0
+    if longSignal
+        strategy.entry("L", strategy.long, qty=qty)
+    if shortSignal
+        strategy.entry("S", strategy.short, qty=qty)
+if strategy.position_size > 0
+    strategy.exit("LX", "L", stop=strategy.position_avg_price - atr * slATR, limit=strategy.position_avg_price + atr * tpATR)
+if strategy.position_size < 0
+    strategy.exit("SX", "S", stop=strategy.position_avg_price + atr * slATR, limit=strategy.position_avg_price - atr * tpATR)
+plot(st, "Supertrend", color=direction < 0 ? color.green : color.red, linewidth=2)
+plot(ema, "Trend EMA", color=color.orange)

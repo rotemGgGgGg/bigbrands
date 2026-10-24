@@ -1,0 +1,27 @@
+//@version=6
+strategy("04 EMA Pullback Continuation | NQ/MNQ", overlay=true, pyramiding=0, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, commission_type=strategy.commission.cash_per_contract, commission_value=2.5, slippage=2)
+qty = input.int(1, "Contracts", minval=1)
+fastLen = input.int(20, "Fast EMA")
+slowLen = input.int(50, "Slow EMA")
+trendLen = input.int(200, "Trend EMA")
+atrLen = input.int(14, "ATR Length")
+slATR = input.float(1.5, "Stop ATR", minval=0.1)
+tpATR = input.float(1.2, "Target ATR", minval=0.1)
+fast = ta.ema(close, fastLen)
+slow = ta.ema(close, slowLen)
+trend = ta.ema(close, trendLen)
+atr = ta.atr(atrLen)
+longSignal = fast > slow and slow > trend and low <= fast and close > fast and close > open
+shortSignal = fast < slow and slow < trend and high >= fast and close < fast and close < open
+if strategy.position_size == 0
+    if longSignal
+        strategy.entry("L", strategy.long, qty=qty)
+    if shortSignal
+        strategy.entry("S", strategy.short, qty=qty)
+if strategy.position_size > 0
+    strategy.exit("LX", "L", stop=strategy.position_avg_price - atr * slATR, limit=strategy.position_avg_price + atr * tpATR)
+if strategy.position_size < 0
+    strategy.exit("SX", "S", stop=strategy.position_avg_price + atr * slATR, limit=strategy.position_avg_price - atr * tpATR)
+plot(fast, "Fast EMA", color=color.yellow)
+plot(slow, "Slow EMA", color=color.orange)
+plot(trend, "Trend EMA", color=color.blue)
