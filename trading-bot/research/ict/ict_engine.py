@@ -6,7 +6,7 @@ Model:  liquidity level swept (window, level set, wick or close-back)  →  conf
         optional displacement body filter, within N bars)  →  entry (market next open / limit at the FVG of the reversal leg:
         proximal, mid or distal edge, valid V bars / IFVG close)  →  stop (sweep extreme / FVG distal / ATR)  →
         target (fixed R / nearest opposite liquidity)  →  optional break-even  →  time exit.
-Filters: bias (none / vs the 18:00 open / premium-discount vs the overnight mid / EMA200 / prior RTH candle), side,
+Filters: bias (none / vs the 18:00 open / premium-discount vs the mid of the session range so far / EMA200 / prior RTH candle), side,
          max trades per day, stop size band, stop-for-the-day after a loss.
 Costs (MNQ, in NQ points per contract): commission+fees P[25] round trip; P[26] slippage on every market fill
 (market entries, stop exits, time exits). Limit entries/targets fill only when price trades THROUGH by P[24]."""
@@ -46,7 +46,7 @@ def run(X, LV, E200, prev_ok, P, d0, d1):
     for d in range(d0, d1):
         o = X[d, :, 0]; h = X[d, :, 1]; l = X[d, :, 2]; c = X[d, :, 3]; a = X[d, :, 4]
         dayopen = o[0]
-        onmid = 0.5 * (LV[d, 3, 0, 0] + LV[d, 3, 1, 0])
+        rhi = -1e18; rlo = 1e18                      # running session high/low (18:00 → previous bar): premium/discount
         pdir = 0
         if prev_ok[d]:
             pdir = 1 if X[d - 1, 1319, 3] > X[d - 1, 930, 0] else -1
@@ -54,7 +54,11 @@ def run(X, LV, E200, prev_ok, P, d0, d1):
         arm = np.zeros(2, np.int64); sbar = np.zeros(2, np.int64); ext = np.zeros(2); mss = np.full(2, np.nan)
         pend = 0; pL = 0.0; pS = 0.0; pT = 0.0; pside = 0; pval = 0; prisk = 0.0
         pos = 0; e = 0.0; st = 0.0; tg = 0.0; risk = 0.0; tin = 0; bearm = False; mkt_in = False
+        for q in range(0, max(ws, 1)):
+            rhi = max(rhi, h[q]); rlo = min(rlo, l[q])
         for t in range(max(ws, 1), te + 1):
+            if t > max(ws, 1):
+                rhi = max(rhi, h[t - 1]); rlo = min(rlo, l[t - 1])
             # ---------- manage open position ----------
             if pos != 0:
                 px = np.nan; ex_slip = 0.0
@@ -138,7 +142,7 @@ def run(X, LV, E200, prev_ok, P, d0, d1):
                 if not okc: continue
                 # bias
                 if bias == 1 and (c[t] - dayopen) * s <= 0: arm[k] = 0; continue
-                if bias == 2 and (c[t] - onmid) * s >= 0: arm[k] = 0; continue
+                if bias == 2 and (c[t] - 0.5 * (rhi + rlo)) * s >= 0: arm[k] = 0; continue
                 if bias == 3 and (c[t] - E200[d, t]) * s <= 0: arm[k] = 0; continue
                 if bias == 4 and pdir != s: arm[k] = 0; continue
                 # entry price / stop

@@ -16,6 +16,25 @@ SEG = [None, (0, 360), (480, 660), (0, t2m("09:30")), (t2m("09:00"), t2m("10:00"
        (t2m("09:30"), t2m("09:35")), (t2m("09:30"), t2m("09:45")), (t2m("09:30"), t2m("10:00"))]
 
 
+def day_levels(X, i, prev_ok_i):
+    """levels of day i computed only from X (used by load() and by the look-ahead audit on scrambled data)."""
+    R0, R1 = t2m("09:30"), t2m("16:00"); out = np.full((NL, 2, 4), np.nan)
+    o, h, l, c = X[i, :, 0], X[i, :, 1], X[i, :, 2], X[i, :, 3]
+    for t in range(NL):
+        if t == 0:
+            if not prev_ok_i: continue
+            ph, pl = X[i - 1, R0:R1, 1].max(), X[i - 1, R0:R1, 2].min(); ready = 0
+        else:
+            a, b = SEG[t]; ph, pl = h[a:b].max(), l[a:b].min(); ready = b
+        for side, lev in ((0, pl), (1, ph)):
+            hit = (l[ready:] < lev) if side == 0 else (h[ready:] > lev)
+            if hit.any():
+                k = ready + int(np.argmax(hit)); cb = (c[k] > lev) if side == 0 else (c[k] < lev)
+            else: k = 9999; cb = False
+            out[t, side] = (lev, ready, k, cb)
+    return out
+
+
 def load():
     p = SP + "days.pkl"
     if os.path.exists(p): return pickle.load(open(p, "rb"))
@@ -23,20 +42,7 @@ def load():
     n = len(d); prev_ok = np.r_[False, (d[1:] - d[:-1]).days <= 4]
     R0, R1 = t2m("09:30"), t2m("16:00")
     LV = np.full((n, NL, 2, 4), np.nan)        # [day, type, side(0 low,1 high), (price, ready, breach, closed_back)]
-    for i in range(n):
-        o, h, l, c = X[i, :, 0], X[i, :, 1], X[i, :, 2], X[i, :, 3]
-        for t in range(NL):
-            if t == 0:
-                if not prev_ok[i]: continue
-                ph, pl = X[i - 1, R0:R1, 1].max(), X[i - 1, R0:R1, 2].min(); ready = 0
-            else:
-                a, b = SEG[t]; ph, pl = h[a:b].max(), l[a:b].min(); ready = b
-            for side, lev in ((0, pl), (1, ph)):
-                hit = (l[ready:] < lev) if side == 0 else (h[ready:] > lev)
-                if hit.any():
-                    k = ready + int(np.argmax(hit)); cb = (c[k] > lev) if side == 0 else (c[k] < lev)
-                else: k = 9999; cb = False
-                LV[i, t, side] = (lev, ready, k, cb)
+    for i in range(n): LV[i] = day_levels(X, i, prev_ok[i])
     # 1-minute EMA(200) of closes, carried across days (bias filter), and the day's 18:00 open
     cl = X[:, :, 3].ravel(); e200 = pd.Series(cl).ewm(span=200, adjust=False).mean().values.reshape(n, 1380)
     out = dict(days=d, X=X, LV=LV, ema200=e200, yr=d.year.values)
