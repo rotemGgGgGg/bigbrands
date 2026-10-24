@@ -22,3 +22,9 @@
   - Built `bars.py`, `ind.py`, `signals.py` (all 50 templates), `engine.py`, `smoke.py`.
   - Smoke test at template defaults (15 m): **every template negative on train, in 24 h and RTH**.
   - Launched `phase1.py`.
+- iter 2:
+  - Phase 1 done: 0 variants above the 4.9 multiple-testing bar with a real sample.
+  - Phase 2: confirmation filters (1,764) and portfolio beam (11,436) add nothing out of sample.
+  - Walk-forward: best template is +0.12R OOS.
+  - Payout simulation for LucidFlex 50K done.
+  - **Final:** keep the God portfolio + $150 risk cap; request payouts at $3k profit. Loop complete (`RESEARCH.md`).
