@@ -1,3 +1,11 @@
+> ⚠️ **CORRECTION (2026-10-24): the No-Wick results in this file are INVALID: look-ahead bias.**
+> The No-Wick simulator (`nowick.sim`) handled pending limit orders one signal at a time. When a signal's limit never filled within
+> `expiry` bars, it went back and took the next signal's earlier touch. A live bot cannot do this, because it would need to know in
+> advance that the first limit never fills. With a causal, bar-by-bar engine (`research/god/nw_causal.py`) the final No-Wick
+> configuration makes **−0.02R per trade (×1 cost) and −0.11R (×2 cost)**, positive in 7/17 and 1/17 years.
+> With expiry = 1 bar both engines agree exactly; the 'edge' grows with expiry only because of the look-ahead.
+> GapFB, Pre-Fade and Opex are causal and unaffected. The valid portfolio is GapFB + Pre-Fade + Opex (`STRATEGY_NQ.md`).
+
 # האסטרטגיה המאוחדת: NQ, ‏2010–2026
 
 **710,289 גרסאות ו-1,420,578 בדיקות.** הבחירה נעשתה רק על 2010–19, עם עלויות כפולות ומילוי מחמיר. אחר כך: אימות על 2020–23, ומבחן אחד בלבד על 2024–26.
