@@ -4,8 +4,8 @@ Periods: TRAIN 2010-2017, VALIDATE 2018-2020, TEST 2021-2023. Every config and i
 import os, sys, time, json
 import numpy as np, pandas as pd
 from multiprocessing import Pool
-import data, ict_engine as E
-from space import sample
+import ict_data as data, ict_engine as E
+from ict_space import sample
 
 OUT = data.SP + "search/"; os.makedirs(OUT, exist_ok=True)
 PER = (("tr", 2010, 2017), ("va", 2018, 2020), ("te", 2021, 2023))

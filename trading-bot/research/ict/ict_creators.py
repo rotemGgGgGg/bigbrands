@@ -7,9 +7,9 @@ Sources (rules copied from code / pages):
   WIELAND  sevensinstrading/wieland-orb-backtest (variants A/B/C)
   SB_AM, V106, MACRO_A, SB_PM via the generic engine (ict_engine) with the closest parameterisation."""
 import numpy as np, pandas as pd
-import data, ict_engine as E
-from data import t2m
-from space import COST_PTS, SLIP_PTS
+import ict_data as data, ict_engine as E
+from ict_data import t2m
+from ict_space import COST_PTS, SLIP_PTS
 
 D = data.load(); X = D["X"]; V = data.volume(); days = D["days"]; yr = D["yr"]
 H = int(np.searchsorted(days.values, np.datetime64("2024-01-01")))

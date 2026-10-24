@@ -2,8 +2,8 @@
 re-run. Every trade whose ENTRY happened at or before the cut must be identical (entry minute, side, risk), because those
 decisions may only depend on bars that had already closed. Also checks that entries never happen outside the window."""
 import numpy as np
-import data, ict_engine as E
-from space import sample, COST_PTS, SLIP_PTS
+import ict_data as data, ict_engine as E
+from ict_space import sample, COST_PTS, SLIP_PTS
 
 D = data.load(); X, LV, E2 = D["X"], D["LV"], D["ema200"]; prev = np.r_[False, (D["days"][1:] - D["days"][:-1]).days <= 4]
 rng = np.random.default_rng(7); bad = 0; checked = 0

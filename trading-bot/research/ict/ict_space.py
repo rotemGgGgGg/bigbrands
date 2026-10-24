@@ -2,7 +2,7 @@
 macro 09:50-10:10, London killzone, ORB/IB ranges, TJR/ICT sweep → MSS/CISD → FVG/IFVG chains, ICT-bot flat 1.1 RR, ...)."""
 import numpy as np
 import ict_engine as E
-from data import t2m
+from ict_data import t2m
 
 COST_PTS = 0.75     # MNQ commission + exchange/NFA ≈ $1.50 round trip = 0.75 NQ points
 SLIP_PTS = 0.25     # 1 tick on every market-type fill (market entry, stop exit, time exit)

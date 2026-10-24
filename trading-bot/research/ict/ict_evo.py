@@ -4,8 +4,8 @@ score (t-stat with ≥ 200 train trades); children = 1-3 parameter mutations. Ev
 import os, sys, json, time, glob
 import numpy as np, pandas as pd
 from multiprocessing import Pool
-import data, search as S, ict_engine as E
-from space import CHOICES, WINDOWS, make
+import ict_data as data, ict_search as S, ict_engine as E
+from ict_space import CHOICES, WINDOWS, make
 
 OUT = data.SP + "evo/"; os.makedirs(OUT, exist_ok=True)
 

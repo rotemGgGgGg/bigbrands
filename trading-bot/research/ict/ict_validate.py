@@ -11,8 +11,8 @@ import itertools, json
 import numpy as np, pandas as pd
 from numba import njit
 from scipy.stats import norm, skew, kurtosis
-import data, search as S, ict_engine as E
-from space import CHOICES, WINDOWS, make, COST_PTS, SLIP_PTS
+import ict_data as data, ict_search as S, ict_engine as E
+from ict_space import CHOICES, WINDOWS, make, COST_PTS, SLIP_PTS
 
 
 def G():
