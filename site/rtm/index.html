@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RTM Watches</title>
+  <meta name="description" content="RTM WATCHES — a curated selection of luxury timepieces." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/rtm.css" />
+</head>
+<body>
+  <header class="hdr">
+    <div class="hdr-left">
+      <img class="hdr-dial" src="assets/header-dial.jpg" alt="" width="240" height="96" />
+      <span class="vrule" aria-hidden="true"></span>
+      <div class="clock" aria-live="off">
+        <time class="clock-time" id="clockTime">12:55</time>
+        <span class="clock-date" id="clockDate">THU, OCT 24</span>
+      </div>
+    </div>
+
+    <a class="logo" href="./" aria-label="RTM Watches — home" id="logo">
+      <span class="logo-main">RTM</span>
+      <span class="logo-sub">WATCHES</span>
+    </a>
+
+    <div class="hdr-right">
+      <button class="icon-btn" id="cartOpen" aria-label="Open shopping bag" aria-controls="cartDrawer" aria-expanded="false">
+        <svg width="42" height="42" viewBox="2 2 30 30" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+          <path d="M5.5 11.5h21l-1.4 18H6.9z" stroke-linejoin="round"/>
+          <path d="M11 14.5V9a5 5 0 0 1 10 0v5.5" stroke-linecap="round"/>
+        </svg>
+        <span class="badge" id="cartCount">0</span>
+      </button>
+      <span class="vrule" aria-hidden="true"></span>
+      <button class="icon-btn" id="menuOpen" aria-label="Open menu" aria-controls="menuDrawer" aria-expanded="false">
+        <svg width="36" height="26" viewBox="0 0 36 26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M1 3h34M1 13h34M1 23h34"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="cats" aria-label="Collections">
+    <ul class="cats-list" id="cats"></ul>
+  </nav>
+
+  <main id="main">
+    <h1 class="sr-only">RTM Watches — luxury timepieces</h1>
+    <p class="grid-status" id="gridStatus" aria-live="polite"></p>
+    <ul class="grid" id="grid"></ul>
+    <p class="fineprint">Prices shown are illustrative. Brand names belong to their respective owners; RTM Watches is an independent retailer.</p>
+  </main>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="drawer drawer-right" id="cartDrawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="cartTitle">Shopping Bag</h2>
+      <button class="icon-btn close" data-close aria-label="Close shopping bag">&times;</button>
+    </div>
+    <ul class="cart-lines" id="cartLines"></ul>
+    <p class="cart-empty" id="cartEmpty">Your bag is empty.</p>
+    <div class="cart-foot" id="cartFoot">
+      <div class="subtotal"><span>Subtotal</span><span id="cartSubtotal">$0</span></div>
+      <p class="cart-note">Checkout is not available in this preview. Contact us to reserve a piece.</p>
+    </div>
+  </aside>
+
+  <aside class="drawer drawer-right" id="menuDrawer" role="dialog" aria-modal="true" aria-labelledby="menuTitle" hidden>
+    <div class="drawer-head">
+      <h2 id="menuTitle">Collections</h2>
+      <button class="icon-btn close" data-close aria-label="Close menu">&times;</button>
+    </div>
+    <ul class="menu-list" id="menuList"></ul>
+  </aside>
+
+  <script src="js/products.js"></script>
+  <script src="js/rtm.js"></script>
+</body>
+</html>
