@@ -419,7 +419,7 @@ button { font-family: inherit; cursor: pointer; }
   margin-bottom: var(--s4); padding: var(--s4); border-radius: var(--r-sm);
   background: radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--blue) 7%, var(--surface)), var(--surface-2));
 }
-.p-card .pname { font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; min-height: 56px; color: var(--text); }
+.p-card .pname { font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; min-height: 56px; color: var(--text); unicode-bidi: plaintext; }
 .p-card .pspecs { font-size: var(--fs-xs); color: var(--text-soft); margin: var(--s1) 0 var(--s3); min-height: 36px; }
 .p-card .pbundle { font-size: var(--fs-xs); color: var(--green, #16a34a); background: color-mix(in srgb, #16a34a 10%, var(--surface)); border-radius: var(--r-sm); padding: 6px 10px; margin: 0 0 var(--s2); line-height: 1.4; }
 .p-card .pstock { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 700; margin-bottom: var(--s3); }
@@ -565,7 +565,7 @@ button { font-family: inherit; cursor: pointer; }
 
 .pdp-info { padding-top: var(--s2); }
 .pdp-meta { font-family: "Rubik", sans-serif; font-size: var(--fs-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: var(--s3); }
-.pdp-name { font-family: "Secular One", "Rubik", sans-serif; font-size: clamp(24px, 3vw, 38px); font-weight: 400; color: var(--navy); line-height: 1.15; letter-spacing: -.02em; }
+.pdp-name { font-family: "Secular One", "Rubik", sans-serif; font-size: clamp(24px, 3vw, 38px); font-weight: 400; color: var(--navy); line-height: 1.15; letter-spacing: -.02em; unicode-bidi: plaintext; }
 [data-theme="dark"] .pdp-name { color: #f2f6ff; }
 .pdp-desc { font-size: var(--fs-md); line-height: 1.6; color: var(--text-soft); margin: var(--s4) 0 0; }
 .pdp-availrow { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; margin: var(--s4) 0 var(--s5); }
@@ -727,7 +727,10 @@ button { font-family: inherit; cursor: pointer; }
   .p-card .device { height: 110px; padding: var(--s3); }
   .brand-tiles { grid-template-columns: 1fr 1fr; }
   .featured-grid { grid-template-columns: 1fr; }
-  .trust-strip { grid-template-columns: 1fr 1fr; }
+  .trust-strip { grid-template-columns: 1fr 1fr; gap: var(--s4) var(--s2); padding: var(--s4) var(--s3); }
+  .trust-item { flex-direction: column; text-align: center; gap: var(--s2); padding-inline: 0; }
+  .trust-ico { width: 44px; height: 44px; }
+  .search .go { width: 48px; }
   .p-card .prow { flex-direction: row; }
   .p-card .pprice { font-size: var(--fs-md); }
 }
@@ -820,6 +823,9 @@ button { font-family: inherit; cursor: pointer; }
   .cbot-launch { inset-inline-end: 12px; }
   .cbot-launch span.cbot-label { display: none; }
   .cbot-launch { padding: 0; width: 58px; justify-content: center; }
+  .fab { width: 46px; height: 46px; inset-block-end: 14px; inset-inline-start: 14px; }
+  .fab svg { width: 22px; height: 22px; }
+  main { padding-bottom: var(--s6); }
 }
 
 /* ---- Respect reduced motion ---- */

@@ -95,11 +95,11 @@ const _PRODUCTS = [
   { id:"n6", brand:"HP", name:"HP 200 G2i 14\" (Core 5 225U)", category:"מחשבים חדשים", status:"stock", price:2980, badge:"חדש",
     desc:`מחשב נייד HP 200 G2i — ניידות מעולה ומסך WUXGA 16:10 לעבודה נוחה במשרד ובדרכים. מגיע ללא מערכת הפעלה.`,
     specs:`14" WUXGA (1920x1200) IPS | Intel Core 5 225U | 12GB DDR5 | 512GB NVMe SSD | Intel Graphics | Wi-Fi 7 | 1.43 ק"ג | ללא מערכת הפעלה | אחריות שנה`,
-    image:"" },
+    image:"assets/products/n6.png" },
   { id:"n7", brand:"HP", name:"HP ProBook 4 G2i (Core Ultra 5 325)", category:"מחשבים חדשים", status:"stock", price:4900, badge:"חדש",
     desc:`מחשב נייד עסקי HP ProBook 4 G2i עם מעבד Intel Core Ultra 5 ומעבד AI משולב — עיצוב אלומיניום קל ומאובטח לעבודה מקצועית מכל מקום. מגיע ללא מערכת הפעלה.`,
     specs:`14" WUXGA (1920x1200) IPS | Intel Core Ultra 5 325 | 24GB DDR5 | 512GB NVMe SSD | Intel Graphics | Wi-Fi 7 | 1.39 ק"ג | ללא מערכת הפעלה | אחריות 3 שנים`,
-    image:"" },
+    image:"assets/products/n7.png" },
 
   /* ── באנדלים ── */
   { id:"b1", brand:"HP", name:"באנדל מקצועי HP — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:1075, wasPrice:1265, badge:"חיסכון 15%",
@@ -148,12 +148,9 @@ window.SITE_DATA = {
 
   heroSlides: [
     {
-      eyebrow: "מבצע חדש",
-      title: "מחשבים חדשים במחירים מיוחדים",
-      subtitle: "HP ProBook, HP 200 G2i ומחשבים מחודשים במלאי מיידי — משלוח חינם עד הבית.",
-      cta: "לכל המחשבים החדשים",
-      link: "products.html?category=מחשבים חדשים",
-      accent: "#e3000f",
+      image: "assets/banners/promo-probook4.png",
+      alt: "HP ProBook 4 G2i — מחשב נייד מקצועי לעסקים",
+      link: "product.html?id=n7",
     },
     {
       image: "assets/banners/dell-latitude.png",
