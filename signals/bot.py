@@ -55,6 +55,7 @@ def notify(env: dict, text: str) -> None:
     reporting channel is down — so the failure goes to the log too."""
     token, chat = env.get("TG_BOT_TOKEN"), env.get("TG_BOT_CHAT")
     print(text, flush=True)
+    whatsapp(env, text)
     if not token or not chat:
         return
     try:
@@ -65,6 +66,22 @@ def notify(env: dict, text: str) -> None:
             f"https://api.telegram.org/bot{token}/sendMessage", body, timeout=10)
     except Exception as e:
         print(f"[notify failed: {e}]", flush=True)
+
+
+def whatsapp(env: dict, text: str) -> None:
+    """The same message to WhatsApp through CallMeBot, a free relay that can
+    only write to the number that activated it. Plain text: the Telegram
+    formatting tags are stripped. Never raises, like notify."""
+    phone, key = env.get("WA_PHONE"), env.get("WA_APIKEY")
+    if not phone or not key:
+        return
+    import re
+    plain = re.sub(r"<[^>]+>", "", text)
+    try:
+        q = urllib.parse.urlencode({"phone": phone, "text": plain, "apikey": key})
+        urllib.request.urlopen(f"https://api.callmebot.com/whatsapp.php?{q}", timeout=15)
+    except Exception as e:
+        print(f"[whatsapp failed: {e}]", flush=True)
 
 
 def make_broker(env: dict, live: bool):
