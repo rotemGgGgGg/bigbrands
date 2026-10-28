@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — כמה זה עלה?</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root { --ivory: #F4F2ED; --ink: #111111; --gold: #D2AC62; --grey: #EDEBE6; }
+  html, body { margin: 0; background: var(--ivory); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ivory); direction: rtl; font-family: 'Heebo', sans-serif; }
+  .ab { position: absolute; }
+
+  /* headline (the voice-over, written) */
+  #hl { left: 60px; right: 60px; top: 150px; height: 300px; display: flex; align-items: center; justify-content: center; }
+  .h { position: absolute; left: 0; right: 0; text-align: center; font-weight: 800; font-size: 78px; line-height: 1.12; color: var(--ink); text-wrap: balance; letter-spacing: -.01em; }
+
+  /* photo frame: images shown at or below native size (1254px source) */
+  #frame { left: 40px; top: 470px; width: 1000px; height: 1000px; border-radius: 44px; overflow: hidden; background: #000;
+    box-shadow: 0 28px 70px rgba(40,32,20,.22), 0 2px 0 rgba(0,0,0,.04); }
+  #zoom { position: absolute; inset: 0; transform-origin: 50% 45%; }
+  #zoom img { position: absolute; inset: 0; width: 1000px; height: 1000px; opacity: 0; }
+
+  .call { position: absolute; padding: 14px 30px; border-radius: 999px; background: #fff; color: var(--ink); font-weight: 700; font-size: 40px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.28); white-space: nowrap; }
+  .dot { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 5px rgba(255,255,255,.35); }
+  svg.lines { position: absolute; inset: 0; width: 1000px; height: 1000px; overflow: visible; }
+
+  .name { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 12px 28px; border-radius: 999px; background: rgba(255,255,255,.94);
+    color: var(--ink); font-weight: 600; font-size: 36px; direction: ltr; white-space: nowrap; opacity: 0; }
+
+  /* poll sticker */
+  #poll { left: 150px; top: 820px; width: 780px; padding: 34px 34px 30px; box-sizing: border-box; border-radius: 40px; background: #fff;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35); transform-origin: 50% 50%; }
+  #poll .q { text-align: center; font-weight: 800; font-size: 46px; color: var(--ink); margin-bottom: 22px; }
+  .opt { position: relative; height: 92px; border-radius: 24px; background: var(--grey); margin-top: 16px; overflow: hidden; }
+  .opt .fill { position: absolute; top: 0; bottom: 0; right: 0; width: 100%; background: var(--gold); transform-origin: 100% 50%; transform: scaleX(0); }
+  .opt span { position: absolute; right: 30px; top: 0; line-height: 92px; font-weight: 600; font-size: 42px; color: var(--ink); }
+  .opt b { position: absolute; left: 28px; top: 23px; width: 46px; height: 46px; border-radius: 50%; background: var(--ink); color: var(--gold);
+    font: 800 30px/46px 'Heebo', sans-serif; text-align: center; opacity: 0; }
+  #tap { width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(17,17,17,.18); left: 300px; top: 1280px; opacity: 0; }
+
+  /* price sticker */
+  #price { left: 560px; top: 515px; padding: 6px 46px 0; border-radius: 34px; background: var(--gold); color: var(--ink);
+    font-weight: 800; font-size: 150px; line-height: 1.12; direction: ltr; box-shadow: 0 22px 50px rgba(0,0,0,.3); opacity: 0; transform-origin: 50% 50%; }
+
+  /* end card */
+  #logo { left: 410px; top: 168px; width: 260px; height: 149px; mix-blend-mode: multiply; opacity: 0; }
+  #url { left: 0; right: 0; margin: auto; top: 1505px; width: 600px; height: 104px; border-radius: 999px; background: var(--ink); color: var(--ivory);
+    text-align: center; font-weight: 600; font-size: 46px; line-height: 104px; direction: ltr; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="hl">
+    <div class="h" id="h0">רגע, לפני שאתם גוללים</div>
+    <div class="h" id="h1">כמה לדעתכם עולה השעון הזה?</div>
+    <div class="h" id="h2">כולל הקופסה</div>
+    <div class="h" id="h3">ויש עוד 5 דגמים</div>
+    <div class="h" id="h4">הלינק בביו</div>
+  </div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo-on-white.png" alt="RTM Watches">
+
+  <div class="ab" id="frame"><div id="zoom">
+    <img id="i_sk_w" src="assets/img/skeleton-black-wrist.webp" alt="">
+    <img id="i_sk_b" src="assets/img/skeleton-black-box.webp" alt="">
+    <img id="i_ocb" src="assets/img/octa-chrono-black-wrist.webp" alt="">
+    <img id="i_ocg" src="assets/img/octa-chrono-grey-wrist.webp" alt="">
+    <img id="i_onx" src="assets/img/arabic-onyx-wrist.webp" alt="">
+    <img id="i_stn" src="assets/img/arabic-stone-wrist.webp" alt="">
+    <img id="i_sky" src="assets/img/arabic-sky-wrist.webp" alt="">
+    <svg class="lines" viewBox="0 0 1000 1000">
+      <path id="ln1" d="M 300 205 L 352 300" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path id="ln2" d="M 700 705 L 590 520" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="dot" id="d1" style="left:352px;top:300px"></div>
+    <div class="dot" id="d2" style="left:590px;top:520px"></div>
+    <div class="call" id="c1" style="right:640px;top:120px">קייס מתומן</div>
+    <div class="call" id="c2" style="right:150px;top:710px">דיאל שלד</div>
+  </div>
+    <div class="name" id="n_ocb">Octa Chrono Midnight</div>
+    <div class="name" id="n_ocg">Octa Chrono Stone Grey</div>
+    <div class="name" id="n_onx">Arabic Onyx Black</div>
+    <div class="name" id="n_stn">Arabic Stone Grey</div>
+    <div class="name" id="n_sky">Arabic Sky Blue</div>
+  </div>
+
+  <div class="ab" id="poll">
+    <div class="q">כמה עולה?</div>
+    <div class="opt" id="o1"><div class="fill"></div><span>מעל 500 ₪</span></div>
+    <div class="opt" id="o2"><div class="fill"></div><span>בין 200 ל-500 ₪</span></div>
+    <div class="opt" id="o3"><div class="fill"></div><span>פחות מ-200 ₪</span><b>✓</b></div>
+  </div>
+  <div class="ab" id="tap"></div>
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 16.4;
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+// voice-over word times (seconds in the video) — from ElevenLabs alignment, after trimming pauses, VO starts at 0.25s
+const W = { kama: 1.77, meshumanan: 4.05, dial: 5.53, yoter: 6.89, pachot: 8.01, tishim: 9.81, kolel: 11.39, veyesh: 12.57, link: 14.05 };
+
+/* headline chunks: pop in, hand over to the next */
+const H = [['#h0', 0.0, W.kama - 0.05], ['#h1', W.kama, W.kolel - 0.05], ['#h2', W.kolel, W.veyesh - 0.05], ['#h3', W.veyesh, W.link - 0.05], ['#h4', W.link, 99]];
+H.forEach(([id, a, b], i) => {
+  tl.set(id, { opacity: 0 }, 0);
+  if (i === 0) tl.set(id, { opacity: 1, scale: 1 }, 0);
+  else tl.fromTo(id, { opacity: 0, scale: 0.9, y: 18 }, { opacity: 1, scale: 1, y: 0, duration: 0.28, ease: 'back.out(1.6)' }, a);
+  if (b < 90) tl.to(id, { opacity: 0, scale: 0.96, duration: 0.12, ease: 'power2.in' }, b);
+});
+
+/* which photo is in the frame */
+const SHOW = [['#i_sk_w', 0], ['#i_sk_b', 3.6], ['#i_sk_w', 6.75], ['#i_sk_b', W.kolel - 0.08],
+  ['#i_ocb', W.veyesh], ['#i_ocg', W.veyesh + 0.30], ['#i_onx', W.veyesh + 0.60], ['#i_stn', W.veyesh + 0.90], ['#i_sky', W.veyesh + 1.20]];
+const ALL = ['#i_sk_w', '#i_sk_b', '#i_ocb', '#i_ocg', '#i_onx', '#i_stn', '#i_sky'];
+// state at t=0 (zero-length sets at position 0 do not render on seek(0))
+gsap.set('#i_sk_w', { opacity: 1 });
+gsap.set(['#poll', '#price', '#logo', '#url', '#tap', '#c1', '#c2', '#d1', '#d2', '#ln1', '#ln2', '#h1', '#h2', '#h3', '#h4'], { opacity: 0 });
+SHOW.forEach(([id, t]) => { ALL.forEach(x => tl.set(x, { opacity: x === id ? 1 : 0 }, t)); });
+const NAMES = [['#n_ocb', 0], ['#n_ocg', 0.30], ['#n_onx', 0.60], ['#n_stn', 0.90], ['#n_sky', 1.20]];
+NAMES.forEach(([id, d], i) => {
+  tl.set(id, { opacity: 1 }, W.veyesh + d);
+  if (i < NAMES.length - 1) tl.set(id, { opacity: 0 }, W.veyesh + d + 0.30);
+  else tl.to(id, { opacity: 0, duration: 0.2 }, W.link + 0.3);
+});
+
+/* gentle pushes (max 1.1 of a 1000px frame -> still below the 1254px source) */
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.05, duration: 3.6, ease: 'none' }, 0);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.10, duration: 3.15, ease: 'power1.inOut', immediateRender: false }, 3.6);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: 4.6, ease: 'none', immediateRender: false }, 6.75);
+tl.fromTo('#zoom', { scale: 1.04 }, { scale: 1.0, duration: 1.1, ease: 'power2.out', immediateRender: false }, W.kolel - 0.08);
+tl.set('#zoom', { scale: 1.0 }, W.veyesh);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: 2.6, ease: 'power1.out', immediateRender: false }, W.veyesh + 1.2);
+
+/* detail callouts */
+[['#c1', '#ln1', '#d1', W.meshumanan], ['#c2', '#ln2', '#d2', W.dial]].forEach(([c, l, d, t]) => {
+  tl.fromTo(d, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, ease: 'back.out(2)' }, t - 0.1);
+  tl.fromTo(l, { strokeDasharray: 200, strokeDashoffset: 200, opacity: 1 }, { strokeDashoffset: 0, duration: 0.25, ease: 'power2.out' }, t - 0.05);
+  tl.fromTo(c, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)' }, t);
+  tl.to([c, l, d], { opacity: 0, duration: 0.2 }, 6.6);
+});
+tl.set(['#c1', '#c2', '#d1', '#d2', '#ln1', '#ln2'], { opacity: 0 }, 0);
+
+/* the poll */
+tl.fromTo('#poll', { opacity: 0, scale: 0.85, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'back.out(1.7)' }, W.yoter - 0.1);
+['#o1', '#o2', '#o3'].forEach((o, i) => tl.fromTo(o, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.25 }, W.yoter + 0.05 + i * 0.12));
+tl.fromTo('#tap', { opacity: 0.0, scale: 0.4 }, { opacity: 0.9, scale: 1, duration: 0.12, ease: 'power2.out' }, 9.32);
+tl.to('#tap', { opacity: 0, scale: 1.5, duration: 0.35, ease: 'power2.out' }, 9.44);
+tl.to('#o3 .fill', { scaleX: 1, duration: 0.45, ease: 'power3.out' }, W.tishim);
+tl.to('#o3 b', { opacity: 1, duration: 0.2 }, W.tishim + 0.2);
+tl.to(['#o1', '#o2'], { opacity: 0.45, duration: 0.3 }, W.tishim);
+tl.to('#poll', { opacity: 0, scale: 0.92, y: 30, duration: 0.25, ease: 'power2.in' }, W.kolel - 0.3);
+
+/* the price */
+tl.fromTo('#price', { opacity: 0, scale: 1.7, rotation: -12 }, { opacity: 1, scale: 1, rotation: -5, duration: 0.32, ease: 'power4.out' }, W.tishim);
+tl.to('#price', { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' }, W.veyesh - 0.25);
+
+/* end card */
+tl.fromTo('#logo', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45 }, W.link - 0.1);
+tl.to('#hl', { y: 70, duration: 0.45, ease: 'power3.inOut' }, W.link - 0.1);
+tl.fromTo('#url', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)' }, W.link + 0.25);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); };
+window.ready = Promise.all([document.fonts.load('800 78px Heebo', 'אבג'), document.fonts.load('600 40px Heebo', 'אבג abc'), document.fonts.ready,
+  ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>
