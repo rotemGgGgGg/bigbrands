@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — המתנה</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root { --ivory: #F4F2ED; --ink: #111111; --gold: #D2AC62; }
+  html, body { margin: 0; background: var(--ivory); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ivory); direction: rtl; font-family: 'Heebo', sans-serif; }
+  .ab { position: absolute; }
+
+  #hl { left: 60px; right: 60px; top: 150px; height: 300px; }
+  .h { position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-weight: 800; font-size: 78px; line-height: 1.12; color: var(--ink); text-wrap: balance; letter-spacing: -.01em; opacity: 0; }
+  .h em { font-style: normal; font-family: 'Noto Color Emoji', sans-serif; font-weight: 400; margin-right: .18em; }
+
+  /* photo frame: everything shown at or below native size */
+  #frame { left: 40px; top: 470px; width: 1000px; height: 1000px; border-radius: 44px; overflow: hidden; background: #000;
+    box-shadow: 0 28px 70px rgba(40,32,20,.22), 0 2px 0 rgba(0,0,0,.04); }
+  #zoom { position: absolute; inset: 0; transform-origin: 50% 45%; }
+  #zoom img { position: absolute; inset: 0; width: 1000px; height: 1000px; opacity: 0; }
+
+  .chip { position: absolute; right: 40px; padding: 16px 34px; border-radius: 999px; background: #fff; color: var(--ink); font-weight: 700; font-size: 44px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.3); white-space: nowrap; opacity: 0; }
+  #price { left: 560px; top: 515px; padding: 6px 46px 0; border-radius: 34px; background: var(--gold); color: var(--ink);
+    font-weight: 800; font-size: 150px; line-height: 1.12; direction: ltr; box-shadow: 0 22px 50px rgba(0,0,0,.3); opacity: 0; transform-origin: 50% 50%; }
+
+  #logo { left: 410px; top: 168px; width: 260px; height: 149px; mix-blend-mode: multiply; opacity: 0; }
+  #url { left: 0; right: 0; margin: auto; top: 1505px; width: 600px; height: 104px; border-radius: 999px; background: var(--ink); color: var(--ivory);
+    text-align: center; font-weight: 600; font-size: 46px; line-height: 104px; direction: ltr; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="hl">
+    <div class="h" id="h0">מחפשים מתנה...</div>
+    <div class="h" id="h1">ואין לכם מושג מה לקנות?</div>
+    <div class="h" id="h2">שעון. בקופסה שנפתחת כמו מתנה</div>
+    <div class="h" id="h3">ליום הולדת?<em>🎂</em></div>
+    <div class="h" id="h4">לחבר?</div>
+    <div class="h" id="h5">לבת הזוג?</div>
+    <div class="h" id="h6">או לעצמכם<em>😉</em></div>
+    <div class="h" id="h7">99 ₪, עד הבית<em>📦</em></div>
+    <div class="h" id="h8">30 יום להחזרה</div>
+    <div class="h" id="h9">אבל לא תחזירו<em>😉</em></div>
+    <div class="h" id="h10">הלינק בביו</div>
+  </div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo-on-white.png" alt="RTM Watches">
+
+  <div class="ab" id="frame"><div id="zoom">
+    <img id="ub" src="assets/unbox/u_000.jpg" alt="" style="opacity:1">
+    <img id="i_sky" src="assets/img/arabic-sky-wrist.webp" alt="">
+    <img id="i_ocg" src="assets/img/octa-chrono-grey-wrist.webp" alt="">
+    <img id="i_stn" src="assets/img/arabic-stone-wrist.webp" alt="">
+    <img id="i_skw" src="assets/img/skeleton-black-wrist.webp" alt="">
+    <img id="i_skb" src="assets/img/skeleton-black-box.webp" alt="">
+  </div></div>
+
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 20.0;
+// word times in the video: Viktor take (viktor_c/voice.mp3), pauses trimmed, VO starts at 0.25s
+const W = { ein: 1.93, shaon: 4.18, yomuledet: 7.27, chaver: 8.24, bat: 9.20, o: 10.65, tishim: 12.16, ad: 13.52, shloshim: 14.48, aval: 16.85, link: 17.92 };
+const UB_N = 85, UB_START = 4.25;                 // the site's real unbox animation, played at its recorded speed
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+
+/* headlines = the voice-over, written */
+const H = [['#h0', 0], ['#h1', W.ein], ['#h2', W.shaon], ['#h3', W.yomuledet], ['#h4', W.chaver], ['#h5', W.bat], ['#h6', W.o],
+  ['#h7', W.tishim], ['#h8', W.shloshim], ['#h9', W.aval], ['#h10', W.link]];
+gsap.set('#h0', { opacity: 1 });
+H.forEach(([id, a], i) => {
+  if (i > 0) tl.fromTo(id, { opacity: 0, scale: 0.9, y: 18 }, { opacity: 1, scale: 1, y: 0, duration: 0.28, ease: 'back.out(1.6)', immediateRender: false }, a);
+  const next = H[i + 1];
+  if (next) tl.to(id, { opacity: 0, scale: 0.96, duration: 0.09, ease: 'power2.in' }, next[1] - 0.11);   // gone before the next one pops
+});
+
+/* what is in the frame */
+const ALL = ['#ub', '#i_sky', '#i_ocg', '#i_stn', '#i_skw', '#i_skb'];
+const SHOW = [['#ub', 0], ['#i_sky', W.yomuledet], ['#i_ocg', W.chaver], ['#i_stn', W.bat], ['#i_skw', W.o], ['#i_skb', W.tishim], ['#ub', W.shloshim], ['#i_sky', W.link]];
+SHOW.forEach(([id, t]) => ALL.forEach(x => tl.set(x, { opacity: x === id ? 1 : 0 }, t)));
+
+/* camera: gentle pushes, never above 1.07 of a 1000px frame (sources are 1076-1254px) */
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.04, duration: W.shaon, ease: 'none' }, 0);
+tl.to('#zoom', { scale: 1.0, duration: 0.6, ease: 'power2.inOut' }, W.shaon);
+[[W.yomuledet, W.chaver], [W.chaver, W.bat], [W.bat, W.o], [W.o, W.tishim], [W.tishim, W.shloshim], [W.shloshim, W.link], [W.link, DURATION]].forEach(([a, b]) =>
+  tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: b - a, ease: 'none', immediateRender: false }, a));
+
+/* price */
+tl.fromTo('#price', { opacity: 0, scale: 1.7, rotation: -12 }, { opacity: 1, scale: 1, rotation: -5, duration: 0.32, ease: 'power4.out', immediateRender: false }, W.tishim);
+tl.to('#price', { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' }, W.shloshim - 0.2);
+
+/* end card */
+tl.fromTo('#logo', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, immediateRender: false }, W.link - 0.1);
+tl.to('#hl', { y: 70, duration: 0.45, ease: 'power3.inOut' }, W.link - 0.1);
+tl.fromTo('#url', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)', immediateRender: false }, W.link + 0.25);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+// the unbox frames are a real recording: pick the frame for time t (closed lid until UB_START, last frame after)
+const ub = document.getElementById('ub');
+const ubFrame = t => Math.max(0, Math.min(UB_N - 1, Math.floor((t - UB_START) * 30)));
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = async t => {
+  tl.seek(t, false);
+  const src = `assets/unbox/u_${String(t < W.shloshim ? ubFrame(t) : UB_N - 1).padStart(3, '0')}.jpg`;
+  if (!ub.src.endsWith(src)) { ub.src = src; await ub.decode().catch(() => {}); }
+};
+window.ready = Promise.all([document.fonts.load('800 78px Heebo', 'אבג'), document.fonts.load('400 78px "Noto Color Emoji"', '🎂😉📦'), document.fonts.ready,
+  ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>
