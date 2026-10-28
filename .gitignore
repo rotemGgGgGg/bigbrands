@@ -11,3 +11,4 @@ _BACKUP_site_pre-redesign_2026-06-01/
 renders/frames/
 renders/stills/still_*
 renders/stills/rtm-guess_[0-9]*
+renders/stills/*_[0-9]*.png
