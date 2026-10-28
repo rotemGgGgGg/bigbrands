@@ -97,10 +97,10 @@
 
 <script src="../../assets/vendor/gsap.min.js"></script>
 <script>
-const FPS = 30, DURATION = 16.4;
+const FPS = 30, DURATION = 17.3;
 const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
-// voice-over word times (seconds in the video) — from ElevenLabs alignment, after trimming pauses, VO starts at 0.25s
-const W = { kama: 1.77, meshumanan: 4.05, dial: 5.53, yoter: 6.89, pachot: 8.01, tishim: 9.81, kolel: 11.39, veyesh: 12.57, link: 14.05 };
+// voice-over word times (seconds in the video) — ElevenLabs alignment of take c2, VO starts at 0.25s, +0.5s pause before the price
+const W = { kama: 2.32, meshumanan: 4.93, dial: 5.65, yoter: 7.65, pachot: 8.99, tishim: 10.75, kolel: 12.11, veyesh: 13.47, link: 15.03 };
 
 /* headline chunks: pop in, hand over to the next */
 const H = [['#h0', 0.0, W.kama - 0.05], ['#h1', W.kama, W.kolel - 0.05], ['#h2', W.kolel, W.veyesh - 0.05], ['#h3', W.veyesh, W.link - 0.05], ['#h4', W.link, 99]];
@@ -112,7 +112,7 @@ H.forEach(([id, a, b], i) => {
 });
 
 /* which photo is in the frame */
-const SHOW = [['#i_sk_w', 0], ['#i_sk_b', 3.6], ['#i_sk_w', 6.75], ['#i_sk_b', W.kolel - 0.08],
+const SHOW = [['#i_sk_w', 0], ['#i_sk_b', 4.3], ['#i_sk_w', W.yoter - 0.2], ['#i_sk_b', W.kolel - 0.08],
   ['#i_ocb', W.veyesh], ['#i_ocg', W.veyesh + 0.30], ['#i_onx', W.veyesh + 0.60], ['#i_stn', W.veyesh + 0.90], ['#i_sky', W.veyesh + 1.20]];
 const ALL = ['#i_sk_w', '#i_sk_b', '#i_ocb', '#i_ocg', '#i_onx', '#i_stn', '#i_sky'];
 // state at t=0 (zero-length sets at position 0 do not render on seek(0))
@@ -127,9 +127,9 @@ NAMES.forEach(([id, d], i) => {
 });
 
 /* gentle pushes (max 1.1 of a 1000px frame -> still below the 1254px source) */
-tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.05, duration: 3.6, ease: 'none' }, 0);
-tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.10, duration: 3.15, ease: 'power1.inOut', immediateRender: false }, 3.6);
-tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: 4.6, ease: 'none', immediateRender: false }, 6.75);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.05, duration: 4.3, ease: 'none' }, 0);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.10, duration: W.yoter - 0.2 - 4.3, ease: 'power1.inOut', immediateRender: false }, 4.3);
+tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: W.kolel - W.yoter, ease: 'none', immediateRender: false }, W.yoter - 0.2);
 tl.fromTo('#zoom', { scale: 1.04 }, { scale: 1.0, duration: 1.1, ease: 'power2.out', immediateRender: false }, W.kolel - 0.08);
 tl.set('#zoom', { scale: 1.0 }, W.veyesh);
 tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: 2.6, ease: 'power1.out', immediateRender: false }, W.veyesh + 1.2);
@@ -139,15 +139,15 @@ tl.fromTo('#zoom', { scale: 1.0 }, { scale: 1.06, duration: 2.6, ease: 'power1.o
   tl.fromTo(d, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, ease: 'back.out(2)' }, t - 0.1);
   tl.fromTo(l, { strokeDasharray: 200, strokeDashoffset: 200, opacity: 1 }, { strokeDashoffset: 0, duration: 0.25, ease: 'power2.out' }, t - 0.05);
   tl.fromTo(c, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)' }, t);
-  tl.to([c, l, d], { opacity: 0, duration: 0.2 }, 6.6);
+  tl.to([c, l, d], { opacity: 0, duration: 0.2 }, W.yoter - 0.35);
 });
 tl.set(['#c1', '#c2', '#d1', '#d2', '#ln1', '#ln2'], { opacity: 0 }, 0);
 
 /* the poll */
 tl.fromTo('#poll', { opacity: 0, scale: 0.85, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'back.out(1.7)' }, W.yoter - 0.1);
 ['#o1', '#o2', '#o3'].forEach((o, i) => tl.fromTo(o, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.25 }, W.yoter + 0.05 + i * 0.12));
-tl.fromTo('#tap', { opacity: 0.0, scale: 0.4 }, { opacity: 0.9, scale: 1, duration: 0.12, ease: 'power2.out' }, 9.32);
-tl.to('#tap', { opacity: 0, scale: 1.5, duration: 0.35, ease: 'power2.out' }, 9.44);
+tl.fromTo('#tap', { opacity: 0.0, scale: 0.4 }, { opacity: 0.9, scale: 1, duration: 0.12, ease: 'power2.out' }, W.tishim - 0.3);
+tl.to('#tap', { opacity: 0, scale: 1.5, duration: 0.35, ease: 'power2.out' }, W.tishim - 0.18);
 tl.to('#o3 .fill', { scaleX: 1, duration: 0.45, ease: 'power3.out' }, W.tishim);
 tl.to('#o3 b', { opacity: 1, duration: 0.2 }, W.tishim + 0.2);
 tl.to(['#o1', '#o2'], { opacity: 0.45, duration: 0.3 }, W.tishim);
