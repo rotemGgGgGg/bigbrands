@@ -227,9 +227,22 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
         target = source
     else:
         # A title: a channel just created has no ID anyone has looked up yet.
-        target = next((d.id for d in client.iter_dialogs() if d.name == source), None)
-        if target is None:
+        # Emoji and case are ignored, so "Essamtrades VIP" finds a channel
+        # called "⚡Essamtrades VIP⚡"; more than one match is refused rather
+        # than guessed, since reading the wrong channel would trade its calls.
+        import re
+        norm = lambda t: " ".join(re.sub(r"[^\w\s]", " ", t or "").lower().split())
+        want = norm(source)
+        dialogs = [d for d in client.iter_dialogs() if d.is_channel or d.is_group]
+        exact = [d for d in dialogs if norm(d.name) == want]
+        found = exact or [d for d in dialogs if want and want in norm(d.name)]
+        if not found:
             raise SystemExit(f"no channel or group named {source!r} on this account")
+        if len(found) > 1:
+            raise SystemExit("more than one channel matches {!r}: {} — use the exact name or the ID"
+                             .format(source, ", ".join(d.name for d in found)))
+        target = found[0].id
+        print(f"channel: {found[0].name} (id {target})", flush=True)
 
     @client.on(events.NewMessage(chats=target))
     async def on_message(event):
