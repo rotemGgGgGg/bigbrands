@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — בצבע של האאוטפיט</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root { --white: #F7F6F3; --ink: #111111; }
+  html, body { margin: 0; background: #0b0b0b; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0b0b0b; direction: rtl; }
+  .ab { position: absolute; }
+  #bg { inset: 0; background: #3a0a10; }
+
+  .line { position: absolute; left: 70px; right: 70px; text-align: center; font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    color: var(--white); line-height: 1.12; text-wrap: balance; }
+  .line .m { display: block; overflow: hidden; padding-bottom: .06em; }
+  .line .m > span { display: block; will-change: transform; }
+  .top { top: 190px; font-size: 84px; }
+  .word { top: 230px; font-size: 150px; }
+  .dark { color: var(--ink); }
+  .word .m { display: inline-block; vertical-align: top; margin: 0 .12em; }
+
+  /* photos: 1080px wide, sources are 1254px — shown below native size */
+  .ph { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; overflow: hidden; opacity: 0; }
+  .ph img { width: 1080px; height: 1080px; display: block; }
+  #grid { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; opacity: 0; transform-origin: 50% 0; }
+  #grid img { position: absolute; width: 538px; height: 538px; }
+
+  /* the colour picker */
+  #picker { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; pointer-events: none; }
+  #ring { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; box-sizing: border-box;
+    border: 7px solid #fff; box-shadow: 0 0 0 2px rgba(0,0,0,.25), 0 14px 34px rgba(0,0,0,.45); background: #521525; opacity: 0; }
+  #hex { position: absolute; left: 50%; top: 126px; transform: translateX(-50%); padding: 7px 16px; border-radius: 999px; background: rgba(255,255,255,.95);
+    color: var(--ink); font: 600 26px 'Heebo', sans-serif; direction: ltr; white-space: nowrap; letter-spacing: .04em; }
+  #badge { position: absolute; right: -14px; top: -14px; width: 46px; height: 46px; border-radius: 50%; background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.35);
+    display: flex; align-items: center; justify-content: center; }
+  #badge svg { width: 26px; height: 26px; }
+  #badge .q { font: 800 30px/1 'Heebo', sans-serif; color: var(--ink); }
+
+  #price { left: 0; right: 0; top: 150px; text-align: center; font: 800 210px/1 'Heebo', sans-serif; color: var(--white); direction: ltr; opacity: 0; }
+  #logo { left: 390px; top: 1590px; width: 300px; height: 173px; opacity: 0; }
+  #url { left: 0; right: 0; margin: auto; top: 1440px; width: 620px; height: 108px; border-radius: 999px; background: var(--white); color: var(--ink);
+    text-align: center; font: 600 48px/108px 'Heebo', sans-serif; direction: ltr; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="bg"></div>
+  <div class="ph" id="p_ruby"><img src="assets/img/ruby.webp" alt=""></div>
+  <div class="ph" id="p_mint"><img src="assets/img/mint.webp" alt=""></div>
+  <div class="ph" id="p_ice"><img src="assets/img/ice.webp" alt=""></div>
+  <div class="ph" id="p_navy"><img src="assets/img/navy.webp" alt=""></div>
+  <div id="grid">
+    <img src="assets/img/ruby.webp" style="right:0;top:0" alt=""><img src="assets/img/mint.webp" style="left:0;top:0" alt="">
+    <img src="assets/img/ice.webp" style="right:0;bottom:0" alt=""><img src="assets/img/navy.webp" style="left:0;bottom:0" alt="">
+  </div>
+
+  <div id="picker"><div id="ring"><div id="hex">#521525</div><div id="badge"><span class="q" id="bq">?</span>
+    <svg id="bk" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div></div>
+
+  <div class="line top" id="t0"><span class="m"><span>אתם מתאימים את הנעליים</span></span><span class="m"><span>לסווטשירט...</span></span></div>
+  <div class="line top" id="t1"><span class="m"><span>אבל מה עם השעון?</span></span></div>
+  <div class="line word" id="w_ruby"><span class="m q"><span>בורדו?</span></span><span class="m y"><span>יש.</span></span></div>
+  <div class="line word" id="w_mint"><span class="m q"><span>מנטה?</span></span><span class="m y"><span>יש.</span></span></div>
+  <div class="line word dark" id="w_ice"><span class="m q"><span>לבן?</span></span><span class="m y"><span>יש.</span></span></div>
+  <div class="line word" id="w_navy"><span class="m q"><span>נייבי?</span></span><span class="m y"><span>יש.</span></span></div>
+  <div class="line top" id="t5"><span class="m"><span>שעון בצבע של האאוטפיט.</span></span></div>
+  <div class="line top" id="t6"><span class="m"><span>בלי לשבור את הכיס.</span></span></div>
+
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo.png" alt="RTM Watches">
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 17.6;
+// word times in the video: Viktor take viktor/take 6 (11.08 st), trims from video/tools/trim_plan.py, VO starts at 0.25s
+const W = { naalaim: 1.13, sweatshirt: 1.65, aval: 2.60, shaon: 3.07, bordo: 3.95, yes1: 4.95, menta: 5.69, yes2: 6.82, lavan: 7.55, yes3: 8.54,
+  navy: 9.32, yes4: 10.40, beseva: 11.10, bli: 12.99, tishim: 14.44, link: 15.96 };
+const BG = { ruby: '#3a0a10', mint: '#14231b', ice: '#dcdcde', navy: '#0b1220', black: '#0b0b0b' };
+// points inside the photo frame (frame top is at y=560); colours sampled from the photos themselves
+const Y0 = 560;
+const EDGE = ([x, y]) => [x - 125, y - 140];   // upper corner of the case, so the dial stays visible
+const P = {
+  ruby: { shoe: [232, Y0 + 684], sleeve: [69, Y0 + 448], dial: [792, Y0 + 456], shoeHex: '#521525' },
+  mint: { shoe: [232, Y0 + 684], dial: [797, Y0 + 465], shoeHex: '#879589' },
+  ice:  { shoe: [232, Y0 + 690], dial: [792, Y0 + 456], shoeHex: '#D9DCF1' },
+  navy: { sleeve: [69, Y0 + 448], dial: [797, Y0 + 462], sleeveHex: '#161827' },
+};
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+const lineIn = (id, t, stagger = 0.09) => tl.fromTo(`${id} .m > span`, { yPercent: 105 }, { yPercent: 0, duration: 0.5, stagger, immediateRender: false }, t);
+const lineOut = (id, t) => tl.to(`${id} .m > span`, { yPercent: -105, duration: 0.25, stagger: 0.04, ease: 'power3.in' }, t);
+const ring = document.getElementById('ring'), hex = document.getElementById('hex');
+const moveRing = (xy, t, d = 0.38) => tl.to('#ring', { left: xy[0], top: xy[1], duration: d, ease: 'power3.inOut' }, t);
+const setHex = (h, t) => { tl.call(() => {}, null, t); tl.set('#ring', { backgroundColor: h }, t); tl.set('#hex', { textContent: h.toUpperCase() }, t); };
+const badge = (q, t) => { tl.set('#bq', { display: q ? 'block' : 'none' }, t); tl.set('#bk', { display: q ? 'none' : 'block' }, t);
+  tl.fromTo('#badge', { scale: 0.4 }, { scale: 1, duration: 0.3, ease: 'back.out(2.2)', immediateRender: false }, t); };
+
+// t = 0
+gsap.set('#p_ruby', { opacity: 1 });
+gsap.set('#t0 .m > span', { yPercent: 0 });
+gsap.set(['#t1', '#w_ruby', '#w_mint', '#w_ice', '#w_navy', '#t5', '#t6'].map(s => s + ' .m > span'), { yPercent: 105 });
+gsap.set('#ring', { left: P.ruby.shoe[0], top: P.ruby.shoe[1] });
+gsap.set('#badge', { opacity: 0 });
+
+/* hook: the picker samples the sneakers, then the sweatshirt, then asks about the watch */
+tl.fromTo('#ring', { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', immediateRender: false }, W.naalaim - 0.1);
+setHex(P.ruby.shoeHex, W.naalaim - 0.1);
+moveRing(P.ruby.sleeve, W.sweatshirt - 0.12, 0.35);
+setHex('#310007', W.sweatshirt + 0.2);
+lineOut('#t0', W.aval - 0.3);
+lineIn('#t1', W.aval);
+moveRing(EDGE(P.ruby.dial), W.shaon - 0.25, 0.42);
+tl.set('#badge', { opacity: 1 }, W.shaon);
+badge(true, W.shaon);
+
+/* colours: name the colour, then "יש" ticks the watch */
+const SEQ = [['ruby', W.bordo, W.yes1, W.menta], ['mint', W.menta, W.yes2, W.lavan], ['ice', W.lavan, W.yes3, W.navy], ['navy', W.navy, W.yes4, W.beseva]];
+lineOut('#t1', W.bordo - 0.28);
+SEQ.forEach(([k, a, yes, next], i) => {
+  if (i > 0) {
+    tl.set('#bg', { backgroundColor: BG[k] }, a);
+    tl.set('#p_' + SEQ[i - 1][0], { opacity: 0 }, a);
+    tl.set('#p_' + k, { opacity: 1 }, a);
+    const from = P[k].shoe || P[k].sleeve;
+    tl.set('#ring', { left: from[0], top: from[1] }, a);
+    setHex(P[k].shoeHex || P[k].sleeveHex, a);
+    tl.set('#badge', { opacity: 0 }, a);
+    tl.fromTo('#ring', { scale: 0.3 }, { scale: 1, duration: 0.28, ease: 'back.out(1.8)', immediateRender: false }, a);
+  } else {
+    tl.set('#ring', { left: P.ruby.shoe[0], top: P.ruby.shoe[1] }, a);     // back to the sneakers for the answer
+    setHex(P.ruby.shoeHex, a);
+    tl.set('#badge', { opacity: 0 }, a);
+    tl.fromTo('#ring', { scale: 0.3 }, { scale: 1, duration: 0.28, ease: 'back.out(1.8)', immediateRender: false }, a);
+  }
+  tl.fromTo(`#w_${k} .q > span`, { yPercent: 105 }, { yPercent: 0, duration: 0.32, immediateRender: false }, a);
+  tl.fromTo(`#w_${k} .y > span`, { yPercent: 105 }, { yPercent: 0, duration: 0.28, immediateRender: false }, yes);
+  moveRing(EDGE(P[k].dial), yes - 0.3, 0.32);
+  tl.set('#badge', { opacity: 1 }, yes);
+  badge(false, yes);
+  tl.set(`#w_${k} .m > span`, { yPercent: -105 }, next);
+});
+
+/* all four, then the price */
+tl.set('#p_navy', { opacity: 0 }, W.beseva);
+tl.set('#bg', { backgroundColor: BG.black }, W.beseva);
+tl.to('#ring', { opacity: 0, scale: 0.4, duration: 0.2, ease: 'power2.in' }, W.beseva - 0.2);
+tl.fromTo('#grid', { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, immediateRender: false }, W.beseva);
+lineIn('#t5', W.beseva);
+lineOut('#t5', W.bli - 0.3);
+lineIn('#t6', W.bli);
+lineOut('#t6', W.tishim - 0.3);
+tl.to('#grid', { scale: 0.74, y: -40, duration: 0.6, ease: 'power3.inOut' }, W.tishim - 0.2);
+tl.fromTo('#price', { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'power4.out', immediateRender: false }, W.tishim);
+tl.fromTo('#url', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, immediateRender: false }, W.link);
+tl.fromTo('#logo', { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, W.link + 0.25);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); };
+window.ready = Promise.all([document.fonts.load('700 84px "Frank Ruhl Libre"', 'אבג'), document.fonts.load('800 210px Heebo', '99?'), document.fonts.load('600 26px Heebo', '#ABC'),
+  document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>
