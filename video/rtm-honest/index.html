@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — בואו נהיה כנים</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root { --white: #F7F6F3; --ink: #111111; }
+  html, body { margin: 0; background: #0b0b0b; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0b0b0b; direction: rtl; }
+  .ab { position: absolute; }
+  #bg { inset: 0; background: #0b1220; }
+
+  /* type: Frank Ruhl Libre (brand display face) for lines, Heebo for labels */
+  .line { position: absolute; left: 70px; right: 70px; text-align: center; font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    color: var(--white); line-height: 1.12; letter-spacing: -.005em; text-wrap: balance; }
+  .line .m { display: block; overflow: hidden; padding-bottom: .06em; }
+  .line .m > span { display: block; will-change: transform; }
+  .top { top: 190px; font-size: 84px; }
+  .mid { top: 760px; font-size: 104px; }
+  .word { top: 210px; font-size: 168px; font-weight: 700; }
+  .label { position: absolute; left: 0; right: 0; top: 448px; text-align: center; font: 500 34px 'Heebo', sans-serif; letter-spacing: .14em;
+    color: rgba(247,246,243,.72); direction: ltr; text-transform: uppercase; opacity: 0; }
+
+  /* photos: full width at 1080px (sources are 1254px) — never enlarged past the source */
+  .ph { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; overflow: hidden; opacity: 0; }
+  .ph img { width: 1080px; height: 1080px; display: block; transform-origin: 50% 50%; }
+  #grid { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; opacity: 0; transform-origin: 50% 0; }
+  #grid img { position: absolute; width: 538px; height: 538px; }
+
+  #price { left: 0; right: 0; top: 150px; text-align: center; font: 800 210px/1 'Heebo', sans-serif; color: var(--white); direction: ltr; opacity: 0; }
+  #logo { left: 390px; top: 1590px; width: 300px; height: 173px; opacity: 0; }
+  #url { left: 0; right: 0; margin: auto; top: 1440px; width: 620px; height: 108px; border-radius: 999px; background: var(--white); color: var(--ink);
+    text-align: center; font: 600 48px/108px 'Heebo', sans-serif; direction: ltr; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="bg"></div>
+
+  <div class="ph" id="p_navy"><img src="assets/img/navy.webp" alt=""></div>
+  <div class="ph" id="p_ruby"><img src="assets/img/ruby.webp" alt=""></div>
+  <div class="ph" id="p_mint"><img src="assets/img/mint.webp" alt=""></div>
+  <div class="ph" id="p_ice"><img src="assets/img/ice.webp" alt=""></div>
+  <div class="ph" id="p_navy2"><img src="assets/img/navy.webp" alt=""></div>
+  <div id="grid">
+    <img src="assets/img/ruby.webp" style="right:0;top:0" alt=""><img src="assets/img/mint.webp" style="left:0;top:0" alt="">
+    <img src="assets/img/ice.webp" style="right:0;bottom:0" alt=""><img src="assets/img/navy.webp" style="left:0;bottom:0" alt="">
+  </div>
+
+  <div class="line top" id="t0"><span class="m"><span>רגע... תמיד רציתם שעון?</span></span></div>
+  <div class="line top" id="t1"><span class="m"><span>אבל אף פעם לא הייתם</span></span><span class="m"><span>מוכנים לשלם עליו אלפים?</span></span></div>
+  <div class="line mid" id="t2"><span class="m"><span>אז בואו נהיה כנים.</span></span></div>
+  <div class="line mid" id="t3" style="top:700px"><span class="m"><span>זה לא שעון</span></span><span class="m"><span>שתורישו לנכדים.</span></span></div>
+  <div class="line top" id="t4"><span class="m"><span>אבל תסתכלו עליו.</span></span></div>
+  <div class="line word" id="w_ruby"><span class="m"><span>אדום</span></span></div>
+  <div class="line word" id="w_mint"><span class="m"><span>מנטה</span></span></div>
+  <div class="line word" id="w_ice" style="color:#111"><span class="m"><span>לבן</span></span></div>
+  <div class="line word" id="w_navy"><span class="m"><span>נייבי</span></span></div>
+  <div class="label" id="l_ruby">Arabic Ruby Red</div>
+  <div class="label" id="l_mint">Skeleton Mint</div>
+  <div class="label" id="l_ice" style="color:rgba(17,17,17,.6)">Skeleton Ice White</div>
+  <div class="label" id="l_navy">Skeleton Navy</div>
+  <div class="line top" id="t5"><span class="m"><span>שעון שכולם ישאלו עליו.</span></span></div>
+  <div class="line top" id="t6"><span class="m"><span>במחיר שלא</span></span><span class="m"><span>תצטרכו להסביר.</span></span></div>
+
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo.png" alt="RTM Watches">
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 23.0;
+// word times in the video: Viktor take viktor_b/take 4, four pauses trimmed, VO starts at 0.25s
+const W = { rega: 0.41, aval: 2.63, az: 5.37, ze: 7.22, aval2: 9.61, adom: 11.53, menta: 12.30, lavan: 13.14, navy: 14.18,
+  shaon: 15.22, bimchir: 17.20, tishim: 19.40, link: 20.80 };
+const BG = { navy: '#0b1220', black: '#0b0b0b', ruby: '#3a0a10', mint: '#14231b', ice: '#dcdcde' };
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+
+// a line block: each row slides up out of its own mask
+const lineIn = (id, t, stagger = 0.09) => tl.fromTo(`${id} .m > span`, { yPercent: 105 }, { yPercent: 0, duration: 0.55, stagger, ease: 'power3.out', immediateRender: false }, t);
+const lineOut = (id, t) => tl.to(`${id} .m > span`, { yPercent: -105, duration: 0.28, stagger: 0.04, ease: 'power3.in' }, t);
+const cut = (t, bg) => tl.set('#bg', { backgroundColor: bg }, t);
+const show = (id, t, push = 1.06, dur = 4) => {
+  tl.set(id, { opacity: 1 }, t);
+  tl.fromTo(`${id} img`, { scale: 1 }, { scale: push, duration: dur, ease: 'none', immediateRender: false }, t);   // 1080 * 1.06 = 1145 < 1254
+};
+const hide = (id, t) => tl.set(id, { opacity: 0 }, t);
+
+// state at t=0
+gsap.set('#p_navy', { opacity: 1 });
+gsap.set('#t0 .m > span', { yPercent: 0 });
+gsap.set(['#t1', '#t2', '#t3', '#t4', '#t5', '#t6', '#w_ruby', '#w_mint', '#w_ice', '#w_navy'].map(s => s + ' .m > span'), { yPercent: 105 });
+
+/* 1 — hook */
+tl.fromTo('#p_navy img', { scale: 1.0 }, { scale: 1.05, duration: W.az, ease: 'none' }, 0);
+lineOut('#t0', W.aval - 0.32);
+lineIn('#t1', W.aval);
+
+/* 2 — honesty: nothing but black and words */
+lineOut('#t1', W.az - 0.3);
+tl.to('#p_navy', { opacity: 0, duration: 0.35, ease: 'power2.in' }, W.az - 0.3);
+tl.to('#bg', { backgroundColor: BG.black, duration: 0.35 }, W.az - 0.3);
+lineIn('#t2', W.az);
+lineOut('#t2', W.ze - 0.3);
+lineIn('#t3', W.ze);
+
+/* 3 — the turn: hard cut on "אבל" */
+tl.set('#t3 .m > span', { yPercent: -105 }, W.aval2);
+cut(W.aval2, BG.ruby);
+show('#p_ruby', W.aval2, 1.05, W.adom - W.aval2);
+lineIn('#t4', W.aval2, 0);
+
+/* 4 — the colours, one hard cut per word */
+const COL = [['ruby', W.adom, W.menta], ['mint', W.menta, W.lavan], ['ice', W.lavan, W.navy], ['navy', W.navy, W.shaon]];
+tl.set('#t4 .m > span', { yPercent: -105 }, W.adom);
+COL.forEach(([k, a, b], i) => {
+  const ph = k === 'navy' ? '#p_navy2' : '#p_' + k;
+  cut(a, BG[k]);
+  if (i > 0) { hide(COL[i - 1][0] === 'ruby' ? '#p_ruby' : '#p_' + COL[i - 1][0], a); }
+  if (k !== 'ruby') show(ph, a, 1.04, b - a);
+  tl.fromTo(`#w_${k} .m > span`, { yPercent: 105 }, { yPercent: 0, duration: 0.32, ease: 'power3.out', immediateRender: false }, a);
+  tl.fromTo('#l_' + k, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, a + 0.08);
+  tl.set(`#w_${k} .m > span`, { yPercent: -105 }, b);
+  tl.set('#l_' + k, { opacity: 0 }, b);
+});
+
+/* 5 — all four */
+hide('#p_navy2', W.shaon);
+cut(W.shaon, BG.black);
+tl.fromTo('#grid', { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: 'power3.out', immediateRender: false }, W.shaon);
+lineIn('#t5', W.shaon);
+lineOut('#t5', W.bimchir - 0.3);
+lineIn('#t6', W.bimchir);
+
+/* 6 — price and call to action */
+lineOut('#t6', W.tishim - 0.3);
+tl.to('#grid', { scale: 0.74, y: -40, duration: 0.6, ease: 'power3.inOut' }, W.tishim - 0.2);
+tl.fromTo('#price', { opacity: 0, scale: 1.25 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'power4.out', immediateRender: false }, W.tishim);
+tl.fromTo('#url', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, immediateRender: false }, W.link);
+tl.fromTo('#logo', { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, W.link + 0.25);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); };
+window.ready = Promise.all([document.fonts.load('700 84px "Frank Ruhl Libre"', 'אבג'), document.fonts.load('800 210px Heebo', '99'), document.fonts.load('500 34px Heebo', 'ABC'),
+  document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>
