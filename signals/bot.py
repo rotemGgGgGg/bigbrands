@@ -363,6 +363,7 @@ def main() -> None:
     num = lambda k: float(env[k]) if env.get(k) else None
     limits = Limits(risk_per_trade=args.risk,
                     risk_usd=num("RISK_USD"),
+                    risk_max_usd=num("RISK_MAX_USD"),
                     daily_stop_usd=num("DAILY_STOP_USD"),
                     total_stop_usd=num("TOTAL_STOP_USD"),
                     max_open=int(env.get("MAX_OPEN", "2")),

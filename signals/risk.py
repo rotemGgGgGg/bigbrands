@@ -38,6 +38,7 @@ class Limits:
     max_trades_day: int | None = None  # new trades per broker day, then stop
     min_stop_dollars: float = 2.0
     max_units: int = 100              # one lot of gold, as a hard ceiling
+    risk_max_usd: float | None = None # may round up to the nearer size, never past this
     max_daily_loss: float = 0.02      # fraction fallback when no dollar cap is set
 
 
@@ -96,6 +97,15 @@ def size(balance: float, entry: float, stop: float, side: str,
 
     risk_budget = limits.risk_usd if limits.risk_usd else balance * limits.risk_per_trade
     units = int(risk_budget / (distance * DOLLARS_PER_UNIT_PER_DOLLAR))
+    # Ounces come whole, so the risk lands below the budget, sometimes well
+    # below ($17.88 of $25 at a $8.94 stop). With a ceiling set, one ounce
+    # more is taken when it lands nearer the budget and stays under the
+    # ceiling; without one, the size only ever rounds down.
+    if limits.risk_max_usd:
+        up = units + 1
+        if (up * distance <= limits.risk_max_usd
+                and abs(up * distance - risk_budget) < abs(units * distance - risk_budget)):
+            units = up
     if units < 1:
         return Decision(0, f"${risk_budget:.2f} of risk cannot buy one ounce "
                            f"at a ${distance:.2f} stop")
