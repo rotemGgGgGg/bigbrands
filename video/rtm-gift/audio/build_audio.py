@@ -1,6 +1,6 @@
 """Builds audio/mix.wav for the "המתנה" reel.
 
-Voice: Viktor (see video/VOICE.md), chosen take src/viktor_c/voice.mp3 (script_v2.txt, pitch spread 9.87 st).
+Voice: Viktor (see video/VOICE.md), chosen take src/viktor_d/voice.mp3 (script_v3.txt: 14-day returns, take 5, pitch spread 10.23 st).
 Three long pauses are trimmed. Music: ElevenLabs Music. Sound effects are synthesised here.
 """
 import subprocess
@@ -13,12 +13,12 @@ from scipy.signal import butter, sosfilt
 HERE = Path(__file__).parent
 SRC = HERE / "src"
 SR = 48000
-DUR = 20.0
+DUR = 21.0
 N = int(SR * DUR)
 VO_START = 0.25
-KEEP = [(0.00, 3.55), (3.85, 6.95), (7.30, 14.50), (14.90, 19.65)]    # cuts sit inside silences
+KEEP = [(0.0, 3.574), (3.858, 7.131), (7.409, 18.801), (19.008, 20.321)]    # from video/tools/trim_plan.py --protect אבל
 # word times in the video (same as W in index.html)
-W = dict(ein=1.93, shaon=4.18, yomuledet=7.27, chaver=8.24, bat=9.20, o=10.65, tishim=12.16, ad=13.52, shloshim=14.48, aval=16.85, link=17.92)
+W = dict(ein=2.09, shaon=4.11, yomuledet=7.28, chaver=8.37, bat=9.55, o=10.95, tishim=12.49, ad=14.01, shloshim=15.37, aval=17.36, link=18.61)
 LID_OPENS = 4.98     # the site animation's lid starts to lift (frame 22 of the recording, from 4.25s)
 
 rng = np.random.default_rng(31)
@@ -95,7 +95,7 @@ parts = ";".join(f"[0]atrim={a}:{b},asetpts=PTS-STARTPTS,afade=t=in:d=0.015,afad
 graph = (f"{parts};" + "".join(f"[p{i}]" for i in range(len(KEEP))) + f"concat=n={len(KEEP)}:v=0:a=1,aresample={SR},"
          f"adelay={int(VO_START * 1000)}|{int(VO_START * 1000)},pan=stereo|c0=c0|c1=c0,apad=whole_dur={DUR},atrim=0:{DUR},"
          "highpass=f=80,acompressor=threshold=-20dB:ratio=2.5:attack=5:release=120:makeup=2[vo]")
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(SRC / "viktor_c" / "voice.mp3"), "-filter_complex", graph, "-map", "[vo]", str(HERE / "vo.wav")], check=True)
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(SRC / "viktor_d" / "voice.mp3"), "-filter_complex", graph, "-map", "[vo]", str(HERE / "vo.wav")], check=True)
 
 subprocess.run([
     "ffmpeg", "-v", "error", "-y",

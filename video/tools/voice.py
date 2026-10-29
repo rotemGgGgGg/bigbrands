@@ -45,11 +45,21 @@ def tts(text, voice, key):
     return base64.b64decode(j["audio_base64"]), j["alignment"]
 
 
-def stt(path, key):
-    out = subprocess.run(["curl", "-sS", "-m", "120", *(["--cacert", "/root/.ccr/ca-bundle.crt"] if os.path.exists("/root/.ccr/ca-bundle.crt") else []),
+def stt(path, key, tries=6):
+    """Speech-to-text; retries while the service is busy (a busy reply is not a failed take)."""
+    import time
+    for k in range(tries):
+        j = json.loads(_stt_once(path, key))
+        if "text" in j:
+            return j["text"]
+        time.sleep(5 * (k + 1))
+    raise RuntimeError(f"speech-to-text unavailable: {j}")
+
+
+def _stt_once(path, key):
+    return subprocess.run(["curl", "-sS", "-m", "120", *(["--cacert", "/root/.ccr/ca-bundle.crt"] if os.path.exists("/root/.ccr/ca-bundle.crt") else []),
                           f"{API}/speech-to-text", "-H", f"xi-api-key: {key}", "-F", "model_id=scribe_v1", "-F", "language_code=he",
                           "-F", f"file=@{path}"], capture_output=True, text=True, check=True).stdout
-    return json.loads(out).get("text", "")
 
 
 def words_from_alignment(al):
@@ -112,6 +122,7 @@ def main():
     ap.add_argument("--takes", type=int, default=5)
     ap.add_argument("--voice", default=VIKTOR)
     ap.add_argument("--key-file")
+    ap.add_argument("--rescore", action="store_true", help="re-check the takes already in out_dir/takes instead of generating new ones")
     a = ap.parse_args()
     key = os.environ.get("ELEVENLABS_API_KEY") or (Path(a.key_file).read_text().strip() if a.key_file else None)
     if not key:
@@ -122,14 +133,16 @@ def main():
     (out / "takes").mkdir(parents=True, exist_ok=True)
 
     results = []
-    for i in range(a.takes):
-        audio, al = tts(text, a.voice, key)
+    n = len(list((out / "takes").glob("take*.mp3"))) if a.rescore else a.takes
+    for i in range(n):
         mp3 = out / "takes" / f"take{i + 1}.mp3"
-        mp3.write_bytes(audio)
+        if not a.rescore:
+            audio, al = tts(text, a.voice, key)
+            mp3.write_bytes(audio)
+            (out / "takes" / f"take{i + 1}.json").write_text(json.dumps(words_from_alignment(al), ensure_ascii=False))
         heard = norm(stt(str(mp3), key))
         match = sum(1 for w in want if w in heard) / max(1, len(want))
         r = {"take": i + 1, "pitch_spread_st": round(liveliness(str(mp3)), 2), "word_match": round(match, 3), "heard": " ".join(heard)}
-        (out / "takes" / f"take{i + 1}.json").write_text(json.dumps(words_from_alignment(al), ensure_ascii=False))
         results.append(r)
         print(r)
 
