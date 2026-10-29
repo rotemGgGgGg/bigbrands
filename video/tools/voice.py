@@ -79,6 +79,7 @@ def words_from_alignment(al):
 
 def norm(text):
     text = re.sub(r"\[[^\]]*\]", " ", text)
+    text = re.sub(r"['\u05f3\u05f4\"]", "", text)   # apostrophes / geresh: "חבר'ה" == "חברה"
     return [w for w in re.sub(r"[^\w\s]", " ", text).split() if w]
 
 
@@ -132,7 +133,8 @@ def main():
         results.append(r)
         print(r)
 
-    ok = [r for r in results if r["word_match"] >= 0.9] or results
+    # every word must be heard; fall back to near-perfect takes only if none is perfect
+    ok = [r for r in results if r["word_match"] >= 0.999] or [r for r in results if r["word_match"] >= 0.9] or results
     best = max(ok, key=lambda r: r["pitch_spread_st"])
     (out / "voice.mp3").write_bytes((out / "takes" / f"take{best['take']}.mp3").read_bytes())
     (out / "words.json").write_text((out / "takes" / f"take{best['take']}.json").read_text())

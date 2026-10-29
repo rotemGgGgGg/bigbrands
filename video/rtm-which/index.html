@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — איזה שעון אתם?</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root { --ivory: #F4F2ED; --ink: #111111; --gold: #D2AC62; }
+  html, body { margin: 0; background: var(--ivory); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ivory); direction: rtl; font-family: 'Heebo', sans-serif; }
+  .ab { position: absolute; }
+
+  #hl { left: 50px; right: 50px; top: 150px; height: 300px; }
+  .h { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-weight: 800; font-size: 78px; line-height: 1.12; color: var(--ink); text-wrap: balance; letter-spacing: -.01em; opacity: 0; }
+  .h em { font-style: normal; font-family: 'Noto Color Emoji', sans-serif; font-weight: 400; margin-right: .18em; }
+
+  #frame { left: 40px; top: 470px; width: 1000px; height: 1000px; border-radius: 44px; overflow: hidden; background: #0b0b0b;
+    box-shadow: 0 28px 70px rgba(40,32,20,.22), 0 2px 0 rgba(0,0,0,.04); }
+  /* grid tiles: the photo is always drawn at the tile's size, so it is never above its 1254px source */
+  .cell { position: absolute; width: 320px; height: 320px; border-radius: 18px; overflow: hidden; background: #000; }
+  .cell img { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 50% 45%; }
+  .cell .w { opacity: 0; }
+  .name { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 12px 30px; border-radius: 999px; background: rgba(255,255,255,.95);
+    color: var(--ink); font-weight: 600; font-size: 38px; direction: ltr; white-space: nowrap; opacity: 0; z-index: 30; }
+
+  #price { left: 560px; top: 515px; padding: 6px 46px 0; border-radius: 34px; background: var(--gold); color: var(--ink); z-index: 40;
+    font-weight: 800; font-size: 150px; line-height: 1.12; direction: ltr; box-shadow: 0 22px 50px rgba(0,0,0,.3); opacity: 0; transform-origin: 50% 50%; }
+  #logo { left: 410px; top: 168px; width: 260px; height: 149px; mix-blend-mode: multiply; opacity: 0; }
+  #url { left: 0; right: 0; margin: auto; top: 1505px; width: 600px; height: 104px; border-radius: 999px; background: var(--ink); color: var(--ivory);
+    text-align: center; font-weight: 600; font-size: 46px; line-height: 104px; direction: ltr; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="hl">
+    <div class="h" id="h0">רגע, בואו נבדוק...</div>
+    <div class="h" id="h1">איזה שעון אתם?</div>
+    <div class="h" id="h2">שחור מלא?</div>
+    <div class="h" id="h3">שקטים... ומסוכנים<em>🖤</em></div>
+    <div class="h" id="h4">תכלת? הכי רגועים בחבר'ה<em>😌</em></div>
+    <div class="h" id="h5">אפור?</div>
+    <div class="h" id="h6">קלאסיקה. תמיד בסטייל</div>
+    <div class="h" id="h7">שלד?</div>
+    <div class="h" id="h8">אתם רוצים שיסתכלו עליכם<em>👀</em></div>
+    <div class="h" id="h9">וכל אחד...</div>
+    <div class="h" id="h10">99 ₪</div>
+    <div class="h" id="h11">תכתבו בתגובות מי אתם<em>👇</em></div>
+    <div class="h" id="h12">הלינק בביו</div>
+  </div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo-on-white.png" alt="RTM Watches">
+  <div class="ab" id="frame"></div>
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 23.2;
+// word times in the video: Viktor take viktor_c/take 5, pauses trimmed, VO starts at 0.25s
+const W = { eize: 1.87, shachor: 3.44, shketim: 4.65, tchelet: 7.10, afor: 9.94, klasika: 10.99, shelad: 13.35, atem: 14.03,
+  vechol: 16.71, tishim: 17.59, tichtevu: 19.27, link: 20.83 };
+
+/* build the 3x2 grid (right to left) */
+const MODELS = [
+  ['onyx', 'arabic-onyx', 'Arabic Onyx Black'], ['sky', 'arabic-sky', 'Arabic Sky Blue'], ['stone', 'arabic-stone', 'Arabic Stone Grey'],
+  ['skel', 'skeleton-black', 'Skeleton Phantom'], ['ocb', 'octa-chrono-black', 'Octa Chrono Midnight'], ['ocg', 'octa-chrono-grey', 'Octa Chrono Stone Grey']];
+const frame = document.getElementById('frame');
+const pos = i => ({ left: 1000 - ((i % 3) + 1) * 320 - (i % 3) * 20, top: 170 + Math.floor(i / 3) * 340 });
+MODELS.forEach(([k, file, name], i) => {
+  const c = document.createElement('div');
+  c.className = 'cell'; c.id = 'c_' + k;
+  Object.assign(c.style, { left: pos(i).left + 'px', top: pos(i).top + 'px' });
+  c.innerHTML = `<img class="b" src="assets/img/${file}-box.webp" alt=""><img class="w" src="assets/img/${file}-wrist.webp" alt="">`;
+  frame.appendChild(c);
+  const n = document.createElement('div');
+  n.className = 'name'; n.id = 'n_' + k; n.textContent = name;
+  frame.appendChild(n);
+});
+
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+
+/* headlines: each one is gone before the next one pops */
+const H = [['#h0', 0], ['#h1', W.eize], ['#h2', W.shachor], ['#h3', W.shketim], ['#h4', W.tchelet], ['#h5', W.afor], ['#h6', W.klasika],
+  ['#h7', W.shelad], ['#h8', W.atem], ['#h9', W.vechol], ['#h10', W.tishim], ['#h11', W.tichtevu], ['#h12', W.link]];
+gsap.set('#h0', { opacity: 1 });
+H.forEach(([id, a], i) => {
+  if (i > 0) tl.fromTo(id, { opacity: 0, scale: 0.9, y: 18 }, { opacity: 1, scale: 1, y: 0, duration: 0.28, ease: 'back.out(1.6)', immediateRender: false }, a);
+  const next = H[i + 1];
+  if (next) tl.to(id, { opacity: 0, scale: 0.96, duration: 0.09, ease: 'power2.in' }, next[1] - 0.11);
+});
+
+/* the grid pops in (frame 0 already shows it, the stagger only adds life) */
+MODELS.forEach(([k], i) => tl.fromTo('#c_' + k, { scale: 0.86, opacity: 0.0 }, { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(1.5)', immediateRender: false }, 0.02 + i * 0.06));
+gsap.set(MODELS.map(([k]) => '#c_' + k), { opacity: 1 });
+
+/* a tile grows to fill the frame and turns into its wrist photo, then goes back */
+const PICK = [['onyx', 0, W.shachor, W.tchelet], ['sky', 1, W.tchelet, W.afor], ['stone', 2, W.afor, W.shelad], ['skel', 3, W.shelad, W.vechol]];
+PICK.forEach(([k, i, a, b]) => {
+  const c = '#c_' + k, p = pos(i);
+  tl.set(c, { zIndex: 10 }, a - 0.06);
+  tl.to(c, { left: 0, top: 0, width: 1000, height: 1000, borderRadius: 0, duration: 0.45, ease: 'power3.inOut' }, a - 0.06);
+  tl.to(c + ' .w', { opacity: 1, duration: 0.3, ease: 'power1.inOut' }, a + 0.12);
+  tl.fromTo(c + ' .w', { scale: 1 }, { scale: 1.05, duration: b - a, ease: 'none', immediateRender: false }, a);
+  tl.fromTo('#n_' + k, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, a + 0.35);
+  tl.to('#n_' + k, { opacity: 0, duration: 0.12 }, b - 0.42);
+  tl.to(c + ' .w', { opacity: 0, duration: 0.2 }, b - 0.4);
+  tl.to(c, { left: p.left, top: p.top, width: 320, height: 320, borderRadius: 18, duration: 0.32, ease: 'power3.inOut' }, b - 0.36);
+  tl.set(c, { zIndex: 1 }, b - 0.03);
+});
+
+/* price on the full grid */
+tl.fromTo('#price', { opacity: 0, scale: 1.7, rotation: -12 }, { opacity: 1, scale: 1, rotation: -5, duration: 0.32, ease: 'power4.out', immediateRender: false }, W.tishim);
+tl.to('#price', { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power2.in' }, W.link - 0.25);
+MODELS.forEach(([k], i) => tl.fromTo('#c_' + k, { y: 0 }, { y: -10, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false }, W.tichtevu + i * 0.07));
+
+/* end card */
+tl.fromTo('#logo', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, immediateRender: false }, W.link - 0.1);
+tl.to('#hl', { y: 70, duration: 0.45, ease: 'power3.inOut' }, W.link - 0.1);
+tl.fromTo('#url', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.6)', immediateRender: false }, W.link + 0.25);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); };
+window.ready = Promise.all([document.fonts.load('800 78px Heebo', 'אבג'), document.fonts.load('400 78px "Noto Color Emoji"', '🖤😌👀👇'), document.fonts.ready,
+  ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>
