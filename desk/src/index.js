@@ -120,18 +120,32 @@ async function ingest(req, env) {
     ).bind(JSON.stringify(payload), ts).run();
     // A limit the bot reached pauses copying here, where only the owner's
     // resume lifts it.
-    if (ev.halt) {
-      await env.DB.prepare(
-        "INSERT INTO meta (k, v, ts) VALUES ('control', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
-      ).bind(JSON.stringify({ paused: true, at: ts, reason: String(ev.halt).slice(0, 300) }), ts).run();
-    }
+    if (ev.halt) await setControl(env, { paused: true, at: ts, reason: String(ev.halt).slice(0, 300) });
     // The answer carries the desk's instructions, so a pause pressed on a
     // phone reaches the bot within one heartbeat.
     const ctl = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();
     return json({ ok: true, ...(ctl ? JSON.parse(ctl.v) : { paused: false }) });
   }
 
+  if (ev.type === "flattened") {
+    // The bot's own account of a close-all: what it closed and what failed.
+    const lines = Array.isArray(ev.lines) ? ev.lines.map((l) => String(l).slice(0, 200)).slice(0, 20) : [];
+    await setControl(env, { flat_result: { at: ts, lines } });
+    return json({ ok: true });
+  }
+
   return json({ error: `unknown type ${ev.type}` }, 400);
+}
+
+// The desk's instructions to the bot, kept as one record. Every change merges
+// into it, so pausing does not forget a close-all press and the other way round.
+async function setControl(env, patch) {
+  const row = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();
+  const v = { ...(row ? JSON.parse(row.v) : { paused: false }), ...patch };
+  await env.DB.prepare(
+    "INSERT INTO meta (k, v, ts) VALUES ('control', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
+  ).bind(JSON.stringify(v), now()).run();
+  return v;
 }
 
 async function data(env) {
@@ -328,15 +342,17 @@ export default {
       return data(env);
     }
     if (path === "/api/control" && req.method === "POST") {
-      // The one thing a viewer may change: whether the bot copies. Reading
-      // and recording go on regardless.
+      // What a viewer may change: whether the bot copies, and the emergency
+      // close-all. Reading and recording go on regardless.
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
       const body = await req.json().catch(() => ({}));
-      const v = JSON.stringify({ paused: Boolean(body.paused), at: now() });
-      await env.DB.prepare(
-        "INSERT INTO meta (k, v, ts) VALUES ('control', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
-      ).bind(v, now()).run();
-      return json(JSON.parse(v));
+      if (body.flatten) {
+        // Close everything: the bot closes positions and cancels its pending
+        // orders at its next heartbeat, and copying pauses so nothing new opens.
+        return json(await setControl(env, { paused: true, at: now(), reason: "closed everything from the desk",
+                                            flatten_at: now(), flat_result: null }));
+      }
+      return json(await setControl(env, { paused: Boolean(body.paused), at: now(), reason: null }));
     }
     if (path === "/api/resolve" && req.method === "POST") {
       if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);

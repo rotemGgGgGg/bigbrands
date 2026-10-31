@@ -143,6 +143,21 @@ def halt(env: dict, key: str, why: str) -> None:
                 f"<b>Resume copying</b> on the desk.")
 
 
+FLAT_PATH = Path(__file__).with_name("flat.json")
+
+
+def _flat_seen(value=None):
+    """The last close-all press already carried out, kept on disk so a restart
+    neither repeats it nor misses one pressed while the bot was down."""
+    if value is not None:
+        FLAT_PATH.write_text(json.dumps(value))
+        return value
+    try:
+        return json.loads(FLAT_PATH.read_text())
+    except Exception:
+        return None
+
+
 def limit_key(detail: str) -> str | None:
     """Which limit a refusal ran into, as a latch key, or None for any other."""
     day = time.strftime("%Y-%m-%d", time.gmtime())
@@ -303,13 +318,24 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                     snap["halt"] = CONTROL["halt"]
                 return desk.heartbeat(env, "live" if live else "paper", source, snap)
             got = await loop.run_in_executor(None, send)
+            flat = got.get("flatten_at")
+            if flat and hasattr(broker, "close_all"):
+                seen = _flat_seen()
+                if seen is None:
+                    _flat_seen(flat)       # first run: an old press is history, not an order
+                elif flat > seen:
+                    _flat_seen(flat)
+                    lines = await loop.run_in_executor(None, broker.close_all)
+                    notify(env, "🧯 <b>close all</b> from the desk\n" + "\n".join(lines))
+                    await loop.run_in_executor(None, lambda: desk.event(
+                        env, {"type": "flattened", "ts": int(time.time()), "lines": lines}))
             if CONTROL["halt"] and got.get("paused"):
                 CONTROL["halt"] = None    # the desk has it, and shows it
             if "paused" in got and bool(got["paused"]) != CONTROL["paused"]:
                 CONTROL["paused"] = bool(got["paused"])
                 notify(env, "⏸ <b>copying paused</b> from the desk" if CONTROL["paused"]
                        else "▶️ <b>copying resumed</b> from the desk")
-            await asyncio.sleep(30)
+            await asyncio.sleep(15)
 
     client.loop.create_task(beat())
 

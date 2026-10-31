@@ -306,6 +306,14 @@ a { color: inherit; text-decoration: none; }
 .cta:hover { filter: brightness(1.04); }
 .cta:active { transform: scale(.99); }
 .cta.paused { background: linear-gradient(90deg, #fcd34d, #fb923c); box-shadow: 0 10px 24px rgba(251, 146, 60, .25); }
+.flat {
+  width: 100%; height: 44px; margin-top: 4px; border-radius: 12px; cursor: pointer;
+  background: transparent; color: var(--down); border: 1.5px solid var(--down);
+  font: inherit; font-size: 13px; font-weight: 600; transition: background .15s ease, color .15s ease;
+}
+.flat:hover { background: rgba(239, 68, 68, .08); }
+.flat.armed { background: var(--down); color: #fff; }
+.flat:focus-visible, .cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .cta-note { text-align: center; font-size: 11px; color: var(--ink-3); margin-top: 10px; min-height: 1.4em; }
 
 .demo-flag { pointer-events: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 20; background: #11142d; color: #fff; font-size: 11px; padding: 6px 14px; border-radius: 0 0 10px 10px; letter-spacing: .04em; }
@@ -519,6 +527,8 @@ a { color: inherit; text-decoration: none; }
       </div>
       <button class="cta" type="button" id="pause">Pause copying</button>
       <div class="cta-note" id="pause-note"></div>
+      <button class="flat" type="button" id="flatten">Close everything</button>
+      <div class="cta-note" id="flat-note"></div>
     </section>
   </aside>
 
@@ -701,7 +711,7 @@ a { color: inherit; text-decoration: none; }
 
   // Sparklines: the same soft line the design uses, coloured by direction.
   function spark(values) {
-    if (values.length < 2) values = [0, 0.4, 0.2, 0.6, 0.4, 0.8];
+    if (values.length < 2) return `<svg class="spark" viewBox="0 0 118 40"><path d="M2 20H116" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/></svg>`;
     const w = 118, h = 40, lo = Math.min(...values), hi = Math.max(...values), sp = hi - lo || 1;
     const pts = values.map((v, i) => [i * (w / (values.length - 1)), h - 4 - ((v - lo) / sp) * (h - 8)]);
     const up = values[values.length - 1] >= values[0];
@@ -886,6 +896,7 @@ a { color: inherit; text-decoration: none; }
     $("#acct-firm").textContent = (a && (a.firm || (a.server || "").split(/[-.]/)[0]) || "FUNDINGPIPS").toUpperCase();
     $("#acct-name").textContent = a && a.name ? a.name : "Trading account";
     $("#acct-size").textContent = a && a.start ? `${Math.round(Number(a.start) / 1000)}K` : "5K";
+    if (!S.sidePicked) { const newest = data.signals.find((s) => s.side); if (newest) S.side = newest.side; }
     const last = data.signals.find((s) => s.side === S.side);
     $("#f2-label").textContent = `Last ${S.side} entry`;
     $("#f2-val").textContent = last ? price(last.entry) : "–";
@@ -898,11 +909,16 @@ a { color: inherit; text-decoration: none; }
     const btn = $("#pause");
     btn.textContent = paused ? "Resume copying" : "Pause copying";
     btn.classList.toggle("paused", Boolean(paused));
-    $("#pause-note").textContent = paused ? (data.control.reason ? `Stopped by the bot: ${data.control.reason}` : "Paused: signals are recorded, nothing is placed") : (live ? "Copying every signal" : "");
+    $("#pause-note").textContent = paused ? (data.control.reason ? (/^closed everything/.test(data.control.reason) ? "Paused after closing everything" : `Stopped by the bot: ${data.control.reason}`) : "Paused: signals are recorded, nothing is placed") : (live ? "Copying every signal" : "");
     $("#bell-dot").hidden = !data.signals.some((s) => data.now - s.ts < 3600);
+    const c = data.control || {};
+    if (!S.flatArmed) {
+      $("#flat-note").textContent = c.flatten_at && !c.flat_result ? "Waiting for the bot to close everything…"
+        : c.flat_result ? `Bot, ${ago(Math.max(0, data.now - c.flat_result.at))} ago: ${c.flat_result.lines.join(" · ")}` : "";
+    }
   }
 
-  document.querySelectorAll("[data-side]").forEach((x) => x.onclick = () => { S.side = x.dataset.side; renderSide(); });
+  document.querySelectorAll("[data-side]").forEach((x) => x.onclick = () => { S.side = x.dataset.side; S.sidePicked = true; renderSide(); });
   document.querySelectorAll("[data-go]").forEach((x) => x.onclick = () => { location.hash = x.dataset.go; });
   $("#pause").onclick = async () => {
     const want = !(S.data.control && S.data.control.paused);
@@ -910,8 +926,26 @@ a { color: inherit; text-decoration: none; }
     let key = ""; try { key = localStorage.getItem(KEY) || ""; } catch (_) {}
     $("#pause-note").textContent = "Sending…";
     const r = await fetch("/api/control", { method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: JSON.stringify({ paused: want }) });
-    if (r.ok) { S.data.control = await r.json(); renderSide(); $("#pause-note").textContent = want ? "Paused. The bot picks this up within 30 seconds" : "Resumed. The bot picks this up within 30 seconds"; }
+    if (r.ok) { S.data.control = await r.json(); renderSide(); $("#pause-note").textContent = want ? "Paused. The bot picks this up within 15 seconds" : "Resumed. The bot picks this up within 15 seconds"; }
     else $("#pause-note").textContent = "Could not reach the desk";
+  };
+  // Close everything takes two taps: the first arms it for five seconds.
+  $("#flatten").onclick = async () => {
+    const btn = $("#flatten");
+    if (!S.flatArmed) {
+      S.flatArmed = true; btn.classList.add("armed"); btn.textContent = "Tap again to close all trades";
+      $("#flat-note").textContent = "Closes every open trade and cancels pending orders, then pauses copying";
+      clearTimeout(S.flatTimer);
+      S.flatTimer = setTimeout(() => { S.flatArmed = false; btn.classList.remove("armed"); btn.textContent = "Close everything"; renderSide(); }, 5000);
+      return;
+    }
+    clearTimeout(S.flatTimer); S.flatArmed = false; btn.classList.remove("armed"); btn.textContent = "Close everything";
+    if (DEMO) { S.data.control = { paused: true, reason: "closed everything from the desk", flat_result: { at: S.data.now, lines: ["closed position 1 (0.03 lots)"] } }; renderSide(); return; }
+    let key = ""; try { key = localStorage.getItem(KEY) || ""; } catch (_) {}
+    $("#flat-note").textContent = "Sending…";
+    const r = await fetch("/api/control", { method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: JSON.stringify({ flatten: true }) });
+    if (r.ok) { S.data.control = await r.json(); renderSide(); }
+    else $("#flat-note").textContent = "Could not reach the desk. Close the trades in MT5.";
   };
   $("#search").addEventListener("input", (e) => {
     S.q = e.target.value.trim();

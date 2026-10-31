@@ -183,6 +183,33 @@ class Mt5Broker:
         return Fill(True, f"{what}, {lots} lots on {self.symbol}",
                     str(res.order), res.price or (sig.entry if order != "market" else None))
 
+    def close_all(self) -> list[str]:
+        """Closes every open position on the bot's symbol and cancels every
+        pending order the bot placed. The emergency button on the desk ends
+        here. Returns one line per action, failures included, so the owner
+        sees exactly what is still open."""
+        mt5 = self.mt5
+        done = []
+        for o in mt5.orders_get(symbol=self.symbol) or []:
+            if o.magic != MAGIC:
+                continue
+            res = mt5.order_send({"action": mt5.TRADE_ACTION_REMOVE, "order": o.ticket})
+            ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+            done.append(f"{'cancelled' if ok else 'FAILED to cancel'} pending order {o.ticket}")
+        for p in mt5.positions_get(symbol=self.symbol) or []:
+            buy = p.type == mt5.POSITION_TYPE_BUY
+            tick = mt5.symbol_info_tick(self.symbol)
+            res = mt5.order_send({
+                "action": mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "position": p.ticket,
+                "volume": p.volume, "type": mt5.ORDER_TYPE_SELL if buy else mt5.ORDER_TYPE_BUY,
+                "price": tick.bid if buy else tick.ask, "deviation": 50, "magic": MAGIC,
+                "comment": "tape close all", "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": self._filling(False)})
+            ok = res is not None and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED)
+            done.append(f"{'closed' if ok else 'FAILED to close'} position {p.ticket} "
+                        f"({p.volume} lots)" + ("" if ok else f": {getattr(res, 'comment', mt5.last_error())}"))
+        return done or ["nothing was open"]
+
     # -- following positions to their end ---------------------------------
 
     def track(self, trade_id: int, order_id: str, pending: bool,
