@@ -356,6 +356,23 @@ export default {
       }
       return json(await setControl(env, { paused: Boolean(body.paused), at: now(), reason: null }));
     }
+    if (path === "/api/history" && req.method === "POST") {
+      // A dump of the channel's past messages, sent in parts by export.py, so
+      // the message formats can be studied without access to Telegram.
+      if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);
+      const body = await req.json().catch(() => ({}));
+      const part = Math.max(0, Math.min(99, Number(body.part) || 0));
+      await env.DB.prepare(
+        "INSERT INTO meta (k, v, ts) VALUES (?, ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
+      ).bind(`history:${part}`, JSON.stringify({ parts: Number(body.parts) || 1, text: String(body.text || "").slice(0, 400000) }), now()).run();
+      return json({ ok: true, part });
+    }
+    if (path === "/api/history" && req.method === "GET") {
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      const part = Math.max(0, Math.min(99, Number(url.searchParams.get("part")) || 0));
+      const row = await env.DB.prepare("SELECT v, ts FROM meta WHERE k = ?").bind(`history:${part}`).first();
+      return json(row ? { ts: row.ts, ...JSON.parse(row.v) } : { error: "none" }, row ? 200 : 404);
+    }
     if (path === "/api/resolve" && req.method === "POST") {
       if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);
       return json(await resolvePaper(env));
