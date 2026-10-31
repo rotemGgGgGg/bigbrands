@@ -319,11 +319,11 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                 return desk.heartbeat(env, "live" if live else "paper", source, snap)
             got = await loop.run_in_executor(None, send)
             flat = got.get("flatten_at")
-            if flat and hasattr(broker, "close_all"):
+            if got and hasattr(broker, "close_all"):
                 seen = _flat_seen()
                 if seen is None:
-                    _flat_seen(flat)       # first run: an old press is history, not an order
-                elif flat > seen:
+                    _flat_seen(flat or 0)  # first run: an old press is history, not an order
+                elif flat and flat > seen:
                     _flat_seen(flat)
                     lines = await loop.run_in_executor(None, broker.close_all)
                     notify(env, "🧯 <b>close all</b> from the desk\n" + "\n".join(lines))

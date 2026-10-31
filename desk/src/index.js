@@ -124,7 +124,9 @@ async function ingest(req, env) {
     // The answer carries the desk's instructions, so a pause pressed on a
     // phone reaches the bot within one heartbeat.
     const ctl = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();
-    return json({ ok: true, ...(ctl ? JSON.parse(ctl.v) : { paused: false }) });
+    // flatten_at is always present: a bot seeing it for the first time takes
+    // it as the baseline, so the first real press is newer and is carried out.
+    return json({ ok: true, flatten_at: 1, ...(ctl ? JSON.parse(ctl.v) : { paused: false }) });
   }
 
   if (ev.type === "flattened") {
