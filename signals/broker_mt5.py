@@ -213,11 +213,25 @@ class Mt5Broker:
     # -- following positions to their end ---------------------------------
 
     def track(self, trade_id: int, order_id: str, pending: bool,
-              side: str | None = None, stop: float | None = None, msg: int | None = None) -> None:
+              side: str | None = None, stop: float | None = None, msg: int | None = None,
+              tp: float | None = None) -> None:
         self.tracked[str(order_id)] = {"trade": trade_id, "pending": pending,
-                                       "side": side, "stop": stop, "be": False,
+                                       "side": side, "stop": stop, "tp": tp, "be": False,
                                        "msg": msg, "at": time.time()}
         self._save()
+
+    def holds_same(self, side: str, stop: float, tp: float, tol: float = 0.6) -> bool:
+        """Whether an order or position the bot still holds has this side,
+        stop and target, within cents: the same trade posted twice."""
+        mt5 = self.mt5
+        for tk, t in self.tracked.items():
+            if t.get("side") != side or t.get("stop") is None or t.get("tp") is None:
+                continue
+            if abs(t["stop"] - stop) > tol or abs(t["tp"] - tp) > tol:
+                continue
+            if mt5.positions_get(ticket=int(tk)) or mt5.orders_get(ticket=int(tk)):
+                return True
+        return False
 
     def cancel_signal(self, msg: int | None) -> list[str]:
         """The channel's "CLOSE ORDER": takes back what one signal opened.

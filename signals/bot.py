@@ -181,6 +181,14 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool, msg: int | 
         notify(env, "⏭ <b>skipped</b>\n" + "\n".join(f"• {p}" for p in sig.problems))
         return
 
+    if hasattr(broker, "holds_same") and broker.holds_same(sig.side, sig.stop, sig.targets[0]):
+        # The channel sometimes posts the same trade again (a stop order
+        # re-sent as a market one, the same levels minutes later). The bot is
+        # already in it; a second entry would double the risk.
+        desk.signal(env, sig, "skipped", "same trade as one already open or pending")
+        notify(env, "⏭ <b>skipped</b>: same side, stop and target as a trade already open or pending")
+        return
+
     rr = risk_reward(sig)
     if hasattr(broker, "state"):
         # The account as it stands, so the caps see today's losses and
@@ -211,7 +219,7 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool, msg: int | 
         if tid and fill.order_id and hasattr(broker, "track"):
             broker.track(tid, fill.order_id,
                          pending=(getattr(sig, "order", None) or "market") != "market",
-                         side=sig.side, stop=sig.stop, msg=msg)
+                         side=sig.side, stop=sig.stop, msg=msg, tp=sig.targets[0])
         at = f" at {fill.price}" if fill.price else ""
         notify(env, f"{head}\n\n✅ <b>{mode}</b> {decision.units} units{at}\n"
                     f"{decision.detail}\n{fill.detail}")
@@ -267,14 +275,16 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
               f"{lag:.1f}s after it was posted", flush=True)
         text = event.raw_text or ""
         try:
-            if re.search(r"close\s*order", text, re.I):
-                # The channel calling a signal off; it answers the signal message.
+            if re.search(r"close\s*(order|trade)", text, re.I):
+                # The channel calling a signal off ("CLOSE ORDER") or exiting it
+                # ("CLOSE TRADE -30PIPS"); either way it answers the signal message.
                 reply = getattr(event.message, "reply_to_msg_id", None)
                 lines = broker.cancel_signal(reply) if hasattr(broker, "cancel_signal") else ["not supported on this broker"]
                 notify(env, "📛 <b>CLOSE ORDER</b> from the channel\n" + "\n".join(lines))
                 return
-            if not re.search(r"\b(buy|sell)\b", text, re.I):
-                # Progress notes ("+40 PIPS"), pictures, chatter: not orders.
+            if not (re.search(r"\b(buy|sell)\b", text, re.I) and re.search(r"\d{3,}", text)):
+                # Progress notes ("+40 PIPS"), a bare "sell now" posted with the
+                # chart a minute before the real signal, chatter: not orders.
                 print("  not a signal, ignored", flush=True)
                 return
             handle(text, env, broker, limits, live, msg=event.message.id)

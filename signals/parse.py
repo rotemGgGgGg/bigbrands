@@ -63,7 +63,7 @@ class Signal:
 def _price(label: str, text: str) -> float | None:
     """Reads one labelled price. The label must be followed by a separator,
     so a number belonging to the next line is never picked up instead."""
-    m = re.search(rf"{label}\s*[:=]\s*{NUM}", text, re.I)
+    m = re.search(rf"{label}\s*[:=]?\s*{NUM}", text, re.I)
     return float(m.group(1)) if m else None
 
 
@@ -118,7 +118,7 @@ def parse(text: str) -> Signal:
     # through the level, "Buy Limit" on a pullback to it, and a bare "Buy"
     # is the price at the moment of sending.
     if sig.side is not None:
-        m = re.search(rf"\b{sig.side}\s*(stop|limit)?\s*[:=]\s*{NUM}", text, re.I)
+        m = re.search(rf"\b{sig.side}\s*(stop|limit)?\s*[:=]?\s*{NUM}", text, re.I)
         if m:
             sig.order = (m.group(1) or "market").lower()
             sig.entry = float(m.group(2))
