@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -168,7 +169,7 @@ def limit_key(detail: str) -> str | None:
     return None
 
 
-def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
+def handle(text: str, env: dict, broker, limits: Limits, live: bool, msg: int | None = None) -> None:
     """One message, start to finish."""
     sig = parse(text)
     if sig.tradeable and CONTROL["paused"]:
@@ -210,7 +211,7 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool) -> None:
         if tid and fill.order_id and hasattr(broker, "track"):
             broker.track(tid, fill.order_id,
                          pending=(getattr(sig, "order", None) or "market") != "market",
-                         side=sig.side, stop=sig.stop)
+                         side=sig.side, stop=sig.stop, msg=msg)
         at = f" at {fill.price}" if fill.price else ""
         notify(env, f"{head}\n\n✅ <b>{mode}</b> {decision.units} units{at}\n"
                     f"{decision.detail}\n{fill.detail}")
@@ -264,8 +265,19 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
         lag = time.time() - event.message.date.timestamp()
         print(f"[{time.strftime('%H:%M:%S')}] message received, "
               f"{lag:.1f}s after it was posted", flush=True)
+        text = event.raw_text or ""
         try:
-            handle(event.raw_text, env, broker, limits, live)
+            if re.search(r"close\s*order", text, re.I):
+                # The channel calling a signal off; it answers the signal message.
+                reply = getattr(event.message, "reply_to_msg_id", None)
+                lines = broker.cancel_signal(reply) if hasattr(broker, "cancel_signal") else ["not supported on this broker"]
+                notify(env, "📛 <b>CLOSE ORDER</b> from the channel\n" + "\n".join(lines))
+                return
+            if not re.search(r"\b(buy|sell)\b", text, re.I):
+                # Progress notes ("+40 PIPS"), pictures, chatter: not orders.
+                print("  not a signal, ignored", flush=True)
+                return
+            handle(text, env, broker, limits, live, msg=event.message.id)
         except Exception as e:
             # A crash here would silently stop the bot reading, which is
             # worse than a bad trade: nothing would say it had stopped.

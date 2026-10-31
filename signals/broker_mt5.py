@@ -213,10 +213,50 @@ class Mt5Broker:
     # -- following positions to their end ---------------------------------
 
     def track(self, trade_id: int, order_id: str, pending: bool,
-              side: str | None = None, stop: float | None = None) -> None:
+              side: str | None = None, stop: float | None = None, msg: int | None = None) -> None:
         self.tracked[str(order_id)] = {"trade": trade_id, "pending": pending,
-                                       "side": side, "stop": stop, "be": False}
+                                       "side": side, "stop": stop, "be": False,
+                                       "msg": msg, "at": time.time()}
         self._save()
+
+    def cancel_signal(self, msg: int | None) -> list[str]:
+        """The channel's "CLOSE ORDER": takes back what one signal opened.
+
+        The order is found by the signal message it answers; with no reply to
+        go by, the newest order from the last six hours. A pending order is
+        cancelled; one that has already filled is closed at the market, since
+        the signal it came from has been called off. Following then reports
+        the cancel or the close to the desk, as for any other ending."""
+        mt5 = self.mt5
+        mine = [(tk, t) for tk, t in self.tracked.items() if msg is not None and t.get("msg") == msg]
+        if not mine and self.tracked:
+            recent = [(tk, t) for tk, t in self.tracked.items() if time.time() - t.get("at", 0) < 6 * 3600]
+            mine = recent[-1:]
+        if not mine:
+            return ["no order of the bot's matches it"]
+        done = []
+        for tk, t in mine:
+            ticket = int(tk)
+            pos = mt5.positions_get(ticket=ticket)
+            if pos:
+                p = pos[0]
+                buy = p.type == mt5.POSITION_TYPE_BUY
+                tick = mt5.symbol_info_tick(self.symbol)
+                res = mt5.order_send({
+                    "action": mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "position": ticket,
+                    "volume": p.volume, "type": mt5.ORDER_TYPE_SELL if buy else mt5.ORDER_TYPE_BUY,
+                    "price": tick.bid if buy else tick.ask, "deviation": 50, "magic": MAGIC,
+                    "comment": "tape close order", "type_time": mt5.ORDER_TIME_GTC,
+                    "type_filling": self._filling(False)})
+                ok = res is not None and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED)
+                done.append(f"{'closed' if ok else 'FAILED to close'} the filled trade {ticket}")
+            elif mt5.orders_get(ticket=ticket):
+                res = mt5.order_send({"action": mt5.TRADE_ACTION_REMOVE, "order": ticket})
+                ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+                done.append(f"{'cancelled' if ok else 'FAILED to cancel'} the pending order {ticket}")
+            else:
+                done.append(f"order {ticket} had already ended")
+        return done
 
     # -- the account, as the guard needs to see it --------------------------
 
