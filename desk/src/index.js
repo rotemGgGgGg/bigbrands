@@ -11,6 +11,7 @@
  */
 import PAGE from "./page.html";
 import { MANIFEST, ICON } from "./assets.js";
+import { SW, subscribe, unsubscribe, notifyAll } from "./push.js";
 
 const PIP = 0.1;
 
@@ -35,6 +36,16 @@ function same(a, b) {
 
 const now = () => Math.floor(Date.now() / 1000);
 
+/** The "you are in a trade" notification. */
+function entered(t, id) {
+  const risk = Math.abs(Number(t.entry) - Number(t.sl)) * Number(t.units);
+  return {
+    title: `\uD83D\uDFE2 In a trade: ${String(t.side).toUpperCase()} ${t.units} oz @ ${Number(t.entry).toFixed(2)}`,
+    body: `SL ${Number(t.sl).toFixed(2)} \u00B7 TP ${Number(t.tp).toFixed(2)} \u00B7 risk $${risk.toFixed(0)}`,
+    tag: `trade-${id}`, url: "/#trades",
+  };
+}
+
 function settle(t, exit, outcome, ts, note = null) {
   const move = t.side === "buy" ? exit - t.entry : t.entry - exit;
   return {
@@ -48,7 +59,19 @@ function settle(t, exit, outcome, ts, note = null) {
   };
 }
 
-async function ingest(req, env) {
+const px = (v) => (v === null || v === undefined ? "?" : Number(v).toFixed(2).replace(/\.?0+$/, ""));
+const ORDER = { market: "", buy_stop: " STOP", sell_stop: " STOP", stop: " STOP", limit: " LIMIT", buy_limit: " LIMIT", sell_limit: " LIMIT" };
+const orderWord = (o) => (o && ORDER[o] !== undefined ? ORDER[o] : o && o !== "market" ? ` ${String(o).toUpperCase()}` : "");
+
+/** Pushes a notification without holding up the bot's request. */
+function push(env, ctx, msg) {
+  const job = notifyAll(env, msg).then((r) => console.log("push", JSON.stringify({ tag: msg.tag, sent: r.sent })))
+    .catch((e) => console.log("push failed", String(e)));
+  if (ctx) ctx.waitUntil(job);
+  return job;
+}
+
+async function ingest(req, env, ctx) {
   const ev = await req.json().catch(() => null);
   if (!ev || !ev.type) return json({ error: "bad event" }, 400);
   const ts = Number(ev.ts) || now();
@@ -59,6 +82,13 @@ async function ingest(req, env) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(ts, ev.side ?? null, ev.order_type ?? null, ev.entry ?? null, ev.sl ?? null,
       ev.tp ?? null, ev.status || "skipped", ev.reason ?? null, (ev.raw || "").slice(0, 2000)).run();
+    const status = ev.status || "skipped";
+    const what = status === "taken" ? "\u2705 Copied" : status === "failed" ? "\u274C Failed" : "\u23ED\uFE0F Not copied";
+    push(env, ctx, {
+      title: `\uD83D\uDCE1 Signal: ${String(ev.side || "?").toUpperCase()}${orderWord(ev.order_type)} ${px(ev.entry)}`,
+      body: `SL ${px(ev.sl)} \u00B7 TP ${px(ev.tp)}\n${what}${ev.reason ? `: ${String(ev.reason).slice(0, 140)}` : ""}`,
+      tag: `signal-${r.meta.last_row_id}`, url: "/#signals",
+    });
     return json({ ok: true, id: r.meta.last_row_id });
   }
 
@@ -77,12 +107,17 @@ async function ingest(req, env) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(ev.signal_id ?? null, live ? "live" : "paper", ev.side, order, Math.abs(ev.units),
       ev.entry, ev.sl, ev.tp, ts, state === "open" ? ts : null, state).run();
+    // A market order is a trade entered now; a pending one is announced
+    // when it fills.
+    if (state === "open") push(env, ctx, entered({ ...ev, units: Math.abs(ev.units) }, r.meta.last_row_id));
     return json({ ok: true, id: r.meta.last_row_id });
   }
 
   if (ev.type === "fill") {
     await env.DB.prepare("UPDATE trades SET state='open', opened_at=?, entry=COALESCE(?, entry) WHERE id = ?")
       .bind(ts, ev.entry ?? null, ev.trade_id).run();
+    const t = await env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(ev.trade_id).first();
+    if (t) push(env, ctx, entered(t, t.id));
     return json({ ok: true });
   }
 
@@ -314,7 +349,7 @@ async function watchdog(env) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const path = url.pathname;
 
@@ -335,9 +370,24 @@ export default {
       return new Response(ICON, { headers: { "content-type": "image/svg+xml", "cache-control": "max-age=86400" } });
     }
 
+    if (path === "/sw.js") {
+      return new Response(SW, { headers: { "content-type": "text/javascript", "cache-control": "no-cache" } });
+    }
+    if (path.startsWith("/api/push/")) {
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      if (path === "/api/push/key") return json({ key: env.VAPID_PUBLIC || null });
+      const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+      if (path === "/api/push/subscribe" && req.method === "POST") return json(await subscribe(env, body));
+      if (path === "/api/push/unsubscribe" && req.method === "POST") return json(await unsubscribe(env, String(body.endpoint || "")));
+      if (path === "/api/push/test" && req.method === "POST") {
+        return json(await notifyAll(env, { title: "\uD83D\uDD14 Tape notifications are on",
+          body: "You will hear about every VIP signal and every trade the bot enters.", tag: "test", url: "/" }));
+      }
+      return json({ error: "not found" }, 404);
+    }
     if (path === "/api/event" && req.method === "POST") {
       if (!same(bearer(req), env.INGEST_KEY)) return json({ error: "unauthorized" }, 401);
-      return ingest(req, env);
+      return ingest(req, env, ctx);
     }
     if (path === "/api/data" && req.method === "GET") {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
