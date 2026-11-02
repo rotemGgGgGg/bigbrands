@@ -371,3 +371,48 @@ def f(D):
             out.append((t, sd, c[t], c[x])); t = x + 1
         else: t += 1
     return ("t", out)
+
+
+# ---------------------------------------------------------------- batch 6: non-price "weird" data claimed in the old literature / Usenet
+EXT = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/oldweb/ext/"
+
+def moon_age(days):
+    """days since new moon (0 = new, ~14.77 = full), mean synodic month from the 2000-01-06 18:14 UTC new moon (+/- ~0.6 day)."""
+    ref = pd.Timestamp("2000-01-06 18:14"); t = (days + pd.Timedelta(hours=16) - ref) / pd.Timedelta(days=1)   # 16:00 NY ~ 20:00-21:00 UTC
+    return np.mod(t.values, 29.530588853)
+
+def nyc_weather(D):
+    import glob
+    w = pd.concat([pd.read_csv(f, parse_dates=["DATE"]) for f in sorted(glob.glob(EXT + "nyc_*.csv"))]).drop_duplicates("DATE").set_index("DATE")
+    return w.reindex(D["days"].normalize())
+
+def kp_daily(D):
+    k = pd.read_csv(EXT + "kp.txt", sep=r"\s+", comment="#", header=None, usecols=[0, 1, 2, 7], names=["y", "m", "d", "kp"])
+    k = k[k.kp >= 0]; k["date"] = pd.to_datetime(dict(year=k.y, month=k.m, day=k.d)); return k.groupby("date").kp.max()
+
+@reg("Lunar: long the 7 days around new moon, short the 7 days around full moon (open->open)", "misc.invest.futures 1998 'LUNAR ECLIPSE STOCK MARKET CRASH ALERT' & Dichev & Janes 2001 'Lunar cycle effects in stock returns'", "d")
+def f(D):
+    a = moon_age(D["days"]); h = np.where((a < 3.7) | (a > 25.8), 1, np.where(np.abs(a - 14.77) < 3.7, -1, 0)); return ("d", h.astype(float), "oo")
+
+@reg("Full-moon short only: short open->close on the 3 trading days nearest full moon", "alt.astrology / misc.invest 1990s full-moon crash posts", "d")
+def f(D):
+    a = moon_age(D["days"]); return ("d", -(np.abs(a - 14.77) < 1.6).astype(float), "oc")
+
+@reg("Wall Street weather: rain in Central Park -> short the day (open->close), dry -> long", "Saunders 1993 AER 'Stock prices and Wall Street weather' (Usenet-era classic); same-day rain, assumes the morning forecast", "d")
+def f(D):
+    w = nyc_weather(D); p = w.PRCP.values; return ("d", np.where(np.isnan(p), 0, np.where(p > 1.0, -1, 1)).astype(float), "oc")
+
+@reg("Rain yesterday in NYC -> short next day open->close (causal version)", "Saunders 1993, lagged so it is fully known before the open", "d")
+def f(D):
+    w = nyc_weather(D); p = lag(w.PRCP.values); return ("d", np.where(np.isnan(p), 0, np.where(p > 1.0, -1, 0)).astype(float), "oc")
+
+@reg("Geomagnetic storm (max Kp >= 5 on any of the prior 3 days) -> short next day open->close", "Krivelyova & Robotti 2003 'Playing the field: geomagnetic storms and the stock market' (Kp from GFZ Potsdam)", "d")
+def f(D):
+    k = kp_daily(D).reindex(D["days"].normalize()).values
+    s = pd.Series(k).rolling(3, min_periods=1).max().shift(1).values; return ("d", -(np.nan_to_num(s) >= 5).astype(float), "oc")
+
+@reg("Pre-holiday: long the last trading day before a US market holiday (open->close)", "Ariel 1990 J. Finance 'High stock returns before holidays' (cited on misc.invest)", "d")
+def f(D):
+    d = D["days"]; gap = np.r_[(d[1:] - d[:-1]).days, 1]; wd = d.weekday.values
+    pre = ((gap > 1) & ~((wd == 4) & (gap == 3))) | ((wd == 4) & (gap > 3)) | ((wd < 4) & (gap > 1))
+    return ("d", pre.astype(float), "oc")
