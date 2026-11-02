@@ -85,10 +85,10 @@ def whatsapp(env: dict, text: str) -> None:
 
 
 def ladder(env: dict) -> list[tuple[float, float]]:
-    """LOCK_LADDER=50:20,75:40,90:60 -> at 50% of the way to the target,
-    lock 20% of it; at 75%, 40%; at 90%, 60%. Empty turns it off."""
+    """LOCK_LADDER=50:15,75:35,90:55 -> at 50% of the way to the target,
+    lock 15% of it; at 75%, 35%; at 90%, 55%. Empty turns it off."""
     out = []
-    for part in env.get("LOCK_LADDER", "50:20,75:40,90:60").split(","):
+    for part in env.get("LOCK_LADDER", "50:15,75:35,90:55").split(","):
         if ":" in part:
             a, b = part.split(":", 1)
             out.append((float(a) / 100, float(b) / 100))
@@ -314,7 +314,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             "max_trades_day": limits.max_trades_day,
             "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
             "trail_step_usd": float(env.get("TRAIL_STEP_USD", "1") or 0),
-            "lock_ladder": env.get("LOCK_LADDER", "50:20,75:40,90:60"),
+            "lock_ladder": env.get("LOCK_LADDER", "50:15,75:35,90:55"),
         }}
         if hasattr(broker, "state"):
             try:
