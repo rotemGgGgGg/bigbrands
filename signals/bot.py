@@ -84,6 +84,17 @@ def whatsapp(env: dict, text: str) -> None:
         print(f"[whatsapp failed: {e}]", flush=True)
 
 
+def ladder(env: dict) -> list[tuple[float, float]]:
+    """LOCK_LADDER=50:20,75:40,90:60 -> at 50% of the way to the target,
+    lock 20% of it; at 75%, 40%; at 90%, 60%. Empty turns it off."""
+    out = []
+    for part in env.get("LOCK_LADDER", "50:20,75:40,90:60").split(","):
+        if ":" in part:
+            a, b = part.split(":", 1)
+            out.append((float(a) / 100, float(b) / 100))
+    return out
+
+
 def make_broker(env: dict, live: bool):
     if not live:
         return PaperBroker(env.get("PAPER_DB") or os.path.join(HERE, "paper.db"))
@@ -95,7 +106,8 @@ def make_broker(env: dict, live: bool):
                          start_balance=float(env["ACCOUNT_START"]) if env.get("ACCOUNT_START") else None,
                          be_at_r=float(env.get("BE_AT_R", "1.5")) or None,
                          be_plus_usd=float(env.get("BE_PLUS_USD", "1")),
-                         trail_step_usd=float(env.get("TRAIL_STEP_USD", "1") or 0) or None)
+                         trail_step_usd=float(env.get("TRAIL_STEP_USD", "1") or 0) or None,
+                         lock_ladder=ladder(env))
     token, account = env.get("OANDA_TOKEN"), env.get("OANDA_ACCOUNT")
     if not token or not account:
         raise SystemExit("--live needs OANDA_TOKEN and OANDA_ACCOUNT in signals/.env")
@@ -302,6 +314,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             "max_trades_day": limits.max_trades_day,
             "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
             "trail_step_usd": float(env.get("TRAIL_STEP_USD", "1") or 0),
+            "lock_ladder": env.get("LOCK_LADDER", "50:20,75:40,90:60"),
         }}
         if hasattr(broker, "state"):
             try:
@@ -379,6 +392,8 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                             notify(env, f"📥 <b>pending order filled</b> at {ev['entry']}")
                         elif ev["type"] == "expire":
                             notify(env, "⌛ <b>pending order expired</b> without filling")
+                        elif ev["type"] == "lock":
+                            notify(env, f"💰 <b>{ev['locked_pct']}% of the target locked</b>, stop at {ev['sl']}")
                         elif ev["type"] == "trail":
                             print(f"  stop pulled to {ev['sl']}" + (" (entry)" if ev.get("at_entry") else ""), flush=True)
                         elif ev["type"] == "be":

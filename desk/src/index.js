@@ -134,6 +134,20 @@ async function ingest(req, env, ctx) {
     return json({ ok: true });
   }
 
+  if (ev.type === "lock") {
+    // Part of the target locked in as price neared it.
+    await env.DB.prepare("UPDATE trades SET sl=?, note=? WHERE id = ?")
+      .bind(ev.sl, `${ev.locked_pct}% of the target locked, stop ${ev.sl}`, ev.trade_id).run();
+    const t = await env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(ev.trade_id).first();
+    if (t) {
+      const got = Math.abs(Number(ev.sl) - Number(t.entry)) * Number(t.units);
+      push(env, ctx, { title: `\uD83D\uDCB0 Profit locked: $${got.toFixed(0)}`,
+        body: `${String(t.side).toUpperCase()} ${t.units} oz from ${Number(t.entry).toFixed(2)}: stop now ${Number(ev.sl).toFixed(2)} (${ev.locked_pct}% of the target)`,
+        tag: `trade-${t.id}`, url: "/#trades" });
+    }
+    return json({ ok: true });
+  }
+
   if (ev.type === "expire") {
     await env.DB.prepare("UPDATE trades SET state='expired', closed_at=? WHERE id = ?")
       .bind(ts, ev.trade_id).run();

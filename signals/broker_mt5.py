@@ -43,7 +43,8 @@ class Mt5Broker:
     def __init__(self, symbol: str | None = None, allow_real: bool = False,
                  track_path: str | None = None, start_balance: float | None = None,
                  be_at_r: float | None = 1.5, be_plus_usd: float = 1.0,
-                 trail_step_usd: float | None = 1.0):
+                 trail_step_usd: float | None = 1.0,
+                 lock_ladder: list[tuple[float, float]] | None = None):
         try:
             import MetaTrader5 as mt5
         except ImportError:
@@ -71,6 +72,8 @@ class Mt5Broker:
         self.be_at_r = be_at_r
         self.be_plus = be_plus_usd
         self.trail_step = trail_step_usd
+        # (share of the way to the target reached, share of the target locked)
+        self.lock_ladder = sorted(lock_ladder or [])
         self.symbol = self._find_symbol(symbol)
         # Which desk trade each terminal ticket belongs to, kept on disk so a
         # restart does not forget positions that are still running.
@@ -330,12 +333,12 @@ class Mt5Broker:
         Plus a dollar, not to the entry itself: a stop at the entry closes
         the trade at a small loss once spread and commission are paid.
         """
-        if not self.be_at_r and not self.trail_step:
+        if not self.be_at_r and not self.trail_step and not self.lock_ladder:
             return []
         mt5 = self.mt5
         events = []
         for ticket, t in self.tracked.items():
-            if t.get("pending") or t.get("be") or t.get("stop") is None:
+            if t.get("pending") or t.get("stop") is None:
                 continue
             pos = mt5.positions_get(ticket=int(ticket))
             if not pos:
@@ -363,7 +366,25 @@ class Mt5Broker:
                         events.append({"type": "trail", "trade_id": t["trade"], "sl": want,
                                        "at_entry": abs(want - p.price_open) < 1e-6,
                                        "ts": int(time.time())})
-            if not self.be_at_r or risk <= 0 or gained < self.be_at_r * risk:
+            # Past the entry: lock a share of the target as price nears it, so
+            # a trade that turns back short of the target still pays something.
+            tp = p.tp or t.get("tp")
+            dist = abs(tp - p.price_open) if tp else 0
+            if self.lock_ladder and dist > 0 and gained > 0:
+                reached = [lock for at, lock in self.lock_ladder if gained >= at * dist]
+                if reached:
+                    lock = reached[-1]
+                    want = round(p.price_open + lock * dist if buy else p.price_open - lock * dist, digits)
+                    better = (buy and (not cur_sl or want > cur_sl + 1e-9)) or (not buy and (not cur_sl or want < cur_sl - 1e-9))
+                    if better:
+                        res = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket,
+                                              "symbol": p.symbol, "sl": want, "tp": p.tp})
+                        if res is not None and res.retcode == mt5.TRADE_RETCODE_DONE:
+                            cur_sl = want
+                            events.append({"type": "lock", "trade_id": t["trade"], "sl": want,
+                                           "locked_pct": round(lock * 100),
+                                           "ts": int(time.time())})
+            if t.get("be") or not self.be_at_r or risk <= 0 or gained < self.be_at_r * risk:
                 continue
             new_sl = round(p.price_open + self.be_plus if buy else p.price_open - self.be_plus, digits)
             if (buy and cur_sl and cur_sl >= new_sl) or (not buy and cur_sl and cur_sl <= new_sl):
