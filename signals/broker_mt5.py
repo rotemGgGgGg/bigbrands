@@ -42,7 +42,8 @@ class Fill:
 class Mt5Broker:
     def __init__(self, symbol: str | None = None, allow_real: bool = False,
                  track_path: str | None = None, start_balance: float | None = None,
-                 be_at_r: float | None = 1.5, be_plus_usd: float = 1.0):
+                 be_at_r: float | None = 1.5, be_plus_usd: float = 1.0,
+                 trail_step_usd: float | None = 1.0):
         try:
             import MetaTrader5 as mt5
         except ImportError:
@@ -69,6 +70,7 @@ class Mt5Broker:
         self.start_balance = start_balance or acc.balance
         self.be_at_r = be_at_r
         self.be_plus = be_plus_usd
+        self.trail_step = trail_step_usd
         self.symbol = self._find_symbol(symbol)
         # Which desk trade each terminal ticket belongs to, kept on disk so a
         # restart does not forget positions that are still running.
@@ -328,7 +330,7 @@ class Mt5Broker:
         Plus a dollar, not to the entry itself: a stop at the entry closes
         the trade at a small loss once spread and commission are paid.
         """
-        if not self.be_at_r:
+        if not self.be_at_r and not self.trail_step:
             return []
         mt5 = self.mt5
         events = []
@@ -343,11 +345,28 @@ class Mt5Broker:
             risk = abs(p.price_open - t["stop"])
             tick = mt5.symbol_info_tick(p.symbol)
             gained = (tick.bid - p.price_open) if buy else (p.price_open - tick.ask)
-            if risk <= 0 or gained < self.be_at_r * risk:
-                continue
             digits = mt5.symbol_info(p.symbol).digits
+            cur_sl = p.sl
+            # The owner's rule: every $1 (10 pips) in profit pulls the stop $1
+            # closer, until it sits on the entry, and goes no further.
+            if self.trail_step and risk > 0 and gained >= self.trail_step:
+                steps = int(gained // self.trail_step)
+                want = (min(t["stop"] + steps * self.trail_step, p.price_open) if buy
+                        else max(t["stop"] - steps * self.trail_step, p.price_open))
+                want = round(want, digits)
+                better = (buy and (not cur_sl or want > cur_sl + 1e-9)) or (not buy and (not cur_sl or want < cur_sl - 1e-9))
+                if better:
+                    res = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket,
+                                          "symbol": p.symbol, "sl": want, "tp": p.tp})
+                    if res is not None and res.retcode == mt5.TRADE_RETCODE_DONE:
+                        cur_sl = want
+                        events.append({"type": "trail", "trade_id": t["trade"], "sl": want,
+                                       "at_entry": abs(want - p.price_open) < 1e-6,
+                                       "ts": int(time.time())})
+            if not self.be_at_r or risk <= 0 or gained < self.be_at_r * risk:
+                continue
             new_sl = round(p.price_open + self.be_plus if buy else p.price_open - self.be_plus, digits)
-            if (buy and p.sl and p.sl >= new_sl) or (not buy and p.sl and p.sl <= new_sl):
+            if (buy and cur_sl and cur_sl >= new_sl) or (not buy and cur_sl and cur_sl <= new_sl):
                 t["be"] = True                        # already at least this safe
                 continue
             res = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "position": p.ticket,

@@ -127,6 +127,13 @@ async function ingest(req, env, ctx) {
     return json({ ok: true });
   }
 
+  if (ev.type === "trail") {
+    // The stop pulled a dollar closer for each dollar in profit, up to the entry.
+    await env.DB.prepare("UPDATE trades SET sl=?, note=? WHERE id = ?")
+      .bind(ev.sl, ev.at_entry ? "stop on the entry" : `stop pulled to ${ev.sl}`, ev.trade_id).run();
+    return json({ ok: true });
+  }
+
   if (ev.type === "expire") {
     await env.DB.prepare("UPDATE trades SET state='expired', closed_at=? WHERE id = ?")
       .bind(ts, ev.trade_id).run();

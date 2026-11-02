@@ -94,7 +94,8 @@ def make_broker(env: dict, live: bool):
                          track_path=os.path.join(HERE, "tracked.json"),
                          start_balance=float(env["ACCOUNT_START"]) if env.get("ACCOUNT_START") else None,
                          be_at_r=float(env.get("BE_AT_R", "1.5")) or None,
-                         be_plus_usd=float(env.get("BE_PLUS_USD", "1")))
+                         be_plus_usd=float(env.get("BE_PLUS_USD", "1")),
+                         trail_step_usd=float(env.get("TRAIL_STEP_USD", "1") or 0) or None)
     token, account = env.get("OANDA_TOKEN"), env.get("OANDA_ACCOUNT")
     if not token or not account:
         raise SystemExit("--live needs OANDA_TOKEN and OANDA_ACCOUNT in signals/.env")
@@ -300,6 +301,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             "total_stop_usd": limits.total_stop_usd, "max_open": limits.max_open,
             "max_trades_day": limits.max_trades_day,
             "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
+            "trail_step_usd": float(env.get("TRAIL_STEP_USD", "1") or 0),
         }}
         if hasattr(broker, "state"):
             try:
@@ -377,6 +379,8 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                             notify(env, f"📥 <b>pending order filled</b> at {ev['entry']}")
                         elif ev["type"] == "expire":
                             notify(env, "⌛ <b>pending order expired</b> without filling")
+                        elif ev["type"] == "trail":
+                            print(f"  stop pulled to {ev['sl']}" + (" (entry)" if ev.get("at_entry") else ""), flush=True)
                         elif ev["type"] == "be":
                             notify(env, f"🔒 <b>stop moved to break-even</b> ({ev['sl']})")
                 except Exception as e:
@@ -431,6 +435,7 @@ def main() -> None:
         print(f"total stop        : " + (f"${limits.total_stop_usd:.2f}" if limits.total_stop_usd else "not set"))
         print(f"max open at once  : {limits.max_open}")
         print(f"max trades a day  : {limits.max_trades_day or 'no limit'}")
+        print(f"stop trailing     : every ${env.get('TRAIL_STEP_USD', '1') or 'off'} in profit, stop $1 closer, until entry")
         print(f"break-even        : at {env.get('BE_AT_R', '1.5')}R, stop to entry + ${env.get('BE_PLUS_USD', '1')}")
         if env.get("OANDA_TOKEN") and env.get("OANDA_ACCOUNT"):
             b = make_broker(env, live=True)
