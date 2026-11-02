@@ -41,3 +41,24 @@ See results.csv for every rule, with its source sentence.
 | Dow line breakout + Wyckoff time stop | 149 | 30% | -1.20 |
 
 **Final: 0 of 51 pass** (Bonferroni bar t >= 3.10). The oldest rules do worse than the 1990s ones.
+
+## Round 3 - the weird corners and non-price data
+- **Weird groups:** alt.astrology(.moderated/.pro), alt.gambling, rec.gambling(.misc), comp.ai.genetic, alt.sci.math.statistics.prediction and sci.stat.math.
+  About 330k posts were filtered to those that talk about the stock market, leaving 247.
+  Only financial astrology made a testable claim (Citystats 'Foresight Hindsight', 2000-01: hard aspects drop markets, soft aspects lift them).
+- **arXiv 1990-2002 econophysics:** only the log-periodic crash fits (Sornette), which give too few signals to test.
+- **Non-price data claimed in the old literature:** Moon phase (computed); Central Park weather (NOAA); geomagnetic storms (GFZ Kp);
+  Moon-planet aspects from a built-in ephemeris (JPL Keplerian elements + Meeus lunar theory, checked against the 2024 eclipse and the 2020 Jupiter-Saturn conjunction).
+
+| rule | trades | win | t |
+|---|---|---|---|
+| Lunar: long new moon week, short full moon week | 357 | 47% | -1.53 |
+| Short the 3 days around full moon | 385 | 43% | -1.63 |
+| NYC rain -> short / dry -> long (same day) | 3573 | 51% | -1.37 |
+| NYC rain yesterday -> short | 980 | 44% | -0.53 |
+| Geomagnetic storm (Kp >= 5) -> short | 713 | 46% | 0.14 |
+| Pre-holiday long | 142 | 58% | 0.32 |
+| Astro intraday: first Moon aspect, soft -> long / hard -> short | 1474 | 49% | 0.21 |
+| Astro daily: net soft-hard aspect minutes | 2295 | 50% | 0.10 |
+
+**Final: 0 of 59 rules pass.**

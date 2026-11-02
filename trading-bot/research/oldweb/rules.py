@@ -416,3 +416,37 @@ def f(D):
     d = D["days"]; gap = np.r_[(d[1:] - d[:-1]).days, 1]; wd = d.weekday.values
     pre = ((gap > 1) & ~((wd == 4) & (gap == 3))) | ((wd == 4) & (gap > 3)) | ((wd < 4) & (gap > 1))
     return ("d", pre.astype(float), "oc")
+
+
+# ---------------------------------------------------------------- batch 7: financial astrology (alt.astrology.moderated, Citystats 'Foresight Hindsight' 2000-01)
+_ASP = None
+def aspect_score(D, orb=1.0):
+    """per RTH minute: (# soft Moon aspects 60/120) - (# hard Moon aspects 0/90/180) within orb degrees, Moon vs Sun..Neptune."""
+    global _ASP
+    if _ASP is not None: return _ASP
+    import ephem
+    days = D["days"]; t = (days.normalize().repeat(390) + pd.to_timedelta(np.tile(np.arange(390) + 570, len(days)), unit="m"))
+    utc = t.tz_localize("America/New_York", ambiguous="NaT", nonexistent="shift_forward").tz_convert("UTC").tz_localize(None)
+    L = ephem.longitudes(pd.DatetimeIndex(utc)); m = L.pop("moon"); sc = np.zeros(len(t))
+    for p, lp in L.items():
+        sep = np.abs(np.mod(m - lp + 180, 360) - 180)
+        for a, w in ((0, -1), (90, -1), (180, -1), (60, 1), (120, 1)): sc += w * (np.abs(sep - a) < orb)
+    _ASP = sc.reshape(len(days), 390); return _ASP
+
+@reg("Astro intraday: first Moon aspect window of the session (9:35-15:00): soft -> long, hard -> short, exit when it ends",
+     "alt.astrology.moderated 2000-01 'Citystats Foresight Hindsight': hard aspects drop the markets, soft aspects take them up", "t")
+def f(D):
+    S_ = aspect_score(D); O, C = D["o"], D["c"]; out = []
+    for t in range(len(O)):
+        s = S_[t]
+        for m in range(5, 330):
+            if s[m] != 0 and s[m - 1] == 0:
+                sd = int(np.sign(s[m])); k = m + 1
+                while k < 389 and np.sign(s[k]) == sd: k += 1
+                out.append((t, sd, O[t, m + 1], O[t, min(k + 1, 389)] if k < 389 else C[t, -1])); break
+    return ("t", out)
+
+@reg("Astro daily: net soft-minus-hard Moon aspect minutes in the session > 0 -> long open->close, < 0 -> short",
+     "alt.astrology.moderated 2000-01 'Citystats': the reason we have been down ... is the aspects; because the aspects have been harder, the market has been going down", "d")
+def f(D):
+    S_ = aspect_score(D); return ("d", np.sign(S_.sum(1)).astype(float), "oc")
