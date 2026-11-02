@@ -280,3 +280,31 @@ def f(D):
 @reg("Range expansion: today's range > range 15 days ago -> long next day open->close", "misc.invest 1990s: 'a system that tells one to go long if the range in prices today is greater than that of 15 days ago'", "d")
 def f(D):
     r = D["dh"] - D["dl"]; return ("d", lag((r > lag(r, 15)).astype(float)), "oc")
+
+
+# ---------------------------------------------------------------- batch 3 (comp.ai.neural-nets, Japanese fj/japan.*, German de.*, uk.*)
+@reg("Friday move > +1% -> long Friday close to Monday close; < -1% -> short", "comp.ai.neural-nets 1999: 'buy index if Friday return is >1% and sell short if <-1%, and exit Monday at close'", "t")
+def f(D):
+    d = D["days"]; c = D["dc"]; wd = d.weekday.values; r = c / lag(c) - 1; out = []
+    for t in range(1, len(c) - 1):
+        if wd[t] == 4 and wd[t + 1] == 0 and abs(r[t]) > .01: out.append((t, 1 if r[t] > 0 else -1, c[t], c[t + 1]))
+    return ("t", out)
+
+@reg("初押しは買い (first pullback is a buy): after a close at a 20-day high, first down close -> buy close, sell next close", "fj.soc.economy 1999 '怪しい話': 初押しは買いの鉄則通り (as the iron rule 'buy the first pullback')", "t")
+def f(D):
+    c = D["dc"]; hi = c >= hh(c, 20); out = []; armed = False
+    for t in range(1, len(c) - 1):
+        if hi[t]: armed = True; continue
+        if armed and c[t] < c[t - 1]: out.append((t, 1, c[t], c[t + 1])); armed = False
+    return ("t", out)
+
+@reg("月末ドレッシング買い (month-end window dressing): buy close 3 days before month end, sell month-end close", "fj.soc.economy 1999: 月末のドレッシング買いを期待 (expecting month-end dressing buying)", "t")
+def f(D):
+    c = D["dc"]; me = np.nonzero(month_end(D))[0]; return ("t", [(k - 3, 1, c[k - 3], c[k]) for k in me if k >= 3])
+
+@reg("German 4/9/18-day lines: long when 4 > 9 > 18, short when 4 < 9 < 18, else flat", "de.etc.finanz.boerse 1999: 'stieg gleich ueber die 4, 9 und 19 Tage Linie' (the classic 4-9-18 day lines)", "d")
+def f(D):
+    c = D["dc"]; a, b, e = sma(c, 4), sma(c, 9), sma(c, 18); return sig(np.where((a > b) & (b > e), 1, np.where((a < b) & (b < e), -1, 0)))
+
+@reg("10-30 day oscillator: long when 10d SMA > 30d SMA, short below", "uk.finance.stockmarket 2000: 'If it has just passed the 10-30 day oscillator then there's a tenuous buy signal'", "d")
+def f(D): c = D["dc"]; return sig(np.sign(sma(c, 10) - sma(c, 30)))
