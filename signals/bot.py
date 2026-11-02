@@ -76,7 +76,6 @@ def whatsapp(env: dict, text: str) -> None:
     phone, key = env.get("WA_PHONE"), env.get("WA_APIKEY")
     if not phone or not key:
         return
-    import re
     plain = re.sub(r"<[^>]+>", "", text)
     try:
         q = urllib.parse.urlencode({"phone": phone, "text": plain, "apikey": key})
@@ -254,7 +253,6 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
         # Emoji and case are ignored, so "Essamtrades VIP" finds a channel
         # called "⚡Essamtrades VIP⚡"; more than one match is refused rather
         # than guessed, since reading the wrong channel would trade its calls.
-        import re
         norm = lambda t: " ".join(re.sub(r"[^\w\s]", " ", t or "").lower().split())
         want = norm(source)
         dialogs = [d for d in client.iter_dialogs() if d.is_channel or d.is_group]
