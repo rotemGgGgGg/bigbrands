@@ -1,4 +1,4 @@
-# Old-web strategy finder (pre-2002 internet -> NQ 2012-2026)
+# Old-web strategy finder (1750 - 2002 sources -> NQ 2012-2026)
 
 **Corpus:** 37 Usenet groups from archive.org (the Wayback Machine is blocked from this environment): misc.invest.*, alt.invest.*, comp.ai.neural-nets, sci.*,
 Japanese fj.* / japan.finance.*, Taiwanese tw.*, German de.etc.finanz.boerse*, uk.finance.stockmarket, plus 14 public-domain books (1884-1927).
@@ -23,3 +23,21 @@ Those were read and coded into **45 testable rules**, using the posters' own num
 All of the near-misses are long-only calendar or trend rules: they mostly harvest NQ's 2012-2026 bull drift, and most of their profit is in 2022-26.
 Intraday pattern rules (OOPS, NR4/NR7, gap fades, opening-range tricks, stochastic/RSI/pivot) are all within noise of zero after costs.
 See results.csv for every rule, with its source sentence.
+
+## Round 2 - older sources (before Usenet)
+- **235 open-access books from 1850-1975** (archive.org; Wyckoff, Nelson, Hamilton, Selden, Clews, Gann-era texts and others): 590 sentences mentioning buying or selling.
+  Almost all of them are anecdotes or advice; the only codable rule was the Dow/Hamilton "line" breakout with a Wyckoff 3-day time stop.
+- **699 BBS files from textfiles.com (1980s - early 90s):** no trading rules, only investing FAQs and price lists.
+- **Japanese / Chinese archive search:** returned newspapers and unrelated books.
+  Instead, the 18th-century Dojima rice-market rules (Sakata five methods, Homma Munehisa) were coded from the tradition itself.
+
+| new rule | trades | win | t |
+|---|---|---|---|
+| 三空 three gaps -> fade | 83 | 40% | -2.13 |
+| 赤三兵/黒三兵 three soldiers / crows | 78 | 45% | -1.29 |
+| 三川 morning / evening star | 40 | 55% | -0.60 |
+| engulfing at a 10-day extreme | 70 | 34% | -2.59 |
+| Homma: 5 down closes -> buy | 262 | 39% | -1.09 |
+| Dow line breakout + Wyckoff time stop | 149 | 30% | -1.20 |
+
+**Final: 0 of 51 pass** (Bonferroni bar t >= 3.10). The oldest rules do worse than the 1990s ones.
