@@ -308,3 +308,66 @@ def f(D):
 
 @reg("10-30 day oscillator: long when 10d SMA > 30d SMA, short below", "uk.finance.stockmarket 2000: 'If it has just passed the 10-30 day oscillator then there's a tenuous buy signal'", "d")
 def f(D): c = D["dc"]; return sig(np.sign(sma(c, 10) - sma(c, 30)))
+
+
+# ---------------------------------------------------------------- batch 4: 18th-century Japanese rice-market rules (酒田五法, Homma Munehisa,
+# Dojima rice exchange, c. 1750). Daily candles; entry next open, exit after the stated holding unless noted.
+def cndl(D):
+    o, h, l, c = dly(D); body = c - o; rng = np.maximum(h - l, 1e-9); return o, h, l, c, body, rng
+
+@reg("三空叩き込み (three gaps down -> buy): 3 consecutive down-gap opens -> buy next open, hold 3 days", "酒田五法 三空 (Homma, c.1750): 三空叩き込みに買い向かえ", "t")
+def f(D):
+    o, h, l, c, b, r = cndl(D); gd = o < lag(l); gu = o > lag(h); out = []
+    for t in range(3, len(c) - 4):
+        if nz(gd[t]) and nz(gd[t - 1]) and nz(gd[t - 2]): out.append((t + 1, 1, o[t + 1], c[t + 3]))
+        if nz(gu[t]) and nz(gu[t - 1]) and nz(gu[t - 2]): out.append((t + 1, -1, o[t + 1], c[t + 3]))
+    return ("t", out)
+
+@reg("赤三兵/黒三兵 (three white soldiers buy / three black crows sell): 3 rising (falling) bullish (bearish) candles -> next open, hold 3 days", "酒田五法 三兵 (Homma, c.1750)", "t")
+def f(D):
+    o, h, l, c, b, r = cndl(D); out = []
+    for t in range(3, len(c) - 4):
+        ws = all(b[k] > 0 and c[k] > c[k - 1] and b[k] > .5 * r[k] for k in (t - 2, t - 1, t))
+        bc = all(b[k] < 0 and c[k] < c[k - 1] and -b[k] > .5 * r[k] for k in (t - 2, t - 1, t))
+        if ws: out.append((t + 1, 1, o[t + 1], c[t + 3]))
+        elif bc: out.append((t + 1, -1, o[t + 1], c[t + 3]))
+    return ("t", out)
+
+@reg("三川明けの明星/宵の明星 (morning/evening star) -> next open, hold 3 days", "酒田五法 三川 (Homma, c.1750)", "t")
+def f(D):
+    o, h, l, c, b, r = cndl(D); out = []
+    for t in range(3, len(c) - 4):
+        a, m, z = t - 2, t - 1, t
+        if b[a] < -.5 * r[a] and abs(b[m]) < .3 * r[m] and max(o[m], c[m]) < c[a] and b[z] > 0 and c[z] > (o[a] + c[a]) / 2: out.append((t + 1, 1, o[t + 1], c[t + 3]))
+        if b[a] > .5 * r[a] and abs(b[m]) < .3 * r[m] and min(o[m], c[m]) > c[a] and b[z] < 0 and c[z] < (o[a] + c[a]) / 2: out.append((t + 1, -1, o[t + 1], c[t + 3]))
+    return ("t", out)
+
+@reg("包み線 (engulfing) at a 10-day extreme -> next open, hold 3 days", "Japanese candlestick tradition (Dojima, 18th c.); 抱き線", "t")
+def f(D):
+    o, h, l, c, b, r = cndl(D); lo10 = l <= ll(l, 10); hi10 = h >= hh(h, 10); out = []
+    for t in range(10, len(c) - 4):
+        if b[t] > 0 and b[t - 1] < 0 and c[t] > o[t - 1] and o[t] < c[t - 1] and (nz(lo10[t]) or nz(lo10[t - 1])): out.append((t + 1, 1, o[t + 1], c[t + 3]))
+        if b[t] < 0 and b[t - 1] > 0 and c[t] < o[t - 1] and o[t] > c[t - 1] and (nz(hi10[t]) or nz(hi10[t - 1])): out.append((t + 1, -1, o[t + 1], c[t + 3]))
+    return ("t", out)
+
+@reg("Homma: 'when all are bearish, there is cause for prices to rise' -> after 5 straight down closes buy close, sell after 5 days (mirror short)", "本間宗久 宗久翁秘録 (c.1750): 万人が万人ながら弱気なれば、たわけになりて米を買うべし", "t")
+def f(D):
+    c = D["dc"]; dn = c < lag(c); up = c > lag(c); out = []
+    for t in range(5, len(c) - 6):
+        if all(nz(dn[t - k]) for k in range(5)): out.append((t, 1, c[t], c[t + 5]))
+        elif all(nz(up[t - k]) for k in range(5)): out.append((t, -1, c[t], c[t + 5]))
+    return ("t", out)
+
+
+# ---------------------------------------------------------------- batch 5: old books (archive.org, 1870-1975)
+@reg("Dow/Hamilton 'line': 15+ days inside a band < 4% wide, then a close beyond it -> follow, hold 20 days (time stop 3 days if no profit, Wyckoff)",
+     "Nelson 1902 'ABC of stock speculation' / Hamilton 1922 'Stock market barometer': stays within a narrow range, say 2 points, until a long horizontal line forms; Wyckoff 1922: unless a stock shows a profit within two or three days, he closes the trade", "t")
+def f(D):
+    c = D["dc"]; hi = lag(hh(c, 15)); lo = lag(ll(c, 15)); narrow = (hi - lo) / c < .04; out = []; t = 15
+    while t < len(c) - 21:
+        if nz(narrow[t]) and (c[t] > hi[t] or c[t] < lo[t]):
+            sd = 1 if c[t] > hi[t] else -1; x = t + 20
+            if sd * (c[t + 3] - c[t]) <= 0: x = t + 3
+            out.append((t, sd, c[t], c[x])); t = x + 1
+        else: t += 1
+    return ("t", out)
