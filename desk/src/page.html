@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#07080b">
+<meta name="theme-color" content="#e4e7ec">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -723,10 +723,108 @@ body::before {
   padding: 12px 16px; border-radius: 14px; background: rgba(20,22,30,.92); color: #fff; font-size: 13px; line-height: 1.4;
   box-shadow: 0 18px 40px -12px rgba(0,0,0,.5); backdrop-filter: blur(14px); }
 @media (max-width: 700px) { .bellbtn .b-txt { display: none; } .bellbtn { padding: 0; width: 32px; justify-content: center; } }
+/* =====================================================================
+   FROST — the light theme, now the default. Frosted panes floating over a
+   soft sculpted grey; cool greys with one quiet blue. The dark theme above
+   is untouched and still on the switch.
+   ===================================================================== */
+.frost-bg { position: fixed; inset: 0; z-index: -2; pointer-events: none; display: none; }
+.frost-bg svg { width: 100%; height: 100%; display: block; }
+:root:not([data-theme="night"]) .frost-bg { display: block; }
+:root:not([data-theme="night"]) {
+  --ink: #15181e; --ink-2: #4d5563; --ink-3: #848b98;
+  --bg: #e4e7ec;
+  --glass: rgba(255, 255, 255, .34);
+  --glass-2: rgba(255, 255, 255, .55);
+  --glass-edge: rgba(255, 255, 255, .95);
+  --hair: rgba(255, 255, 255, .55);
+  --hair-2: rgba(20, 26, 38, .10);
+  --lift: 0 1px 0 rgba(255,255,255,.85) inset, 0 -1px 0 rgba(255,255,255,.25) inset, 0 24px 50px -24px rgba(40, 50, 70, .35), 0 2px 6px -2px rgba(40, 50, 70, .08);
+  --glow-a: transparent; --glow-b: transparent;
+  --accent: #3a6ff0; --accent-ink: #ffffff; --accent-soft: rgba(58, 111, 240, .12);
+  --cyan: #3a6ff0; --pink: #7c8aa5;
+  --up: #12996b; --down: #e0365a; --warn: #c27a0e;
+  --panel: rgba(255, 255, 255, .38); --field: rgba(255, 255, 255, .5);
+
+}
+:root:not([data-theme="night"]) body { background: var(--bg); }
+:root:not([data-theme="night"]) body::before { display: none; }
+:root:not([data-theme="night"]) .chart-card, :root:not([data-theme="night"]) .stat, :root:not([data-theme="night"]) .table,
+:root:not([data-theme="night"]) .kv .item, :root:not([data-theme="night"]) .trade-box, :root:not([data-theme="night"]) .lock form,
+:root:not([data-theme="night"]) .promo, :root:not([data-theme="night"]) .status-card {
+  -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.6);
+}
+:root:not([data-theme="night"]) .side { background: rgba(255,255,255,.22); border-right: 1px solid rgba(255,255,255,.55); -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%); }
+:root:not([data-theme="night"]) .right { background: rgba(255,255,255,.16); border-left: 1px solid rgba(255,255,255,.55); -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%); }
+:root:not([data-theme="night"]) .head { border-bottom: 1px solid rgba(255,255,255,.5); }
+/* selected things lift out as a brighter pane, like the reference's pill */
+:root:not([data-theme="night"]) .nav a[aria-current="page"],
+:root:not([data-theme="night"]) .tabs button[aria-pressed="true"],
+:root:not([data-theme="night"]) .ranges button[aria-pressed="true"] {
+  background: rgba(255,255,255,.78); color: var(--ink);
+  box-shadow: 0 1px 0 #fff inset, 0 6px 16px -8px rgba(40,50,70,.35), 0 0 0 1px rgba(20,26,38,.06);
+}
+:root:not([data-theme="night"]) .tabs, :root:not([data-theme="night"]) .search { background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.6); }
+:root:not([data-theme="night"]) .tr:not(.h):hover, :root:not([data-theme="night"]) .sig:hover {
+  background: rgba(255,255,255,.5); box-shadow: 0 1px 0 #fff inset, 0 8px 20px -14px rgba(40,50,70,.4);
+}
+:root:not([data-theme="night"]) .tr, :root:not([data-theme="night"]) .sig { border-bottom: 1px solid rgba(255,255,255,.45); }
+:root:not([data-theme="night"]) .balance-row .amt { background: none; color: var(--ink); -webkit-text-fill-color: currentColor; }
+:root:not([data-theme="night"]) .chip.a { background: rgba(58,111,240,.08); } :root:not([data-theme="night"]) .chip.a i { background: rgba(58,111,240,.14); color: var(--accent); }
+:root:not([data-theme="night"]) .chip.b { background: rgba(124,138,165,.1); } :root:not([data-theme="night"]) .chip.b i { background: rgba(124,138,165,.18); color: #5b6782; }
+:root:not([data-theme="night"]) .promo { background: radial-gradient(120% 80% at 100% 0%, rgba(58,111,240,.10), transparent 60%), var(--glass); }
+:root:not([data-theme="night"]) .promo .meter span { background: linear-gradient(90deg, var(--accent), #8aa6f5); box-shadow: none; }
+:root:not([data-theme="night"]) .pill.open, :root:not([data-theme="night"]) .pill.pending { box-shadow: 0 0 0 1px rgba(58,111,240,.25) inset; }
+:root:not([data-theme="night"]) .pill.tp, :root:not([data-theme="night"]) .pill.taken { background: rgba(18,153,107,.1); }
+:root:not([data-theme="night"]) .pill.sl, :root:not([data-theme="night"]) .pill.failed { background: rgba(224,54,90,.08); }
+:root:not([data-theme="night"]) .status-card .badge { box-shadow: 0 0 0 1px rgba(58,111,240,.2) inset; }
+:root:not([data-theme="night"]) .icons .dot { box-shadow: none; }
+/* the main button: graphite glass, as calm as the rest */
+:root:not([data-theme="night"]) .cta {
+  color: #fff; background: linear-gradient(180deg, #3b404b, #1d2129);
+  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 14px 30px -14px rgba(20,26,38,.6);
+}
+:root:not([data-theme="night"]) .cta:hover { box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 18px 36px -14px rgba(20,26,38,.7); }
+:root:not([data-theme="night"]) .cta.paused { color: #fff; background: linear-gradient(180deg, #5a7ff2, var(--accent)); box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 14px 30px -14px rgba(58,111,240,.6); }
+:root:not([data-theme="night"]) .flat { background: rgba(255,255,255,.35); border-color: rgba(224,54,90,.3); }
+:root:not([data-theme="night"]) .flat.armed { background: var(--down); color: #fff; }
+:root:not([data-theme="night"]) .acct .l { background: radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,.9), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgba(58,111,240,.22), transparent 60%), rgba(255,255,255,.35); }
+:root:not([data-theme="night"]) .acct .r { background: rgba(29,33,41,.86); }
+:root:not([data-theme="night"]) .acct-shadow { background: radial-gradient(60% 100% at 50% 0%, rgba(40,50,70,.25), transparent 70%); }
+:root:not([data-theme="night"]) .dots i.on { background: var(--ink); }
+:root:not([data-theme="night"]) .bellbtn { background: rgba(255,255,255,.4); border-color: rgba(255,255,255,.65); color: var(--ink-2); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+:root:not([data-theme="night"]) .bellbtn[aria-pressed="true"] { color: var(--accent); border-color: rgba(58,111,240,.35); background: rgba(255,255,255,.7); }
+:root:not([data-theme="night"]) .notify-toast { background: rgba(255,255,255,.75); color: var(--ink); border: 1px solid rgba(255,255,255,.8); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); }
+:root:not([data-theme="night"]) .search:focus-within, :root:not([data-theme="night"]) .lock input:focus { border-color: rgba(58,111,240,.4); }
+@media (max-width: 760px) {
+  :root:not([data-theme="night"]) .head { background: rgba(236,238,242,.45); }
+  :root:not([data-theme="night"]) .bottom-nav { background: rgba(240,242,246,.78); border-top: 1px solid rgba(255,255,255,.8); -webkit-backdrop-filter: blur(30px) saturate(150%); backdrop-filter: blur(30px) saturate(150%); }
+  :root:not([data-theme="night"]) .right { background: transparent; }
+}
 </style>
 </head>
 <body>
 
+<div class="frost-bg" aria-hidden="true"><svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef0f4"/><stop offset="1" stop-color="#d7dbe2"/></linearGradient>
+    <linearGradient id="r1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e6e9ee"/><stop offset="1" stop-color="#bfc5cf"/></linearGradient>
+    <linearGradient id="r2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7f8fa"/><stop offset=".6" stop-color="#d9dde4"/><stop offset="1" stop-color="#b8bfca"/></linearGradient>
+    <filter id="soft" filterUnits="userSpaceOnUse" x="-400" y="-400" width="1800" height="1800"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="shade" filterUnits="userSpaceOnUse" x="-400" y="-400" width="1800" height="1800"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#fb)"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M-120 210 C 120 60, 260 360, 470 230 S 820 40, 1120 220" stroke="#9aa3b2" stroke-opacity=".5" stroke-width="170" filter="url(#shade)" transform="translate(0 40)"/>
+    <path d="M-120 210 C 120 60, 260 360, 470 230 S 820 40, 1120 220" stroke="url(#r1)" stroke-width="160" filter="url(#soft)"/>
+    <path d="M-160 520 C 90 380, 330 700, 560 520 S 900 330, 1160 560" stroke="#8f99a9" stroke-opacity=".48" stroke-width="190" filter="url(#shade)" transform="translate(0 46)"/>
+    <path d="M-160 520 C 90 380, 330 700, 560 520 S 900 330, 1160 560" stroke="url(#r2)" stroke-width="180" filter="url(#soft)"/>
+    <path d="M-140 860 C 140 720, 380 1010, 620 850 S 960 700, 1180 880" stroke="#8f99a9" stroke-opacity=".46" stroke-width="180" filter="url(#shade)" transform="translate(0 44)"/>
+    <path d="M-140 860 C 140 720, 380 1010, 620 850 S 960 700, 1180 880" stroke="url(#r1)" stroke-width="170" filter="url(#soft)"/>
+    <path d="M300 -80 C 380 120, 240 300, 360 480" stroke="#ffffff" stroke-opacity=".55" stroke-width="60" filter="url(#shade)"/>
+  </g>
+</svg></div>
 <div class="lock" id="lock" hidden>
   <form id="lock-form" autocomplete="off">
     <div class="logo"><svg width="34" height="38" viewBox="0 0 34 38"><path d="M17 1 32.6 10v18L17 37 1.4 28V10z" fill="#11142d"/><path d="M17 9.5 25 14v9.2L17 27.8 9 23.2V14z" fill="none" stroke="#fff" stroke-width="3"/></svg><span>TAPE<br>DESK</span></div>
@@ -837,7 +935,7 @@ body::before {
 <script>
 (() => {
   "use strict";
-  const KEY = "tape.key", THEME = "tape.theme2", PROMO = "tape.promo";
+  const KEY = "tape.key", THEME = "tape.theme3", PROMO = "tape.promo";
   const DEMO = new URLSearchParams(location.search).has("demo");
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -864,10 +962,10 @@ body::before {
   const paintTheme = () => {
     const night = root.dataset.theme === "night";
     document.querySelectorAll("[data-theme-toggle]").forEach((b) => b.setAttribute("aria-checked", String(night)));
-    document.querySelector('meta[name="theme-color"]').content = night ? "#07080b" : "#eef0f4";
+    document.querySelector('meta[name="theme-color"]').content = night ? "#07080b" : "#e4e7ec";
   };
-  root.dataset.theme = "night";
-  try { if (localStorage.getItem(THEME) === "day") delete root.dataset.theme; } catch (_) {}
+  // Frosted light is the default; the switch still turns the room dark.
+  try { if (localStorage.getItem(THEME) === "night") root.dataset.theme = "night"; } catch (_) {}
   paintTheme();
   document.querySelectorAll("[data-theme-toggle]").forEach((b) => b.addEventListener("click", () => {
     const night = root.dataset.theme !== "night";
