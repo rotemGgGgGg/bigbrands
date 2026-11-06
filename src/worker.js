@@ -21,9 +21,23 @@ function sameHex(a, b) {
   return diff === 0;
 }
 
+const sessionToken = (request) => ((request.headers.get("Cookie") || "").match(new RegExp(`(?:^|; )${COOKIE}=([0-9a-f]{64})`)) || [])[1];
+
 async function isAuthed(request) {
-  const m = (request.headers.get("Cookie") || "").match(new RegExp(`(?:^|; )${COOKIE}=([0-9a-f]{64})`));
-  return !!m && sameHex(await sha256(m[1]), SESSION_HASH);
+  const t = sessionToken(request);
+  return !!t && sameHex(await sha256(t), SESSION_HASH);
+}
+
+// Serper API key, AES-GCM encrypted with a key derived from the session token,
+// so it is only readable by a request that carries a valid login cookie.
+const SERPER_KEY_ENC = "1ECkNuyVB5LcUOo3xyNw0+UxLphbIxw3w8coWScc7pbHsHaOSfR54Mnf+UZGDAH3XsvlIuSwXRc55DaxrZa//6RjMoQ=";
+
+async function decryptWithSession(token, b64) {
+  const raw = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const keyBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token + "|serper"));
+  const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: raw.slice(0, 12) }, key, raw.slice(12));
+  return new TextDecoder().decode(plain);
 }
 
 const failures = new Map();
@@ -107,7 +121,11 @@ export default {
       const q = (url.searchParams.get("q") || "").trim().slice(0, 120);
       if (!q) return json({ error: "חסרה שאילתה" }, 400);
       const sources = (url.searchParams.get("sources") || "zap").split(",").slice(0, 6);
-      try { return json(await searchPrices(q, sources, env)); }
+      let serperKey = env.SERPER_KEY;
+      if (!serperKey && sources.includes("serper")) {
+        try { serperKey = await decryptWithSession(sessionToken(request), SERPER_KEY_ENC); } catch {}
+      }
+      try { return json(await searchPrices(q, sources, { ...env, SERPER_KEY: serperKey })); }
       catch (e) { return json({ error: e.message }, 500); }
     }
     if (path.startsWith("/api/")) return json({ error: "לא נמצא" }, 404);

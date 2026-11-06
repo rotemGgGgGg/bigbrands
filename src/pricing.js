@@ -99,6 +99,27 @@ async function searchAliExpress(query) {
   return out;
 }
 
+/* ---------- Google Shopping via Serper (2 credits per search) ---------- */
+async function searchSerper(query, apiKey) {
+  if (!apiKey) throw new Error("חסר מפתח Serper");
+  const res = await fetch("https://google.serper.dev/shopping", {
+    method: "POST",
+    headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ q: query, gl: "il", hl: "iw", num: 100 }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Serper החזיר " + res.status);
+  return (data.shopping || []).map((r) => {
+    const price = Number(String(r.price || "").replace(/[^\d.]/g, ""));
+    const currency = /\$/.test(r.price) ? "USD" : /€/.test(r.price) ? "EUR" : "ILS";
+    return {
+      source: "Google", region: currency === "ILS" ? "IL" : "INT", store: r.source || "?", title: r.title, image: r.imageUrl || "",
+      price, currency, shipping: null, delivery: r.delivery || "",
+      url: r.link || "https://www.google.com/search?tbm=shop&q=" + encodeURIComponent(r.title || query),
+    };
+  });
+}
+
 /* ---------- Google Shopping via SerpAPI (paid key) ---------- */
 async function searchGoogle(query, apiKey, country) {
   if (!apiKey) throw new Error("חסר מפתח SERPAPI_KEY");
@@ -161,6 +182,7 @@ export async function searchPrices(query, sources, env) {
   const jobs = {
     zap: () => searchZap(query),
     ivory: () => searchIvory(query),
+    serper: () => searchSerper(query, env.SERPER_KEY),
     aliexpress: () => searchAliExpress(query),
     google_il: () => searchGoogle(query, env.SERPAPI_KEY, "il"),
     google_us: () => searchGoogle(query, env.SERPAPI_KEY, "us"),
