@@ -18,12 +18,30 @@ MK = {
     "USDJPY": ("America/New_York", "08:00", 1.0, 0.001), "EURJPY": ("America/New_York", "08:00", 1.5, 0.001)}
 
 
+MK["SPXUSD"] = ("America/New_York", "09:30", 1.3, 0.25); MK["NSXUSD"] = ("America/New_York", "09:30", 1.3, 0.25)
+HD = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/histdata/"
+
+
+def histdata(sym):
+    import glob, zipfile, io
+    parts = []
+    for zf in sorted(glob.glob(HD + sym + "_*.zip")):
+        with zipfile.ZipFile(zf) as f:
+            n = [x for x in f.namelist() if x.endswith(".csv")][0]
+            d = pd.read_csv(io.BytesIO(f.read(n)), sep=";", header=None, names=["t", "o", "h", "l", "c", "v"])
+        d.index = pd.to_datetime(d.t, format="%Y%m%d %H%M%S"); parts.append(d[["o", "h", "l", "c"]])
+    return pd.concat(parts).sort_index()
+
+
 def load(sym):
     f = CACHE + sym + ".pkl"
     if os.path.exists(f): return pickle.load(open(f, "rb"))
-    z = np.load(DK + sym + ".npz"); tz, st, bp, tick = MK[sym]
-    t = pd.to_datetime(z["t"] * 60, unit="s", utc=True).tz_convert(tz).tz_localize(None)
-    df = pd.DataFrame({k: z[k] for k in "ohlc"}, index=t).sort_index(); df = df[~df.index.duplicated()]
+    tz, st, bp, tick = MK[sym]
+    if sym in ("SPXUSD", "NSXUSD"): df = histdata(sym)                       # HistData: already New York wall-clock time
+    else:
+        z = np.load(DK + sym + ".npz"); t = pd.to_datetime(z["t"] * 60, unit="s", utc=True).tz_convert(tz).tz_localize(None)
+        df = pd.DataFrame({k: z[k] for k in "ohlc"}, index=t)
+    df = df.sort_index(); df = df[~df.index.duplicated()]
     s0 = int(st[:2]) * 60 + int(st[3:]); m = df.index.hour * 60 + df.index.minute; dd = df.index.normalize()
     rth = df[(m >= s0) & (m < s0 + 390)]; rm = (rth.index.hour * 60 + rth.index.minute - s0).values; rd = rth.index.normalize()
     pm = df[(m >= s0 - 240) & (m < s0)]; pmg = {k: g for k, g in pm.groupby(pm.index.normalize())}

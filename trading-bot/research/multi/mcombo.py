@@ -22,7 +22,7 @@ if __name__ == "__main__":
             b = np.cov(x[S], bh[S])[0, 1] / bh[S].var(); a = x - b * bh; sd = x[S][on].std()
             if not sd > 0: continue
             k = f"{sym}|{c}"; cols[k] = x / sd; hedged_cols[k] = a / sd
-            t = a[S].mean() / a[S].std() * math.sqrt(S.sum()); pos = (a[S].groupby(Y[S]).sum() > 0).sum()
+            yy = a[S].groupby(Y[S]).sum(); t = a[S].mean() / a[S].std() * math.sqrt(S.sum()); pos = (yy > 0).mean() * 8
             meta.append((k, sym, t, pos >= 5 and t >= 1.0))
     A = pd.DataFrame(hedged_cols).sort_index().fillna(0); M = pd.DataFrame(meta, columns=["k", "sym", "t", "ok"]).set_index("k")
     el = list(M.index[M.ok]); Yi = A.index.year; S, O = Yi <= 2019, Yi >= 2020

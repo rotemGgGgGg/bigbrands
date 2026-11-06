@@ -40,16 +40,23 @@ def day(sym, d):
     return "ERR"
 
 
-def get(sym, start=dt.date(2012, 1, 1), end=dt.date(2026, 10, 31)):
+def get(sym, y0=2012, y1=2026, threads=6):
+    """year by year into OUT/<sym>_<year>.npy (resumable), then merged into OUT/<sym>.npz."""
     f = OUT + sym + ".npz"
     if os.path.exists(f): return sym, "cached"
-    ds = [start + dt.timedelta(n) for n in range((end - start).days + 1)]; ds = [d for d in ds if d.weekday() != 5]
-    with ThreadPoolExecutor(8) as ex: res = list(ex.map(lambda d: day(sym, d), ds))
-    err = sum(1 for r in res if isinstance(r, str)); rows = [r for r in res if r is not None and not isinstance(r, str)]
-    if not rows: return sym, f"no data (errors {err})"
-    a = np.concatenate(rows); a = a[a[:, 5] > 0] if (a[:, 5] > 0).mean() > .5 else a
+    errs = 0
+    for y in range(y0, y1 + 1):
+        fy = OUT + f"{sym}_{y}.npy"
+        if os.path.exists(fy): continue
+        end = dt.date(y, 12, 31) if y < 2026 else dt.date(2026, 10, 31)
+        ds = [dt.date(y, 1, 1) + dt.timedelta(n) for n in range((end - dt.date(y, 1, 1)).days + 1)]; ds = [d for d in ds if d.weekday() != 5]
+        with ThreadPoolExecutor(threads) as ex: res = list(ex.map(lambda d: day(sym, d), ds))
+        e = sum(1 for r in res if isinstance(r, str)); errs += e; rows = [r for r in res if r is not None and not isinstance(r, str)]
+        np.save(fy, np.concatenate(rows) if rows else np.zeros((0, 6))); print(sym, y, len(rows), "days, errors", e, flush=True)
+    parts = [np.load(OUT + f"{sym}_{y}.npy") for y in range(y0, y1 + 1)]; a = np.concatenate([p for p in parts if len(p)])
+    if not len(a): return sym, "no data"
     dv = SYMS[sym]; np.savez_compressed(f, t=a[:, 0].astype(np.int64), o=a[:, 1] / dv, h=a[:, 4] / dv, l=a[:, 3] / dv, c=a[:, 2] / dv, v=a[:, 5])
-    return sym, f"{len(a):,} bars, {len(rows)} days, errors {err}"
+    return sym, f"{len(a):,} bars, errors {errs}"
 
 
 if __name__ == "__main__":
