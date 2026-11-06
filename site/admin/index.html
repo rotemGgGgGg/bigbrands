@@ -7,223 +7,297 @@
 <title>ניהול — BIG BRANDS</title>
 <style>
   :root {
-    --text: #1b2232; --muted: #6b7486; --faint: #98a1b2;
-    --glass: rgba(255,255,255,.42); --glass-strong: rgba(255,255,255,.62); --edge: rgba(255,255,255,.75);
-    --blue: #3b6fd8; --green: #12805c;
+    --text: #16191f; --muted: #7d838e; --faint: #a3a8b1;
+    --glass: rgba(246,247,250,.46); --glass-hi: rgba(255,255,255,.62);
+    --edge: rgba(255,255,255,.78); --edge-soft: rgba(255,255,255,.45);
+    --blue: #4a6fa5; --ink-blue: #2f4f7f;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
-    font-family: system-ui, "Segoe UI", Arial, sans-serif; color: var(--text);
-    background:
-      radial-gradient(1100px 650px at 15% 0%, #fff 0%, transparent 60%),
-      radial-gradient(900px 700px at 100% 100%, #c9d3e3 0%, transparent 60%),
-      radial-gradient(700px 500px at 0% 100%, #dfe5ee 0%, transparent 65%),
-      linear-gradient(140deg, #eceff4 0%, #d5dbe5 100%);
-    background-attachment: fixed;
-    padding: max(18px, env(safe-area-inset-top)) 16px 40px;
+    font-family: "Inter", system-ui, "Segoe UI", Arial, sans-serif; color: var(--text);
+    background: #d9dbe0; overflow-x: hidden;
+    padding: max(28px, env(safe-area-inset-top)) 16px 48px;
   }
+
+  /* Soft white 3D folds, like the reference wallpaper */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background: radial-gradient(120% 90% at 20% 10%, #f4f5f7 0%, #dcdee3 55%, #c9ccd3 100%); }
+  .bg svg { position: absolute; width: 140%; height: 140%; left: -20%; top: -20%; filter: blur(2px); }
+
+  .stage { position: relative; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; }
   .glass {
-    background: var(--glass);
-    backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%);
-    border: 1px solid var(--edge); border-radius: 28px;
-    box-shadow: 0 28px 70px rgba(40,55,85,.16), inset 0 1px 0 rgba(255,255,255,.9);
+    position: relative; border-radius: 26px; background: var(--glass);
+    backdrop-filter: blur(30px) saturate(140%); -webkit-backdrop-filter: blur(30px) saturate(140%);
+    border: 1px solid var(--edge-soft);
+    box-shadow: 0 40px 80px -20px rgba(30,35,48,.28), 0 2px 0 rgba(255,255,255,.7) inset, 0 -1px 0 rgba(255,255,255,.25) inset;
   }
-  .app { max-width: 760px; margin: 0 auto; }
+  /* glossy reflection along the top edge */
+  .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(160deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,0) 70%, rgba(255,255,255,.18) 100%); }
+  .glass > * { position: relative; }
 
-  header { display: flex; align-items: center; gap: 12px; padding: 12px 14px 12px 12px; margin-bottom: 14px; }
-  .logo { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
-  .logo img { width: 34px; }
-  header b { font-size: 16px; }
-  header small { display: block; color: var(--muted); font-size: 12px; }
+  /* back card (recent searches) sits behind, offset like the reference */
+  .card-back { grid-column: 1; grid-row: 1; margin-top: 46px; margin-inline-end: -60px; padding: 22px 22px 18px 80px; min-height: 520px; }
+  .card-front { grid-column: 2; grid-row: 1; padding: 22px; z-index: 2; min-height: 560px; }
+
+  .top { display: flex; align-items: center; gap: 10px; }
+  .ava-logo { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); flex: none; }
+  .ava-logo img { width: 30px; }
+  .addr { font-weight: 600; font-size: 15px; }
+  .copy { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: var(--glass-hi); border: 1px solid var(--edge); color: var(--muted); }
   .spacer { flex: 1; }
-  .icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--text);
-    background: var(--glass-strong); border: 1px solid var(--edge); text-decoration: none; transition: transform .15s; }
-  .icon-btn:hover { transform: scale(1.06); }
+  .round { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--text); text-decoration: none;
+    background: var(--glass-hi); border: 1px solid var(--edge); transition: transform .15s, background .15s; }
+  .round:hover { transform: scale(1.06); background: #fff; }
 
-  .panel { padding: 22px; }
-  .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.35); border: 1px solid var(--edge); margin-bottom: 18px; }
-  .tabs a { padding: 8px 16px; border-radius: 999px; font-size: 14px; color: var(--muted); text-decoration: none; }
-  .tabs a.on { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 2px 8px rgba(40,55,85,.1); }
+  .big { font-size: 40px; font-weight: 500; letter-spacing: -.02em; margin: 22px 0 2px; font-variant-numeric: tabular-nums; }
+  .sub { color: var(--muted); font-size: 14px; min-height: 20px; }
+  .sub a { color: var(--ink-blue); text-decoration: none; font-weight: 600; }
 
-  .search { display: flex; gap: 8px; }
-  .search input {
-    flex: 1; min-width: 0; font-size: 17px; padding: 15px 18px; border-radius: 18px; outline: none; color: var(--text);
-    background: var(--glass-strong); border: 1px solid var(--edge); transition: box-shadow .2s;
-  }
-  .search input:focus { box-shadow: 0 0 0 4px rgba(59,111,216,.16); }
-  .search button {
-    flex: none; padding: 0 22px; border: 0; border-radius: 18px; font-size: 16px; font-weight: 700; color: #fff; cursor: pointer;
-    background: linear-gradient(135deg, #3b6fd8, #5f8ff0); box-shadow: 0 10px 24px rgba(59,111,216,.3);
-  }
-  .search button:disabled { opacity: .6; cursor: wait; }
+  .search { display: flex; gap: 8px; margin: 18px 0 12px; }
+  .search input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 16px; border-radius: 16px; outline: none; color: var(--text);
+    background: rgba(255,255,255,.5); border: 1px solid var(--edge); transition: box-shadow .2s, background .2s; }
+  .search input:focus { background: rgba(255,255,255,.75); box-shadow: 0 0 0 4px rgba(74,111,165,.14); }
+  .search button { flex: none; width: 46px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); color: var(--text); cursor: pointer; display: grid; place-items: center; }
+  .search button:hover { background: #fff; }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 13px; cursor: pointer; user-select: none;
-    background: rgba(255,255,255,.3); border: 1px solid var(--edge); color: var(--muted); }
-  .chip input { display: none; }
-  .chip:has(input:checked) { background: var(--glass-strong); color: var(--text); font-weight: 600; }
-  .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
-  .chip:has(input:checked) .dot { background: var(--blue); }
+  .pills { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+  .pill { padding: 7px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid transparent; background: none; font-family: inherit; user-select: none; }
+  .pill.on, .pill:has(input:checked) { background: var(--glass-hi); color: var(--text); font-weight: 600; border-color: var(--edge); box-shadow: 0 2px 10px rgba(30,35,48,.08); }
+  .pill input { display: none; }
+  .row-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .srcs { margin-top: 10px; }
+  .srcs .pill { font-size: 12px; padding: 5px 11px; }
 
-  .hero { margin-top: 18px; padding: 22px; }
-  .hero .label { color: var(--muted); font-size: 13px; }
-  .hero .big { font-size: 40px; font-weight: 700; letter-spacing: -.02em; margin: 2px 0; font-variant-numeric: tabular-nums; }
-  .hero .meta { color: var(--muted); font-size: 14px; }
-  .hero a { color: var(--blue); font-weight: 600; text-decoration: none; }
-  .status { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .status span { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.4); color: var(--muted); }
-  .status span.err { color: #b42318; }
-
-  .list { margin-top: 14px; padding: 8px; }
-  .filter { padding: 8px 10px 4px; }
-  .filter input { width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--edge); background: rgba(255,255,255,.45); font-size: 14px; outline: none; }
-  .group { color: var(--faint); font-size: 12px; font-weight: 600; padding: 12px 14px 4px; }
-  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; text-decoration: none; color: inherit; transition: background .15s; }
-  .row:hover { background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px var(--edge); }
-  .ava { width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; }
-  .info { flex: 1; min-width: 0; }
-  .info b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .info small { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .amt { text-align: left; flex: none; font-variant-numeric: tabular-nums; }
-  .amt b { display: block; font-size: 15px; }
-  .amt small { display: block; color: var(--muted); font-size: 12px; }
-  .tag { font-size: 10px; padding: 2px 7px; border-radius: 6px; background: rgba(18,128,92,.12); color: var(--green); margin-inline-start: 6px; vertical-align: middle; }
-  .tag.abroad { background: rgba(59,111,216,.12); color: var(--blue); }
-  .empty { padding: 26px; text-align: center; color: var(--muted); }
-  .note { color: var(--faint); font-size: 12px; padding: 10px 14px 6px; }
-  .spin { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: s .8s linear infinite; display: inline-block; vertical-align: middle; }
+  .section { color: var(--faint); font-size: 12px; font-weight: 600; margin: 18px 4px 6px; }
+  .list { display: flex; flex-direction: column; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 16px; text-decoration: none; color: inherit; border: 1px solid transparent; transition: background .15s, border-color .15s, box-shadow .15s; }
+  .item:hover { background: rgba(255,255,255,.5); border-color: var(--edge); box-shadow: 0 6px 18px rgba(30,35,48,.08); }
+  .ico { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 13px; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .meta { flex: 1; min-width: 0; }
+  .meta b { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta small { display: block; color: var(--faint); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .val { text-align: left; flex: none; font-variant-numeric: tabular-nums; }
+  .val b { display: block; font-size: 14px; font-weight: 600; }
+  .val small { display: block; color: var(--faint); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .card-front, .card-back, .item, .list { min-width: 0; }
+  .used { font-size: 10px; font-weight: 600; padding: 1px 7px; margin-inline-start: 6px; border-radius: 6px; background: rgba(140,90,40,.12); color: #7a4f1d; vertical-align: 1px; }
+  .meta small.ptitle { unicode-bidi: plaintext; text-align: right; }
+  .empty { color: var(--muted); font-size: 14px; padding: 30px 8px; text-align: center; }
+  .status { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .status span { font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.4); border: 1px solid var(--edge-soft); color: var(--muted); }
+  .status span.err { color: #8a2a2a; }
+  .filter { width: 100%; font: inherit; font-size: 13px; padding: 9px 14px; border-radius: 14px; border: 1px solid var(--edge-soft); background: rgba(255,255,255,.35); outline: none; margin-top: 12px; }
+  .note { color: var(--faint); font-size: 11.5px; margin: 14px 4px 0; }
+  .recent .item { cursor: pointer; }
+  .spin { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,.15); border-top-color: var(--text); border-radius: 50%; animation: s .8s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
 
-  @media (max-width: 520px) {
-    .panel, .hero { padding: 18px; }
-    .hero .big { font-size: 34px; }
-    .search button { padding: 0 16px; }
-    .row { padding: 11px 10px; gap: 10px; }
+  @media (max-width: 820px) {
+    .stage { grid-template-columns: minmax(0, 1fr); max-width: 460px; }
+    .val small { max-width: 110px; }
+    .card-back { display: none; }
+    .card-front { grid-column: 1; min-height: 0; }
+    .big { font-size: 36px; }
   }
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="glass">
-    <div class="logo"><img src="/assets/logo.png" alt="" /></div>
-    <div><b>BIG BRANDS</b><small>מערכת ניהול</small></div>
-    <div class="spacer"></div>
-    <a class="icon-btn" href="/" title="לאתר" aria-label="לאתר">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11 12 3l9 8M5 10v10h14V10"/></svg>
-    </a>
-    <a class="icon-btn" href="/admin/logout" title="יציאה" aria-label="יציאה">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
-    </a>
-  </header>
+<div class="bg" aria-hidden="true">
+  <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="f1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e3e5ea"/><stop offset="1" stop-color="#b9bdc6"/></linearGradient>
+      <linearGradient id="f2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfbfc"/><stop offset=".6" stop-color="#d6d9df"/><stop offset="1" stop-color="#aeb3bd"/></linearGradient>
+      <filter id="sh"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#5a6070" flood-opacity=".25"/></filter>
+    </defs>
+    <g filter="url(#sh)">
+      <path d="M-100 260 C 200 120, 420 420, 700 300 S 1180 60, 1700 240 L1700 420 C 1200 260, 980 560, 700 500 S 180 360, -100 470 Z" fill="url(#f1)"/>
+      <path d="M-100 560 C 260 430, 520 720, 860 600 S 1340 380, 1700 560 L1700 760 C 1340 600, 1080 900, 820 820 S 240 660, -100 780 Z" fill="url(#f2)"/>
+      <path d="M-100 860 C 300 760, 600 1000, 960 900 S 1400 760, 1700 880 L1700 1100 L-100 1100 Z" fill="url(#f1)"/>
+      <path d="M200 -60 C 360 120, 260 240, 420 360 S 700 520, 640 700" stroke="#ffffff" stroke-opacity=".7" stroke-width="70" fill="none" stroke-linecap="round"/>
+      <path d="M1180 -60 C 1060 140, 1240 260, 1120 420 S 980 640, 1100 860" stroke="#f1f2f5" stroke-opacity=".8" stroke-width="90" fill="none" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
 
-  <section class="glass panel">
-    <nav class="tabs">
-      <a class="on" href="/admin/">חיפוש מחירים</a>
-      <a href="/admin/products.html">ניהול מוצרים</a>
-    </nav>
-    <form class="search" id="f">
-      <input id="q" list="catalog" placeholder="מחשב, מסך, מק״ט… למשל DN6M7ET" autocomplete="off" required />
-      <datalist id="catalog"></datalist>
-      <button id="go">חפש</button>
-    </form>
-    <div class="chips" id="srcs">
-      <label class="chip"><input type="checkbox" value="zap" checked /><span class="dot"></span>זאפ · כל החנויות בישראל</label>
-      <label class="chip"><input type="checkbox" value="ivory" checked /><span class="dot"></span>Ivory</label>
-      <label class="chip"><input type="checkbox" value="aliexpress" /><span class="dot"></span>AliExpress</label>
-      <label class="chip"><input type="checkbox" value="serper" checked /><span class="dot"></span>Google · מאות חנויות</label>
-      <label class="chip"><input type="checkbox" value="ebay" /><span class="dot"></span>eBay</label>
+<div class="stage">
+  <!-- back card: recent searches (the "Activity" card) -->
+  <aside class="glass card-back recent">
+    <div class="top">
+      <div class="ava-logo"><img src="/assets/logo.png" alt="" /></div>
+      <span class="addr">היסטוריה</span>
     </div>
-  </section>
+    <div class="big" id="lastBest">—</div>
+    <div class="sub" id="lastQ">החיפוש האחרון</div>
+    <div class="section">חיפושים אחרונים</div>
+    <div class="list" id="recent"><div class="empty">עדיין אין חיפושים</div></div>
+  </aside>
 
-  <div id="out"></div>
+  <!-- front card: search + offers (the "Tokens" card) -->
+  <main class="glass card-front">
+    <div class="top">
+      <div class="ava-logo"><img src="/assets/logo.png" alt="" /></div>
+      <span class="addr">BIG BRANDS</span>
+      <a class="copy" href="/admin/products.html" title="ניהול מוצרים" aria-label="ניהול מוצרים">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
+      </a>
+      <span class="spacer"></span>
+      <a class="round" href="/" title="לאתר" aria-label="לאתר">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 11 12 3l9 8M5 10v10h14V10"/></svg>
+      </a>
+      <a class="round" href="/admin/logout" title="יציאה" aria-label="יציאה">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
+      </a>
+    </div>
+
+    <div class="big" id="best">₪0</div>
+    <div class="sub" id="bestSub">המחיר הכי טוב עד הבית יופיע כאן</div>
+
+    <form class="search" id="f">
+      <input id="q" list="catalog" placeholder="חפש מוצר — שם דגם מלא עובד הכי טוב" autocomplete="off" required />
+      <datalist id="catalog"></datalist>
+      <button id="go" aria-label="חפש">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+      </button>
+    </form>
+
+    <div class="row-tools">
+      <div class="pills" id="tabs">
+        <button class="pill on" data-tab="all">כל ההצעות</button>
+        <button class="pill" data-tab="IL">ישראל</button>
+        <button class="pill" data-tab="abroad">חו״ל</button>
+      </div>
+    </div>
+    <div class="pills srcs" id="srcs">
+      <label class="pill"><input type="checkbox" value="serper" checked />Google</label>
+      <label class="pill"><input type="checkbox" value="zap" checked />זאפ</label>
+      <label class="pill"><input type="checkbox" value="ivory" checked />Ivory</label>
+      <label class="pill"><input type="checkbox" value="aliexpress" />AliExpress</label>
+      <label class="pill"><input type="checkbox" value="ebay" />eBay</label>
+    </div>
+
+    <div id="results"></div>
+  </main>
 </div>
 
 <script src="/js/data.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-const ils = (n) => n == null ? "—" : Number(n).toLocaleString("he-IL") + " ₪";
+const ils = (n) => n == null ? "—" : "₪" + Number(n).toLocaleString("he-IL");
 const safeUrl = (u) => /^https?:\/\//.test(u || "") ? u : "#";
-const COLORS = ["#4f7be8","#7b5cd6","#1f9d74","#e0794b","#d6497b","#2f8fb8","#8a6d3b","#5b6577"];
-const colorFor = (s) => COLORS[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
-const SOURCE_NAMES = { serper: "Google", ivory: "Ivory", aliexpress: "AliExpress", zap: "זאפ", google_il: "Google IL", google_us: "Google US", ebay: "eBay" };
-let data = null, filterText = "";
+const TONES = ["#5b6f8f","#6f7f99","#4a6fa5","#7a8494","#56708a","#8a93a3","#3f5878","#6b7a8c"];
+const tone = (s) => TONES[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % TONES.length];
+const SOURCE_NAMES = { serper: "Google", zap: "זאפ", ivory: "Ivory", aliexpress: "AliExpress", ebay: "eBay" };
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+let data = null, tab = "all", filterText = "";
 
 try {
-  $("#catalog").innerHTML = (window.SITE_DATA?.products || [])
-    .map((p) => `<option value="${esc(p.mpn || p.name)}">${esc(p.name)}</option>`).join("");
+  $("#catalog").innerHTML = (window.SITE_DATA?.products || []).map((p) => `<option value="${esc(p.name)}"></option>`).join("");
 } catch {}
 
-try {
-  const saved = JSON.parse(localStorage.getItem("bb.admin.sources.v2") || "null");
-  if (saved) document.querySelectorAll("#srcs input").forEach((i) => (i.checked = saved.includes(i.value)));
-} catch {}
+const savedSrc = store.get("bb.admin.sources.v3", null);
+if (savedSrc) document.querySelectorAll("#srcs input").forEach((i) => (i.checked = savedSrc.includes(i.value)));
 
-$("#f").addEventListener("submit", async (e) => {
-  e.preventDefault();
+document.querySelectorAll("#tabs .pill").forEach((b) => b.onclick = () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll("#tabs .pill").forEach((x) => x.classList.toggle("on", x === b));
+  if (data) renderList();
+});
+
+$("#f").addEventListener("submit", (e) => { e.preventDefault(); run($("#q").value); });
+
+async function run(query) {
+  query = query.trim();
+  if (!query) return;
+  $("#q").value = query;
   const sources = [...document.querySelectorAll("#srcs input:checked")].map((i) => i.value);
   if (!sources.length) return alert("בחר לפחות מקור אחד");
-  try { localStorage.setItem("bb.admin.sources.v2", JSON.stringify(sources)); } catch {}
-  const btn = $("#go");
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
-  $("#out").innerHTML = "";
+  store.set("bb.admin.sources.v3", sources);
+  $("#go").innerHTML = '<span class="spin"></span>'; $("#go").disabled = true;
+  $("#results").innerHTML = "";
   filterText = "";
   try {
-    const r = await fetch(`/api/prices?q=${encodeURIComponent($("#q").value)}&sources=${sources.join(",")}`, { credentials: "same-origin" });
+    const r = await fetch(`/api/prices?q=${encodeURIComponent(query)}&sources=${sources.join(",")}`, { credentials: "same-origin" });
     if (r.status === 401) { location.reload(); return; }
     data = await r.json();
     if (data.error) throw new Error(data.error);
-    render();
+    saveRecent(query, data.items[0]?.totalILS);
+    renderAll();
   } catch (err) {
-    $("#out").innerHTML = `<section class="glass hero"><div class="empty">שגיאה: ${esc(err.message)}</div></section>`;
-  } finally { btn.disabled = false; btn.textContent = "חפש"; }
-});
+    $("#results").innerHTML = `<div class="empty">שגיאה: ${esc(err.message)}</div>`;
+  } finally {
+    $("#go").disabled = false;
+    $("#go").innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+  }
+}
+
+function renderAll() {
+  const best = data.items[0];
+  $("#best").textContent = best ? ils(best.totalILS) : "אין תוצאות";
+  $("#bestSub").innerHTML = best
+    ? `~ ${esc(best.store)} · <a href="${esc(safeUrl(best.url))}" target="_blank" rel="noopener noreferrer">לעסקה ←</a>`
+    : "נסה שם דגם מלא או מקור נוסף";
+  renderList();
+}
 
 function row(i) {
   const abroad = i.region !== "IL";
-  const sub = [i.shippingILS === 0 ? "משלוח חינם" : i.shippingILS ? "משלוח " + ils(i.shippingILS) : "", i.delivery, i.source + (abroad ? " " + i.region : "")].filter(Boolean).join(" · ");
-  const detail = abroad && i.vatILS ? `כולל מע״מ ${ils(i.vatILS)}` : i.title;
-  return `<a class="row" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">
-    <span class="ava" style="background:${colorFor(i.store)}">${esc((i.store || "?").trim().charAt(0).toUpperCase())}</span>
-    <span class="info"><b>${esc(i.store)}<span class="tag${abroad ? " abroad" : ""}">${abroad ? "חו״ל" : "ישראל"}</span></b><small>${esc(sub)}</small></span>
-    <span class="amt"><b>${ils(i.totalILS)}</b><small>${esc(abroad && i.vatILS ? detail : "")}</small></span>
+  const sub = [SOURCE_NAMES[{ Google: "serper", Zap: "zap", Ivory: "ivory", AliExpress: "aliexpress", eBay: "ebay" }[i.source]] || i.source,
+    i.shippingILS === 0 ? "משלוח חינם" : i.shippingILS ? "משלוח " + ils(i.shippingILS) : "",
+    i.delivery].filter(Boolean).join(" · ");
+  return `<a class="item" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer" title="${esc(i.title)}">
+    <span class="ico" style="background:${tone(i.store)}">${esc((i.store || "?").trim().charAt(0).toUpperCase())}</span>
+    <span class="meta"><b>${esc(i.store)}${/מחודש|משומש|יד שני|refurb|renewed|used|open box/i.test(i.title) ? '<span class="used">מחודש</span>' : ""}</b><small class="ptitle">${esc(i.title)}</small></span>
+    <span class="val"><b>${ils(i.totalILS)}</b><small>${esc(sub)}${abroad && i.vatILS ? " · כולל מע״מ" : ""}</small></span>
   </a>`;
 }
 
-function render() {
+function renderList() {
+  let items = data.items.filter((i) => tab === "all" || (tab === "IL" ? i.region === "IL" : i.region !== "IL"));
+  if (filterText) items = items.filter((i) => (i.title + " " + i.store).toLowerCase().includes(filterText));
   const status = Object.entries(data.status).map(([k, v]) =>
-    v.ok ? `<span>${SOURCE_NAMES[k]}: ${v.count}</span>` : `<span class="err">${SOURCE_NAMES[k]}: ${esc(v.error)}</span>`).join("");
-  const best = data.items[0];
-  const items = data.items.filter((i) => !filterText || (i.title + " " + i.store).toLowerCase().includes(filterText));
+    v.ok ? `<span>${SOURCE_NAMES[k] || k} ${v.count}</span>` : `<span class="err">${SOURCE_NAMES[k] || k}: ${esc(v.error)}</span>`).join("");
 
-  // Group offers by model so different configurations don't mix in one ranking.
-  const groups = new Map();
-  for (const i of items) {
-    const k = i.source === "Zap" ? i.title : "הצעות נוספות";
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(i);
-  }
-
-  $("#out").innerHTML = `
-    <section class="glass hero">
-      ${best ? `
-        <div class="label">המחיר הכי טוב עד הבית</div>
-        <div class="big">${ils(best.totalILS)}</div>
-        <div class="meta">${esc(best.store)} · ${esc(best.title)}<br><a href="${esc(safeUrl(best.url))}" target="_blank" rel="noopener noreferrer">לעסקה ←</a></div>`
-      : `<div class="empty">לא נמצאו הצעות. נסה מק״ט מדויק או מקור נוסף.</div>`}
-      <div class="status">${status}<span>דולר ${data.usdIls} ₪</span>${data.cached ? "<span>מהזיכרון</span>" : ""}</div>
-    </section>
-    ${data.items.length ? `
-    <section class="glass list">
-      <div class="filter"><input id="tf" placeholder="סינון בתוצאות…" value="${esc(filterText)}" /></div>
-      ${[...groups].map(([name, list]) => `<div class="group">${esc(name)} · ${list.length}</div>${list.map(row).join("")}`).join("")}
-      <div class="note">${items.length} הצעות, ממוינות לפי מחיר סופי. מע״מ יבוא הוא הערכה. הצעות מחו״ל בדרך כלל בלי אחריות יבואן.</div>
-    </section>` : ""}`;
+  const cheap = items.slice(0, 10), rest = items.slice(10);
+  $("#results").innerHTML = `
+    <div class="status">${status}</div>
+    ${data.items.length ? `<input class="filter" id="tf" placeholder="סינון בתוצאות…" value="${esc(filterText)}" />` : ""}
+    ${items.length ? `
+      <div class="section">הכי זולים</div><div class="list">${cheap.map(row).join("")}</div>
+      ${rest.length ? `<div class="section">עוד ${rest.length} הצעות</div><div class="list">${rest.map(row).join("")}</div>` : ""}
+      <p class="note">${items.length} הצעות מכל המקורות, ממוינות לפי מחיר סופי עד הבית.</p>`
+    : `<div class="empty">אין הצעות בסינון הזה.</div>`}`;
 
   const tf = $("#tf");
-  if (tf) tf.oninput = () => { filterText = tf.value.toLowerCase(); const p = tf.selectionStart; render(); const n = $("#tf"); n.focus(); n.setSelectionRange(p, p); };
+  if (tf) tf.oninput = () => { filterText = tf.value.toLowerCase(); const p = tf.selectionStart; renderList(); const n = $("#tf"); n.focus(); n.setSelectionRange(p, p); };
 }
+
+function saveRecent(q, best) {
+  const list = store.get("bb.admin.recent", []).filter((r) => r.q.toLowerCase() !== q.toLowerCase());
+  list.unshift({ q, best, at: Date.now() });
+  store.set("bb.admin.recent", list.slice(0, 12));
+  renderRecent();
+}
+
+function renderRecent() {
+  const list = store.get("bb.admin.recent", []);
+  if (!list.length) return;
+  $("#lastBest").textContent = list[0].best ? ils(list[0].best) : "—";
+  $("#lastQ").textContent = "~ " + list[0].q;
+  $("#recent").innerHTML = list.map((r) => `
+    <div class="item" data-q="${esc(r.q)}">
+      <span class="ico" style="background:${tone(r.q)}">${esc(r.q.trim().charAt(0).toUpperCase())}</span>
+      <span class="meta"><b>${esc(r.q)}</b><small>${new Date(r.at).toLocaleDateString("he-IL")}</small></span>
+      <span class="val"><b>${r.best ? ils(r.best) : "—"}</b></span>
+    </div>`).join("");
+  document.querySelectorAll("#recent .item").forEach((el) => el.onclick = () => run(el.dataset.q));
+}
+renderRecent();
 </script>
 </body>
 </html>
