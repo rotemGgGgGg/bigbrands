@@ -472,7 +472,7 @@ class Mt5Broker:
             outcome = {mt5.DEAL_REASON_TP: "tp", mt5.DEAL_REASON_SL: "sl"}.get(last.reason, "manual")
             events.append({"type": "close", "trade_id": t["trade"], "exit": last.price,
                            "outcome": outcome, "ts": int(last.time),
-                           "profit": sum(d.profit + d.commission + d.swap for d in deals)})
+                           "profit": sum(d.profit + d.commission + d.swap + getattr(d, "fee", 0) for d in deals)})
             self.tracked.pop(ticket)
         self._save()
         return events

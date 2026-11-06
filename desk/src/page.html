@@ -1070,7 +1070,16 @@ body::before {
         <h2>Performance</h2>
         <div class="cards">
           ${statCard("winrate", "Win rate", "CLOSED", st.winRate == null ? "–" : (st.winRate * 100).toFixed(1) + "%", sparkWin(st))}
-          ${statCard("net", "Net P&L", st.closed.length ? "USD" : "", st.closed.length ? money(st.net, true) : "–", sparkEquity(st))}
+          ${(() => {
+            // The account is the truth: it also counts trades taken by hand
+            // and costs the bot never saw. The trade list's sum is only the
+            // bot's share, so it is used just for the paper and today views.
+            const a = S.data.bot && S.data.bot.account;
+            if (a && a.start && S.mode !== "paper" && S.mode !== "today") {
+              return statCard("net", "Net P&L", "ACCOUNT", money(Number(a.equity ?? a.balance) - Number(a.start), true), sparkEquity(st));
+            }
+            return statCard("net", "Net P&L", st.closed.length ? "USD" : "", st.closed.length ? money(st.net, true) : "–", sparkEquity(st));
+          })()}
           ${statCard("count", "Trades", "CLOSED", String(st.closed.length), sparkCount(st))}
           ${statCard("r", "Per trade", "AVG R", st.closed.length ? (st.avgR >= 0 ? "+" : MINUS) + Math.abs(st.avgR).toFixed(2) + "R" : "–", sparkR(st))}
         </div>
