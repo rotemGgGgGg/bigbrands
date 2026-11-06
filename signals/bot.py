@@ -226,7 +226,7 @@ def handle(text: str, env: dict, broker, limits: Limits, live: bool, msg: int | 
     mode = "LIVE" if live else "PAPER"
     if fill.ok:
         sid = desk.signal(env, sig, "taken", decision.detail)
-        tid = desk.opened(env, sid, sig, decision.units, "live" if live else "paper",
+        tid = desk.opened(env, sid, sig, getattr(sig, "placed_units", None) or decision.units, "live" if live else "paper",
                           fill_price=fill.price if (getattr(sig, "order", None) or "market") == "market" else None)
         if tid and fill.order_id and hasattr(broker, "track"):
             broker.track(tid, fill.order_id,

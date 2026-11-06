@@ -145,6 +145,33 @@ class Mt5Broker:
         buy = sig.side == "buy"
         order = getattr(sig, "order", None) or "market"
         digits = mt5.symbol_info(self.symbol).digits
+        if order != "market":
+            # By the time the message arrives, price has sometimes already
+            # gone through the entry; the terminal then refuses the order as
+            # "Invalid price" and the trade is lost. Take it at market instead,
+            # with the size cut so the dollar risk stays the same, unless price
+            # has run too far toward the target to still be worth it.
+            info = mt5.symbol_info(self.symbol)
+            tick = mt5.symbol_info_tick(self.symbol)
+            now_px = tick.ask if buy else tick.bid
+            gap = (info.trade_stops_level or 0) * (info.point or 0.01)
+            passed = (now_px >= sig.entry - gap) if (buy == (order == "stop")) else (now_px <= sig.entry + gap)
+            if passed:
+                old_risk = abs(sig.entry - sig.stop)
+                new_risk = abs(now_px - sig.stop)
+                if (buy and now_px <= sig.stop) or (not buy and now_px >= sig.stop):
+                    return Fill(False, f"price {now_px} is already past the stop {sig.stop}")
+                if new_risk > 1.5 * old_risk:
+                    return Fill(False, f"price {now_px} already ran {abs(now_px - sig.entry):.2f} past the "
+                                       f"entry {sig.entry}; too late to chase")
+                units = int(abs(units) * old_risk / new_risk) if new_risk > old_risk else units
+                lots, why = self._lots(units)
+                if why:
+                    return Fill(False, f"refused: {why}")
+                sig.late_note = (f"price was already through the {order} level {sig.entry}, "
+                                 f"so taken at market ({now_px}), {units} oz")
+                sig.placed_units = units
+                sig.order = order = "market"
         req = {
             "symbol": self.symbol,
             "volume": lots,
@@ -184,7 +211,7 @@ class Mt5Broker:
         ok_codes = (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED)
         if res.retcode not in ok_codes:
             return Fill(False, f"rejected {res.retcode}: {res.comment}")
-        what = "filled" if order == "market" else f"{order} order placed"
+        what = getattr(sig, "late_note", None) or ("filled" if order == "market" else f"{order} order placed")
         return Fill(True, f"{what}, {lots} lots on {self.symbol}",
                     str(res.order), res.price or (sig.entry if order != "market" else None))
 
