@@ -369,6 +369,60 @@ async function watchdog(env) {
   return { silent, raised };
 }
 
+/**
+ * Price around one trade, for its chart: from a little before it opened to a
+ * little after it closed, at a bar size that keeps it near 120 bars. A closed
+ * trade's bars never change, so they are kept after the first fetch.
+ */
+async function candles(env, id) {
+  const t = await env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(id).first();
+  if (!t) return { error: "no such trade" };
+  const key = `candles2:${id}`;
+  if (t.state === "closed" || t.state === "expired") {
+    const hit = await env.DB.prepare("SELECT v FROM meta WHERE k = ?").bind(key).first();
+    if (hit) return JSON.parse(hit.v);
+  }
+  if (!env.TWELVEDATA_KEY) return { error: "no price key" };
+  const start = t.opened_at || t.created_at;
+  const end = t.closed_at || now();
+  const span = Math.max(end - start, 600);
+  const pad = Math.max(900, Math.round(span * 0.35));
+  const from = start - pad, to = Math.min(now(), end + pad);
+  const sizes = [1, 5, 15, 30, 60, 240];
+  const step = sizes.find((m) => (to - from) / 60 / m <= 140) || 240;
+  const interval = step >= 60 ? `${step / 60}h` : `${step}min`;
+  const fmt = (x) => new Date(x * 1000).toISOString().slice(0, 19).replace("T", " ");
+  const q = new URLSearchParams({ symbol: "XAU/USD", interval, timezone: "UTC", order: "asc",
+    start_date: fmt(from), end_date: fmt(to), outputsize: "5000", apikey: env.TWELVEDATA_KEY });
+  const body = await (await fetch(`https://api.twelvedata.com/time_series?${q}`)).json();
+  if (body.status === "error") return { error: body.message || "price source refused" };
+  const bars = (body.values || []).map((v) => [Date.parse(v.datetime.replace(" ", "T") + "Z") / 1000,
+    +v.open, +v.high, +v.low, +v.close]);
+  const out = { id: t.id, interval, bars };
+  if ((t.state === "closed" || t.state === "expired") && bars.length) {
+    await env.DB.prepare("INSERT INTO meta (k, v, ts) VALUES (?, ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts")
+      .bind(key, JSON.stringify(out), now()).run();
+  }
+  return out;
+}
+
+/**
+ * One-time repair: until 6 Nov 2026 the bot sent MT5 fill and close times in
+ * the broker's clock (UTC+2, UTC+3 before 1 Nov), so those trades sat hours
+ * late on the desk. These are the corrected UTC times; it runs once.
+ */
+const TZ_FIX = [{"id": 18, "closed_at": 1793967482, "opened_at": 1793965626}, {"id": 17, "closed_at": 1793964234, "opened_at": 1793959845}, {"id": 16, "closed_at": 1793892829, "opened_at": 1793892366}, {"id": 15, "closed_at": 1793889483}, {"id": 14, "closed_at": 1793886024, "opened_at": 1793884209}, {"id": 13, "closed_at": 1793886496}, {"id": 12, "closed_at": 1793804534, "opened_at": 1793803837}, {"id": 11, "closed_at": 1793802765}, {"id": 10, "closed_at": 1793797394}, {"id": 9, "closed_at": 1793794810, "opened_at": 1793793871}, {"id": 8, "closed_at": 1793712582}, {"id": 7, "closed_at": 1793634368, "opened_at": 1793633408}, {"id": 6, "closed_at": 1793629616}, {"id": 5, "closed_at": 1793628957}, {"id": 4, "closed_at": 1793626903, "opened_at": 1793625793}, {"id": 3, "closed_at": 1793625603, "opened_at": 1793624462}, {"id": 2, "closed_at": 1793280862, "opened_at": 1793280797}];
+async function fixTimesOnce(env) {
+  const done = await env.DB.prepare("SELECT v FROM meta WHERE k = 'tzfix1'").first();
+  if (done) return;
+  for (const f of TZ_FIX) {
+    await env.DB.prepare("UPDATE trades SET opened_at = COALESCE(?, opened_at), closed_at = ? WHERE id = ? AND mode = 'live'")
+      .bind(f.opened_at ?? null, f.closed_at, f.id).run();
+  }
+  await env.DB.prepare("INSERT INTO meta (k, v, ts) VALUES ('tzfix1', 'done', ?)").bind(now()).run();
+  console.log("tzfix1 applied", TZ_FIX.length);
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -414,6 +468,11 @@ export default {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
       return data(env);
     }
+    if (path === "/api/candles" && req.method === "GET") {
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      const r = await candles(env, Number(url.searchParams.get("trade")));
+      return json(r, r.error ? 404 : 200);
+    }
     if (path === "/api/control" && req.method === "POST") {
       // What a viewer may change: whether the bot copies, and the emergency
       // close-all. Reading and recording go on regardless.
@@ -452,6 +511,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    ctx.waitUntil(fixTimesOnce(env));
     // The watchdog every minute; paper settlement every fifth, which keeps
     // the free price allowance far from its daily limit.
     ctx.waitUntil(watchdog(env).then((r) => console.log("watchdog", JSON.stringify(r))));

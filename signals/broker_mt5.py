@@ -429,6 +429,20 @@ class Mt5Broker:
         if self.track_path:
             json.dump(self.tracked, open(self.track_path, "w", encoding="utf-8"))
 
+    def _server_offset(self) -> int:
+        """Seconds the broker's clock runs ahead of UTC. MT5 stamps deals in
+        server time (often UTC+2 or +3), so a fill or close sent as is lands
+        hours late on the desk. Measured from a fresh tick, kept between ticks."""
+        tick = self.mt5.symbol_info_tick(self.symbol)
+        if tick and time.time() - getattr(self, "_off_at", 0) > 600:
+            raw = tick.time - time.time()
+            off = round(raw / 3600) * 3600
+            # Only a fresh tick tells: a stale one (weekend, quiet market) is
+            # far from a whole hour and is ignored.
+            if abs(raw - off) < 900 and abs(off) <= 14 * 3600:
+                self._off, self._off_at = off, time.time()
+        return getattr(self, "_off", 0)
+
     def poll(self) -> list[dict]:
         """What happened to tracked tickets since last asked.
 
@@ -450,7 +464,7 @@ class Mt5Broker:
                     entry = next((d for d in deals if d.entry == mt5.DEAL_ENTRY_IN), None)
                     events.append({"type": "fill", "trade_id": t["trade"],
                                    "entry": entry.price if entry else None,
-                                   "ts": int(entry.time) if entry else int(time.time())})
+                                   "ts": int(entry.time) - self._server_offset() if entry else int(time.time())})
                     t["pending"] = False
                 elif state is not None:
                     events.append({"type": "expire", "trade_id": t["trade"],
@@ -471,7 +485,7 @@ class Mt5Broker:
             last = out[-1]
             outcome = {mt5.DEAL_REASON_TP: "tp", mt5.DEAL_REASON_SL: "sl"}.get(last.reason, "manual")
             events.append({"type": "close", "trade_id": t["trade"], "exit": last.price,
-                           "outcome": outcome, "ts": int(last.time),
+                           "outcome": outcome, "ts": int(last.time) - self._server_offset(),
                            "profit": sum(d.profit + d.commission + d.swap + getattr(d, "fee", 0) for d in deals)})
             self.tracked.pop(ticket)
         self._save()

@@ -802,6 +802,39 @@ body::before {
   :root:not([data-theme="night"]) .bottom-nav { background: rgba(240,242,246,.78); border-top: 1px solid rgba(255,255,255,.8); -webkit-backdrop-filter: blur(30px) saturate(150%); backdrop-filter: blur(30px) saturate(150%); }
   :root:not([data-theme="night"]) .right { background: transparent; }
 }
+/* ---------- one trade, drawn ---------- */
+.tr.trade { cursor: pointer; }
+.tsheet { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
+.tsheet[hidden] { display: none; }
+.tsheet-back { position: absolute; inset: 0; background: rgba(20, 24, 34, .28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.tsheet-card {
+  position: relative; width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; border-radius: 24px; padding: 20px 20px 16px;
+  background: var(--glass-2); border: 1px solid rgba(255,255,255,.6); color: var(--ink);
+  -webkit-backdrop-filter: blur(34px) saturate(150%); backdrop-filter: blur(34px) saturate(150%);
+  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 40px 80px -30px rgba(20,26,38,.45); animation: rise .35s var(--ease) both;
+}
+:root[data-theme="night"] .tsheet-card { background: rgba(18,20,26,.82); border-color: var(--hair-2); box-shadow: 0 40px 80px -30px rgba(0,0,0,.8); }
+.tsheet-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.tsheet-card h3 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+.tsheet-card h3 .up { color: var(--up); } .tsheet-card h3 .down { color: var(--down); }
+.ts-x { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hair-2); background: var(--panel); color: var(--ink-2); display: grid; place-items: center; cursor: pointer; flex: none; }
+.ts-chart { aspect-ratio: 720 / 340; }
+.ts-wait { min-height: 200px; }
+.ts-chart svg { width: 100%; height: 100%; display: block; }
+.ts-chart .ax { font-family: var(--mono); font-size: 10px; fill: var(--ink-3); }
+.ts-chart .lbl { font-family: var(--mono); font-size: 10.5px; font-weight: 500; }
+.ts-wait { height: 100%; display: grid; place-items: center; color: var(--ink-3); font-size: 13px; }
+.ts-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.ts-facts div { background: var(--panel); border: 1px solid var(--hair); border-radius: 12px; padding: 9px 11px; }
+.ts-facts small { display: block; font-size: 10.5px; color: var(--ink-3); letter-spacing: .04em; }
+.ts-facts b { font-family: var(--mono); font-weight: 500; font-size: 13.5px; }
+.ts-note { font-size: 11px; margin: 10px 2px 0; }
+@media (max-width: 600px) {
+  .tsheet { place-items: end center; padding: 0; }
+  .tsheet-card { border-radius: 24px 24px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+
+  .ts-facts { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -930,6 +963,16 @@ body::before {
   </aside>
 
   <nav class="bottom-nav" id="bottom-nav"></nav>
+  <div class="tsheet" id="tsheet" hidden>
+    <div class="tsheet-back" data-close></div>
+    <section class="tsheet-card" role="dialog" aria-modal="true" aria-labelledby="ts-title">
+      <header><div><h3 id="ts-title"></h3><small id="ts-sub" class="muted"></small></div>
+        <button type="button" class="ts-x" data-close aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12"><path d="m2 2 8 8M10 2 2 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></header>
+      <div class="ts-chart" id="ts-chart"></div>
+      <div class="ts-facts" id="ts-facts"></div>
+      <p class="ts-note muted">Spot gold from a public feed; the broker's prices can differ by a few cents.</p>
+    </section>
+  </div>
 </div>
 
 <script>
@@ -1206,7 +1249,7 @@ body::before {
           const ts = t.closed_at || t.opened_at || t.created_at, closed = t.state === "closed";
           const res = closed ? (t.outcome === "tp" ? "tp" : t.outcome === "sl" ? "sl" : "manual") : t.state;
           const word = { tp: "Target", sl: "Stopped", manual: "Closed", open: "Open", pending: "Waiting", expired: "Expired" }[res];
-          return `<div class="tr trade"><span class="muted">${esc(dayName(ts))}<br> ${esc(hhmm(ts))}</span>
+          return `<div class="tr trade" data-trade="${t.id}" role="button" tabindex="0" aria-label="Show the chart of this trade"><span class="muted">${esc(dayName(ts))}<br> ${esc(hhmm(ts))}</span>
             <span class="side-tag ${t.side === "buy" ? "up" : "down"}">${t.side.toUpperCase()}<small>${esc(t.order_type)} · ${t.units} oz · ${esc(t.mode)}</small></span>
             <span>${price(t.entry)} → ${closed ? price(t.exit) : `<span class="muted">SL ${price(t.sl)} · TP ${price(t.tp)}</span>`}${t.note ? `<br><small class="muted">${esc(t.note)}</small>` : ""}</span>
             <span class="num ${closed ? tone(t.pips) : "muted"}">${closed ? (t.pips > 0 ? "+" : "") + t.pips : "–"}</span>
@@ -1412,6 +1455,116 @@ body::before {
     } catch (e) { toast(`Could not turn notifications on: ${e.message}`); }
   };
   if (PUSH_OK) { navigator.serviceWorker.getRegistration("/").then((r) => r && r.update()).catch(() => {}); paintBell(); }
+
+  /* ---------- one trade, drawn ---------- */
+  function fakeBars(t) {
+    // Demo only: a made-up path that goes from the entry to the exit.
+    const start = t.opened_at || t.created_at, end = t.closed_at || S.data.now;
+    const step = 300, from = start - 1800, to = end + 1800, out = [];
+    let p = t.entry + (t.side === "buy" ? 1.5 : -1.5), seed = t.id * 97;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; };
+    for (let x = from; x <= to; x += step) {
+      const goal = x < start ? t.entry : x > end ? (t.exit ?? t.entry) : t.entry + ((t.exit ?? t.entry) - t.entry) * (x - start) / Math.max(1, end - start);
+      const o = p; p = p + (goal - p) * 0.35 + rnd() * 2.2;
+      out.push([x, o, Math.max(o, p) + Math.abs(rnd()) * 1.4, Math.min(o, p) - Math.abs(rnd()) * 1.4, p]);
+    }
+    return out;
+  }
+  function drawTrade(t, bars) {
+    const W = 720, H = 340, L = 8, R = 92, T = 14, B = 26;
+    const start = t.opened_at || t.created_at, end = t.closed_at || S.data.now;
+    const sg = S.data.signals.find((x) => x.id === t.signal_id);
+    const levels = [t.entry, t.sl, t.tp, t.exit, sg && sg.sl].filter((v) => v != null).map(Number);
+    let lo = Math.min(...bars.map((b) => b[3]), ...levels), hi = Math.max(...bars.map((b) => b[2]), ...levels);
+    const padY = (hi - lo) * 0.08 || 1; lo -= padY; hi += padY;
+    const x0 = bars[0][0], x1 = bars[bars.length - 1][0] || x0 + 1;
+    const X = (ts) => L + (W - L - R) * (ts - x0) / Math.max(1, x1 - x0);
+    const Y = (v) => T + (H - T - B) * (hi - v) / (hi - lo);
+    const bw = Math.max(1.5, Math.min(9, (W - L - R) / bars.length * 0.62));
+    const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const up = css("--up"), down = css("--down"), ink = css("--ink"), ink3 = css("--ink-3");
+    const xs = Math.min(Math.max(X(start), L), W - R), xe = Math.min(Math.max(X(end), L), W - R);
+    let g = "";
+    // the trade's two zones: reward toward the target, risk toward the stop
+    g += `<rect x="${xs}" y="${Math.min(Y(t.entry), Y(t.tp))}" width="${Math.max(1, xe - xs)}" height="${Math.abs(Y(t.tp) - Y(t.entry))}" fill="${up}" opacity=".09"/>`;
+    const s0 = (S.data.signals.find((x) => x.id === t.signal_id) || {}).sl ?? t.sl;
+    g += `<rect x="${xs}" y="${Math.min(Y(t.entry), Y(s0))}" width="${Math.max(1, xe - xs)}" height="${Math.abs(Y(s0) - Y(t.entry))}" fill="${down}" opacity=".09"/>`;
+    for (const [ts, o, h, l, c] of bars) {
+      const x = X(ts), col = c >= o ? up : down;
+      g += `<line x1="${x}" x2="${x}" y1="${Y(h)}" y2="${Y(l)}" stroke="${col}" stroke-width="1" opacity=".85"/>`;
+      g += `<rect x="${x - bw / 2}" y="${Math.min(Y(o), Y(c))}" width="${bw}" height="${Math.max(1, Math.abs(Y(o) - Y(c)))}" rx="1" fill="${col}"/>`;
+    }
+    // The stop the signal gave, and where the bot had moved it by the end.
+    const sig = S.data.signals.find((x) => x.id === t.signal_id);
+    const sl0 = sig && sig.sl != null ? Number(sig.sl) : Number(t.sl);
+    const labels = [];
+    const line = (v, col, name, dash) => {
+      if (v == null) return "";
+      labels.push({ y: Y(v), col, txt: `${name} ${Number(v).toFixed(2)}` });
+      return `<line x1="${L}" x2="${W - R + 4}" y1="${Y(v)}" y2="${Y(v)}" stroke="${col}" stroke-width="1.2" ${dash ? 'stroke-dasharray="4 4"' : ""} opacity=".9"/>`;
+    };
+    g += line(t.tp, up, "TP", true) + line(sl0, down, "SL", true) + line(t.entry, ink, "IN", false);
+    if (Math.abs(Number(t.sl) - sl0) > 0.005) g += line(t.sl, ink3, "STOP", true);
+    if (t.exit != null && t.state === "closed" && Math.abs(t.exit - t.tp) > 0.005 && Math.abs(t.exit - t.sl) > 0.005) g += line(t.exit, ink3, "OUT", true);
+    // labels pushed apart so none sit on another
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 19) labels[i].y = labels[i - 1].y + 19;
+    const over = labels.length ? Math.max(0, labels[labels.length - 1].y - (H - B)) : 0;
+    for (const l of labels) {
+      const y = l.y - over;
+      g += `<rect x="${W - R + 6}" y="${y - 9}" width="${R - 6}" height="18" rx="6" fill="${l.col}" opacity=".14"/>
+        <text class="lbl" x="${W - R + 10}" y="${y + 3.5}" fill="${l.col}">${l.txt}</text>`;
+    }
+    // where it went in and where it came out
+    const dot = (x, v, col, txt) => `<circle cx="${x}" cy="${Y(v)}" r="6.5" fill="${col}" stroke="#fff" stroke-width="2.5"/>
+      <text class="lbl" x="${x}" y="${Y(v) - 12}" text-anchor="middle" fill="${col}">${txt}</text>`;
+    g += dot(xs, t.entry, ink, "IN");
+    if (t.state === "closed" && t.exit != null) g += dot(xe, t.exit, t.pnl >= 0 ? up : down, "OUT");
+    // a few times along the bottom
+    for (let i = 0; i <= 4; i++) {
+      const ts = x0 + (x1 - x0) * i / 4;
+      g += `<text class="ax" x="${L + (W - L - R) * i / 4}" y="${H - 6}" text-anchor="${i === 0 ? "start" : i === 4 ? "end" : "middle"}">${hhmm(ts)}</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price during the trade">${g}</svg>`;
+  }
+  async function openTrade(id) {
+    const t = S.data.trades.find((x) => String(x.id) === String(id)); if (!t) return;
+    const closed = t.state === "closed";
+    $("#ts-title").innerHTML = `<span class="${t.side === "buy" ? "up" : "down"}">${t.side.toUpperCase()}</span> ${t.units} oz · ${price(t.entry)}${closed ? " → " + price(t.exit) : ""}`;
+    $("#ts-sub").textContent = `${dayName(t.opened_at || t.created_at)} ${hhmm(t.opened_at || t.created_at)}${t.closed_at ? " – " + hhmm(t.closed_at) : ""} · ${t.order_type} · ${t.mode}`;
+    const sg = S.data.signals.find((x) => x.id === t.signal_id);
+    const risk = Math.abs(t.entry - (sg && sg.sl != null ? sg.sl : t.sl)) * t.units;
+    $("#ts-facts").innerHTML = [
+      ["Result", closed ? money(t.pnl, true) : t.state],
+      ["Risked", money(risk)],
+      ["Stop / Target", `${price(sg && sg.sl != null ? sg.sl : t.sl)} / ${price(t.tp)}`],
+      ["R", closed && risk ? ((t.pnl / risk >= 0 ? "+" : "") + (t.pnl / risk).toFixed(2) + "R") : "–"],
+    ].map(([k, v]) => `<div><small>${k}</small><b>${esc(String(v))}</b></div>`).join("");
+    $("#ts-chart").innerHTML = `<div class="ts-wait">Loading the price…</div>`;
+    $("#tsheet").hidden = false;
+    try {
+      let bars;
+      if (DEMO) bars = fakeBars(t);
+      else {
+        let key = ""; try { key = localStorage.getItem(KEY) || ""; } catch (_) {}
+        const r = await fetch(`/api/candles?trade=${encodeURIComponent(t.id)}`, { headers: { authorization: `Bearer ${key}` } });
+        const body = await r.json();
+        if (!r.ok || !body.bars || !body.bars.length) throw new Error(body.error || "no prices for that time");
+        bars = body.bars;
+      }
+      if ($("#tsheet").hidden) return;
+      $("#ts-chart").innerHTML = drawTrade(t, bars);
+    } catch (e) { $("#ts-chart").innerHTML = `<div class="ts-wait">Could not draw it: ${esc(e.message)}</div>`; }
+  }
+  document.addEventListener("click", (e) => {
+    const row = e.target.closest && e.target.closest("[data-trade]");
+    if (row) { openTrade(row.dataset.trade); return; }
+    if (e.target.closest && e.target.closest("[data-close]")) $("#tsheet").hidden = true;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") $("#tsheet").hidden = true;
+    if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.trade) { e.preventDefault(); openTrade(e.target.dataset.trade); }
+  });
 
   /* ---------- routing ---------- */
   const VIEWS = { dashboard: renderDashboard, trades: renderTrades, signals: renderSignals, reports: renderReports, bot: renderBot, rules: renderRules, account: renderAccount };
