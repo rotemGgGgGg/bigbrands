@@ -37,14 +37,14 @@ def both(D, a, b):
      "misc.invest.futures 1997 'Index Trading System!' (Badcock) + 2001 'Help with easy language': if open < low 1 bar ago buy at low+1 tick", "i")
 def f(D):
     o = D["do"]; ph, pl, _ = pdh(D)
-    return both(D, single(D, o < pl, 1, pl + 0.25, stop=np.full(len(o), np.nan)), single(D, o > ph, -1, ph - 0.25, stop=np.full(len(o), np.nan)))
+    return both(D, single(D, o < pl, 1, pl + D.get("tick", 0.25), stop=np.full(len(o), np.nan)), single(D, o > ph, -1, ph - D.get("tick", 0.25), stop=np.full(len(o), np.nan)))
 
 @reg("OOPS held overnight (exit next open)", "misc.invest.futures 1997: 'wait until the next day's open to exit ... profitability increased by as much as 50%'", "t")
 def f(D):
     o, h, l, c = dly(D); ph, pl, _ = pdh(D); out = []
     for t in range(1, len(o) - 1):
-        if o[t] < pl[t] and h[t] >= pl[t] + 0.25: out.append((t, 1, pl[t] + 0.25, o[t + 1]))
-        elif o[t] > ph[t] and l[t] <= ph[t] - 0.25: out.append((t, -1, ph[t] - 0.25, o[t + 1]))
+        if o[t] < pl[t] and h[t] >= pl[t] + D.get("tick", 0.25): out.append((t, 1, pl[t] + D.get("tick", 0.25), o[t + 1]))
+        elif o[t] > ph[t] and l[t] <= ph[t] - D.get("tick", 0.25): out.append((t, -1, ph[t] - D.get("tick", 0.25), o[t + 1]))
     return ("t", out)
 
 @reg("Connors 10% OOPS: close in bottom/top 10% of range, gap beyond, stop entry at prior L/H",
