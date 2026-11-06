@@ -2,36 +2,28 @@ import { searchPrices } from "./pricing.js";
 
 const COOKIE = "bb_admin";
 const SESSION_DAYS = 7;
-const enc = new TextEncoder();
 
-async function hmac(secret, data) {
-  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-  return btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/[+/=]/g, (c) => ({ "+": "-", "/": "_", "=": "" }[c]));
+// The repo is public, so only hashes live here — never the password itself.
+// LOGIN_HASH = sha256("bb-login|" + password). The session cookie holds sha256("bb-session|" + password),
+// which can't be derived from these hashes; SESSION_HASH = sha256(that cookie value).
+// To change the password, recompute both with the same prefixes.
+const LOGIN_HASH = "e1c790f303b93ec1ad317365336816aeb13e4dbbe69ef9cfc928087dd7a0319f";
+const SESSION_HASH = "610ddef53d71f59e52f9e4c05312896cbdbb03b0ea7ff966c8f5be8327464628";
+
+async function sha256(s) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Compare via HMAC digests so the comparison time doesn't leak the password.
-async function safeEqual(a, b, secret) {
-  const [x, y] = await Promise.all([hmac(secret, "cmp:" + a), hmac(secret, "cmp:" + b)]);
-  let diff = x.length ^ y.length;
-  for (let i = 0; i < Math.min(x.length, y.length); i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+function sameHex(a, b) {
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
 
-const sessionSecret = (env) => env.ADMIN_SESSION_SECRET || "s:" + env.ADMIN_PASSWORD;
-
-async function makeSession(env) {
-  const exp = Date.now() + SESSION_DAYS * 864e5;
-  return `${exp}.${await hmac(sessionSecret(env), "session:" + exp)}`;
-}
-
-async function isAuthed(request, env) {
-  if (!env.ADMIN_PASSWORD) return false;
-  const m = (request.headers.get("Cookie") || "").match(new RegExp(`(?:^|; )${COOKIE}=([^;]+)`));
-  if (!m) return false;
-  const [exp, sig] = m[1].split(".");
-  if (!exp || !sig || Number(exp) < Date.now()) return false;
-  return safeEqual(sig, await hmac(sessionSecret(env), "session:" + exp), sessionSecret(env));
+async function isAuthed(request) {
+  const m = (request.headers.get("Cookie") || "").match(new RegExp(`(?:^|; )${COOKIE}=([0-9a-f]{64})`));
+  return !!m && sameHex(await sha256(m[1]), SESSION_HASH);
 }
 
 const failures = new Map();
@@ -85,11 +77,10 @@ export default {
     if (!isAdmin) return env.ASSETS.fetch(request);
 
     if (path === "/admin/login" && request.method === "POST") {
-      if (!env.ADMIN_PASSWORD) return loginPage("הכניסה עדיין לא הוגדרה (חסר ADMIN_PASSWORD).");
       const ip = request.headers.get("CF-Connecting-IP") || "?";
       if (tooManyAttempts(ip)) return loginPage("יותר מדי ניסיונות. נסה שוב בעוד 15 דקות.");
-      const form = await request.formData();
-      if (!(await safeEqual(String(form.get("password") || ""), env.ADMIN_PASSWORD, sessionSecret(env)))) {
+      const password = String((await request.formData()).get("password") || "");
+      if (!sameHex(await sha256("bb-login|" + password), LOGIN_HASH)) {
         recordFailure(ip);
         return loginPage("סיסמה שגויה.");
       }
@@ -98,7 +89,7 @@ export default {
         status: 303,
         headers: {
           Location: "/admin/",
-          "Set-Cookie": `${COOKIE}=${await makeSession(env)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}`,
+          "Set-Cookie": `${COOKIE}=${await sha256("bb-session|" + password)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}`,
         },
       }));
     }
@@ -107,7 +98,7 @@ export default {
       return withSecurity(new Response(null, { status: 303, headers: { Location: "/admin/", "Set-Cookie": `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` } }));
     }
 
-    if (!(await isAuthed(request, env))) {
+    if (!(await isAuthed(request))) {
       return path.startsWith("/api/") ? json({ error: "לא מחובר" }, 401) : loginPage();
     }
 
