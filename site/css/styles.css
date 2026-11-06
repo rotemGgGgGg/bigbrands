@@ -828,6 +828,13 @@ button { font-family: inherit; cursor: pointer; }
   main { padding-bottom: var(--s6); }
 }
 
+/* Product photos have white backgrounds: give their tiles a matching white so they blend */
+.feat-card .media, .pdp-media, .p-card .device, .cbot-prod .cbot-pimg { background: #fff; }
+:root:not([data-theme="dark"]) .feat-card img.device, :root:not([data-theme="dark"]) .pdp-media img.device { mix-blend-mode: multiply; }
+[data-theme="dark"] .feat-card .media, [data-theme="dark"] .pdp-media, [data-theme="dark"] .p-card .device { background: #fff; }
+
+.p-card .pspecs, .feat-card .pname { unicode-bidi: plaintext; }
+
 /* ---- Respect reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
