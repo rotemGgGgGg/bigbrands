@@ -5,124 +5,137 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="robots" content="noindex, nofollow" />
 <title>ניהול — BIG BRANDS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
+  /* FROST recipe: frosted panes over a sculpted grey SVG background */
   :root {
-    --text: #16191f; --muted: #7d838e; --faint: #a3a8b1;
-    --glass: rgba(246,247,250,.46); --glass-hi: rgba(255,255,255,.62);
-    --edge: rgba(255,255,255,.78); --edge-soft: rgba(255,255,255,.45);
-    --blue: #4a6fa5; --ink-blue: #2f4f7f;
+    --ink: #15181e; --ink-2: #4d5563; --ink-3: #848b98;
+    --bg: #e4e7ec;
+    --accent: #3a6ff0; --accent-soft: rgba(58,111,240,.12);
+    --up: #12996b; --down: #e0365a;
+    --lift: 0 1px 0 rgba(255,255,255,.85) inset, 0 -1px 0 rgba(255,255,255,.25) inset, 0 24px 50px -24px rgba(40,50,70,.35), 0 2px 6px -2px rgba(40,50,70,.08);
+    --mono: "Geist Mono", ui-monospace, monospace;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
-    font-family: "Inter", system-ui, "Segoe UI", Arial, sans-serif; color: var(--text);
-    background: #d9dbe0; overflow-x: hidden;
-    padding: max(28px, env(safe-area-inset-top)) 16px 48px;
+    font-family: "Geist", system-ui, "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg);
+    overflow-x: hidden; padding: max(28px, env(safe-area-inset-top)) 16px 48px;
   }
+  .frost-bg { position: fixed; inset: 0; z-index: -2; pointer-events: none; }
+  .frost-bg svg { width: 100%; height: 100%; display: block; }
 
-  /* Soft white 3D folds, like the reference wallpaper */
-  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden;
-    background: radial-gradient(120% 90% at 20% 10%, #f4f5f7 0%, #dcdee3 55%, #c9ccd3 100%); }
-  .bg svg { position: absolute; width: 140%; height: 140%; left: -20%; top: -20%; filter: blur(2px); }
+  .glass {
+    background: rgba(255,255,255,.34);
+    -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%);
+    border: 1px solid rgba(255,255,255,.6); border-radius: 22px; box-shadow: var(--lift);
+  }
+  .glass-selected {
+    background: rgba(255,255,255,.78);
+    box-shadow: 0 1px 0 #fff inset, 0 6px 16px -8px rgba(40,50,70,.35), 0 0 0 1px rgba(20,26,38,.06);
+  }
 
   .stage { position: relative; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; }
-  .glass {
-    position: relative; border-radius: 26px; background: var(--glass);
-    backdrop-filter: blur(30px) saturate(140%); -webkit-backdrop-filter: blur(30px) saturate(140%);
-    border: 1px solid var(--edge-soft);
-    box-shadow: 0 40px 80px -20px rgba(30,35,48,.28), 0 2px 0 rgba(255,255,255,.7) inset, 0 -1px 0 rgba(255,255,255,.25) inset;
-  }
-  /* glossy reflection along the top edge */
-  .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    background: linear-gradient(160deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 32%, rgba(255,255,255,0) 70%, rgba(255,255,255,.18) 100%); }
-  .glass > * { position: relative; }
-
-  /* back card (recent searches) sits behind, offset like the reference */
   .card-back { grid-column: 1; grid-row: 1; margin-top: 46px; margin-inline-end: -60px; padding: 22px 22px 18px 80px; min-height: 520px; }
   .card-front { grid-column: 2; grid-row: 1; padding: 22px; z-index: 2; min-height: 560px; }
+  .card-front, .card-back, .item, .list { min-width: 0; }
 
   .top { display: flex; align-items: center; gap: 10px; }
   .ava-logo { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); flex: none; }
   .ava-logo img { width: 30px; }
   .addr { font-weight: 600; font-size: 15px; }
-  .copy { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: var(--glass-hi); border: 1px solid var(--edge); color: var(--muted); }
+  .copy { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; color: var(--ink-3); background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.6); }
   .spacer { flex: 1; }
-  .round { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--text); text-decoration: none;
-    background: var(--glass-hi); border: 1px solid var(--edge); transition: transform .15s, background .15s; }
-  .round:hover { transform: scale(1.06); background: #fff; }
+  .round { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-2); text-decoration: none;
+    background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.65); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: background .15s; }
+  .round:hover { background: rgba(255,255,255,.7); color: var(--ink); }
 
-  .big { font-size: 40px; font-weight: 500; letter-spacing: -.02em; margin: 22px 0 2px; font-variant-numeric: tabular-nums; }
-  .sub { color: var(--muted); font-size: 14px; min-height: 20px; }
-  .sub a { color: var(--ink-blue); text-decoration: none; font-weight: 600; }
+  .big { font-size: 40px; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin: 22px 0 2px; }
+  .sub { color: var(--ink-3); font-size: 14px; min-height: 20px; }
+  .sub a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .model { color: var(--ink-2); font-size: 12.5px; margin-top: 4px; unicode-bidi: plaintext; text-align: right; }
 
-  .search { display: flex; gap: 8px; margin: 18px 0 12px; }
-  .search input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 16px; border-radius: 16px; outline: none; color: var(--text);
-    background: rgba(255,255,255,.5); border: 1px solid var(--edge); transition: box-shadow .2s, background .2s; }
-  .search input:focus { background: rgba(255,255,255,.75); box-shadow: 0 0 0 4px rgba(74,111,165,.14); }
-  .search button { flex: none; width: 46px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); color: var(--text); cursor: pointer; display: grid; place-items: center; }
-  .search button:hover { background: #fff; }
+  .search { display: flex; gap: 8px; margin: 18px 0 12px; padding: 5px; border-radius: 18px; background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.6); }
+  .search:focus-within { border-color: rgba(58,111,240,.4); }
+  .search input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 9px 12px; border: 0; outline: none; background: transparent; color: var(--ink); }
+  .search input::placeholder { color: var(--ink-3); }
+  .cta { flex: none; width: 44px; border: 0; border-radius: 14px; cursor: pointer; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(180deg, #3b404b, #1d2129); box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 14px 30px -14px rgba(20,26,38,.6); }
+  .cta:hover { box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 18px 36px -14px rgba(20,26,38,.7); }
 
-  .pills { display: inline-flex; gap: 4px; flex-wrap: wrap; }
-  .pill { padding: 7px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); cursor: pointer; border: 1px solid transparent; background: none; font-family: inherit; user-select: none; }
-  .pill.on, .pill:has(input:checked) { background: var(--glass-hi); color: var(--text); font-weight: 600; border-color: var(--edge); box-shadow: 0 2px 10px rgba(30,35,48,.08); }
+  .tabs { display: inline-flex; gap: 2px; flex-wrap: wrap; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.6); }
+  .pill { padding: 6px 14px; border-radius: 999px; font-size: 13px; color: var(--ink-2); cursor: pointer; border: 0; background: none; font-family: inherit; user-select: none; }
+  .pill[aria-pressed="true"], .pill:has(input:checked) {
+    background: rgba(255,255,255,.78); color: var(--ink); font-weight: 600;
+    box-shadow: 0 1px 0 #fff inset, 0 6px 16px -8px rgba(40,50,70,.35), 0 0 0 1px rgba(20,26,38,.06);
+  }
   .pill input { display: none; }
-  .row-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-  .srcs { margin-top: 10px; }
+  .srcs { margin-top: 8px; }
   .srcs .pill { font-size: 12px; padding: 5px 11px; }
 
-  .section { color: var(--faint); font-size: 12px; font-weight: 600; margin: 18px 4px 6px; }
+  .section { color: var(--ink-3); font-size: 12px; font-weight: 600; margin: 18px 4px 6px; }
   .list { display: flex; flex-direction: column; }
-  .item { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 16px; text-decoration: none; color: inherit; border: 1px solid transparent; transition: background .15s, border-color .15s, box-shadow .15s; }
-  .item:hover { background: rgba(255,255,255,.5); border-color: var(--edge); box-shadow: 0 6px 18px rgba(30,35,48,.08); }
-  .ico { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 13px; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 16px; text-decoration: none; color: inherit;
+    border-bottom: 1px solid rgba(255,255,255,.45); transition: background .15s, box-shadow .15s; }
+  .item:last-child { border-bottom-color: transparent; }
+  .item:hover { background: rgba(255,255,255,.5); box-shadow: 0 1px 0 #fff inset, 0 8px 20px -14px rgba(40,50,70,.4); }
+  .ico { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 600; font-size: 13px;
+    background: rgba(124,138,165,.18); color: #5b6782; }
+  .ico.a { background: rgba(58,111,240,.14); color: var(--accent); }
   .meta { flex: 1; min-width: 0; }
   .meta b { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .meta small { display: block; color: var(--faint); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .val { text-align: left; flex: none; font-variant-numeric: tabular-nums; }
-  .val b { display: block; font-size: 14px; font-weight: 600; }
-  .val small { display: block; color: var(--faint); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
-  .card-front, .card-back, .item, .list { min-width: 0; }
-  .used { font-size: 10px; font-weight: 600; padding: 1px 7px; margin-inline-start: 6px; border-radius: 6px; background: rgba(140,90,40,.12); color: #7a4f1d; vertical-align: 1px; }
-  .meta small.ptitle { unicode-bidi: plaintext; text-align: right; }
-  .empty { color: var(--muted); font-size: 14px; padding: 30px 8px; text-align: center; }
+  .meta small { display: block; color: var(--ink-3); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
+  .val { text-align: left; flex: none; }
+  .val b { display: block; font-family: var(--mono); font-size: 14px; font-weight: 500; }
+  .val small { display: block; color: var(--ink-3); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .tag { font-size: 10px; font-weight: 600; padding: 1px 7px; margin-inline-start: 6px; border-radius: 6px; vertical-align: 1px; }
+  .tag.exact { background: var(--accent-soft); color: var(--accent); }
+  .tag.similar { background: rgba(124,138,165,.14); color: #5b6782; }
+  .tag.used { background: rgba(194,122,14,.12); color: #9a5f0b; }
+  .empty { color: var(--ink-3); font-size: 14px; padding: 30px 8px; text-align: center; }
   .status { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .status span { font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.4); border: 1px solid var(--edge-soft); color: var(--muted); }
-  .status span.err { color: #8a2a2a; }
-  .filter { width: 100%; font: inherit; font-size: 13px; padding: 9px 14px; border-radius: 14px; border: 1px solid var(--edge-soft); background: rgba(255,255,255,.35); outline: none; margin-top: 12px; }
-  .note { color: var(--faint); font-size: 11.5px; margin: 14px 4px 0; }
+  .status span { font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.55); color: var(--ink-3); }
+  .status span.err { color: var(--down); }
+  .filter { width: 100%; font: inherit; font-size: 13px; padding: 9px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.6); background: rgba(255,255,255,.4); outline: none; margin-top: 12px; color: var(--ink); }
+  .filter:focus { border-color: rgba(58,111,240,.4); }
+  .note { color: var(--ink-3); font-size: 11.5px; margin: 14px 4px 0; }
   .recent .item { cursor: pointer; }
-  .spin { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,.15); border-top-color: var(--text); border-radius: 50%; animation: s .8s linear infinite; }
+  .spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: s .8s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
 
   @media (max-width: 820px) {
     .stage { grid-template-columns: minmax(0, 1fr); max-width: 460px; }
-    .val small { max-width: 110px; }
     .card-back { display: none; }
     .card-front { grid-column: 1; min-height: 0; }
-    .big { font-size: 36px; }
+    .big { font-size: 34px; }
+    .val small { max-width: 110px; }
   }
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true">
-  <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <linearGradient id="f1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e3e5ea"/><stop offset="1" stop-color="#b9bdc6"/></linearGradient>
-      <linearGradient id="f2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfbfc"/><stop offset=".6" stop-color="#d6d9df"/><stop offset="1" stop-color="#aeb3bd"/></linearGradient>
-      <filter id="sh"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#5a6070" flood-opacity=".25"/></filter>
-    </defs>
-    <g filter="url(#sh)">
-      <path d="M-100 260 C 200 120, 420 420, 700 300 S 1180 60, 1700 240 L1700 420 C 1200 260, 980 560, 700 500 S 180 360, -100 470 Z" fill="url(#f1)"/>
-      <path d="M-100 560 C 260 430, 520 720, 860 600 S 1340 380, 1700 560 L1700 760 C 1340 600, 1080 900, 820 820 S 240 660, -100 780 Z" fill="url(#f2)"/>
-      <path d="M-100 860 C 300 760, 600 1000, 960 900 S 1400 760, 1700 880 L1700 1100 L-100 1100 Z" fill="url(#f1)"/>
-      <path d="M200 -60 C 360 120, 260 240, 420 360 S 700 520, 640 700" stroke="#ffffff" stroke-opacity=".7" stroke-width="70" fill="none" stroke-linecap="round"/>
-      <path d="M1180 -60 C 1060 140, 1240 260, 1120 420 S 980 640, 1100 860" stroke="#f1f2f5" stroke-opacity=".8" stroke-width="90" fill="none" stroke-linecap="round"/>
-    </g>
-  </svg>
-</div>
+<div class="frost-bg" aria-hidden="true"><svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="fb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef0f4"/><stop offset="1" stop-color="#d7dbe2"/></linearGradient>
+    <linearGradient id="r1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e6e9ee"/><stop offset="1" stop-color="#bfc5cf"/></linearGradient>
+    <linearGradient id="r2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7f8fa"/><stop offset=".6" stop-color="#d9dde4"/><stop offset="1" stop-color="#b8bfca"/></linearGradient>
+    <filter id="soft" filterUnits="userSpaceOnUse" x="-400" y="-400" width="1800" height="1800"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="shade" filterUnits="userSpaceOnUse" x="-400" y="-400" width="1800" height="1800"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#fb)"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M-120 210 C 120 60, 260 360, 470 230 S 820 40, 1120 220" stroke="#9aa3b2" stroke-opacity=".5" stroke-width="170" filter="url(#shade)" transform="translate(0 40)"/>
+    <path d="M-120 210 C 120 60, 260 360, 470 230 S 820 40, 1120 220" stroke="url(#r1)" stroke-width="160" filter="url(#soft)"/>
+    <path d="M-160 520 C 90 380, 330 700, 560 520 S 900 330, 1160 560" stroke="#8f99a9" stroke-opacity=".48" stroke-width="190" filter="url(#shade)" transform="translate(0 46)"/>
+    <path d="M-160 520 C 90 380, 330 700, 560 520 S 900 330, 1160 560" stroke="url(#r2)" stroke-width="180" filter="url(#soft)"/>
+    <path d="M-140 860 C 140 720, 380 1010, 620 850 S 960 700, 1180 880" stroke="#8f99a9" stroke-opacity=".46" stroke-width="180" filter="url(#shade)" transform="translate(0 44)"/>
+    <path d="M-140 860 C 140 720, 380 1010, 620 850 S 960 700, 1180 880" stroke="url(#r1)" stroke-width="170" filter="url(#soft)"/>
+    <path d="M300 -80 C 380 120, 240 300, 360 480" stroke="#ffffff" stroke-opacity=".55" stroke-width="60" filter="url(#shade)"/>
+  </g>
+</svg></div>
 
 <div class="stage">
-  <!-- back card: recent searches (the "Activity" card) -->
   <aside class="glass card-back recent">
     <div class="top">
       <div class="ava-logo"><img src="/assets/logo.png" alt="" /></div>
@@ -134,7 +147,6 @@
     <div class="list" id="recent"><div class="empty">עדיין אין חיפושים</div></div>
   </aside>
 
-  <!-- front card: search + offers (the "Tokens" card) -->
   <main class="glass card-front">
     <div class="top">
       <div class="ava-logo"><img src="/assets/logo.png" alt="" /></div>
@@ -152,29 +164,29 @@
     </div>
 
     <div class="big" id="best">₪0</div>
-    <div class="sub" id="bestSub">המחיר הכי טוב עד הבית יופיע כאן</div>
+    <div class="sub" id="bestSub">הכי מדויק: חיפוש לפי מק״ט, למשל DN6M7ET</div>
+    <div class="model" id="model"></div>
 
     <form class="search" id="f">
-      <input id="q" list="catalog" placeholder="חפש מוצר — שם דגם מלא עובד הכי טוב" autocomplete="off" required />
+      <input id="q" list="catalog" placeholder="מק״ט או שם דגם מלא…" autocomplete="off" required />
       <datalist id="catalog"></datalist>
-      <button id="go" aria-label="חפש">
+      <button class="cta" id="go" aria-label="חפש">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
       </button>
     </form>
 
-    <div class="row-tools">
-      <div class="pills" id="tabs">
-        <button class="pill on" data-tab="all">כל ההצעות</button>
-        <button class="pill" data-tab="IL">ישראל</button>
-        <button class="pill" data-tab="abroad">חו״ל</button>
-      </div>
+    <div class="tabs" id="tabs">
+      <button class="pill" data-tab="all" aria-pressed="true">כל ההצעות</button>
+      <button class="pill" data-tab="IL" aria-pressed="false">ישראל</button>
+      <button class="pill" data-tab="abroad" aria-pressed="false">חו״ל</button>
     </div>
-    <div class="pills srcs" id="srcs">
-      <label class="pill"><input type="checkbox" value="serper" checked />Google</label>
-      <label class="pill"><input type="checkbox" value="zap" checked />זאפ</label>
-      <label class="pill"><input type="checkbox" value="ivory" checked />Ivory</label>
-      <label class="pill"><input type="checkbox" value="aliexpress" />AliExpress</label>
-      <label class="pill"><input type="checkbox" value="ebay" />eBay</label>
+    <div class="srcs">
+      <div class="tabs" id="srcs">
+        <label class="pill"><input type="checkbox" value="serper" checked />Google</label>
+        <label class="pill"><input type="checkbox" value="zap" checked />זאפ</label>
+        <label class="pill"><input type="checkbox" value="ivory" checked />Ivory</label>
+        <label class="pill"><input type="checkbox" value="aliexpress" />AliExpress</label>
+      </div>
     </div>
 
     <div id="results"></div>
@@ -187,17 +199,18 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const ils = (n) => n == null ? "—" : "₪" + Number(n).toLocaleString("he-IL");
 const safeUrl = (u) => /^https?:\/\//.test(u || "") ? u : "#";
-const TONES = ["#5b6f8f","#6f7f99","#4a6fa5","#7a8494","#56708a","#8a93a3","#3f5878","#6b7a8c"];
-const tone = (s) => TONES[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % TONES.length];
-const SOURCE_NAMES = { serper: "Google", zap: "זאפ", ivory: "Ivory", aliexpress: "AliExpress", ebay: "eBay" };
+const SRC = { Google: "Google", Zap: "זאפ", Ivory: "Ivory", AliExpress: "AliExpress", eBay: "eBay" };
+const STATUS = { serper: "Google", zap: "זאפ", ivory: "Ivory", aliexpress: "AliExpress", ebay: "eBay" };
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+const SEARCH_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
 let data = null, tab = "all", filterText = "";
 
 try {
-  $("#catalog").innerHTML = (window.SITE_DATA?.products || []).map((p) => `<option value="${esc(p.name)}"></option>`).join("");
+  $("#catalog").innerHTML = (window.SITE_DATA?.products || [])
+    .map((p) => `<option value="${esc(p.mpn || p.name)}">${esc(p.name)}</option>`).join("");
 } catch {}
 
 const savedSrc = store.get("bb.admin.sources.v3", null);
@@ -205,7 +218,7 @@ if (savedSrc) document.querySelectorAll("#srcs input").forEach((i) => (i.checked
 
 document.querySelectorAll("#tabs .pill").forEach((b) => b.onclick = () => {
   tab = b.dataset.tab;
-  document.querySelectorAll("#tabs .pill").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll("#tabs .pill").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   if (data) renderList();
 });
 
@@ -219,7 +232,7 @@ async function run(query) {
   if (!sources.length) return alert("בחר לפחות מקור אחד");
   store.set("bb.admin.sources.v3", sources);
   $("#go").innerHTML = '<span class="spin"></span>'; $("#go").disabled = true;
-  $("#results").innerHTML = "";
+  $("#results").innerHTML = ""; $("#model").textContent = "";
   filterText = "";
   try {
     const r = await fetch(`/api/prices?q=${encodeURIComponent(query)}&sources=${sources.join(",")}`, { credentials: "same-origin" });
@@ -231,8 +244,7 @@ async function run(query) {
   } catch (err) {
     $("#results").innerHTML = `<div class="empty">שגיאה: ${esc(err.message)}</div>`;
   } finally {
-    $("#go").disabled = false;
-    $("#go").innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+    $("#go").disabled = false; $("#go").innerHTML = SEARCH_ICON;
   }
 }
 
@@ -240,20 +252,22 @@ function renderAll() {
   const best = data.items[0];
   $("#best").textContent = best ? ils(best.totalILS) : "אין תוצאות";
   $("#bestSub").innerHTML = best
-    ? `~ ${esc(best.store)} · <a href="${esc(safeUrl(best.url))}" target="_blank" rel="noopener noreferrer">לעסקה ←</a>`
-    : "נסה שם דגם מלא או מקור נוסף";
+    ? `~ ${esc(best.store)}${best.match === "similar" ? " · דגם דומה" : ""} · <a href="${esc(safeUrl(best.url))}" target="_blank" rel="noopener noreferrer">לעסקה ←</a>`
+    : (data.mpnMode ? "המק״ט לא נמצא בזאפ. נסה שם דגם מלא." : "נסה מק״ט או שם דגם מלא");
+  $("#model").textContent = data.model ? "דגם: " + data.model : "";
   renderList();
 }
 
 function row(i) {
   const abroad = i.region !== "IL";
-  const sub = [SOURCE_NAMES[{ Google: "serper", Zap: "zap", Ivory: "ivory", AliExpress: "aliexpress", eBay: "ebay" }[i.source]] || i.source,
-    i.shippingILS === 0 ? "משלוח חינם" : i.shippingILS ? "משלוח " + ils(i.shippingILS) : "",
-    i.delivery].filter(Boolean).join(" · ");
+  const used = /מחודש|משומש|יד שני|refurb|renewed|used|open box/i.test(i.title);
+  const tags = (i.match === "exact" ? '<span class="tag exact">מק״ט תואם</span>' : i.match === "similar" ? '<span class="tag similar">דגם דומה</span>' : "")
+    + (used ? '<span class="tag used">מחודש</span>' : "");
+  const sub = [SRC[i.source] || i.source, i.shippingILS === 0 ? "משלוח חינם" : i.shippingILS ? "משלוח " + ils(i.shippingILS) : "", i.delivery, abroad && i.vatILS ? "כולל מע״מ" : ""].filter(Boolean).join(" · ");
   return `<a class="item" href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer" title="${esc(i.title)}">
-    <span class="ico" style="background:${tone(i.store)}">${esc((i.store || "?").trim().charAt(0).toUpperCase())}</span>
-    <span class="meta"><b>${esc(i.store)}${/מחודש|משומש|יד שני|refurb|renewed|used|open box/i.test(i.title) ? '<span class="used">מחודש</span>' : ""}</b><small class="ptitle">${esc(i.title)}</small></span>
-    <span class="val"><b>${ils(i.totalILS)}</b><small>${esc(sub)}${abroad && i.vatILS ? " · כולל מע״מ" : ""}</small></span>
+    <span class="ico${i.match === "exact" ? " a" : ""}">${esc((i.store || "?").trim().charAt(0).toUpperCase())}</span>
+    <span class="meta"><b>${esc(i.store)}${tags}</b><small>${esc(i.title)}</small></span>
+    <span class="val"><b>${ils(i.totalILS)}</b><small>${esc(sub)}</small></span>
   </a>`;
 }
 
@@ -261,18 +275,16 @@ function renderList() {
   let items = data.items.filter((i) => tab === "all" || (tab === "IL" ? i.region === "IL" : i.region !== "IL"));
   if (filterText) items = items.filter((i) => (i.title + " " + i.store).toLowerCase().includes(filterText));
   const status = Object.entries(data.status).map(([k, v]) =>
-    v.ok ? `<span>${SOURCE_NAMES[k] || k} ${v.count}</span>` : `<span class="err">${SOURCE_NAMES[k] || k}: ${esc(v.error)}</span>`).join("");
-
-  const cheap = items.slice(0, 10), rest = items.slice(10);
+    v.ok ? `<span>${STATUS[k] || k} ${v.count}</span>` : `<span class="err">${STATUS[k] || k}: ${esc(v.error)}</span>`).join("");
+  const exact = items.filter((i) => i.match !== "similar"), similar = items.filter((i) => i.match === "similar");
   $("#results").innerHTML = `
     <div class="status">${status}</div>
     ${data.items.length ? `<input class="filter" id="tf" placeholder="סינון בתוצאות…" value="${esc(filterText)}" />` : ""}
     ${items.length ? `
-      <div class="section">הכי זולים</div><div class="list">${cheap.map(row).join("")}</div>
-      ${rest.length ? `<div class="section">עוד ${rest.length} הצעות</div><div class="list">${rest.map(row).join("")}</div>` : ""}
-      <p class="note">${items.length} הצעות מכל המקורות, ממוינות לפי מחיר סופי עד הבית.</p>`
+      ${exact.length ? `<div class="section">${data.mpnMode ? "מק״ט תואם" : "הכי זולים"} · ${exact.length}</div><div class="list">${exact.map(row).join("")}</div>` : ""}
+      ${similar.length ? `<div class="section">דגם דומה, תצורה לא מאומתת · ${similar.length}</div><div class="list">${similar.map(row).join("")}</div>` : ""}
+      <p class="note">ממוין לפי מחיר סופי עד הבית. "דגם דומה" = אותו דגם בלי המק״ט בכותרת, ייתכן זיכרון/אחסון שונה.</p>`
     : `<div class="empty">אין הצעות בסינון הזה.</div>`}`;
-
   const tf = $("#tf");
   if (tf) tf.oninput = () => { filterText = tf.value.toLowerCase(); const p = tf.selectionStart; renderList(); const n = $("#tf"); n.focus(); n.setSelectionRange(p, p); };
 }
@@ -291,7 +303,7 @@ function renderRecent() {
   $("#lastQ").textContent = "~ " + list[0].q;
   $("#recent").innerHTML = list.map((r) => `
     <div class="item" data-q="${esc(r.q)}">
-      <span class="ico" style="background:${tone(r.q)}">${esc(r.q.trim().charAt(0).toUpperCase())}</span>
+      <span class="ico">${esc(r.q.trim().charAt(0).toUpperCase())}</span>
       <span class="meta"><b>${esc(r.q)}</b><small>${new Date(r.at).toLocaleDateString("he-IL")}</small></span>
       <span class="val"><b>${r.best ? ils(r.best) : "—"}</b></span>
     </div>`).join("");

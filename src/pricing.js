@@ -174,19 +174,37 @@ async function getRates() {
 const ACCESSORY = /\b(charger|adapter|case|sleeve|bag|battery|keyboard cover|skin|screen protector|cable|replacement|parts?|hinge|motherboard|fan)\b|מטען|תיק|סוללה|כבל|מגן מסך|חלקים/i;
 const cache = new Map();
 
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9֐-׿]+/g, "");
+// A part number: one token mixing letters and digits, e.g. DN6M7ET, 21QC002EIV, MGDP4HB/A
+const looksLikeMpn = (q) => /^(?=.*[a-z])(?=.*\d)[a-z0-9\-\/#.]{5,}$/i.test(q.trim());
+// Latin model words from a Zap title: "מחשב נייד HP ProBook 4 G2i DN6M7ET" -> ["hp","probook","4","g2i"]
+const modelWords = (title) => [...new Set((String(title).match(/[A-Za-z0-9]+/g) || [])
+  .map((w) => w.toLowerCase())
+  .filter((w) => !(w.length >= 6 && /[a-z]/.test(w) && /\d/.test(w))))]; // drop part numbers, keep "hp probook 4 g2i"
+
 export async function searchPrices(query, sources, env) {
   const key = query.toLowerCase() + "|" + sources.join(",");
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < 30 * 60e3) return { ...hit.data, cached: true };
 
+  // Part-number mode: Zap resolves the part number to a full model name; the other sources search by that name.
+  const mpnMode = looksLikeMpn(query);
+  let zapFirst = null, model = null;
+  if (mpnMode) {
+    zapFirst = await searchZap(query).then((v) => ({ ok: v }), (e) => ({ err: e.message }));
+    const named = zapFirst.ok?.find((i) => norm(i.title).includes(norm(query)));
+    if (named) model = { title: named.title, words: modelWords(named.title) };
+  }
+  const other = model ? [...model.words, query].join(" ") : query;
+
   const jobs = {
-    zap: () => searchZap(query),
-    ivory: () => searchIvory(query),
-    serper: () => searchSerper(query, env.SERPER_KEY),
-    aliexpress: () => searchAliExpress(query),
-    google_il: () => searchGoogle(query, env.SERPAPI_KEY, "il"),
-    google_us: () => searchGoogle(query, env.SERPAPI_KEY, "us"),
-    ebay: () => searchEbay(query, env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET),
+    zap: () => (zapFirst ? (zapFirst.ok ? Promise.resolve(zapFirst.ok) : Promise.reject(new Error(zapFirst.err))) : searchZap(query)),
+    ivory: () => searchIvory(model ? model.words.join(" ") : query),
+    serper: () => searchSerper(other, env.SERPER_KEY),
+    aliexpress: () => searchAliExpress(model ? model.words.join(" ") : query),
+    google_il: () => searchGoogle(other, env.SERPAPI_KEY, "il"),
+    google_us: () => searchGoogle(other, env.SERPAPI_KEY, "us"),
+    ebay: () => searchEbay(other, env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET),
   };
   const active = sources.filter((s) => jobs[s]);
   const [r, ...settled] = await Promise.all([getRates(), ...active.map((s) => jobs[s]().then((v) => ({ ok: v }), (e) => ({ err: e.message })))]);
@@ -200,10 +218,21 @@ export async function searchPrices(query, sources, env) {
 
   const limitUsd = Number(env.VAT_FREE_LIMIT_USD || 75);
   const toILS = (a, c) => (c === "ILS" ? a : (a / r[c]) * r.ILS);
-  // Every source pads results with loosely related products; keep titles containing every query word.
+  // Every source pads results with loosely related products.
+  // Part-number mode: exact = part number in the title; similar = all model words but no part number (config unconfirmed).
+  // Name mode: every query word must appear in the title.
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   items = items
-    .filter((i) => words.every((w) => (i.title || "").toLowerCase().includes(w)))
+    .map((i) => {
+      const t = (i.title || "").toLowerCase();
+      if (mpnMode) {
+        if (norm(t).includes(norm(query))) return { ...i, match: "exact" };
+        if (model && model.words.length && model.words.every((w) => t.includes(w))) return { ...i, match: "similar" };
+        return null;
+      }
+      return words.every((w) => t.includes(w)) ? { ...i, match: "name" } : null;
+    })
+    .filter(Boolean)
     .filter((i) => i.price > 0 && r[i.currency] && !ACCESSORY.test(i.title || ""))
     .map((i) => {
       const base = toILS(i.price, i.currency), ship = i.shipping == null ? 0 : toILS(i.shipping, i.currency);
@@ -214,9 +243,9 @@ export async function searchPrices(query, sources, env) {
   // Prices far below the median are almost always accessories or the wrong model.
   const totals = items.map((i) => i.totalILS).sort((a, b) => a - b);
   const median = totals[Math.floor(totals.length / 2)] || 0;
-  items = items.filter((i) => i.totalILS >= median * 0.35).sort((a, b) => a.totalILS - b.totalILS);
+  items = items.filter((i) => i.totalILS >= median * 0.35).sort((a, b) => (a.match === "similar") - (b.match === "similar") || a.totalILS - b.totalILS);
 
-  const data = { query, status, usdIls: +r.ILS.toFixed(3), count: items.length, items };
+  const data = { query, mpnMode, model: model?.title || null, status, usdIls: +r.ILS.toFixed(3), count: items.length, items };
   cache.set(key, { at: Date.now(), data });
   return data;
 }
