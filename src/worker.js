@@ -62,7 +62,8 @@ input:focus{box-shadow:0 0 0 4px rgba(64,110,200,.18)}
 button{width:100%;margin-top:12px;padding:14px;font-size:16px;font-weight:700;border:0;border-radius:16px;color:#fff;background:linear-gradient(135deg,#3b6fd8,#5c8ef0);cursor:pointer}
 .err{color:#b42318;font-size:14px;margin:12px 0 0}</style></head><body>
 <form class="card" method="post" action="/admin/login"><h1>BIG BRANDS · ניהול</h1><p>אזור מוגן. הזן סיסמה כדי להמשיך.</p>
-<input type="password" name="password" placeholder="סיסמה" autocomplete="current-password" required autofocus>
+<input type="password" name="password" placeholder="סיסמה" dir="ltr" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="current-password" required autofocus>
+<small style="display:block;margin-top:8px;color:#6b7486;font-size:12px">הסיסמה באנגלית — בדוק שהמקלדת לא בעברית ושה-Caps Lock כבוי.</small>
 <button>כניסה</button>${error ? `<p class="err">${error}</p>` : ""}</form></body></html>`,
     { status: error ? 401 : 200, headers: { "Content-Type": "text/html; charset=utf-8" } }));
 }

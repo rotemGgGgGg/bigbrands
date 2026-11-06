@@ -55,6 +55,50 @@ async function searchZap(query, maxModels = 8) {
   return items.filter((i) => words.every((w) => (i.title || "").toLowerCase().includes(w)));
 }
 
+/* ---------- Ivory: structured product list on its search page ---------- */
+async function searchIvory(query) {
+  const res = await fetch("https://www.ivory.co.il/catalog.php?act=cat&q=" + encodeURIComponent(query), { headers: UA });
+  if (!res.ok) throw new Error("Ivory החזיר " + res.status);
+  const html = await res.text();
+  const out = [];
+  for (const m of html.matchAll(/<script[^>]*application\/ld(?:\+|&#x2B;|&#43;)json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    let d;
+    try { d = JSON.parse(m[1]); } catch { continue; }
+    if (d["@type"] !== "ItemList") continue;
+    for (const el of d.itemListElement || []) {
+      const p = el.item, o = p?.offers;
+      if (!o || !o.price || /OutOfStock/i.test(o.availability || "")) continue;
+      out.push({
+        source: "Ivory", region: "IL", store: "Ivory", title: p.name, image: p.image?.[0] || "",
+        price: Number(o.price), currency: o.priceCurrency || "ILS", shipping: null, delivery: "במלאי", url: o.url || p.url,
+      });
+    }
+  }
+  return out;
+}
+
+/* ---------- AliExpress: search results embedded as JSON, priced for Israel ---------- */
+async function searchAliExpress(query) {
+  const slug = query.trim().replace(/[^\p{L}\p{N}]+/gu, "-");
+  const res = await fetch(`https://www.aliexpress.com/w/wholesale-${encodeURIComponent(slug)}.html?SearchText=${encodeURIComponent(query)}`, {
+    headers: { ...UA, Cookie: "aep_usuc_f=site=glo&c_tp=ILS&region=IL&b_locale=he_IL" },
+  });
+  if (!res.ok) throw new Error("AliExpress החזיר " + res.status);
+  const html = await res.text();
+  const out = [];
+  const re = /"productId":"(\d+)"[\s\S]*?"displayTitle":"((?:[^"\\]|\\.)*)"[\s\S]*?"salePrice":\{[^}]*?"currencyCode":"([A-Z]{3})","minPrice":([\d.]+)/g;
+  for (const m of html.matchAll(re)) {
+    let title;
+    try { title = JSON.parse(`"${m[2]}"`); } catch { title = m[2]; }
+    out.push({
+      source: "AliExpress", region: "CN", store: "AliExpress", title, image: "",
+      price: Number(m[4]), currency: m[3], shipping: null, delivery: "", url: `https://www.aliexpress.com/item/${m[1]}.html`,
+    });
+  }
+  if (!out.length && /captcha|punish/i.test(html)) throw new Error("AliExpress חסם את הבקשה");
+  return out;
+}
+
 /* ---------- Google Shopping via SerpAPI (paid key) ---------- */
 async function searchGoogle(query, apiKey, country) {
   if (!apiKey) throw new Error("חסר מפתח SERPAPI_KEY");
@@ -116,6 +160,8 @@ export async function searchPrices(query, sources, env) {
 
   const jobs = {
     zap: () => searchZap(query),
+    ivory: () => searchIvory(query),
+    aliexpress: () => searchAliExpress(query),
     google_il: () => searchGoogle(query, env.SERPAPI_KEY, "il"),
     google_us: () => searchGoogle(query, env.SERPAPI_KEY, "us"),
     ebay: () => searchEbay(query, env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET),
@@ -132,7 +178,10 @@ export async function searchPrices(query, sources, env) {
 
   const limitUsd = Number(env.VAT_FREE_LIMIT_USD || 75);
   const toILS = (a, c) => (c === "ILS" ? a : (a / r[c]) * r.ILS);
+  // Every source pads results with loosely related products; keep titles containing every query word.
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   items = items
+    .filter((i) => words.every((w) => (i.title || "").toLowerCase().includes(w)))
     .filter((i) => i.price > 0 && r[i.currency] && !ACCESSORY.test(i.title || ""))
     .map((i) => {
       const base = toILS(i.price, i.currency), ship = i.shipping == null ? 0 : toILS(i.shipping, i.currency);

@@ -129,6 +129,8 @@
     </form>
     <div class="chips" id="srcs">
       <label class="chip"><input type="checkbox" value="zap" checked /><span class="dot"></span>זאפ · כל החנויות בישראל</label>
+      <label class="chip"><input type="checkbox" value="ivory" checked /><span class="dot"></span>Ivory</label>
+      <label class="chip"><input type="checkbox" value="aliexpress" /><span class="dot"></span>AliExpress</label>
       <label class="chip"><input type="checkbox" value="google_il" /><span class="dot"></span>Google ישראל</label>
       <label class="chip"><input type="checkbox" value="google_us" /><span class="dot"></span>Google ארה״ב</label>
       <label class="chip"><input type="checkbox" value="ebay" /><span class="dot"></span>eBay</label>
@@ -146,7 +148,7 @@ const ils = (n) => n == null ? "—" : Number(n).toLocaleString("he-IL") + " ₪
 const safeUrl = (u) => /^https?:\/\//.test(u || "") ? u : "#";
 const COLORS = ["#4f7be8","#7b5cd6","#1f9d74","#e0794b","#d6497b","#2f8fb8","#8a6d3b","#5b6577"];
 const colorFor = (s) => COLORS[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
-const SOURCE_NAMES = { zap: "זאפ", google_il: "Google IL", google_us: "Google US", ebay: "eBay" };
+const SOURCE_NAMES = { ivory: "Ivory", aliexpress: "AliExpress", zap: "זאפ", google_il: "Google IL", google_us: "Google US", ebay: "eBay" };
 let data = null, filterText = "";
 
 try {
