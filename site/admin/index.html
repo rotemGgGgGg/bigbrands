@@ -182,7 +182,8 @@
     </div>
     <div class="srcs">
       <div class="tabs" id="srcs">
-        <label class="pill"><input type="checkbox" value="serper" checked />Google</label>
+        <label class="pill"><input type="checkbox" value="serper" checked />Google ישראל</label>
+        <label class="pill"><input type="checkbox" value="serper_us" />Google ארה״ב</label>
         <label class="pill"><input type="checkbox" value="zap" checked />זאפ</label>
         <label class="pill"><input type="checkbox" value="ivory" checked />Ivory</label>
         <label class="pill"><input type="checkbox" value="aliexpress" />AliExpress</label>
@@ -200,7 +201,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<"
 const ils = (n) => n == null ? "—" : "₪" + Number(n).toLocaleString("he-IL");
 const safeUrl = (u) => /^https?:\/\//.test(u || "") ? u : "#";
 const SRC = { Google: "Google", Zap: "זאפ", Ivory: "Ivory", AliExpress: "AliExpress", eBay: "eBay" };
-const STATUS = { serper: "Google", zap: "זאפ", ivory: "Ivory", aliexpress: "AliExpress", ebay: "eBay" };
+const STATUS = { serper: "Google IL", serper_us: "Google US", zap: "זאפ", ivory: "Ivory", aliexpress: "AliExpress", ebay: "eBay" };
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },

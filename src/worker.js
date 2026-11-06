@@ -122,7 +122,7 @@ export default {
       if (!q) return json({ error: "חסרה שאילתה" }, 400);
       const sources = (url.searchParams.get("sources") || "zap").split(",").slice(0, 6);
       let serperKey = env.SERPER_KEY;
-      if (!serperKey && sources.includes("serper")) {
+      if (!serperKey && sources.some((s) => s.startsWith("serper"))) {
         try { serperKey = await decryptWithSession(sessionToken(request), SERPER_KEY_ENC); } catch {}
       }
       try { return json(await searchPrices(q, sources, { ...env, SERPER_KEY: serperKey })); }

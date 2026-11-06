@@ -35,7 +35,7 @@ function parseZapModel(html, url) {
   return out;
 }
 
-async function searchZap(query, maxModels = 8) {
+async function searchZap(query, maxModels = 15) {
   const res = await fetch("https://www.zap.co.il/search.aspx?keyword=" + encodeURIComponent(query), { headers: UA });
   if (!res.ok) throw new Error("Zap החזיר " + res.status);
   const html = await res.text();
@@ -100,22 +100,28 @@ async function searchAliExpress(query) {
 }
 
 /* ---------- Google Shopping via Serper (2 credits per search) ---------- */
-async function searchSerper(query, apiKey) {
-  if (!apiKey) throw new Error("חסר מפתח Serper");
+// Each page costs 2 credits. Israel: 2 pages. US: 1 page (import offers, most US stores need a forwarder).
+async function serperPage(query, apiKey, gl, page) {
   const res = await fetch("https://google.serper.dev/shopping", {
     method: "POST",
     headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ q: query, gl: "il", hl: "iw", num: 100 }),
+    body: JSON.stringify({ q: query, gl, hl: gl === "il" ? "iw" : "en", num: 100, page }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Serper החזיר " + res.status);
-  return (data.shopping || []).map((r) => {
+  return data.shopping || [];
+}
+
+async function searchSerper(query, apiKey, gl = "il", pages = 2) {
+  if (!apiKey) throw new Error("חסר מפתח Serper");
+  const results = (await Promise.all(Array.from({ length: pages }, (_, i) => serperPage(query, apiKey, gl, i + 1).catch((e) => (i ? [] : Promise.reject(e)))))).flat();
+  return results.map((r) => {
     const price = Number(String(r.price || "").replace(/[^\d.]/g, ""));
-    const currency = /\$/.test(r.price) ? "USD" : /€/.test(r.price) ? "EUR" : "ILS";
+    const currency = /\$/.test(r.price) ? "USD" : /€/.test(r.price) ? "EUR" : /£/.test(r.price) ? "GBP" : "ILS";
     return {
-      source: "Google", region: currency === "ILS" ? "IL" : "INT", store: r.source || "?", title: r.title, image: r.imageUrl || "",
-      price, currency, shipping: null, delivery: r.delivery || "",
-      url: r.link || "https://www.google.com/search?tbm=shop&q=" + encodeURIComponent(r.title || query),
+      source: "Google", region: currency === "ILS" ? "IL" : gl.toUpperCase(), store: r.source || "?", title: r.title, image: r.imageUrl || "",
+      price, currency, shipping: null, delivery: gl === "il" ? r.delivery || "" : "דרך חברת שילוח",
+      url: r.link || `https://www.google.com/search?tbm=shop&gl=${gl}&q=` + encodeURIComponent(r.title || query),
     };
   });
 }
@@ -200,7 +206,8 @@ export async function searchPrices(query, sources, env) {
   const jobs = {
     zap: () => (zapFirst ? (zapFirst.ok ? Promise.resolve(zapFirst.ok) : Promise.reject(new Error(zapFirst.err))) : searchZap(query)),
     ivory: () => searchIvory(model ? model.words.join(" ") : query),
-    serper: () => searchSerper(other, env.SERPER_KEY),
+    serper: () => searchSerper(other, env.SERPER_KEY, "il", 2),
+    serper_us: () => searchSerper(model ? model.words.join(" ") + " " + query : query, env.SERPER_KEY, "us", 1),
     aliexpress: () => searchAliExpress(model ? model.words.join(" ") : query),
     google_il: () => searchGoogle(other, env.SERPAPI_KEY, "il"),
     google_us: () => searchGoogle(other, env.SERPAPI_KEY, "us"),
@@ -239,6 +246,15 @@ export async function searchPrices(query, sources, env) {
       const vat = i.region !== "IL" && (i.price + (i.shipping || 0)) / r[i.currency] > limitUsd ? (base + ship) * VAT : 0;
       return { ...i, priceILS: Math.round(base), shippingILS: i.shipping == null ? null : Math.round(ship), vatILS: Math.round(vat), totalILS: Math.round(base + ship + vat) };
     });
+
+  // The same offer often appears in several sources (Google lists Zap stores too).
+  const seen = new Set();
+  items = items.filter((i) => {
+    const k = norm(i.store) + "|" + i.totalILS + "|" + norm(i.title).slice(0, 40);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 
   // Prices far below the median are almost always accessories or the wrong model.
   const totals = items.map((i) => i.totalILS).sort((a, b) => a - b);
