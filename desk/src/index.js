@@ -468,6 +468,17 @@ export default {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
       return data(env);
     }
+    if (path === "/api/bars" && req.method === "GET") {
+      // Raw minute bars for a range, for backtests run off the desk.
+      if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
+      if (!env.TWELVEDATA_KEY) return json({ error: "no price key" }, 404);
+      const q = new URLSearchParams({ symbol: "XAU/USD", interval: url.searchParams.get("interval") || "1min",
+        timezone: "UTC", order: "asc", start_date: url.searchParams.get("start") || "", end_date: url.searchParams.get("end") || "",
+        outputsize: "5000", apikey: env.TWELVEDATA_KEY });
+      const body = await (await fetch(`https://api.twelvedata.com/time_series?${q}`)).json();
+      if (body.status === "error") return json({ error: body.message || "refused", code: body.code }, 502);
+      return json({ bars: (body.values || []).map((v) => [Date.parse(v.datetime.replace(" ", "T") + "Z") / 1000, +v.open, +v.high, +v.low, +v.close]) });
+    }
     if (path === "/api/candles" && req.method === "GET") {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
       const r = await candles(env, Number(url.searchParams.get("trade")));
