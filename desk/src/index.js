@@ -177,6 +177,17 @@ async function ingest(req, env, ctx) {
     // A limit the bot reached pauses copying here, where only the owner's
     // resume lifts it.
     if (ev.halt) await setControl(env, { paused: true, at: ts, reason: String(ev.halt).slice(0, 300) });
+    // A new trading account starts a clean page: what happened on the old
+    // one stays in the database but is no longer what the desk shows.
+    const login = ev.account && ev.account.login ? String(ev.account.login) : null;
+    if (login) {
+      const cur = await env.DB.prepare("SELECT v FROM meta WHERE k = 'acct_since'").first();
+      const was = cur ? JSON.parse(cur.v) : null;
+      if (!was || was.login !== login) {
+        await env.DB.prepare("INSERT INTO meta (k, v, ts) VALUES ('acct_since', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts")
+          .bind(JSON.stringify({ login, since: ts, previous: was }), ts).run();
+      }
+    }
     // The answer carries the desk's instructions, so a pause pressed on a
     // phone reaches the bot within one heartbeat.
     const ctl = await env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first();
@@ -206,17 +217,25 @@ async function setControl(env, patch) {
   return v;
 }
 
-async function data(env) {
+async function data(env, all = false) {
+  const acct = await env.DB.prepare("SELECT v FROM meta WHERE k = 'acct_since'").first();
+  const since = acct && !all ? JSON.parse(acct.v).since : 0;
   const [signals, trades, bot, ctl] = await Promise.all([
-    env.DB.prepare("SELECT * FROM signals ORDER BY ts DESC LIMIT 300").all(),
-    env.DB.prepare("SELECT * FROM trades ORDER BY created_at DESC LIMIT 1000").all(),
+    env.DB.prepare("SELECT * FROM signals WHERE ts >= ? ORDER BY ts DESC LIMIT 300").bind(since).all(),
+    env.DB.prepare("SELECT * FROM trades WHERE created_at >= ? ORDER BY created_at DESC LIMIT 1000").bind(since).all(),
     env.DB.prepare("SELECT v, ts FROM meta WHERE k = 'bot'").first(),
     env.DB.prepare("SELECT v FROM meta WHERE k = 'control'").first(),
   ]);
   return json({
     now: now(),
+    since,
     bot: bot ? { ...JSON.parse(bot.v), ts: bot.ts } : null,
-    control: ctl ? JSON.parse(ctl.v) : { paused: false },
+    control: (() => {
+      const c = ctl ? JSON.parse(ctl.v) : { paused: false };
+      // a close-all report from an earlier account is not news on this one
+      if (c.flat_result && c.flat_result.at < since) c.flat_result = null;
+      return c;
+    })(),
     signals: signals.results || [],
     trades: trades.results || [],
   });
@@ -466,7 +485,7 @@ export default {
     }
     if (path === "/api/data" && req.method === "GET") {
       if (!same(bearer(req), env.VIEW_KEY)) return json({ error: "unauthorized" }, 401);
-      return data(env);
+      return data(env, url.searchParams.has("all"));
     }
     if (path === "/api/bars" && req.method === "GET") {
       // Raw minute bars for a range, for backtests run off the desk.
