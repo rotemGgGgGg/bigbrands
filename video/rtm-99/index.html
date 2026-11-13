@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — מה קונים ב-99 שקל</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  /* Paid Reels/Stories ad. Everything that must be read sits inside the safe zone: y 270–1250, x 65–1015. */
+  :root { --white: #F7F6F3; --ink: #111111; --cream: #F3EFE6; --red: #D8412F; }
+  html, body { margin: 0; background: #0b0b0b; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0b0b0b; direction: rtl; }
+  .ab { position: absolute; }
+  #bg { inset: 0; background: #0b0b0b; }
+
+  .line { position: absolute; left: 70px; right: 70px; text-align: center; font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    color: var(--white); line-height: 1.12; text-wrap: balance; }
+  .line .m { display: block; overflow: hidden; padding-bottom: .08em; }
+  .line .m > span { display: block; will-change: transform; }
+  .top { top: 290px; font-size: 92px; }
+  .sub { top: 420px; font-size: 92px; }
+  .red { color: #FF6B57; }
+
+  /* hook: the price as a giant tag */
+  #tag { left: 190px; top: 560px; width: 700px; height: 560px; border-radius: 56px; background: var(--cream); transform-origin: 50% 50%; }
+  #tag .n { position: absolute; left: 0; right: 0; top: 96px; text-align: center; font: 800 300px/1 'Heebo', sans-serif; color: var(--ink); direction: ltr; letter-spacing: -.02em; }
+  #tag .q { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; font: 700 54px/1 'Heebo', sans-serif; color: #6d665a; }
+  #tag .hole { position: absolute; left: 50%; top: 34px; width: 40px; height: 40px; margin-left: -20px; border-radius: 50%; background: #0b0b0b; }
+
+  /* the two things that end */
+  .card { left: 130px; top: 600px; width: 820px; height: 620px; border-radius: 56px; background: var(--cream); opacity: 0; overflow: hidden; }
+  .card svg.art { position: absolute; left: 0; top: 0; width: 820px; height: 620px; }
+  .chip { position: absolute; height: 84px; padding: 0 30px; border-radius: 999px; font: 800 50px/84px 'Heebo', sans-serif; white-space: nowrap; }
+  .chip.price { left: 34px; top: 34px; background: var(--ink); color: var(--white); direction: ltr; }
+  .chip.timer { right: 34px; top: 34px; background: #fff; color: var(--ink); box-shadow: inset 0 0 0 4px var(--ink); direction: rtl; }
+  .chip.timer b { font-weight: 800; display: inline-block; min-width: 1.25em; text-align: center; direction: ltr; }
+  .stamp { position: absolute; left: 50%; top: 50%; margin: -95px 0 0 -230px; width: 460px; height: 190px; border: 12px solid var(--red); border-radius: 28px; box-sizing: border-box;
+    color: var(--red); font: 800 124px/160px 'Heebo', sans-serif; text-align: center; transform: rotate(-9deg); opacity: 0; background: rgba(243,239,230,.9); }
+
+  /* the watch */
+  .ph { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; overflow: hidden; opacity: 0; }
+  .ph img { width: 1080px; height: 1080px; display: block; transform-origin: 72% 45%; }
+  #days { left: 70px; top: 1090px; height: 110px; padding: 0 40px; border-radius: 999px; background: var(--white); color: var(--ink); font: 800 62px/110px 'Heebo', sans-serif;
+    white-space: nowrap; opacity: 0; box-shadow: 0 16px 40px rgba(0,0,0,.5); direction: rtl; }
+  #days b { display: inline-block; min-width: 1.9em; text-align: center; direction: ltr; }
+
+  /* all the models */
+  #grid { left: 0; top: 560px; width: 1080px; height: 1080px; opacity: 0; transform-origin: 50% 0; }
+  #grid div { position: absolute; width: 360px; height: 360px; background-size: 360px 360px; background-repeat: no-repeat; }
+  .fact { position: absolute; left: 70px; right: 70px; text-align: center; font: 800 80px/1.1 'Heebo', sans-serif; color: var(--white); opacity: 0; }
+  #f1 { top: 285px; } #f2 { top: 375px; } #f3 { top: 465px; }
+  .fact i { font-style: normal; color: #FFB067; }
+
+  #price { left: 0; right: 0; top: 262px; text-align: center; font: 800 250px/1 'Heebo', sans-serif; color: var(--white); direction: ltr; opacity: 0; letter-spacing: -.02em; }
+  #url { left: 0; right: 0; margin: auto; top: 1120px; box-shadow: 0 18px 50px rgba(0,0,0,.7); width: 700px; height: 120px; border-radius: 999px; background: var(--white); color: var(--ink);
+    text-align: center; font: 700 54px/120px 'Heebo', sans-serif; direction: ltr; opacity: 0; }
+  #logo { left: 420px; top: 1690px; width: 240px; height: 138px; opacity: .9; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ab" id="bg"></div>
+
+  <!-- watch -->
+  <div class="ph" id="p_watch"><img src="assets/img/arabic-sky-wrist.webp" alt=""></div>
+  <div class="ab" id="grid">
+    <div style="left:720px;top:0px;background-image:url(assets/img/ruby.webp)"></div>
+    <div style="left:360px;top:0px;background-image:url(assets/img/mint.webp)"></div>
+    <div style="left:0px;top:0px;background-image:url(assets/img/ice.webp)"></div>
+    <div style="left:720px;top:360px;background-image:url(assets/img/navy.webp)"></div>
+    <div style="left:360px;top:360px;background-image:url(assets/img/arabic-sky-wrist.webp)"></div>
+    <div style="left:0px;top:360px;background-image:url(assets/img/skeleton-black-wrist.webp)"></div>
+    <div style="left:720px;top:720px;background-image:url(assets/img/arabic-stone-wrist.webp)"></div>
+    <div style="left:360px;top:720px;background-image:url(assets/img/octa-chrono-grey-wrist.webp)"></div>
+    <div style="left:0px;top:720px;background-image:url(assets/img/arabic-onyx-wrist.webp)"></div>
+  </div>
+
+  <!-- hook -->
+  <div class="ab" id="tag"><span class="hole"></span><div class="n">₪99</div><div class="q">מה קונים בזה?</div></div>
+
+  <!-- burger -->
+  <div class="ab card" id="c_burger">
+    <svg class="art" viewBox="0 0 820 620">
+      <defs><mask id="bites"><rect width="820" height="620" fill="#fff"/>
+        <circle id="b1" cx="560" cy="250" r="0" fill="#000"/><circle id="b2" cx="470" cy="330" r="0" fill="#000"/>
+        <circle id="b3" cx="330" cy="290" r="0" fill="#000"/><circle id="b4" cx="250" cy="400" r="0" fill="#000"/></mask></defs>
+      <g id="burger" mask="url(#bites)">
+        <path d="M190 330 Q190 170 400 170 Q610 170 610 330 Z" fill="#E7A247"/>
+        <g fill="#FBE6B8"><ellipse cx="300" cy="235" rx="13" ry="7" transform="rotate(-20 300 235)"/><ellipse cx="380" cy="210" rx="13" ry="7"/><ellipse cx="460" cy="228" rx="13" ry="7" transform="rotate(18 460 228)"/>
+          <ellipse cx="530" cy="268" rx="13" ry="7" transform="rotate(30 530 268)"/><ellipse cx="340" cy="282" rx="13" ry="7" transform="rotate(-10 340 282)"/><ellipse cx="430" cy="276" rx="13" ry="7"/></g>
+        <path d="M170 335 q28 34 56 0 q28 34 56 0 q28 34 56 0 q28 34 56 0 q28 34 56 0 q28 34 56 0 q28 34 56 0 q28 34 56 0 v-14 h-448 z" fill="#63B556"/>
+        <rect x="186" y="352" width="428" height="26" rx="13" fill="#E0503A"/>
+        <path d="M180 378 h440 l-40 34 l-36 -20 l-40 30 l-44 -26 l-48 30 l-50 -28 l-52 30 l-48 -24 z" fill="#FFC83A"/>
+        <rect x="184" y="398" width="432" height="58" rx="27" fill="#6A3A1F"/>
+        <path d="M190 462 h420 v24 q0 44 -44 44 h-332 q-44 0 -44 -44 z" fill="#E7A247"/>
+      </g>
+      <g id="crumbs" fill="#E7A247" opacity="0"><circle cx="300" cy="520" r="9"/><circle cx="352" cy="540" r="6"/><circle cx="420" cy="526" r="8"/><circle cx="486" cy="544" r="5"/><circle cx="540" cy="522" r="7"/><circle cx="388" cy="556" r="4"/></g>
+    </svg>
+    <div class="chip price">₪99</div>
+    <div class="chip timer">עוד <b id="tm1">10</b> דק׳</div>
+    <div class="stamp" id="s1">נגמר</div>
+  </div>
+
+  <!-- taxi -->
+  <div class="ab card" id="c_taxi">
+    <svg class="art" viewBox="0 0 820 620">
+      <rect x="0" y="500" width="820" height="120" fill="#E4DED1"/>
+      <g id="dashes" fill="#fff"><rect x="40" y="552" width="110" height="14" rx="7"/><rect x="250" y="552" width="110" height="14" rx="7"/><rect x="460" y="552" width="110" height="14" rx="7"/><rect x="670" y="552" width="110" height="14" rx="7"/><rect x="880" y="552" width="110" height="14" rx="7"/></g>
+      <g id="taxi">
+        <g id="speed" stroke="#111" stroke-width="10" stroke-linecap="round" opacity="0"><path d="M690 330 h90"/><path d="M700 390 h120"/><path d="M690 450 h80"/></g>
+        <rect x="352" y="218" width="116" height="44" rx="12" fill="#111"/>
+        <text x="410" y="252" text-anchor="middle" font-family="Heebo, sans-serif" font-weight="800" font-size="32" fill="#FFC400">TAXI</text>
+        <path d="M250 350 L300 276 Q308 262 326 262 H500 Q518 262 528 276 L586 350 Z" fill="#FFC400"/>
+        <path d="M290 344 L326 290 Q330 284 338 284 H400 V344 Z" fill="#BFE4F7"/><path d="M418 284 H490 Q498 284 503 290 L544 344 H418 Z" fill="#BFE4F7"/>
+        <rect x="150" y="344" width="520" height="118" rx="38" fill="#FFC400"/>
+        <g fill="#111"><rect x="300" y="392" width="24" height="24"/><rect x="348" y="392" width="24" height="24"/><rect x="396" y="392" width="24" height="24"/><rect x="444" y="392" width="24" height="24"/><rect x="492" y="392" width="24" height="24"/>
+          <rect x="324" y="416" width="24" height="24"/><rect x="372" y="416" width="24" height="24"/><rect x="420" y="416" width="24" height="24"/><rect x="468" y="416" width="24" height="24"/></g>
+        <rect x="150" y="378" width="34" height="30" rx="10" fill="#FFF3B0"/><rect x="640" y="378" width="30" height="30" rx="10" fill="#E0503A"/>
+        <g class="wh"><circle cx="270" cy="462" r="54" fill="#1b1b1b"/><circle cx="270" cy="462" r="22" fill="#C9C9C9"/></g>
+        <g class="wh"><circle cx="550" cy="462" r="54" fill="#1b1b1b"/><circle cx="550" cy="462" r="22" fill="#C9C9C9"/></g>
+      </g>
+    </svg>
+    <div class="chip price">₪99</div>
+    <div class="chip timer">עוד <b id="tm2">15</b> דק׳</div>
+    <div class="stamp" id="s2">נגמרה</div>
+  </div>
+
+  <div class="ab" id="days">על היד · יום <b id="dn">1</b></div>
+
+  <!-- text -->
+  <div class="line top" id="t0"><span class="m"><span>מה קונים היום</span></span><span class="m"><span>ב-99 שקל?</span></span></div>
+  <div class="line top" id="t1"><span class="m"><span>המבורגר וצ'יפס?</span></span></div>
+  <div class="line sub red" id="t1b"><span class="m"><span>נגמר ב-10 דקות.</span></span></div>
+  <div class="line top" id="t2"><span class="m"><span>מונית הביתה?</span></span></div>
+  <div class="line sub red" id="t2b"><span class="m"><span>נגמרה ברבע שעה.</span></span></div>
+  <div class="line top" id="t3"><span class="m"><span>או שעון.</span></span></div>
+  <div class="line sub" id="t3b"><span class="m"><span>שנשאר על היד כל יום.</span></span></div>
+  <div class="fact" id="f1"><i>11</i> דגמים</div>
+  <div class="fact" id="f2">עד הבית</div>
+  <div class="fact" id="f3"><i>14</i> יום להחזרה</div>
+
+  <div class="ab" id="price">₪99</div>
+  <div class="ab" id="url">rtmwatches.store</div>
+  <img class="ab" id="logo" src="assets/img/rtm-logo.png" alt="RTM Watches">
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 16.6;
+// word times in the video (voice take + trims: see audio/build_audio.py)
+const W = { ma: 0.52, burger: 2.48, nigmar: 3.87, monit: 5.21, nigmera: 6.13, o: 7.30, shaon: 7.77, nishar: 8.49, kolyom: 9.26, dgamim: 9.87, bayit: 11.05, hachzara: 11.92, tishim: 13.32, link: 14.67 };
+
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+const lineIn = (id, t, d = 0.42) => tl.fromTo(`${id} .m > span`, { yPercent: 105 }, { yPercent: 0, duration: d, stagger: 0.08, immediateRender: false }, t);
+const lineOut = (id, t) => tl.to(`${id} .m > span`, { yPercent: -105, duration: 0.22, stagger: 0.03, ease: 'power3.in' }, t);
+const count = (sel, from, to, t, d, ease = 'none') => tl.fromTo(sel, { textContent: from }, { textContent: to, duration: d, ease, snap: { textContent: 1 }, immediateRender: false }, t);
+const stamp = (sel, t) => tl.fromTo(sel, { opacity: 0, scale: 2.2, rotation: -20 }, { opacity: 1, scale: 1, rotation: -9, duration: 0.2, ease: 'power4.in', immediateRender: false }, t);
+
+// t = 0: the hook is already on screen (the first frame is the thumbnail)
+gsap.set(['#t1', '#t1b', '#t2', '#t2b', '#t3', '#t3b'].map(s => s + ' .m > span'), { yPercent: 105 });
+gsap.set('#t0 .m > span', { yPercent: 0 });
+gsap.set('#taxi', { x: 900 });
+
+/* hook: the tag swings, then becomes the price chip of the first thing */
+tl.fromTo('#tag', { rotation: -5, scale: 0.94 }, { rotation: 3, scale: 1, duration: 0.5, ease: 'back.out(2.4)' }, 0);
+tl.to('#tag', { rotation: -2, duration: 0.6, ease: 'sine.inOut' }, 0.5);
+tl.to('#tag', { rotation: 1.5, duration: 0.6, ease: 'sine.inOut' }, 1.1);
+
+/* burger */
+const B = W.burger;
+lineOut('#t0', B - 0.26);
+tl.to('#tag', { scale: 0.2, x: -210, y: -160, opacity: 0, duration: 0.3, ease: 'power3.in' }, B - 0.28);
+tl.fromTo('#c_burger', { opacity: 0, scale: 0.9, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.34, ease: 'back.out(1.6)', immediateRender: false }, B - 0.06);
+lineIn('#t1', B);
+const eat = W.nigmar - 0.75;                               // four bites land just before "נגמר"
+[['#b1', 105], ['#b2', 120], ['#b3', 125], ['#b4', 150]].forEach(([s, r], i) => tl.fromTo(s, { attr: { r: 0 } }, { attr: { r }, duration: 0.09, ease: 'power2.out', immediateRender: false }, eat + i * 0.17));
+tl.to('#burger', { scale: 0, transformOrigin: '410px 420px', duration: 0.16, ease: 'power2.in' }, eat + 0.7);
+tl.fromTo('#crumbs', { opacity: 0 }, { opacity: 1, duration: 0.1, immediateRender: false }, eat + 0.78);
+count('#tm1', 10, 0, B + 0.25, Math.max(0.3, W.nigmar - B - 0.25));
+lineIn('#t1b', W.nigmar, 0.3);
+stamp('#s1', W.nigmar + 0.02);
+tl.to('#c_burger', { x: 5, duration: 0.04, repeat: 3, yoyo: true, ease: 'none' }, W.nigmar + 0.22);
+
+/* taxi */
+const T = W.monit;
+lineOut('#t1', T - 0.26); lineOut('#t1b', T - 0.24);
+tl.to('#c_burger', { opacity: 0, x: -140, rotation: -5, duration: 0.24, ease: 'power3.in' }, T - 0.26);
+tl.fromTo('#c_taxi', { opacity: 0, x: 140, rotation: 5 }, { opacity: 1, x: 0, rotation: 0, duration: 0.32, immediateRender: false }, T - 0.06);
+tl.to('#taxi', { x: 0, duration: 0.5, ease: 'power3.out' }, T - 0.02);
+tl.to('#dashes', { x: -210, duration: W.nigmera - T + 0.3, ease: 'none' }, T - 0.02);
+tl.to('#taxi', { y: -5, duration: 0.11, repeat: 5, yoyo: true, ease: 'sine.inOut' }, T + 0.5);
+lineIn('#t2', T);
+count('#tm2', 15, 0, T + 0.25, Math.max(0.3, W.nigmera - T - 0.25));
+tl.to('#speed', { opacity: 1, duration: 0.08 }, W.nigmera - 0.34);
+tl.to('#taxi', { x: -980, duration: 0.3, ease: 'power3.in' }, W.nigmera - 0.3);
+lineIn('#t2b', W.nigmera, 0.3);
+stamp('#s2', W.nigmera + 0.02);
+tl.to('#c_taxi', { x: 5, duration: 0.04, repeat: 3, yoyo: true, ease: 'none' }, W.nigmera + 0.22);
+
+/* the watch: cut to the photo, the day counter keeps running */
+const S = W.shaon;
+lineOut('#t2', W.o - 0.24); lineOut('#t2b', W.o - 0.22);
+tl.to('#c_taxi', { opacity: 0, scale: 0.86, duration: 0.24, ease: 'power3.in' }, W.o - 0.22);
+tl.set('#bg', { backgroundColor: '#0c1722' }, S - 0.05);
+tl.fromTo('#p_watch', { opacity: 0 }, { opacity: 1, duration: 0.14, immediateRender: false }, S - 0.05);
+tl.fromTo('#p_watch img', { scale: 1.22 }, { scale: 1, duration: 3.2, ease: 'power2.out', immediateRender: false }, S - 0.05);
+lineIn('#t3', S - 0.02, 0.3);
+lineIn('#t3b', W.nishar);
+tl.fromTo('#days', { opacity: 0, y: 30, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.8)', immediateRender: false }, W.nishar + 0.1);
+count('#dn', 1, 365, W.nishar + 0.3, Math.max(0.6, W.dgamim - W.nishar - 0.55), 'power2.in');
+
+/* all models + the three facts */
+const G = W.dgamim;
+lineOut('#t3', G - 0.26); lineOut('#t3b', G - 0.24);
+tl.to('#days', { opacity: 0, y: -20, duration: 0.18, ease: 'power2.in' }, G - 0.24);
+tl.set('#p_watch', { opacity: 0 }, G - 0.04);
+tl.set('#bg', { backgroundColor: '#0b0b0b' }, G - 0.04);
+tl.set('#grid', { opacity: 1 }, G - 0.04);
+tl.fromTo('#grid div', { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.3, stagger: 0.07, immediateRender: false }, G - 0.04);
+[['#f1', W.dgamim], ['#f2', W.bayit], ['#f3', W.hachzara]].forEach(([s, t]) => tl.fromTo(s, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.28, immediateRender: false }, t));
+
+/* price + where to buy */
+const P = W.tishim;
+tl.to('.fact', { opacity: 0, y: -24, duration: 0.2, stagger: 0.03, ease: 'power2.in' }, P - 0.3);
+tl.to('#grid', { scale: 0.62, y: -10, duration: 0.5, ease: 'power3.inOut' }, P - 0.22);
+tl.fromTo('#price', { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.32, ease: 'power4.out', immediateRender: false }, P);
+tl.fromTo('#url', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.36, immediateRender: false }, W.link - 0.1);
+tl.to('#url', { scale: 1.05, duration: 0.3, repeat: 3, yoyo: true, ease: 'sine.inOut' }, W.link + 0.5);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); };
+window.ready = Promise.all([document.fonts.load('700 92px "Frank Ruhl Libre"', 'אבג'), document.fonts.load('800 250px Heebo', '99₪'), document.fonts.load('700 54px Heebo', 'אבג abc'),
+  document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {})),
+  ...['ruby', 'mint', 'ice', 'navy', 'arabic-sky-wrist', 'skeleton-black-wrist', 'arabic-stone-wrist', 'octa-chrono-grey-wrist', 'arabic-onyx-wrist'].map(n => { const i = new Image(); i.src = `assets/img/${n}.webp`; return i.decode().catch(() => {}); })]);
+window.seek(0);
+</script>
+</body>
+</html>

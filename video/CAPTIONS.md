@@ -64,3 +64,25 @@ TikTok: רעיון למתנה ב-99 ₪ 🎁 #rtmwatches #מתנה #unboxing #fy
 #rtmwatches #שעונים #שעוןיד #איזהאתם #סטייל #watches #wristwatch #watchesofinstagram #israel
 
 TikTok: איזה שעון אתם? 👇 #rtmwatches #שעונים #watchtok #fyp
+
+---
+
+## rtm-99.mp4 — "מה קונים ב-99 שקל?" (paid ad)
+
+Checked against rtmwatches.store on 2026-11-13: 11 watches, all at 99 ₪ ("השקה"). The store says the box in the photos is for
+illustration, so this ad shows no box and promises none. Text sits inside the Reels ad safe zone (y 270–1250 of 1920).
+
+**Primary text:**
+מה קונים היום ב-99 ₪?
+המבורגר נגמר ב-10 דקות. מונית ברבע שעה.
+שעון נשאר על היד כל יום.
+11 דגמים · עד הבית · 14 יום להחזרה.
+
+**Headline:** שעון ב-99 ₪
+**Description:** 11 דגמים, עד הבית
+**Button:** Shop now / לרכישה · rtmwatches.store
+
+Organic post: same text + 🔗 הלינק בביו
+#rtmwatches #שעונים #שעוןיד #סטייל #מתנה #אופנה #watches #wristwatch #watchesofinstagram #israel
+
+TikTok: מה קונים ב-99 שקל? ⌚ #rtmwatches #שעונים #watchtok #fyp

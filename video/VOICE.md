@@ -35,3 +35,4 @@ The approved reference take is `video/rtm-guess/audio/src/viktor_take_c2.mp3` (s
 - Scripts full of questions and surprise come out livelier than calm, "warm" lines. If a batch is flat, rewrite
   the lines with more `?` and `[excited]` before generating more takes.
 - Reels made so far: `rtm-guess` (10.3 st, approved), `rtm-gift` (9.87 st), `rtm-which` (9.45 st).
+- `rtm-99` (11.1 st): the first batch with calm lines was flat (6–8 st); adding "רגע," and more `?!` fixed it. The lively takes run long, so pauses were trimmed harder and the voice sped up 1.1x.
