@@ -172,6 +172,30 @@ class Mt5Broker:
                                  f"so taken at market ({now_px}), {units} oz")
                 sig.placed_units = units
                 sig.order = order = "market"
+        elif not getattr(sig, "late_note", None):
+            # A market signal is sized on his price, but the fill is at
+            # today's price a few seconds later. When gold has moved toward
+            # the target in between, the stop is further away than he wrote
+            # and the same size risks far more (13 Nov: $3.20 stop on paper,
+            # $6.12 at the fill, $92 lost on a $50 trade). Size on the live
+            # price, and skip when the stop has grown past 1.5x.
+            tick = mt5.symbol_info_tick(self.symbol)
+            now_px = tick.ask if buy else tick.bid
+            if (buy and now_px <= sig.stop) or (not buy and now_px >= sig.stop):
+                return Fill(False, f"price {now_px} is already past the stop {sig.stop}")
+            old_risk = abs(sig.entry - sig.stop)
+            new_risk = abs(now_px - sig.stop)
+            if new_risk > 1.5 * old_risk:
+                return Fill(False, f"price {now_px} is {abs(now_px - sig.entry):.2f} from his entry "
+                                   f"{sig.entry}: the stop is now ${new_risk:.2f} away instead of "
+                                   f"${old_risk:.2f}; too late to chase")
+            if new_risk > old_risk:
+                units = int(abs(units) * old_risk / new_risk)
+                lots, why = self._lots(units)
+                if why:
+                    return Fill(False, f"refused: {why}")
+                sig.placed_units = units
+                sig.late_note = f"price had moved to {now_px}, so the size was cut to {units} oz"
         req = {
             "symbol": self.symbol,
             "volume": lots,
