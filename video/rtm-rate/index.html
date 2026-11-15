@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — בואו נדרג את השעון</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  /* Paid Reels/Stories ad, 1080x1920. Text that must be read sits in the ad safe zone: y 270–1250. */
+  :root { --white: #F7F4EE; --ink: #0E0D0C; --gold1: #F3D79A; --gold2: #C9964F; --mute: #9C958A; }
+  html, body { margin: 0; background: #000; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #050505; direction: rtl; }
+  .ab { position: absolute; }
+  #cam { position: absolute; inset: 0; transform-origin: 50% 46%; }
+
+  /* light */
+  #spot { left: -260px; top: 260px; width: 1600px; height: 1600px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(201,150,79,.30), rgba(120,86,44,.14) 40%, rgba(0,0,0,0) 72%); }
+  #spot2 { left: 140px; top: 1200px; width: 800px; height: 500px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255,240,215,.10), rgba(0,0,0,0) 70%); }
+
+  /* hero: cutout watches (real store cutouts, transparent) */
+  .cut { position: absolute; left: 540px; top: 930px; transform: translate(-50%, -50%); filter: drop-shadow(0 50px 60px rgba(0,0,0,.75)); will-change: transform; }
+  .cut img { display: block; height: 760px; width: auto; }
+  #floor { left: 190px; top: 1300px; width: 700px; height: 90px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.65), rgba(0,0,0,0)); }
+
+  /* hero: wrist photos (real store photos, square) */
+  .ph { position: absolute; left: 0; top: 560px; width: 1080px; height: 1080px; overflow: hidden; opacity: 0; }
+  .ph img { width: 1080px; height: 1080px; display: block; will-change: transform; }
+  .ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,5,5,.9) 0%, rgba(5,5,5,0) 16%, rgba(5,5,5,0) 84%, rgba(5,5,5,.95) 100%); }
+
+  /* the rating card (top) */
+  #card { left: 54px; right: 54px; top: 270px; height: 250px; }
+  .title { position: absolute; right: 10px; top: 6px; left: 300px; text-align: right; font: 800 118px/1.02 'Heebo', sans-serif; color: var(--white); letter-spacing: -.01em; }
+  .title.two { font-size: 84px; line-height: 1.06; top: 4px; }
+  .title .m { display: block; overflow: hidden; padding-bottom: .04em; }
+  .title .m > span { display: block; will-change: transform; }
+  #kicker { right: 12px; top: -44px; font: 600 30px/1 'Heebo', sans-serif; color: var(--gold1); letter-spacing: .12em; direction: ltr; }
+  #box { left: 0; top: 0; width: 250px; height: 250px; border-radius: 44px; background: linear-gradient(145deg, var(--gold1), var(--gold2));
+    box-shadow: 0 24px 60px rgba(201,150,79,.35), inset 0 2px 0 rgba(255,255,255,.55); transform-origin: 50% 50%; }
+  #sv { position: absolute; left: 0; right: 0; top: 24px; text-align: center; font: 800 158px/1 'Heebo', sans-serif; color: var(--ink); direction: ltr; letter-spacing: -.03em; }
+  #sd { position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; font: 700 34px/1 'Heebo', sans-serif; color: rgba(14,13,12,.62); direction: ltr; }
+  #segs { right: 12px; top: 212px; width: 640px; height: 26px; display: flex; gap: 9px; direction: ltr; }
+  #segs i { flex: 1; border-radius: 6px; background: var(--gold1); opacity: .14; transform-origin: 50% 100%; }
+  #flash { inset: 0; background: radial-gradient(60% 40% at 50% 30%, rgba(255,226,170,.55), rgba(255,226,170,0)); opacity: 0; mix-blend-mode: screen; }
+  #white { inset: 0; background: #fff; opacity: 0; }
+
+  /* price */
+  #price { left: 0; right: 0; top: 700px; text-align: center; font: 800 400px/1 'Heebo', sans-serif; color: var(--white); direction: ltr; letter-spacing: -.04em; opacity: 0;
+    text-shadow: 0 30px 90px rgba(201,150,79,.45); }
+  #ring { left: 540px; top: 900px; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%; border: 10px solid var(--gold1); opacity: 0; }
+  #pricesub { left: 0; right: 0; top: 1150px; text-align: center; font: 700 58px/1 'Heebo', sans-serif; color: var(--mute); opacity: 0; }
+
+  /* finale */
+  #stamp { left: 540px; top: 900px; width: 560px; height: 300px; margin: -150px 0 0 -280px; border-radius: 60px; background: linear-gradient(145deg, var(--gold1), var(--gold2));
+    box-shadow: 0 40px 120px rgba(0,0,0,.8), 0 0 0 10px rgba(243,215,154,.25); opacity: 0; transform-origin: 50% 50%; }
+  #stamp b { position: absolute; left: 0; right: 0; top: 40px; text-align: center; font: 800 210px/1 'Heebo', sans-serif; color: var(--ink); direction: ltr; letter-spacing: -.03em; }
+  #url { left: 0; right: 0; margin: auto; top: 1112px; width: 720px; height: 124px; border-radius: 999px; background: var(--white); color: var(--ink);
+    text-align: center; font: 700 56px/124px 'Heebo', sans-serif; direction: ltr; opacity: 0; box-shadow: 0 24px 60px rgba(0,0,0,.7); }
+  #logo { left: 430px; top: 1700px; width: 220px; height: 127px; opacity: .85; }
+
+  #grain { position: absolute; inset: 0; width: 1080px; height: 1920px; opacity: .07; mix-blend-mode: overlay; pointer-events: none; image-rendering: pixelated; }
+  #vig { inset: 0; background: radial-gradient(120% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div class="ab" id="spot"></div>
+    <div class="ab" id="spot2"></div>
+    <div class="ab" id="floor"></div>
+
+    <div class="cut" id="c_skel"><img src="assets/img/cut-skeleton-black.png" alt=""></div>
+    <div class="cut" id="c_octab"><img src="assets/img/cut-octa-chrono-black.png" alt=""></div>
+    <div class="cut" id="c_sky"><img src="assets/img/cut-arabic-sky.png" alt=""></div>
+    <div class="cut" id="c_stone"><img src="assets/img/cut-arabic-stone.png" alt=""></div>
+    <div class="cut" id="c_onyx"><img src="assets/img/cut-arabic-onyx.png" alt=""></div>
+    <div class="cut" id="c_octag"><img src="assets/img/cut-octa-chrono-grey.png" alt=""></div>
+
+    <div class="ph" id="p_wrist"><img src="assets/img/wrist-arabic-sky.webp" alt=""></div>
+    <div id="reel"></div>
+
+    <div class="ab" id="price">₪99</div>
+    <div class="ab" id="ring"></div>
+    <div class="ab" id="pricesub">ולא, אין פה טעות</div>
+
+    <div class="ab" id="stamp"><b>10/10</b></div>
+    <div class="ab" id="url">rtmwatches.store</div>
+  </div>
+
+  <!-- the rating card stays put while the camera moves -->
+  <div class="ab" id="card">
+    <div class="ab" id="kicker">RTM · RATING</div>
+    <div class="title two" id="t0"><span class="m"><span>בואו נדרג</span></span><span class="m"><span>את השעון הזה</span></span></div>
+    <div class="title" id="t1"><span class="m"><span>עיצוב</span></span></div>
+    <div class="title" id="t2"><span class="m"><span>על היד</span></span></div>
+    <div class="title" id="t3"><span class="m"><span>צבעים</span></span></div>
+    <div class="title" id="t4"><span class="m"><span>מחיר</span></span></div>
+    <div class="title" id="t5"><span class="m"><span>ציון סופי</span></span></div>
+    <div class="ab" id="segs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="ab" id="box"><div id="sv">?</div><div id="sd">/10</div></div>
+  </div>
+
+  <img class="ab" id="logo" src="assets/img/rtm-logo.png" alt="RTM Watches">
+  <div class="ab" id="flash"></div>
+  <div class="ab" id="white"></div>
+  <div class="ab" id="vig"></div>
+  <canvas id="grain" width="360" height="640"></canvas>
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30, DURATION = 16.0;
+// word times in the video: Yael take 1, trims from video/tools/trim_plan.py (see audio/build_audio.py)
+const W = { az: 0.46, nadarg: 1.30, shaon: 1.82, itzuv: 2.87, eser1: 3.97, al: 4.66, eser2: 5.86, kama: 6.65, tzvaim: 6.89, achad: 7.57, eser3: 8.01,
+  mechir: 8.76, tishim: 9.83, shekel: 10.75, eser4: 12.31, meeser: 12.57, link: 13.31 };
+const REEL = ['arabic-ruby', 'skeleton-mint', 'arabic-onyx', 'skeleton-ice', 'octa-chrono-grey', 'skeleton-navy', 'geneva-chrono-cocoa', 'arabic-stone', 'octa-chrono-black', 'skeleton-black', 'arabic-sky'];
+const reel = document.getElementById('reel');
+REEL.forEach((n, i) => { const d = document.createElement('div'); d.className = 'ph'; d.id = 'r' + i; d.innerHTML = `<img src="assets/img/wrist-${n}.webp" alt="">`; reel.appendChild(d); });
+
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+const T = ['#t0', '#t1', '#t2', '#t3', '#t4', '#t5'];
+const titleIn = (id, t) => tl.fromTo(`${id} .m > span`, { yPercent: 110 }, { yPercent: 0, duration: 0.34, stagger: 0.06, ease: 'power4.out', immediateRender: false }, t);
+const titleOut = (id, t) => tl.to(`${id} .m > span`, { yPercent: -110, duration: 0.18, stagger: 0.03, ease: 'power3.in' }, t);
+const shake = (t, amp = 14, n = 6) => { for (let k = 0; k < n; k++) tl.to('#cam', { x: (k % 2 ? -1 : 1) * amp * (1 - k / n), y: ((k * 7) % 3 - 1) * amp * 0.6 * (1 - k / n), duration: 0.035, ease: 'none' }, t + k * 0.035);
+  tl.to('#cam', { x: 0, y: 0, duration: 0.05 }, t + n * 0.035); };
+const segsTo = (n, t, d = 0.22) => { tl.set('#segs i', { opacity: 0.14, scaleY: 1 }, t - 0.001);
+  tl.to(`#segs i:nth-child(-n+${n})`, { opacity: 1, duration: 0.05, stagger: d / Math.max(1, n), ease: 'none' }, t); };
+const scoreSet = (txt, t) => tl.set('#sv', { textContent: txt }, t);
+// count 0 -> v and slam the gold box on the word
+const slam = (v, t, sub = '/10') => {
+  tl.set('#sd', { textContent: sub }, t - 0.26);
+  tl.fromTo('#sv', { textContent: 0 }, { textContent: v, duration: 0.24, ease: 'power1.in', snap: { textContent: 1 }, immediateRender: false }, t - 0.24);
+  segsTo(Math.min(10, v), t - 0.24, 0.22);
+  tl.fromTo('#box', { scale: 1.32, rotation: -6 }, { scale: 1, rotation: 0, duration: 0.42, ease: 'elastic.out(1, 0.45)', immediateRender: false }, t);
+  tl.fromTo('#flash', { opacity: 0.95 }, { opacity: 0, duration: 0.5, ease: 'power2.out', immediateRender: false }, t);
+  tl.fromTo('#cam', { scale: 1.045 }, { scale: 1, duration: 0.35, ease: 'power3.out', immediateRender: false }, t);
+  shake(t, 12, 5);
+};
+const resetBox = (t, txt = '?', sub = '/10') => { scoreSet(txt, t); tl.set('#sd', { textContent: sub }, t); tl.set('#segs i', { opacity: 0.14 }, t); tl.fromTo('#box', { scale: 0.86 }, { scale: 1, duration: 0.3, ease: 'back.out(2)', immediateRender: false }, t); };
+const whiteCut = (t) => tl.fromTo('#white', { opacity: 0.85 }, { opacity: 0, duration: 0.16, ease: 'power2.out', immediateRender: false }, t);
+
+/* t = 0 (the thumbnail): the card asks, the skeleton watch is already in the light */
+gsap.set(T.slice(1).map(s => s + ' .m > span'), { yPercent: 110 });
+gsap.set('.cut', { opacity: 0 });
+gsap.set('#c_skel', { opacity: 1, scale: 1, rotation: -4 });
+
+/* hook */
+tl.fromTo('#c_skel', { rotation: -4, scale: 1.0 }, { rotation: 3, scale: 1.08, duration: 2.6, ease: 'sine.inOut' }, 0);
+tl.fromTo('#spot', { x: -60 }, { x: 80, duration: 2.6, ease: 'sine.inOut' }, 0);
+tl.fromTo('#box', { scale: 1 }, { scale: 1.08, duration: 0.28, repeat: 5, yoyo: true, ease: 'sine.inOut' }, 0.6);
+tl.fromTo('#kicker', { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, immediateRender: false }, 0.1);
+
+/* 1. design: whip into a macro of the dial */
+titleOut('#t0', W.itzuv - 0.22);
+titleIn('#t1', W.itzuv - 0.02);
+resetBox(W.itzuv - 0.02);
+tl.to('#c_skel', { scale: 1.75, x: -30, y: 120, rotation: 0, duration: 0.42, ease: 'power4.inOut' }, W.itzuv - 0.2);
+tl.to('#c_skel', { scale: 1.88, x: 25, y: 110, duration: W.eser1 - W.itzuv + 0.4, ease: 'none' }, W.itzuv + 0.22);
+tl.to('#floor', { opacity: 0, duration: 0.2 }, W.itzuv - 0.2);
+slam(10, W.eser1);
+
+/* 2. on the wrist: white flash, real photo, fast push */
+titleOut('#t1', W.al - 0.22);
+titleIn('#t2', W.al - 0.02);
+resetBox(W.al - 0.02);
+tl.to('#c_skel', { x: -1400, rotation: -25, duration: 0.24, ease: 'power3.in' }, W.al - 0.26);
+tl.set('#c_skel', { opacity: 0 }, W.al - 0.02);
+whiteCut(W.al - 0.02);
+tl.set('#p_wrist', { opacity: 1 }, W.al - 0.02);
+tl.fromTo('#p_wrist img', { scale: 1.45, x: 120, rotation: -3 }, { scale: 1.06, x: 0, rotation: 0, duration: 0.55, ease: 'power4.out', immediateRender: false }, W.al - 0.02);
+tl.to('#p_wrist img', { scale: 1.0, duration: W.eser2 - W.al, ease: 'none' }, W.al + 0.53);
+slam(10, W.eser2);
+
+/* 3. colours: 11 real wrist photos, one per beat, the box counts them */
+titleOut('#t2', W.kama - 0.22);
+titleIn('#t3', W.kama - 0.02);
+resetBox(W.kama - 0.02, '0', 'דגמים');
+tl.to('#p_wrist', { opacity: 0, duration: 0.12 }, W.kama - 0.06);
+const r0 = W.kama + 0.05, r1 = W.eser3;          // 11 cuts that land the last one on "עשר"
+REEL.forEach((n, i) => {
+  const t = r0 + (r1 - r0) * Math.pow(i / (REEL.length - 1), 0.8);
+  tl.set('#r' + i, { opacity: 1 }, t);
+  if (i > 0) tl.set('#r' + (i - 1), { opacity: 0 }, t);
+  tl.fromTo(`#r${i} img`, { scale: 1.22, rotation: (i % 2 ? 2 : -2) }, { scale: 1.04, rotation: 0, duration: 0.32, ease: 'power3.out', immediateRender: false }, t);
+  tl.set('#sv', { textContent: i + 1 }, t);
+  tl.set(`#segs i:nth-child(-n+${Math.min(10, i + 1)})`, { opacity: 1 }, t);
+  tl.fromTo('#box', { scale: 1.1 }, { scale: 1, duration: 0.12, immediateRender: false }, t);
+});
+tl.fromTo('#box', { scale: 1.32, rotation: -6 }, { scale: 1, rotation: 0, duration: 0.42, ease: 'elastic.out(1, 0.45)', immediateRender: false }, r1);
+tl.fromTo('#flash', { opacity: 0.95 }, { opacity: 0, duration: 0.5, immediateRender: false }, r1);
+shake(r1, 12, 5);
+tl.to(`#r${REEL.length - 1} img`, { scale: 1.0, duration: W.mechir - r1, ease: 'none' }, r1 + 0.3);
+
+/* 4. price: black, the number slams, the ring blows out */
+titleOut('#t3', W.mechir - 0.22);
+titleIn('#t4', W.mechir - 0.02);
+resetBox(W.mechir - 0.02);
+tl.to(`#r${REEL.length - 1}`, { opacity: 0, scale: 0.9, duration: 0.2, ease: 'power3.in' }, W.mechir - 0.2);
+tl.fromTo('#c_onyx', { opacity: 0, scale: 0.5, y: 200, rotation: 18 }, { opacity: 0.22, scale: 1.05, y: 0, rotation: -8, duration: 0.6, ease: 'power3.out', immediateRender: false }, W.mechir);
+tl.fromTo('#price', { opacity: 0, scale: 3.2 }, { opacity: 1, scale: 1, duration: 0.22, ease: 'power4.in', immediateRender: false }, W.tishim - 0.22);
+tl.fromTo('#ring', { opacity: 0.9, scale: 0.4 }, { opacity: 0, scale: 4.2, duration: 0.7, ease: 'power2.out', immediateRender: false }, W.tishim);
+shake(W.tishim, 22, 7);
+tl.fromTo('#pricesub', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, W.tishim + 0.45);
+tl.to('#price', { scale: 1.06, duration: W.shekel - W.tishim, ease: 'none' }, W.tishim);
+slam(10, W.shekel);
+
+/* 5. final: six real cutouts fan out, gold 10/10, then where to buy */
+const F = W.eser4;
+titleOut('#t4', F - 0.24);
+titleIn('#t5', F - 0.04);
+tl.to(['#price', '#pricesub'], { opacity: 0, scale: 0.8, duration: 0.2, ease: 'power3.in' }, F - 0.26);
+tl.set('#c_onyx', { opacity: 0 }, F - 0.06);
+const FAN = [['#c_octag', -420, -20, -16], ['#c_stone', -250, 10, -9], ['#c_sky', -85, 22, -3], ['#c_onyx', 85, 22, 3], ['#c_octab', 250, 10, 9], ['#c_skel', 420, -20, 16]];
+FAN.forEach(([s, x, y, r], i) => tl.fromTo(s, { opacity: 0, x: 0, y: 700, scale: 0.4, rotation: 0 }, { opacity: 1, x, y, scale: 0.5, rotation: r, duration: 0.42, ease: 'back.out(1.4)', immediateRender: false }, F - 0.06 + i * 0.03));
+tl.fromTo('#stamp', { opacity: 0, scale: 2.6, rotation: -14 }, { opacity: 1, scale: 1, rotation: -6, duration: 0.2, ease: 'power4.in', immediateRender: false }, F - 0.2);
+scoreSet('10', F - 0.2);
+tl.set('#sd', { textContent: '/10' }, F - 0.2);
+tl.set('#segs i', { opacity: 1 }, F - 0.2);
+tl.fromTo('#flash', { opacity: 1 }, { opacity: 0, duration: 0.6, immediateRender: false }, F);
+shake(F, 20, 7);
+tl.to(FAN.map(f => f[0]), { y: '-=150', duration: 0.5, ease: 'power3.inOut' }, W.link - 0.3);
+tl.to('#stamp', { y: -150, scale: 0.62, duration: 0.5, ease: 'power3.inOut' }, W.link - 0.3);
+tl.fromTo('#url', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.36, ease: 'back.out(1.6)', immediateRender: false }, W.link - 0.05);
+tl.to('#url', { scale: 1.05, duration: 0.32, repeat: 5, yoyo: true, ease: 'sine.inOut' }, W.link + 0.5);
+tl.to(FAN.map(f => f[0]), { rotation: '+=3', duration: 1.2, repeat: 1, yoyo: true, ease: 'sine.inOut' }, W.link + 0.3);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+/* film grain: the same noise for the same frame, so renders are repeatable */
+const g = document.getElementById('grain'), gx = g.getContext('2d'), gimg = gx.createImageData(360, 640);
+function grain(frame) {
+  let s = (frame * 2654435761) >>> 0;
+  for (let i = 0; i < gimg.data.length; i += 4) { s = (s * 1664525 + 1013904223) >>> 0; const v = s >>> 24; gimg.data[i] = gimg.data[i + 1] = gimg.data[i + 2] = v; gimg.data[i + 3] = 255; }
+  gx.putImageData(gimg, 0, 0);
+}
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); grain(Math.floor(t * FPS)); };
+window.ready = Promise.all([document.fonts.load('800 118px Heebo', 'אבג 10?'), document.fonts.load('700 56px Heebo', 'rtm'), document.fonts.load('600 30px Heebo', 'RTM'),
+  document.fonts.ready, ...[...document.images].map(i => i.decode().catch(() => {}))]);
+window.seek(0);
+</script>
+</body>
+</html>

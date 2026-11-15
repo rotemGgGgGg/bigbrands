@@ -3,6 +3,7 @@
 //
 //   node video/render.cjs <page dir> <out.mp4>                -> PNG frames + MP4 with <page dir>/audio/mix.wav
 //   node video/render.cjs <page dir> --stills 1.5,8,14        -> renders/stills/<name>_<t>.png
+//   SUBFRAMES=3 node video/render.cjs ...                       -> motion blur: 3 renders per frame over a 180° shutter, averaged
 const { chromium } = require('playwright');
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -38,19 +39,24 @@ const stillsAt = process.argv.indexOf('--stills');
   fs.rmSync(frames, { recursive: true, force: true });
   fs.mkdirSync(frames, { recursive: true });
   const n = Math.round(meta.dur * meta.fps);
-  for (let i = 0; i < n; i++) {
-    await page.evaluate(async t => { await window.seek(t); }, i / meta.fps);
-    await page.screenshot({ path: path.join(frames, `f_${String(i).padStart(5, '0')}.png`) });
+  const sub = Math.max(1, parseInt(process.env.SUBFRAMES || '1', 10));
+  const dt = sub > 1 ? 0.5 / (meta.fps * (sub - 1)) : 0;          // 180° shutter that ends on the frame time
+  for (let i = 0, j = 0; i < n; i++) {
+    for (let k = 0; k < sub; k++, j++) {
+      await page.evaluate(async t => { await window.seek(t); }, Math.max(0, i / meta.fps - (sub - 1 - k) * dt));
+      await page.screenshot({ path: path.join(frames, `f_${String(j).padStart(6, '0')}.png`) });
+    }
   }
   await browser.close();
   const tFrames = (Date.now() - t0) / 1000;
 
   execFileSync('ffmpeg', ['-v', 'error', '-y',
-    '-framerate', String(meta.fps), '-i', path.join(frames, 'f_%05d.png'),
+    '-framerate', String(meta.fps * sub), '-i', path.join(frames, 'f_%06d.png'),
+    ...(sub > 1 ? ['-vf', `tmix=frames=${sub},select='eq(mod(n\\,${sub})\\,${sub - 1})',setpts=N/${meta.fps}/TB`] : []),
     '-i', path.join(dir, 'audio', 'mix.wav'),
     '-map', '0:v', '-map', '1:a',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '15', '-pix_fmt', 'yuv420p', '-r', String(meta.fps),
     '-c:a', 'aac', '-b:a', '192k', '-ar', '48000',
     '-t', String(meta.dur), '-movflags', '+faststart', outFile], { stdio: 'inherit' });
-  console.log(`${meta.w}x${meta.h}@${meta.fps} | frames: ${n} in ${tFrames.toFixed(1)}s (${(tFrames / n * 1000).toFixed(0)} ms/frame) | total with encode: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  console.log(`${meta.w}x${meta.h}@${meta.fps} x${sub} | frames: ${n} in ${tFrames.toFixed(1)}s (${(tFrames / n * 1000).toFixed(0)} ms/frame) | total with encode: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 })();
