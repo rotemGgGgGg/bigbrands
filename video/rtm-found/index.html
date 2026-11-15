@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>RTM — תראו מה מצאתי</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  /* POV "screen recording" ad, 1080x1920. Every screen is a real capture of rtmwatches.store on a phone (360x640 @3x).
+     Captions sit in the ad safe zone (y 270–1250). */
+  :root { --white: #FFFFFF; --ink: #0B0A09; --gold: #F2D49A; --gold2: #C9964F; }
+  html, body { margin: 0; background: #000; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; direction: rtl; }
+  .ab { position: absolute; }
+  #cam { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform; }
+  .scr { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; opacity: 0; overflow: hidden; }
+  .scr > img { display: block; width: 1080px; }
+  #feed { opacity: 1; }
+  #feed img { will-change: transform; }
+  #zoom img { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; opacity: 0; }
+  #chipmask { left: 720px; top: 1076px; width: 310px; height: 84px; background: #000; }
+  #wrist { left: 0; top: 0; width: 1080px; height: 1920px; background: #000; opacity: 0; }
+  #wrist img { position: absolute; left: 0; top: 420px; width: 1080px; height: 1080px; }
+  #scan { left: 0; top: 420px; width: 1080px; height: 10px; background: linear-gradient(90deg, rgba(242,212,154,0), var(--gold), rgba(242,212,154,0)); box-shadow: 0 0 40px var(--gold); opacity: 0; }
+  #ai { left: 0; right: 0; top: 330px; text-align: center; font: 700 44px/1 'Heebo', sans-serif; color: var(--gold); opacity: 0; }
+
+  /* touch indicator, like the phone's own screen-recording touches */
+  #touch { left: 0; top: 0; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; background: rgba(255,255,255,.35); border: 4px solid rgba(255,255,255,.8);
+    box-shadow: 0 6px 24px rgba(0,0,0,.35); opacity: 0; }
+  #ripple { left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 6px solid rgba(255,255,255,.9); opacity: 0; }
+
+  /* the price moment */
+  #ring { left: 868px; top: 870px; width: 190px; height: 120px; }
+  #ring path { fill: none; stroke: var(--gold); stroke-width: 9; stroke-linecap: round; }
+  #uline { left: 330px; top: 1060px; width: 690px; height: 10px; border-radius: 6px; background: var(--gold); transform-origin: 100% 50%; transform: scaleX(0); }
+
+  /* captions */
+  #capbg { left: 0; right: 0; top: 960px; height: 420px; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.55) 45%, rgba(0,0,0,.55) 70%, rgba(0,0,0,0)); opacity: 1; }
+  .cap { position: absolute; left: 70px; right: 70px; top: 1060px; text-align: center; font: 800 80px/1.14 'Heebo', sans-serif; white-space: normal; color: var(--white); opacity: 0;
+    text-shadow: 0 4px 0 rgba(0,0,0,.55), 0 8px 30px rgba(0,0,0,.6); text-wrap: balance; }
+  .cap .w { display: inline-block; opacity: .0; transform: translateY(20px) scale(.9); }
+  .cap .w.on { color: var(--gold); }
+  .cap .n { direction: ltr; unicode-bidi: isolate; }
+
+  /* end card */
+  #end { inset: 0; background: rgba(0,0,0,.72); opacity: 0; backdrop-filter: blur(14px); }
+  #logo { left: 300px; top: 470px; width: 480px; height: 276px; opacity: 0; }
+  #offer { left: 0; right: 0; top: 820px; text-align: center; font: 800 128px/1 'Heebo', sans-serif; color: var(--white); direction: rtl; opacity: 0; }
+  #offer small { display: block; margin-top: 22px; font: 600 50px/1.2 'Heebo', sans-serif; color: var(--gold); }
+  #url { left: 0; right: 0; margin: auto; top: 1110px; width: 760px; height: 132px; border-radius: 999px; background: linear-gradient(145deg, #F6DDA8, #C9964F); color: var(--ink);
+    text-align: center; font: 800 58px/132px 'Heebo', sans-serif; direction: ltr; opacity: 0; box-shadow: 0 24px 60px rgba(201,150,79,.35); }
+  #arrow { left: 510px; top: 1290px; width: 60px; height: 60px; opacity: 0; }
+  #arrow path { fill: none; stroke: #fff; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+
+  #grain { position: absolute; inset: 0; width: 1080px; height: 1920px; opacity: .05; mix-blend-mode: overlay; pointer-events: none; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div class="scr" id="feed"><img src="assets/shots/feed.jpg" alt=""></div>
+    <div class="scr" id="card"><img src="assets/shots/at_card.jpg" alt=""></div>
+    <div class="scr" id="mtop"><img src="assets/shots/modal_top.jpg" alt=""></div>
+    <div class="scr" id="zoom"></div>
+    <div class="scr" id="mprice"><img src="assets/shots/modal_price.jpg" alt=""><div class="ab" id="chipmask"></div>
+      <svg class="ab" id="ring" viewBox="0 0 190 120"><path id="ringp" d="M120 10 C 30 0, 0 40, 12 72 C 24 108, 120 116, 168 88 C 196 70, 184 22, 120 12 L 104 14"/></svg>
+      <div class="ab" id="uline"></div></div>
+    <div class="scr" id="tryon"><img src="assets/shots/tryon.jpg" alt=""></div>
+    <div class="ab" id="wrist"><img src="assets/shots/wrist-arabic-sky.webp" alt=""><div class="ab" id="scan"></div><div class="ab" id="ai">✦ ככה זה יושב על היד</div></div>
+    <div class="ab" id="touch"></div>
+    <div class="ab" id="ripple"></div>
+  </div>
+
+  <div class="ab" id="capbg"></div>
+  <div id="caps"></div>
+
+  <div class="ab" id="end"></div>
+  <img class="ab" id="logo" src="assets/shots/rtm-logo.png" alt="RTM Watches">
+  <div class="ab" id="offer"><span class="n">₪99</span> במקום <span class="n">₪150</span><small>מחיר השקה עד 30.11</small></div>
+  <div class="ab" id="url">rtmwatches.store</div>
+  <svg class="ab" id="arrow" viewBox="0 0 60 60"><path d="M30 6 V50 M12 34 L30 52 L48 34"/></svg>
+  <canvas id="grain" width="360" height="640"></canvas>
+</div>
+
+<script src="../../assets/vendor/gsap.min.js"></script>
+<script>
+const FPS = 30;
+// Voice: Yael take 2, pauses trimmed (audio/build_audio.py), played 1.06x. RAW = word starts after trimming, VO at 0.10 s.
+const TEMPO = 1.06, VO = 0.10;
+const RAW = { rega: 0.34, tiru: 0.86, matzati: 1.26, atar: 2.06, shaonim: 2.44, nire: 3.38, kmo: 3.86, chalom: 4.18, kol: 4.86, shaon: 5.06, po: 5.58,
+  tishim: 6.10, vtesha: 6.66, shekel: 7.14, veefshar: 7.84, lirot: 8.20, kol2: 8.72, prat: 8.96, mikarov: 9.24, veafilu: 10.32, lehalot: 10.72, tmuna: 11.20,
+  shel: 11.52, yad: 11.72, velirot: 12.40, eich: 12.84, hu: 13.06, yoshev: 13.12, aleichem: 13.52, aval: 14.24, hamechir: 14.45, haze: 14.93, rak: 15.29, ad: 15.45,
+  sof: 15.61, hachodesh: 15.81, achar: 16.68, kach: 17.09, mea: 17.53, chamishim: 18.05, halink: 18.75, lemata: 19.12, end: 19.68 };
+const W = {}; for (const k in RAW) W[k] = +((RAW[k] - VO) / TEMPO + VO).toFixed(3);
+const DURATION = +(W.end + 1.6).toFixed(2);
+
+/* captions: one phrase at a time, each word pops on its spoken time; the key word turns gold */
+const CAPS = [
+  [['רגע...', 'rega'], ['תראו', 'tiru'], ['מה', 'tiru'], ['מצאתי', 'matzati', 1]],
+  [['אתר', 'atar'], ['שעונים...', 'shaonim']],
+  [['שנראה', 'nire'], ['כמו', 'kmo'], ['חלום', 'chalom', 1]],
+  [['כל', 'kol'], ['שעון', 'shaon'], ['פה...', 'po']],
+  [['<span class="n">₪99</span>?', 'tishim', 1]],
+  [['כל', 'kol2'], ['פרט', 'prat'], ['מקרוב', 'mikarov', 1]],
+  [['מעלים', 'lehalot'], ['תמונה', 'tmuna'], ['של', 'shel'], ['היד', 'yad', 1]],
+  [['ורואים', 'velirot'], ['איך', 'eich'], ['זה', 'hu'], ['יושב', 'yoshev'], ['עליכם', 'aleichem', 1]],
+  [['רק', 'rak'], ['עד', 'ad'], ['סוף', 'sof'], ['החודש', 'hachodesh', 1]],
+  [['אחר', 'achar'], ['כך', 'kach'], ['<span class="n">₪150</span>', 'mea', 1]],
+];
+const capsEl = document.getElementById('caps');
+CAPS.forEach((ph, i) => { const d = document.createElement('div'); d.className = 'cap'; d.id = 'cap' + i;
+  d.innerHTML = ph.map(([w, , key], j) => `<span class="w${key ? ' on' : ''}" id="c${i}_${j}">${w}</span>`).join(' '); capsEl.appendChild(d); });
+
+const ZN = 36;
+const zoomEl = document.getElementById('zoom');
+for (let i = 0; i < ZN; i++) { const im = document.createElement('img'); im.src = `assets/shots/zoom/z_${String(i).padStart(3, '0')}.jpg`; zoomEl.appendChild(im); }
+
+const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+const show = (id, t) => tl.set(id, { opacity: 1 }, t);
+const hide = (id, t) => tl.set(id, { opacity: 0 }, t);
+const touch = (x, y, t, hold = 0.18) => {
+  tl.set('#touch', { left: x, top: y }, t); tl.fromTo('#touch', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.08, immediateRender: false }, t);
+  tl.to('#touch', { opacity: 0, scale: 0.8, duration: 0.15 }, t + hold);
+  tl.set('#ripple', { left: x, top: y }, t + hold * 0.5); tl.fromTo('#ripple', { opacity: 0.9, scale: 0.5 }, { opacity: 0, scale: 2.4, duration: 0.45, ease: 'power2.out', immediateRender: false }, t + hold * 0.5);
+};
+const camTo = (props, t, d, ease = 'power3.inOut') => tl.to('#cam', { ...props, duration: d, ease }, t);
+
+/* captions timing */
+gsap.set('#cap0', { opacity: 1 }); gsap.set('#cap0 .w', { opacity: 1, y: 0, scale: 1 });
+CAPS.forEach((ph, i) => {
+  const t0 = W[ph[0][1]] - 0.06;
+  if (i === 0) { tl.set('#cap0', { opacity: 0 }, W[CAPS[1][0][1]] - 0.1); return; }
+  const next = CAPS[i + 1] ? W[CAPS[i + 1][0][1]] - 0.1 : W.halink - 0.1;
+  tl.set('#cap' + i, { opacity: 1 }, t0);
+  ph.forEach(([, k], j) => tl.fromTo(`#c${i}_${j}`, { opacity: 0, y: 20, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.16, ease: 'back.out(2.5)', immediateRender: false }, W[k] - 0.04));
+  tl.set('#cap' + i, { opacity: 0 }, Math.min(next, t0 + 3.2));
+});
+
+/* A. hook: the store's home screen, a little thumb wiggle */
+camTo({ scale: 1.04 }, 0, 0.01);
+camTo({ scale: 1.0 }, 0.02, 1.6, 'power2.out');
+tl.fromTo('#feed img', { y: 0 }, { y: -40, duration: 0.25, ease: 'power2.out', immediateRender: false }, W.tiru);
+tl.to('#feed img', { y: 0, duration: 0.35, ease: 'back.out(2)' }, W.tiru + 0.25);
+tl.set('#touch', { left: 620, top: 1500 }, W.tiru - 0.05);
+tl.fromTo('#touch', { opacity: 0 }, { opacity: 1, duration: 0.06, immediateRender: false }, W.tiru - 0.05);
+tl.to('#touch', { top: 1420, duration: 0.25 }, W.tiru);
+tl.to('#touch', { opacity: 0, duration: 0.12 }, W.tiru + 0.28);
+
+/* B. fast scroll through the real collection, flick and land on the sky blue one */
+const S0 = W.atar - 0.15, S1 = W.chalom + 0.25;
+tl.set('#touch', { left: 560, top: 1600 }, S0);
+tl.fromTo('#touch', { opacity: 0 }, { opacity: 1, duration: 0.05, immediateRender: false }, S0);
+tl.to('#touch', { top: 900, duration: 0.22, ease: 'power2.in' }, S0);
+tl.to('#touch', { opacity: 0, duration: 0.08 }, S0 + 0.2);
+tl.to('#feed img', { y: -6700, duration: 1.35, ease: 'power3.out' }, S0 + 0.12);          // flick down the whole grid
+tl.to('#feed img', { y: -3900, duration: 0.9, ease: 'power3.inOut' }, S0 + 1.5);           // and back up to the blue one
+camTo({ rotation: -0.6, scale: 1.01 }, S0 + 0.1, 0.5);
+camTo({ rotation: 0, scale: 1 }, S0 + 0.6, 0.6);
+show('#card', S1 - 0.05);
+tl.fromTo('#card', { opacity: 0 }, { opacity: 1, duration: 0.08, immediateRender: false }, S1 - 0.05);
+touch(540, 990, W.kol - 0.25, 0.14);
+
+/* C. product opens, then the camera dives into the price */
+const C = W.kol - 0.1;
+show('#mtop', C);
+tl.fromTo('#mtop', { scale: 0.62, y: -110, opacity: 0, borderRadius: 40 }, { scale: 1, y: 0, opacity: 1, borderRadius: 0, duration: 0.32, ease: 'power3.out', immediateRender: false }, C);
+hide('#card', C + 0.3); hide('#feed', C + 0.3);
+// "scroll" to the price as the number is said
+show('#mprice', W.tishim - 0.32);
+tl.fromTo('#mprice', { y: 700, opacity: 1 }, { y: 0, duration: 0.3, ease: 'power3.out', immediateRender: false }, W.tishim - 0.32);
+tl.to('#mtop', { y: -700, duration: 0.3, ease: 'power3.out' }, W.tishim - 0.32);
+camTo({ scale: 2.3, x: -966, y: -191 }, W.tishim - 0.05, 0.35, 'power4.out');               // land on "99₪" (screen 540,700)
+tl.fromTo('#ringp', { strokeDasharray: 520, strokeDashoffset: 520 }, { strokeDashoffset: 0, duration: 0.42, ease: 'power2.inOut', immediateRender: false }, W.shekel - 0.25);
+tl.to('#cam', { x: '+=10', duration: 0.04, repeat: 3, yoyo: true, ease: 'none' }, W.shekel);
+
+/* D. the store's magnifier: a real finger-drag across the dial */
+const D = W.veefshar - 0.05;
+camTo({ scale: 1, x: 0, y: 0 }, D - 0.25, 0.28, 'power3.in');
+hide('#mprice', D); hide('#mtop', D);
+show('#zoom', D);
+const Z1 = W.veafilu - 0.25;
+const ZP = [[432, 451], [453, 465], [474, 478], [494, 492], [513, 506], [532, 520], [549, 533], [565, 547], [580, 561], [592, 575], [603, 588], [612, 602], [619, 616], [624, 630], [626, 643], [626, 657], [624, 671], [620, 685], [613, 698], [605, 712], [594, 726], [582, 739], [568, 753], [552, 767], [535, 781], [516, 794], [497, 808], [477, 822], [456, 836], [435, 849], [415, 863], [394, 877], [374, 891], [354, 904], [335, 918], [318, 932]];   // the pointer path used during the capture (px)
+for (let i = 0; i < ZN; i++) {
+  const t = D + (Z1 - D) * (i / (ZN - 1));
+  tl.set(`#zoom img:nth-child(${i + 1})`, { opacity: 1 }, t);
+  if (i > 0) tl.set(`#zoom img:nth-child(${i})`, { opacity: 0 }, t);
+  tl.set('#touch', { left: ZP[i][0], top: ZP[i][1] }, t);
+}
+tl.fromTo('#touch', { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.08, immediateRender: false }, D);
+tl.to('#touch', { opacity: 0, duration: 0.12 }, Z1);
+camTo({ scale: 1.08 }, D, Z1 - D, 'none');
+
+/* E. try it on: the store's AI try-on sheet, a tap on upload, then the watch on a wrist */
+const E = W.veafilu - 0.15;
+camTo({ scale: 1 }, E - 0.05, 0.2);
+hide('#zoom', E + 0.3);
+show('#tryon', E);
+tl.fromTo('#tryon', { y: 1920 }, { y: 0, duration: 0.42, ease: 'power3.out', immediateRender: false }, E);
+touch(540, 1492, W.tmuna - 0.1, 0.16);
+camTo({ scale: 1.12, y: -120 }, W.tmuna, 0.6, 'power2.out');
+const F0 = W.velirot - 0.2;
+camTo({ scale: 1, y: 0 }, F0 - 0.05, 0.2);
+show('#wrist', F0);
+tl.fromTo('#wrist', { opacity: 0 }, { opacity: 1, duration: 0.18, immediateRender: false }, F0);
+tl.fromTo('#scan', { opacity: 1, y: 0 }, { y: 1070, duration: 0.7, ease: 'power1.inOut', immediateRender: false }, F0 + 0.05);
+tl.to('#scan', { opacity: 0, duration: 0.12 }, F0 + 0.75);
+tl.fromTo('#wrist img', { scale: 1.18, filter: 'blur(14px) brightness(.6)' }, { scale: 1.02, filter: 'blur(0px) brightness(1)', duration: 0.75, ease: 'power2.out', immediateRender: false }, F0 + 0.05);
+tl.fromTo('#ai', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, F0 + 0.6);
+tl.to('#wrist img', { scale: 1.0, duration: W.aval - F0, ease: 'none' }, F0 + 0.8);
+
+/* F. the launch price and its end date, straight from the product page */
+const G = W.aval - 0.1;
+hide('#wrist', G); hide('#tryon', G);
+show('#mprice', G);
+tl.set('#mprice', { y: 0 }, G);
+tl.set('#ringp', { strokeDashoffset: 0 }, G);
+tl.fromTo('#cam', { scale: 1.2, x: -158, y: -346 }, { scale: 1.45, x: -191, y: -364, duration: 0.5, ease: 'power3.out', immediateRender: false }, G);
+tl.to('#uline', { scaleX: 1, duration: 0.5, ease: 'power2.inOut' }, W.rak - 0.05);
+camTo({ scale: 1.55, x: -205, y: -372 }, W.sof, W.chamishim - W.sof + 0.3, 'sine.inOut');
+tl.to('#cam', { x: '-=12', duration: 0.04, repeat: 3, yoyo: true, ease: 'none' }, W.mea);
+
+/* G. end card */
+const H = W.halink - 0.2;
+tl.fromTo('#end', { opacity: 0 }, { opacity: 1, duration: 0.3, immediateRender: false }, H);
+tl.fromTo('#logo', { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.4, immediateRender: false }, H + 0.05);
+tl.fromTo('#offer', { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'power4.out', immediateRender: false }, H + 0.1);
+tl.fromTo('#url', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.36, ease: 'back.out(1.6)', immediateRender: false }, W.lemata - 0.1);
+tl.to('#url', { scale: 1.05, duration: 0.3, repeat: 5, yoyo: true, ease: 'sine.inOut' }, W.lemata + 0.4);
+tl.fromTo('#arrow', { opacity: 0, y: -10 }, { opacity: 1, y: 20, duration: 0.35, repeat: 5, yoyo: true, ease: 'sine.inOut', immediateRender: false }, W.lemata + 0.2);
+tl.to('#capbg', { opacity: 0, duration: 0.2 }, H);
+tl.to({}, { duration: 0.01 }, DURATION - 0.01);
+
+
+/* film grain, same noise for the same frame */
+const g = document.getElementById('grain'), gx = g.getContext('2d'), gimg = gx.createImageData(360, 640);
+function grain(frame) { let s = (frame * 2654435761) >>> 0;
+  for (let i = 0; i < gimg.data.length; i += 4) { s = (s * 1664525 + 1013904223) >>> 0; const v = s >>> 24; gimg.data[i] = gimg.data[i + 1] = gimg.data[i + 2] = v; gimg.data[i + 3] = 255; }
+  gx.putImageData(gimg, 0, 0); }
+
+window.FPS = FPS; window.DURATION = DURATION; window.W_PX = 1080; window.H_PX = 1920;
+window.seek = t => { tl.seek(t, false); grain(Math.floor(t * FPS)); };
+window.ready = Promise.all([document.fonts.load('800 86px Heebo', 'אבג ₪99'), document.fonts.load('600 50px Heebo', 'אבג'),
+  document.fonts.ready, new Promise(r => setTimeout(r, 50)).then(() => Promise.all([...document.images].map(i => i.decode().catch(() => {}))))]);
+window.seek(0);
+</script>
+</body>
+</html>
