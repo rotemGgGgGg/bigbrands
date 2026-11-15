@@ -129,7 +129,7 @@ subprocess.run([
     f"[0]aresample={SR},atrim=0:{DUR},afade=t=out:st={DUR - 1.0}:d=1.0,volume=0.5[m];"
     "[1]asplit=2[v][vsc];"
     "[m][vsc]sidechaincompress=threshold=0.03:ratio=5:attack=15:release=300:makeup=1[md];"
-    "[md][v][2]amix=inputs=3:normalize=0,loudnorm=I=-13.5:TP=-1.5:LRA=9[out]",
+    "[md][v][2]amix=inputs=3:normalize=0,loudnorm=I=-14.1:TP=-1.5:LRA=9[out]",
     "-map", "[out]", "-ar", str(SR), str(HERE / "mix.wav"),
 ], check=True)
 print("wrote", HERE / "mix.wav", "duration", DUR)

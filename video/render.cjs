@@ -52,9 +52,10 @@ const stillsAt = process.argv.indexOf('--stills');
 
   execFileSync('ffmpeg', ['-v', 'error', '-y',
     '-framerate', String(meta.fps * sub), '-i', path.join(frames, 'f_%06d.png'),
-    ...(sub > 1 ? ['-vf', `tmix=frames=${sub},select='eq(mod(n\\,${sub})\\,${sub - 1})',setpts=N/${meta.fps}/TB`] : []),
     '-i', path.join(dir, 'audio', 'mix.wav'),
     '-map', '0:v', '-map', '1:a',
+    // motion blur: average each frame's subframes, keep one per frame (an output option, so it goes after the inputs)
+    ...(sub > 1 ? ['-vf', `tmix=frames=${sub},select=eq(mod(n\\,${sub})\\,${sub - 1}),setpts=N/${meta.fps}/TB`] : []),
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '15', '-pix_fmt', 'yuv420p', '-r', String(meta.fps),
     '-c:a', 'aac', '-b:a', '192k', '-ar', '48000',
     '-t', String(meta.dur), '-movflags', '+faststart', outFile], { stdio: 'inherit' });
