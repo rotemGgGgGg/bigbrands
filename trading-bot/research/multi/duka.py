@@ -7,7 +7,7 @@ OUT = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/s
 SYMS = {  # name: price divisor
     "DEUIDXEUR": 1e3, "GBRIDXGBP": 1e3, "JPNIDXJPY": 1e3, "USA500IDXUSD": 1e3, "USATECHIDXUSD": 1e3, "USA30IDXUSD": 1e3, "EUSIDXEUR": 1e3,
     "FRAIDXEUR": 1e3, "AUSIDXAUD": 1e3, "HKGIDXHKD": 1e3, "XAUUSD": 1e3, "XAGUSD": 1e3, "LIGHTCMDUSD": 1e3, "BRENTCMDUSD": 1e3,
-    "EURUSD": 1e5, "USDJPY": 1e3, "GBPUSD": 1e5, "AUDUSD": 1e5, "USDCAD": 1e5, "EURJPY": 1e3}
+    "EURUSD": 1e5, "USDJPY": 1e3, "GBPUSD": 1e5, "AUDUSD": 1e5, "USDCAD": 1e5, "EURJPY": 1e3, "GBPJPY": 1e3}
 
 
 import http.client, ssl, threading, urllib.parse
