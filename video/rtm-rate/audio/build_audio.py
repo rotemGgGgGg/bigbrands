@@ -131,7 +131,7 @@ graph = (f"{parts};" + "".join(f"[p{i}]" for i in range(len(KEEP))) + f"concat=n
          "acompressor=threshold=-22dB:ratio=3:attack=4:release=110:makeup=2.5[vo]")
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(SRC / "yael" / "takes" / "take1.mp3"), "-filter_complex", graph, "-map", "[vo]", str(HERE / "vo.wav")], check=True)
 
-# loudnorm runs single-pass and lands about 1.2 LU low, so it aims at -12.8 to measure -14 LUFS
+# loudnorm runs single-pass and lands about 1.2 LU low, so it aims at -13.7 to measure -14 LUFS
 subprocess.run([
     "ffmpeg", "-v", "error", "-y",
     "-i", str(SRC / "music.mp3"), "-i", str(HERE / "vo.wav"), "-i", str(HERE / "sfx.wav"),
@@ -139,7 +139,7 @@ subprocess.run([
     f"[0]aresample={SR},atrim=0:{DUR},afade=t=out:st={DUR - 1.0}:d=1.0,volume=0.5[m];"
     "[1]asplit=2[v][vsc];"
     "[m][vsc]sidechaincompress=threshold=0.03:ratio=5:attack=15:release=300:makeup=1[md];"
-    "[md][v][2]amix=inputs=3:normalize=0,loudnorm=I=-12.8:TP=-1.5:LRA=9[out]",
+    "[md][v][2]amix=inputs=3:normalize=0,loudnorm=I=-13.7:TP=-1.5:LRA=9[out]",
     "-map", "[out]", "-ar", str(SR), str(HERE / "mix.wav"),
 ], check=True)
 print("wrote", HERE / "mix.wav")
