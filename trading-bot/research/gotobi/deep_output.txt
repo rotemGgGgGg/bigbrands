@@ -1,0 +1,84 @@
+===== A. exact replication (pips/day per pair, both legs)
+USDJPY 2018-Jul2026 (vendor window)           n   608 |   4.78 pips | t  3.88 | win  60.2% | RR 1.03 | PF 1.56
+USDJPY 2012-2017 (never shown)                n   428 |   6.95 pips | t  4.85 | win  61.9% | RR 1.25 | PF 2.03
+USDJPY 2023-2026                              n   275 |   3.73 pips | t  1.59 | win  54.9% | RR 1.07 | PF 1.30
+USDJPY ordinary days 2012-26 (control)        n  2542 |  -0.86 pips | t -1.35 | win  49.9% | RR 0.92 | PF 0.92
+USDJPY legs 2012-26: long 4.58 (t 5.30) | short 1.09 (t 2.87)
+EURJPY 2018-Jul2026 (vendor window)           n   605 |   6.10 pips | t  4.71 | win  60.7% | RR 1.11 | PF 1.71
+EURJPY 2012-2017 (never shown)                n   430 |   5.95 pips | t  3.82 | win  61.9% | RR 1.03 | PF 1.68
+EURJPY 2023-2026                              n   270 |   7.57 pips | t  3.33 | win  59.3% | RR 1.24 | PF 1.80
+EURJPY ordinary days 2012-26 (control)        n  2544 |  -0.81 pips | t -1.21 | win  50.6% | RR 0.91 | PF 0.93
+EURJPY legs 2012-26: long 5.25 (t 5.63) | short 0.96 (t 2.41)
+GBPJPY 2018-Jul2026 (vendor window)           n   609 |   5.78 pips | t  3.42 | win  58.9% | RR 1.05 | PF 1.50
+GBPJPY 2012-2017 (never shown)                n   427 |   9.61 pips | t  4.22 | win  62.5% | RR 1.12 | PF 1.86
+GBPJPY 2023-2026                              n   274 |   5.81 pips | t  2.23 | win  56.9% | RR 1.11 | PF 1.47
+GBPJPY ordinary days 2012-26 (control)        n  2548 |  -0.74 pips | t -0.88 | win  50.0% | RR 0.95 | PF 0.95
+GBPJPY legs 2012-26: long 6.28 (t 4.75) | short 1.29 (t 2.31)
+BOOK $ 1 lot x3 vendor window : net $77,542 | PF 1.63 | win days 60.9% | avg win $542 / avg loss $519 (RR 1.04) | maxDD $-7,440
+BOOK $ 1 lot x3 2012-2017     : net $92,957 | PF 1.94 | win days 62.9% | avg win $707 / avg loss $617 (RR 1.15) | maxDD $-5,117
+BOOK $ 1 lot x3 all           : net $175,397 | PF 1.78 | win days 61.7% | avg win $612 / avg loss $555 (RR 1.10) | maxDD $-7,440
+per year $: {2012: 7600, 2013: 35200, 2014: 3700, 2015: 6400, 2016: 25600, 2017: 14500, 2018: 2700, 2019: 10200, 2020: 7200, 2021: 11700, 2022: 19900, 2023: 8000, 2024: 3600, 2025: 11000, 2026: 8100}
+
+===== B. statistics
+placebo 1000 random ordinary-day sets: mean -0.80, 99.9th 1.65 pips | gotobi 6.44 -> p < 0.001
+bootstrap 95% CI of pips/day/pair: [4.59, 8.37]
+by year (avg pips/pair/day):
+        2012   2013   2014   2015   2016   2017   2018   2019   2020   2021   2022   2023   2024   2025   2026
+pips   3.34  15.72   1.74   3.51  12.77   7.56   1.50   5.23   3.71   6.07  12.61   5.02   2.74   7.92   7.21
+n     72.00  72.00  71.00  72.00  72.00  72.00  72.00  71.00  71.00  71.00  72.00  72.00  72.00  71.00  60.00
+t      1.28   3.81   0.60   0.98   2.50   2.03   0.49   1.62   1.27   2.63   2.84   1.15   0.56   1.90   1.58
+leg edge over ordinary days, by year (pips):
+                  2012   2013  2014  2015   2016  2017  2018  2019  2020  2021  2022  2023  2024  2025  2026
+long_minus_ord   4.43  12.36 -0.48  5.99  12.48  4.70  2.23  6.27  6.96  3.08  4.59  8.91 -3.25  3.08  9.54
+short_minus_ord -0.22  -0.05  1.10 -0.20   6.70  1.81  0.39  0.94  0.56  2.24  0.26  3.42  5.62  6.22  0.62
+  trend of long_minus_ord: -0.16 pips per year (t -0.60)
+  trend of short_minus_ord: +0.22 pips per year (t 1.64)
+short leg (to 10:30) by entry minute, gotobi minus ordinary, by period:
+  2012-2017: {'09:45': np.float64(-0.81), '09:50': np.float64(-0.63), '09:53': np.float64(0.21), '09:54': np.float64(0.53), '09:55': np.float64(1.5), '09:56': np.float64(1.0), '10:00': np.float64(0.56)}
+  2018-2022: {'09:45': np.float64(0.31), '09:50': np.float64(0.3), '09:53': np.float64(0.6), '09:54': np.float64(0.86), '09:55': np.float64(0.93), '09:56': np.float64(0.13), '10:00': np.float64(0.41)}
+  2023-2025: {'09:45': np.float64(4.6), '09:50': np.float64(4.27), '09:53': np.float64(5.23), '09:54': np.float64(4.73), '09:55': np.float64(5.08), '09:56': np.float64(3.47), '10:00': np.float64(2.56)}
+  2026-2026: {'09:45': np.float64(2.17), '09:50': np.float64(0.72), '09:53': np.float64(2.01), '09:54': np.float64(2.34), '09:55': np.float64(0.63), '09:56': np.float64(-1.98), '10:00': np.float64(-2.14)}
+
+===== C. variation grid (avg of 3 pairs; choose on 2012-19, judge 2020-26 and 2023-26)
+long_in  flip short_out   IS  IS_t  OOS  OOS_t  y23_26   win
+  03:00 09:55     10:05 6.76  5.32 5.74   3.92    5.47 61.15
+  03:00 09:55     10:15 7.00  5.24 6.98   4.68    6.83 62.84
+  03:00 09:55     10:20 6.91  5.06 7.39   4.91    7.24 62.56
+  03:00 09:55     10:30 6.54  4.99 6.54   4.28    5.82 61.71
+  03:00 09:54     10:15 6.06  4.79 5.84   3.98    5.24 60.77
+  03:00 09:54     10:05 5.83  4.78 4.60   3.20    3.88 60.96
+  03:00 09:54     10:20 5.97  4.60 6.25   4.24    5.65 62.09
+  03:00 09:54     10:30 5.60  4.39 5.41   3.60    4.23 60.40
+  03:00 09:53     10:15 5.33  4.35 5.63   3.82    5.22 61.15
+  03:00 09:53     10:05 5.09  4.27 4.38   3.05    3.86 61.05
+  03:00 09:53     10:20 5.24  4.19 6.04   4.09    5.63 61.99
+  03:00 09:55     10:45 5.74  4.18 7.08   4.32    6.77 61.05
+vendor params:
+ long_in  flip short_out   IS  IS_t  OOS  OOS_t  y23_26   win
+  03:00 09:55     10:30 6.54  4.99 6.54   4.28    5.82 61.71
+variants OOS>0: 94/100 | best-IS variant OOS 5.74 vs vendor 6.54
+
+===== D. math overlays (each: rule fixed on 2012-19, judged 2020-26; base = vendor rules)
+  base (vendor rules)                            IS  6.54 t  4.99 | OOS  6.54 t  4.28 | OOS Sharpe/day 0.194 | 23-26  5.82
+  IS t by nominal day: {'10': 1.71, '15': 4.06, '20': 2.74, '25': 2.39, '5': 0.63, 'E': 0.43} | OOS mean by day: {'10': 3.23, '15': 6.17, '20': 12.42, '25': 8.79, '5': -2.43, 'E': 10.75}
+  D1 weight by nominal day (IS t)                IS  9.31 t  5.60 | OOS  7.46 t  4.80 | OOS Sharpe/day 0.217 | 23-26  7.03
+  short-leg pips vs run-into-fix (IS slope -0.146 pips per pip of run)
+  D2 short only if price ran up 08:00-09:54      IS  5.94 t  4.52 | OOS  5.54 t  3.63 | OOS Sharpe/day 0.164 | 23-26  4.18
+  D2b short sized by run (clip 0..2x, IS-scaled) IS  6.00 t  4.38 | OOS  5.96 t  3.64 | OOS Sharpe/day 0.165 | 23-26  4.86
+  D3 IS mean-variance weights: {'USDJPY': np.float64(1.96), 'EURJPY': np.float64(0.41), 'GBPJPY': np.float64(0.63)}
+  D3 mean-variance pair weights                  IS  6.15 t  5.16 | OOS  6.05 t  4.10 | OOS Sharpe/day 0.185 | 23-26  4.67
+  D3b USDJPY+EURJPY only                         IS  5.45 t  4.94 | OOS  6.44 t  4.52 | OOS Sharpe/day 0.204 | 23-26  5.58
+  D4 inverse-vol sizing                          IS  5.79 t  4.14 | OOS  6.21 t  4.21 | OOS Sharpe/day 0.190 | 23-26  5.38
+  D5 long leg only in USDJPY uptrend             IS  4.29 t  4.21 | OOS  5.68 t  4.47 | OOS Sharpe/day 0.202 | 23-26  5.84
+  D5b long leg only in downtrend                 IS  2.35 t  2.40 | OOS  2.93 t  2.77 | OOS Sharpe/day 0.125 | 23-26  2.53
+  D6 stop 15 pips each leg                       IS  3.50 t  3.30 | OOS  1.88 t  1.73 | OOS Sharpe/day 0.078 | 23-26  0.78
+  D6 stop 25 pips each leg                       IS  4.23 t  3.64 | OOS  3.74 t  2.95 | OOS Sharpe/day 0.133 | 23-26  2.67
+  D6 stop 50 pips each leg                       IS  5.80 t  4.58 | OOS  5.63 t  3.86 | OOS Sharpe/day 0.175 | 23-26  4.65
+  D7 short leg only                              IS  0.30 t  0.53 | OOS  2.09 t  3.35 | OOS Sharpe/day 0.151 | 23-26  2.55
+  D7b long leg only                              IS  6.24 t  5.06 | OOS  4.45 t  3.11 | OOS Sharpe/day 0.141 | 23-26  3.27
+  D8 long from 08:00 Tokyo                       IS  1.23 t  1.34 | OOS  4.64 t  3.73 | OOS Sharpe/day 0.169 | 23-26  5.63
+
+===== E. sizing, 1 lot x 3 pairs on $100K, vendor rules
+  per gotobi day: mean $165, sd $812; per-day Sharpe 0.203; ~71 days/yr -> annual Sharpe 1.71
+  worst day $-3,356 (2016-10-07); 1-in-100 day $-2,116; $/yr ~ $11,715 (= 11.7% on 100K)
+  full-Kelly fraction of $ variance: 25.0x 1-lot-sets per $100K (use 1/4 Kelly -> 6.3x)
