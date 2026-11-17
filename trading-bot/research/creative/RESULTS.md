@@ -24,3 +24,16 @@ Core rule (NQ): at 09:45, if price vs the 09:00 open points the opposite way to 
 - + London-mid filter: 53/yr, win 55%, RR 1.32, +15 / +17 / +19 bp, 14/15 years.
 - S&P: positive in every period but weak (t 0.5-1.5), 8/15 years -> mostly an NQ effect.
 - Risk: no stop, max drawdown ~19% of notional (1 MNQ ~ $9K) — needs a stop/size study before use.
+
+# THEORY FACTORY v2 (factory2.py): 87 signed conditions x 13 regime filters (vol, gap, Monday/Friday, Gotobi, FOMC, month
+# start/end, day after shock) — 1.85M theories. REAL 173 survivors vs PLACEBO 4; 147/173 positive in 2022-26.
+Same family again (go with today's early direction when it disagrees with yesterday); strongest on high-vol days and the day after a shock.
+
+# REVERSAL-DAY MOMENTUM (rdm.py) — tradeable version
+At 09:45: today = sign(price - 09:00 open), yesterday = sign(RTH close - RTH open); disagree -> trade today's way, flat 15:55.
+| stop / regime | trades/yr | win | RR | 2012-19 R (t) | 2020-26 R (t) | last 2y R | positive yrs |
+| none / all | 113 | 52.3% | 1.22 | +0.06 (4.2) | +0.03 (2.1) | +0.06 | 13/15 |
+| 0.75 ATR / all | 113 | 50.9% | 1.24 | +0.10 (3.6) | +0.06 (2.0) | +0.13 | 12/15 |
+| 0.5 ATR / high vol | 58 | 48.7% | 1.46 | +0.15 (2.8) | +0.14 (2.5) | +0.27 | 13/15 |
+Prop 50K (2020-26 starts): 0.5 ATR / high vol, ~$200-400 risk -> ~42% payout / 58% fail; ~$3K/yr per MNQ unit.
+Verdict: first NQ intraday rule that passed every gate; real but thin (~0.1 R/trade) — better as a portfolio sleeve than a prop strategy.
