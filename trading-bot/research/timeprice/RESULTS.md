@@ -12,3 +12,13 @@ Placebo: identical rules on grids shifted 1/8..7/8 of a block.
 32 rule x level combinations: none positive with significance; 2012-19 t from -17.7 to +0.38; 2020-26 best t 1.43 (week AMD+TO, 6 trades/yr).
 Session-level reversal beats all shifted grids (time alignment carries a little information, ~1.6-2 bp gross in NY AM)
 but is below costs: NY AM net +0.3 to +0.8 bp, t < 0.7. No tradeable edge.
+
+# Quarter Sequence Map (original time x price state model) - sequence.py
+States: session x 90-min quarter x price band in previous session's range (6) x side of true open (x up/down sequence).
+Learned on 2012-19, Bonferroni-corrected; judged 2020-26; placebo = shifted clocks.
+Only one state passes Bonferroni: NY AM quarter 1 (06:00-07:30 NY) opening in the BOTTOM quarter of the London (00:00-06:00) range -> long.
+- NQ: 53 trades/yr, 2012-19 +2.1 bp t 2.3 (state t 3.8), 2020-26 +1.9 bp t 1.2, win 55%, 12/15 years positive.
+- Real clock OOS t 1.16 > every shifted clock (max 0.61).
+- Mirror (top quarter): NQ falls next 90 min (long side 0/15 years) but the short is ~0 after costs.
+- S&P: 13/15 years positive but 2020-26 t 0.3. DAX, gold: nothing (06:00 NY is not their session).
+Sequence (up/down history) adds nothing robust. Verdict: a real but small effect (~2 bp/trade), not proven out of sample.
