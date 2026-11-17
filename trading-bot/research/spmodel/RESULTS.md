@@ -23,3 +23,11 @@ Best variants (none reaches 2012-19 t >= 2):
 - S2 only + with daily trend (NQ vs 50-day avg), brackets unchanged: 32 trades/yr, win 52%, RR 1.07, IS +0.07R (t 1.1), OOS +0.08R (t 1.1), 9/15 yrs.
 - All scenarios, target -0.27 extension + stop at fib 1.0: 172/yr, win 42%, RR 1.44, IS +0.03R, OOS +0.03R (t 0.9), 11/15 yrs.
 Verdict: changes move it from about -0.03R to about +0.05R per trade; still not statistically proven and thin after costs.
+
+## New strategy from the autopsy: London Break & Retest (lbr.py) — failed
+Trend-side 5-min close beyond the London level 09:30-11/12:00; entry on retest or at the break; stop 0.25/0.5 London range; 2R or 15:55.
+32 variants (16 x trend on/off), choose 2012-19, check 2020-26 and S&P.
+- Nothing reaches 2012-19 t >= 2. Best: breakout entry, tight stop, hold to 15:55, NO trend filter: 220/yr, win 29%, RR 2.6, IS +0.065R (t 1.2), OOS +0.04R (t 0.8).
+- The trend filter made every variant worse (mean IS -0.15R vs -0.08R).
+- Retest entries are the worst (down to -0.27R): when price comes back to the broken London level, the break usually fails.
+- Pre-chosen pick (best IS with trend) on S&P: -0.07R, 2020-26 -0.08R. Last 2 years NQ +0.01R.
