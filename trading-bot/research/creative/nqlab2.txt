@@ -1,0 +1,15 @@
+                                                theory   n_yr   win    IS  IS_t   OOS  OOS_t  last2y   pos
+                               T7 RDM 12:00-15:55 part 113.45 53.01  5.19  2.68  4.72   1.51    6.93 11/15
+                                T7 RDM 9:45-12:00 part 113.45 51.34  4.56  2.57  3.67   1.37    6.85 13/15
+T7 RDM re-check at 12:00: still with today -> 12-15:55  78.99 53.72  4.26  1.81  6.45   1.63    9.52 10/15
+        T1 wild morning: follow 12-13 move 13:00-15:55  75.20 49.51  2.68  1.13 -8.84  -2.58   -0.61  7/15
+         T3 closed at high + gap up -> fade 9:30-10:30  43.85 50.08  1.81  0.74  2.24   0.58   -2.30  8/15
+         T1 mid morning: follow 12-13 move 13:00-15:55  79.86 48.48  1.16  0.61 -1.41  -0.44    5.10  5/15
+            T5 fade overnight move >0.6ATR, 9:30-15:55  51.22 48.15  2.13  0.46  2.53   0.37   11.00  8/15
+            T2 lunch-range break AGAINST morning trend 109.66 48.06  0.51  0.31 -3.71  -1.47   -1.83  8/15
+            T5 fade overnight move >0.3ATR, 9:30-15:55 115.61 48.45  0.54  0.19 -1.39  -0.32    3.81  8/15
+               T2 lunch-range break WITH morning trend 114.93 51.03 -0.01 -0.01  3.97   1.55    5.24 10/15
+          T1 calm morning: fade 12-13 move 13:00-15:55  75.07 47.88 -0.51 -0.33 -1.05  -0.37   -0.13  8/15
+        T1 calm morning: follow 12-13 move 13:00-15:55  75.07 48.24 -2.09 -1.35 -1.55  -0.54   -2.47  4/15
+           T1 mid morning: fade 12-13 move 13:00-15:55  79.86 48.82 -3.76 -1.96 -1.19  -0.37   -7.70  3/15
+          T1 wild morning: fade 12-13 move 13:00-15:55  75.20 47.26 -5.28 -2.22  6.24   1.82   -1.99  7/15

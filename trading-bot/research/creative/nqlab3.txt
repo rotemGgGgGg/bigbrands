@@ -1,0 +1,11 @@
+                                       theory   n_yr   win    IS  IS_t    OOS  OOS_t   pos
+                        T10 RDM on other days  91.42 52.33 11.18  3.87  10.68   2.27 12/15
+    T10 NQ long 9:30-15:55 on non-Gotobi days 168.45 54.03  3.38  1.49  -0.03  -0.01 10/15
+                  T10 RDM on month-start days   5.47 55.56 21.92  1.47  15.82   1.09 10/15
+                         T10 RDM on FOMC days   3.85 47.37 20.27  1.42 -46.36  -1.60  8/15
+                     T10 RDM on opex Fri days   6.15 54.95  7.52  0.91  21.07   1.50 12/15
+       T11 first day of month long 9:30-15:55  11.76 54.60 -0.55 -0.06  10.98   0.84  9/15
+                    T10 RDM on month-end days   6.55 49.48 -1.20 -0.16   8.58   0.48  8/15
+    T11 opex Friday: fade morning 13:00-15:55  10.95 44.44 -2.78 -0.68  -7.32  -1.15  8/15
+T11 month-end: fade month-to-date 15:00-15:55  11.82 44.00 -2.89 -1.13  -4.73  -0.96  5/15
+        T10 NQ long 9:30-15:55 on Gotobi days  62.97 52.36 -5.22 -1.43  10.07   1.81  8/15

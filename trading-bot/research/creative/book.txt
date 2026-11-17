@@ -1,0 +1,33 @@
+sleeve Sharpe 2012-15 / 16-19 / 20-26:
+  GOTOBI     1.78  1.69  1.59
+  TSMOM      0.62  0.35  0.57
+  REVERSAL   0.02  0.28  0.42
+  TOM        0.30  0.01  0.70
+  RDM        0.95  1.85  1.02
+corr 2016-26:
+           GOTOBI  TSMOM  REVERSAL   TOM   RDM
+GOTOBI      1.00  -0.01      0.10  0.01 -0.05
+TSMOM      -0.01   1.00     -0.09  0.11 -0.05
+REVERSAL    0.10  -0.09      1.00 -0.09  0.10
+TOM         0.01   0.11     -0.09  1.00  0.02
+RDM        -0.05  -0.05      0.10  0.02  1.00
+
+RDM: 2016-26 Sharpe 0.89 t 2.98 CAGR 18.9% maxDD -14.6% | 2020-26 Sharpe 0.82 | win days 52.3% RR 1.43
+   years %: {2016: 39.6, 2017: 5.1, 2018: 27.4, 2019: 1.5, 2020: 26.3, 2021: -0.1, 2022: 5.8, 2023: 62.0, 2024: -2.5, 2025: 35.7, 2026: 28.8}
+   prop 50K @3% vol: payout 35% fail 19% days 338.0
+   prop 50K @5% vol: payout 40% fail 45% days 199.0
+
+GOTOBI+RDM: 2016-26 Sharpe 1.71 t 5.72 CAGR 22.6% maxDD -18.5% | 2020-26 Sharpe 1.58 | win days 56.9% RR 1.21
+   years %: {2016: 42.0, 2017: 20.7, 2018: 20.9, 2019: 19.9, 2020: 22.0, 2021: 27.1, 2022: 21.4, 2023: 29.1, 2024: -3.8, 2025: 34.7, 2026: 25.4}
+   prop 50K @3% vol: payout 73% fail 13% days 378.0
+   prop 50K @5% vol: payout 69% fail 21% days 221.5
+
+GOTOBI+TSMOM+REVERSAL+TOM: 2016-26 Sharpe 1.28 t 4.29 CAGR 16.3% maxDD -20.0% | 2020-26 Sharpe 1.32 | win days 55.2% RR 1.16
+   years %: {2016: 17.7, 2017: 27.4, 2018: 4.5, 2019: 14.0, 2020: 15.3, 2021: 28.2, 2022: 24.1, 2023: 7.3, 2024: -5.1, 2025: 30.0, 2026: 25.5}
+   prop 50K @3% vol: payout 54% fail 35% days 332.0
+   prop 50K @5% vol: payout 54% fail 41% days 177.0
+
+GOTOBI+TSMOM+REVERSAL+TOM+RDM: 2016-26 Sharpe 1.73 t 5.79 CAGR 21.9% maxDD -16.6% | 2020-26 Sharpe 1.62 | win days 55.4% RR 1.22
+   years %: {2016: 36.4, 2017: 25.4, 2018: 19.3, 2019: 19.0, 2020: 29.0, 2021: 21.0, 2022: 19.5, 2023: 21.5, 2024: -2.3, 2025: 34.3, 2026: 28.0}
+   prop 50K @3% vol: payout 64% fail 23% days 357.0
+   prop 50K @5% vol: payout 59% fail 33% days 197.0

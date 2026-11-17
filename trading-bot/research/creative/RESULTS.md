@@ -37,3 +37,16 @@ At 09:45: today = sign(price - 09:00 open), yesterday = sign(RTH close - RTH ope
 | 0.5 ATR / high vol | 58 | 48.7% | 1.46 | +0.15 (2.8) | +0.14 (2.5) | +0.27 | 13/15 |
 Prop 50K (2020-26 starts): 0.5 ATR / high vol, ~$200-400 risk -> ~42% payout / 58% fail; ~$3K/yr per MNQ unit.
 Verdict: first NQ intraday rule that passed every gate; real but thin (~0.1 R/trade) — better as a portfolio sleeve than a prop strategy.
+
+# NQ LAB rounds (nqlab.py + rdm_defs/nqlab2/nqlab3/book.txt)
+Tested theories: RDM surface, trapped overnight, two-day trap, exhaustion, weekly drift, early extreme, turnaround Tuesday, small gap fill,
+gamma regime afternoon, lunch-range break, closing-extreme gap fade, overnight tug-of-war, FOMC/opex/month-end/start/Gotobi days on NQ.
+Only RDM passes. What RDM is:
+- needs DISAGREEMENT with yesterday: same-direction days give 0 (control); overnight reversal (vs RTH) gives 0 -> it is yesterday's RTH candle.
+- robust to definitions (yesterday RTH/morning/afternoon; today vs 00:00/09:00/09:30): all positive OOS; pays evenly morning and afternoon.
+- NQ-specific: S&P weak +, Nikkei IS only, DAX/FX/gold none.  Skip FOMC days (RDM on FOMC 2020-26: -46 bp).
+COMBINED BOOK (walk-forward Sharpe weights, 10% vol, 2016-26 out of sample):
+- RDM alone: Sharpe 0.89, CAGR 18.9%, maxDD -14.6%
+- GOTOBI + RDM: Sharpe 1.71 (t 5.7), CAGR 22.6%, maxDD -18.5%, 10/11 years positive (2024 -3.8%); prop 3% vol 73% payout / 13% fail
+- GOTOBI + TSMOM + REVERSAL + TOM + RDM: Sharpe 1.73, CAGR 21.9%, maxDD -16.6%, 10/11 years (2024 -2.3%)
+Correlation RDM vs others |r| <= 0.10.

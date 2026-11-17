@@ -1,0 +1,33 @@
+      yesterday         today entry   n_yr    IS  IS_t  OOS  OOS_t  pos
+    RTH 9:30-16      vs 09:00  9:45 114.05 10.82  4.27 9.68   2.32   15
+morning 9:30-12      vs 09:00  9:45 113.92  9.34  3.80 7.54   1.84   14
+afternoon 12-16      vs 09:00  9:45 113.65  8.25  3.11 7.70   1.89   11
+       last 30m      vs 09:00  9:45 111.49  7.24  2.88 3.77   0.91   11
+    RTH 9:30-16 vs prev close  9:45 113.99  6.92  2.82 5.05   1.23   13
+morning 9:30-12      vs 09:00 10:00 112.09  6.66  2.72 6.11   1.57   14
+    RTH 9:30-16      vs 09:00 10:00 115.74  6.53  2.67 7.62   1.95   14
+    RTH 9:30-16 vs 09:30 open 10:00 115.54  6.31  2.55 5.89   1.45   14
+    RTH 9:30-16 vs 09:30 open  9:45 115.20  6.45  2.51 9.50   2.25   12
+morning 9:30-12 vs 09:30 open 10:00 113.85  6.12  2.47 4.38   1.10   13
+morning 9:30-12 vs prev close  9:45 110.81  5.15  2.07 3.24   0.80   12
+morning 9:30-12 vs 09:30 open  9:45 113.65  5.17  2.01 7.54   1.82   11
+       last 30m      vs 09:00 10:00 111.55  4.72  1.94 3.20   0.79   10
+afternoon 12-16      vs 09:00 10:00 114.32  4.76  1.85 6.86   1.82   10
+    RTH 9:30-16      vs 00:00  9:45 114.46  4.74  1.84 8.51   2.05   13
+       last 30m vs 09:30 open 10:00 112.84  4.41  1.80 2.24   0.55   10
+afternoon 12-16 vs prev close  9:45 118.45  4.49  1.78 2.99   0.76   12
+afternoon 12-16 vs 09:30 open 10:00 115.20  4.46  1.75 5.12   1.32   11
+morning 9:30-12      vs 00:00 10:00 110.95  4.04  1.68 6.52   1.62   12
+afternoon 12-16 vs 09:30 open  9:45 116.28  4.12  1.60 7.56   1.84   11
+
+mean OOS t by yesterday definition: {'RTH 9:30-16': 1.84, 'afternoon 12-16': 1.53, 'last 30m': 0.43, 'last hour': 1.39, 'morning 9:30-12': 1.45}
+mean OOS t by today reference: {'vs 00:00': 1.41, 'vs 09:00': 1.65, 'vs 09:30 open': 1.45, 'vs prev close': 0.79}
+
+CROSS-MARKET (first 15 min of own session vs yesterday's session candle):
+  NSXUSD       n/yr 119.8 | 12-19   7.14bp t  2.89 | 20-26  10.85bp t  2.57 | pos yrs 13/15
+  SPXUSD       n/yr 113.6 | 12-19   1.19bp t  0.59 | 20-26   4.58bp t  1.35 | pos yrs 10/15
+  DEUIDXEUR    n/yr 114.5 | 12-19   0.36bp t  0.15 | 20-26  -2.34bp t -0.87 | pos yrs 4/15
+  JPNIDXJPY    n/yr  99.4 | 12-19   8.28bp t  2.64 | 20-26   1.67bp t  0.64 | pos yrs 8/15
+  XAUUSD       n/yr 123.3 | 12-19  -4.02bp t -2.13 | 20-26  -0.13bp t -0.05 | pos yrs 7/15
+  USDJPY       n/yr 126.4 | 12-19  -1.87bp t -1.81 | 20-26  -1.01bp t -0.82 | pos yrs 3/15
+  EURUSD       n/yr 128.2 | 12-19  -1.36bp t -1.22 | 20-26  -1.60bp t -1.52 | pos yrs 6/15
