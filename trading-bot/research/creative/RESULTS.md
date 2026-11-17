@@ -13,3 +13,14 @@ Time in 4s (NY session 06-12 -> 90-min quarters, Q3 -> 22.5-min), price in 4s (y
 - Full sequence NQ: 13/yr, win 30-37%, RR 1.6-2.4, IS +0.07 to +0.20R (t <= 0.8), OOS -0.10 to +0.04R, last 2 years -0.2 to -0.3R.
 - Without the micro condition (58/yr): IS ~0R, OOS +0.08-0.09R (t 1.4), 8/15 years.
 - S&P: same picture. Verdict: the five-scale alignment does not predict direction.
+
+# THEORY FACTORY (factory.py) — 2.48 million generated time x price theories, three gates + shuffled-day placebo
+78 conditions (price vs 9 true opens/mids at 7 times, range quarters, sweeps, flow) x 1-3 combos x 30 entry/exit x 2 orientations.
+Gates: 2012-17 t>=3 -> 2018-21 t>=2 same sign -> 2022-26 once.  REAL: 142 survivors; PLACEBO: 2.  139/142 positive in 2022-26.
+Almost all survivors are ONE family: "today's early move disagrees with yesterday -> go with today, hold to the close".
+Core rule (NQ): at 09:45, if price vs the 09:00 open points the opposite way to yesterday's RTH candle -> trade in today's direction 09:45-15:55.
+- 114 trades/yr, win 52.3%, RR 1.25, 2012-17 +10.2 bp (t 3.7), 2018-21 +11.0 (t 2.6), 2022-26 +9.7 (t 1.8), 15/15 years positive.
+- Robust to the reference time (00:00 ... 09:20 opens all give +5.6 to +9 bp) -> the 09:00 'true open' is not special.
+- + London-mid filter: 53/yr, win 55%, RR 1.32, +15 / +17 / +19 bp, 14/15 years.
+- S&P: positive in every period but weak (t 0.5-1.5), 8/15 years -> mostly an NQ effect.
+- Risk: no stop, max drawdown ~19% of notional (1 MNQ ~ $9K) — needs a stop/size study before use.
