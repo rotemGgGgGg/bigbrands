@@ -53,6 +53,8 @@ class Params:
     use_s2: bool = True
     use_s3: bool = True
     ldn_min_bars: int = 60          # [IMPL] London range needs ≥ 60 of its 72 bars
+    ldn_start: int = 0              # London range window start, minutes after 00:00 NY [T: 00:00]
+    ldn_end: int = LDN_END          # ...and end (sweeps count from here) [T: 06:00]
     qty: int = 1                    # [IMPL] fixed size
     check: bool = True              # invariants raise InvariantError
 
@@ -273,7 +275,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
                 D.capped = True                              # [T] no trades on holidays
 
         # 3 ── London range 00:00–06:00 [T]
-        if mn < LDN_END:
+        if p.ldn_start <= mn < p.ldn_end:
             D.ldn_hi = h if D.ldn_hi is None else max(D.ldn_hi, h)
             D.ldn_lo = l if D.ldn_lo is None else min(D.ldn_lo, l)
             D.ldn_n += 1
@@ -281,7 +283,7 @@ def run(df: pd.DataFrame, p: Params = Params()) -> Result:
         in_win = WIN_START <= mn < WIN_END
 
         # 4 ── sweeps from 06:00: wick, exact touch counts, each level consumed once [T]
-        if mn >= LDN_END and valid:
+        if mn >= p.ldn_end and valid:
             for sd, px, lvl in ((D.sides[1], h, D.ldn_hi), (D.sides[-1], l, D.ldn_lo)):
                 if sd.sweep_bar is not None:
                     if beyond(px, sd.ext, sd.sign):
