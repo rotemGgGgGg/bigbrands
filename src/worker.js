@@ -8,6 +8,9 @@ const SESSION_DAYS = 7;
 // which can't be derived from these hashes; SESSION_HASH = sha256(that cookie value).
 // To change the password, recompute both with the same prefixes.
 const LOGIN_HASH = "e1c790f303b93ec1ad317365336816aeb13e4dbbe69ef9cfc928087dd7a0319f";
+// Second, view-only password for the sales page (same scheme, different prefixes).
+const FLEX_LOGIN_HASH = "d426f80690a5427f6310d971af5c339ce064daa7430e46d67e786fc1f78ec49d";
+const FLEX_SESSION_HASH = "0f679a2c7082d689466abdf871f1b9e35f97f2a62ba3b17e42886825f37947ed";
 const SESSION_HASH = "610ddef53d71f59e52f9e4c05312896cbdbb03b0ea7ff966c8f5be8327464628";
 
 async function sha256(s) {
@@ -95,6 +98,11 @@ export default {
       const ip = request.headers.get("CF-Connecting-IP") || "?";
       if (tooManyAttempts(ip)) return loginPage("יותר מדי ניסיונות. נסה שוב בעוד 15 דקות.");
       const password = String((await request.formData()).get("password") || "");
+      if (sameHex(await sha256("bb-flexlogin|" + password), FLEX_LOGIN_HASH)) {
+        failures.delete(ip);
+        return withSecurity(new Response(null, { status: 303, headers: { Location: "/admin/sales/",
+          "Set-Cookie": `bb_flex=${await sha256("bb-flex|" + password)}; Path=/admin/sales; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}` } }));
+      }
       if (!sameHex(await sha256("bb-login|" + password), LOGIN_HASH)) {
         recordFailure(ip);
         return loginPage("סיסמה שגויה.");
@@ -111,6 +119,14 @@ export default {
 
     if (path === "/admin/logout") {
       return withSecurity(new Response(null, { status: 303, headers: { Location: "/admin/", "Set-Cookie": `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` } }));
+    }
+
+    if (path.startsWith("/admin/sales")) {
+      const f = ((request.headers.get("Cookie") || "").match(/(?:^|; )bb_flex=([0-9a-f]{64})/) || [])[1];
+      const ok = (await isAuthed(request)) || (f && sameHex(await sha256(f), FLEX_SESSION_HASH));
+      if (!ok) return loginPage();
+      if (path === "/admin/sales") return Response.redirect(url.origin + "/admin/sales/", 301);
+      return withSecurity(await env.ASSETS.fetch(request));
     }
 
     if (!(await isAuthed(request))) {
