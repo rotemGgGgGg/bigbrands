@@ -100,6 +100,10 @@ const _PRODUCTS = [
     desc:`מחשב נייד עסקי HP ProBook 4 G2i עם מעבד Intel Core Ultra 5 ומעבד AI משולב — עיצוב אלומיניום קל ומאובטח לעבודה מקצועית מכל מקום. מגיע ללא מערכת הפעלה.`,
     specs:`14" WUXGA (1920x1200) IPS | Intel Core Ultra 5 325 | 24GB DDR5 | 512GB NVMe SSD | Intel Graphics | Wi-Fi 7 | 1.39 ק"ג | ללא מערכת הפעלה | אחריות 3 שנים`,
     image:"assets/products/n7.png" },
+  { id:"n8", brand:"Lenovo", name:"Lenovo ThinkBook 14x (Core Ultra 5 226V)", category:"מחשבים חדשים", status:"stock", price:4490, wasPrice:5390, badge:"חדש", mpn:"22BG001EIV",
+    desc:`מחשב נייד Lenovo ThinkBook 14x עם מעבד Intel Core Ultra 5 מהדור החדש וכרטיס גרפי Intel Arc — דק, קל ומהיר לעבודה עסקית יומיומית. כולל Windows 11 Pro.`,
+    specs:`14" | Intel Core Ultra 5 226V | 16GB RAM | 512GB SSD | Intel Arc 130V | Windows 11 Pro | אחריות שנתיים`,
+    image:"" },
 
   /* ── באנדלים ── */
   { id:"b1", brand:"HP", name:"באנדל מקצועי HP — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:1075, wasPrice:1265, badge:"חיסכון 15%",
