@@ -315,6 +315,7 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
             "be_at_r": float(env.get("BE_AT_R", "1.5")), "be_plus_usd": float(env.get("BE_PLUS_USD", "1")),
             "trail_step_usd": float(env.get("TRAIL_STEP_USD", "1") or 0),
             "lock_ladder": env.get("LOCK_LADDER", "50:15,75:35,90:55"),
+            "profit_target_usd": float(env.get("PROFIT_TARGET_USD") or 0),
         }}
         if hasattr(broker, "state"):
             try:
@@ -333,6 +334,14 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                 if limits.daily_stop_usd and st.day_loss >= limits.daily_stop_usd:
                     halt(env, f"daily:{day}", f"daily stop: ${st.day_loss:.2f} lost today, "
                                               f"the limit is ${limits.daily_stop_usd:.2f}")
+                # The challenge target reached: bank it and stop, so a losing
+                # trade afterwards cannot take the pass back.
+                target = float(env.get("PROFIT_TARGET_USD") or 0)
+                if target and st.equity - broker.start_balance >= target and "target" not in _latched():
+                    lines = broker.close_all() if hasattr(broker, "close_all") else []
+                    halt(env, "target", f"profit target reached: ${st.equity - broker.start_balance:.2f} "
+                                        f"of ${target:.2f}; everything closed"
+                                        + (f" ({'; '.join(lines)})" if lines else ""))
                 if limits.total_stop_usd and st.total_loss >= limits.total_stop_usd:
                     halt(env, "total", f"account stop: ${st.total_loss:.2f} below the start, "
                                        f"the limit is ${limits.total_stop_usd:.2f}")
