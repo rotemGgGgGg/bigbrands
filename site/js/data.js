@@ -103,7 +103,7 @@ const _PRODUCTS = [
   { id:"n8", brand:"Lenovo", name:"Lenovo ThinkBook 14x (Core Ultra 5 226V)", category:"מחשבים חדשים", status:"stock", price:4490, wasPrice:5390, badge:"חדש", mpn:"22BG001EIV",
     desc:`מחשב נייד Lenovo ThinkBook 14x עם מעבד Intel Core Ultra 5 מהדור החדש וכרטיס גרפי Intel Arc — דק, קל ומהיר לעבודה עסקית יומיומית. כולל Windows 11 Pro.`,
     specs:`14" | Intel Core Ultra 5 226V | 16GB RAM | 512GB SSD | Intel Arc 130V | Windows 11 Pro | אחריות שנתיים`,
-    image:"" },
+    image:"assets/products/n8.png" },
 
   /* ── באנדלים ── */
   { id:"b1", brand:"HP", name:"באנדל מקצועי HP — מחשב + מסך + מקלדת ועכבר", category:"באנדלים", status:"stock", price:1075, wasPrice:1265, badge:"חיסכון 15%",
