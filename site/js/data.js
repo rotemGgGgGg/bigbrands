@@ -14,7 +14,7 @@ const _IMG = "https://snsruxcwdkgqkorsdssa.supabase.co/storage/v1/object/public/
 
 const _PRODUCTS = [
   /* ── יד שנייה (refurbished) ── */
-  { id:"u1", brand:"Lenovo", series:"T", name:"Lenovo ThinkPad T14 Gen 2", category:"יד שנייה", status:"stock", price:1590, badge:"מחודש",
+  { id:"u1", brand:"Lenovo", series:"T", name:"Lenovo ThinkPad T14 Gen 2", category:"יד שנייה", status:"stock", price:1790, badge:"מחודש",
     desc:`מחשב נייד עסקי מחודש של Lenovo מסדרת ThinkPad T — קל, מהיר ואמין, אידיאלי לעבודה יומיומית ולמשימות משרדיות בבית ובעסק.`,
     specs:`14" FHD | Intel i5-1135G7 (דור 11) | 16GB RAM | 256GB SSD | Thunderbolt 4 | WiFi 6 | Win11`,
     image:_IMG+"1777019117802_zqgfqv24mqm.jpg" },

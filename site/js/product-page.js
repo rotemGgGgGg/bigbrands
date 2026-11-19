@@ -145,7 +145,18 @@
       </div>
 
       ${relatedCards(p)}
+      <div class="m-buybar" aria-hidden="true">
+        <div class="m-buybar-price">${p.price ? ils(p.price) : "לבירור מחיר"}${p.wasPrice ? `<s>${ils(p.wasPrice)}</s>` : ""}</div>
+        <button class="m-buybar-btn" type="button" tabindex="-1">הוספה לעגלה</button>
+      </div>
     `;
+    const bar = document.querySelector(".m-buybar"), mainCta = document.querySelector("#pdpAdd");
+    document.querySelectorAll("body > .m-buybar").forEach((b) => b !== bar && b.remove());
+    if (bar) document.body.appendChild(bar);
+    if (bar && mainCta) {
+      bar.querySelector("button").onclick = () => mainCta.click();
+      new IntersectionObserver(([e]) => bar.classList.toggle("show", !e.isIntersecting && e.boundingClientRect.top < 0)).observe(mainCta);
+    }
 
     initTilt();
     initReveal();

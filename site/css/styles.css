@@ -91,7 +91,7 @@ html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px)
 a, button, .p-card .add, .icon-btn, .brand-tile, .feat-card, .dd-menu li, .car-btn, .dots button { touch-action: manipulation; }
 section[id], main { scroll-margin-top: calc(var(--header-h) + 16px); }
 
-html, body { overflow-x: hidden; max-width: 100%; }
+html, body { overflow-x: clip; max-width: 100%; }
 body {
   margin: 0;
   direction: rtl;
@@ -835,6 +835,56 @@ button { font-family: inherit; cursor: pointer; }
 
 .p-card .pspecs, .feat-card .pname { unicode-bidi: plaintext; }
 
+/* ===== Phone: compact, thumb-friendly shopping ===== */
+.m-buybar { display: none; }
+@media (max-width: 820px) {
+  html { -webkit-text-size-adjust: 100%; }
+  body { -webkit-tap-highlight-color: transparent; }
+  /* only the slim top row stays pinned; search + categories scroll away */
+  .header { position: relative; }
+  .header .container { padding-block: 8px; gap: 8px; }
+  .logo-img { height: 36px; }
+  .icon-btn { width: 42px; height: 42px; }
+  .search { height: 46px; }
+  .search input { font-size: 16px; } /* stops iOS zooming into the field */
+  .nav .container { height: 48px; padding-inline: 0; }
+  .nav .all { display: none; }
+  .nav ul { padding-inline: var(--s4); scroll-snap-type: x proximity; }
+  .nav li a { line-height: 48px; padding: 0 14px; scroll-snap-align: start; }
+
+  /* content shows immediately, no fade-in delay while scrolling */
+  .reveal, .reveal[data-stagger] > * { opacity: 1 !important; transform: none !important; transition: none !important; }
+
+  /* cards: bigger tap targets, no hover tilt */
+  .p-card:hover, .feat-card:hover { transform: none; }
+  .p-card .add { width: 44px; height: 44px; }
+  .p-card .pname { -webkit-line-clamp: 3; }
+  .p-card .pspecs { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* product page */
+  .pdp-brandlink, .crumb, .breadcrumbs a { display: inline-block; padding: 10px 4px; }
+  .btn-cta { min-height: 52px; font-size: 16px; }
+
+  /* sticky buy bar once the main button scrolls away */
+  .m-buybar {
+    display: flex; position: fixed; inset-inline: 0; bottom: 0; z-index: 90; align-items: center; gap: 12px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(10,31,68,.12);
+    transform: translateY(110%); transition: transform .25s var(--ease);
+  }
+  [data-theme="dark"] .m-buybar { background: rgba(16,22,36,.92); }
+  .m-buybar.show { transform: none; }
+  .m-buybar-price { flex: 1; font-weight: 800; font-size: 20px; color: #d9024c; font-variant-numeric: tabular-nums; }
+  .m-buybar-price s { font-size: 13px; color: var(--text-faint); font-weight: 500; margin-inline-start: 8px; }
+  .m-buybar-btn { flex: none; height: 48px; padding: 0 22px; border: 0; border-radius: 14px; font: inherit; font-weight: 700; font-size: 16px; color: #fff; background: var(--grad-accent); }
+  body:has(.m-buybar.show) .fab, body:has(.m-buybar.show) .cbot-launch { bottom: 84px; }
+
+  /* cart drawer full width and easy to close */
+  .bb-cart { width: 100vw; }
+  .bb-cart-x { width: 44px; height: 44px; }
+}
+
 /* ---- Respect reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
@@ -874,7 +924,7 @@ button { font-family: inherit; cursor: pointer; }
 .bb-cart-checkout{width:100%;justify-content:center;font-weight:800}
 .bb-cart-clear{background:transparent;border:0;color:var(--muted,#6b7280);cursor:pointer;font-size:13px;text-decoration:underline;padding:4px}
 .bb-cart-clear:hover{color:var(--brand,#e11d48)}
-body.bb-cart-lock{overflow:hidden}
+body:has(.bb-cart.open){overflow:hidden}
 [data-theme="dark"] .bb-cart{background:#0f172a;color:#e5e7eb}
 [data-theme="dark"] .bb-cart-item{background:#111827;border-color:#1f2937}
 [data-theme="dark"] .bb-cart-img{background:#111827;border-color:#1f2937}
@@ -888,4 +938,8 @@ body.bb-cart-lock{overflow:hidden}
 .rv-up.rv-in{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){
   .rv-w,.rv-up{opacity:1 !important;transform:none !important;filter:none !important;transition:none !important}
+}
+@media (max-width: 560px) {
+  .cbot-launch { width: 48px; height: 48px; inset-block-end: 14px; }
+  .cbot-launch .cbot-spark { width: 26px; height: 26px; }
 }
