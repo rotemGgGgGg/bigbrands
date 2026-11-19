@@ -835,6 +835,28 @@ body::before {
 
   .ts-facts { grid-template-columns: repeat(2, 1fr); }
 }
+/* ---------- live now ---------- */
+.live-card { position: relative; margin: 0 0 18px; padding: 14px 16px 6px; border-radius: var(--r-xl); background: var(--glass); border: 1px solid var(--hair);
+  box-shadow: var(--lift); -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%); }
+.live-card header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.live-card h3 { margin: 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-3); }
+.live-card header .muted { font-size: 11px; }
+.live-card header b { margin-left: auto; font-family: var(--mono); font-weight: 500; font-size: 15px; }
+.lv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+.lv-dot.on { background: var(--up); box-shadow: 0 0 0 3px rgba(18,153,107,.15); animation: pulse 1.6s ease infinite; }
+.lv-row { display: grid; grid-template-columns: 110px 1fr 104px; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--hair); }
+.lv-row[data-trade] { cursor: pointer; }
+.lv-b .num { font-family: var(--mono); font-size: 12.5px; }
+.lv-bar { position: relative; height: 6px; margin-top: 8px; border-radius: 3px; background: linear-gradient(90deg, rgba(224,54,90,.25), rgba(124,138,165,.18) 50%, rgba(18,153,107,.25)); }
+.lv-bar i { position: absolute; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; }
+.lv-ent { width: 2px; height: 12px; border-radius: 1px !important; background: var(--ink-2); }
+.lv-now { width: 11px; height: 11px; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.lv-now.up { background: var(--up); } .lv-now.down { background: var(--down); }
+.lv-ends { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-top: 4px; }
+.lv-c { text-align: right; }
+.lv-c b { display: block; font-family: var(--mono); font-weight: 500; font-size: 17px; }
+.lv-c small { font-family: var(--mono); font-size: 11px; }
+@media (max-width: 600px) { .lv-row { grid-template-columns: 1fr auto; } .lv-b { grid-column: 1 / -1; grid-row: 2; } }
 </style>
 </head>
 <body>
@@ -1094,6 +1116,7 @@ body::before {
         </div>
       </div>
 
+      ${liveCard()}
       <section class="chart-card">
         <div class="chart-top">
           <div class="ranges" role="group" aria-label="Range">
@@ -1456,6 +1479,65 @@ body::before {
   };
   if (PUSH_OK) { navigator.serviceWorker.getRegistration("/").then((r) => r && r.update()).catch(() => {}); paintBell(); }
 
+  /* ---------- live: what is open right now, read only ---------- */
+  const livePositions = () => {
+    if (DEMO && S.data) {
+      // demo: the open trades, priced a little in their favour
+      return S.data.trades.filter((t) => t.state === "open" || t.state === "pending").slice(0, 3).map((t) => {
+        const dir = t.side === "buy" ? 1 : -1, px = t.entry + dir * Math.abs(t.tp - t.entry) * 0.35;
+        return { trade: t.id, side: t.side, oz: t.units, entry: t.entry, price: px, sl: t.sl, sl0: t.sl, tp: t.tp,
+                 pnl: t.state === "open" ? +(dir * (px - t.entry) * t.units).toFixed(2) : 0, bot: true, pending: t.state === "pending" };
+      });
+    }
+    return (S.data && S.data.bot && S.data.bot.positions) || [];
+  };
+  const liveFresh = () => S.data && S.data.bot && (S.data.now - S.data.bot.ts) < 90;
+  function liveCard() {
+    const ps = livePositions();
+    if (!ps.length) return "";
+    const total = ps.reduce((a, p) => a + (p.pnl || 0), 0);
+    const rows = ps.map((p) => {
+      const stop = p.sl0 || p.sl, risk = stop ? Math.abs(p.entry - stop) * p.oz : 0;
+      const r = risk && !p.pending ? p.pnl / risk : null;
+      // where price sits between the stop (0) and the target (1)
+      let pos = null, ent = null;
+      if (stop && p.tp) {
+        const span = p.tp - stop;
+        pos = Math.max(0, Math.min(1, (p.price - stop) / span));
+        ent = Math.max(0, Math.min(1, (p.entry - stop) / span));
+      }
+      const attrs = p.trade ? `data-trade="${p.trade}" role="button" tabindex="0" aria-label="Chart of this trade"` : "";
+      return `<div class="lv-row" ${attrs}>
+        <div class="lv-a"><span class="side-tag ${p.side === "buy" ? "up" : "down"}">${p.side.toUpperCase()}<small>${p.oz} oz${p.pending ? " · waiting" : ""}${p.bot ? "" : " · by hand"}</small></span></div>
+        <div class="lv-b"><span class="num">${price(p.entry)} → ${price(p.price)}</span>
+          ${pos == null ? "" : `<div class="lv-bar" title="stop ${price(stop)} · target ${price(p.tp)}"><i class="lv-ent" style="left:${(ent * 100).toFixed(1)}%"></i><i class="lv-now ${p.pnl >= 0 ? "up" : "down"}" style="left:${(pos * 100).toFixed(1)}%"></i></div>
+          <div class="lv-ends"><span>SL ${price(p.sl || stop)}</span><span>TP ${price(p.tp)}</span></div>`}</div>
+        <div class="lv-c"><b class="${p.pending ? "muted" : tone(p.pnl)}">${p.pending ? "–" : money(p.pnl, true)}</b>${r == null ? "" : `<small class="${tone(r)}">${(r >= 0 ? "+" : "") + r.toFixed(2)}R</small>`}</div>
+      </div>`;
+    }).join("");
+    return `<section class="live-card">
+      <header><span class="lv-dot ${liveFresh() ? "on" : ""}"></span><h3>Live now</h3>
+        <span class="muted">${liveFresh() ? "updates every few seconds" : "no fresh data from the bot"}</span>
+        <b class="${tone(total)}">${money(total, true)}</b></header>${rows}</section>`;
+  }
+  // an open trade's sheet keeps its chart moving: the live price every
+  // refresh, and fresh candles once a minute
+  async function refreshOpenSheet() {
+    const id = S.sheetTrade; if (!id || $("#tsheet").hidden) return;
+    const t = S.data.trades.find((x) => String(x.id) === String(id));
+    if (!t || t.state === "closed" || !S.sheetBars) return;
+    if (Date.now() - (S.sheetBarsAt || 0) > 60000 && !DEMO) {
+      try {
+        let key = ""; try { key = localStorage.getItem(KEY) || ""; } catch (_) {}
+        const r = await fetch(`/api/candles?trade=${encodeURIComponent(t.id)}`, { headers: { authorization: `Bearer ${key}` } });
+        const body = await r.json(); if (r.ok && body.bars && body.bars.length) { S.sheetBars = body.bars; S.sheetBarsAt = Date.now(); }
+      } catch (_) {}
+    }
+    const lp = livePositions().find((p) => String(p.trade) === String(id));
+    $("#ts-chart").innerHTML = drawTrade(t, S.sheetBars, lp && lp.price);
+    if (lp) { const b = $("#ts-facts b"); if (b) { b.textContent = money(lp.pnl, true); b.className = tone(lp.pnl); } }
+  }
+
   /* ---------- one trade, drawn ---------- */
   function fakeBars(t) {
     // Demo only: a made-up path that goes from the entry to the exit.
@@ -1470,11 +1552,11 @@ body::before {
     }
     return out;
   }
-  function drawTrade(t, bars) {
+  function drawTrade(t, bars, livePx) {
     const W = 720, H = 340, L = 8, R = 92, T = 14, B = 26;
     const start = t.opened_at || t.created_at, end = t.closed_at || S.data.now;
     const sg = S.data.signals.find((x) => x.id === t.signal_id);
-    const levels = [t.entry, t.sl, t.tp, t.exit, sg && sg.sl].filter((v) => v != null).map(Number);
+    const levels = [t.entry, t.sl, t.tp, t.exit, sg && sg.sl, livePx].filter((v) => v != null).map(Number);
     let lo = Math.min(...bars.map((b) => b[3]), ...levels), hi = Math.max(...bars.map((b) => b[2]), ...levels);
     const padY = (hi - lo) * 0.08 || 1; lo -= padY; hi += padY;
     const x0 = bars[0][0], x1 = bars[bars.length - 1][0] || x0 + 1;
@@ -1506,6 +1588,7 @@ body::before {
     g += line(t.tp, up, "TP", true) + line(sl0, down, "SL", true) + line(t.entry, ink, "IN", false);
     if (Math.abs(Number(t.sl) - sl0) > 0.005) g += line(t.sl, ink3, "STOP", true);
     if (t.exit != null && t.state === "closed" && Math.abs(t.exit - t.tp) > 0.005 && Math.abs(t.exit - t.sl) > 0.005) g += line(t.exit, ink3, "OUT", true);
+    if (livePx != null && t.state !== "closed") g += line(livePx, css("--accent") || ink, "NOW", true);
     // labels pushed apart so none sit on another
     labels.sort((a, b) => a.y - b.y);
     for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 19) labels[i].y = labels[i - 1].y + 19;
@@ -1530,15 +1613,17 @@ body::before {
   async function openTrade(id) {
     const t = S.data.trades.find((x) => String(x.id) === String(id)); if (!t) return;
     const closed = t.state === "closed";
+    S.sheetTrade = t.id; S.sheetBars = null;
+    const lp = livePositions().find((p) => String(p.trade) === String(t.id));
     $("#ts-title").innerHTML = `<span class="${t.side === "buy" ? "up" : "down"}">${t.side.toUpperCase()}</span> ${t.units} oz · ${price(t.entry)}${closed ? " → " + price(t.exit) : ""}`;
     $("#ts-sub").textContent = `${dayName(t.opened_at || t.created_at)} ${hhmm(t.opened_at || t.created_at)}${t.closed_at ? " – " + hhmm(t.closed_at) : ""} · ${t.order_type} · ${t.mode}`;
     const sg = S.data.signals.find((x) => x.id === t.signal_id);
     const risk = Math.abs(t.entry - (sg && sg.sl != null ? sg.sl : t.sl)) * t.units;
     $("#ts-facts").innerHTML = [
-      ["Result", closed ? money(t.pnl, true) : t.state],
+      ["Result", closed ? money(t.pnl, true) : lp ? money(lp.pnl, true) : t.state],
       ["Risked", money(risk)],
       ["Stop / Target", `${price(sg && sg.sl != null ? sg.sl : t.sl)} / ${price(t.tp)}`],
-      ["R", closed && risk ? ((t.pnl / risk >= 0 ? "+" : "") + (t.pnl / risk).toFixed(2) + "R") : "–"],
+      ["R", (() => { const v = closed ? t.pnl : lp ? lp.pnl : null; return v != null && risk ? ((v / risk >= 0 ? "+" : "") + (v / risk).toFixed(2) + "R") : "–"; })()],
     ].map(([k, v]) => `<div><small>${k}</small><b>${esc(String(v))}</b></div>`).join("");
     $("#ts-chart").innerHTML = `<div class="ts-wait">Loading the price…</div>`;
     $("#tsheet").hidden = false;
@@ -1553,7 +1638,8 @@ body::before {
         bars = body.bars;
       }
       if ($("#tsheet").hidden) return;
-      $("#ts-chart").innerHTML = drawTrade(t, bars);
+      S.sheetBars = bars; S.sheetBarsAt = Date.now();
+      $("#ts-chart").innerHTML = drawTrade(t, bars, lp && !closed ? lp.price : null);
     } catch (e) { $("#ts-chart").innerHTML = `<div class="ts-wait">Could not draw it: ${esc(e.message)}</div>`; }
   }
   document.addEventListener("click", (e) => {
@@ -1600,7 +1686,7 @@ body::before {
     try {
       const data = await load();
       if (!data) return false;
-      S.data = data; render(); return true;
+      S.data = data; render(); refreshOpenSheet(); return true;
     } catch (_) {
       $("#status-title").textContent = "Desk unreachable"; $("#status-sub").textContent = "retrying";
       return Boolean(S.data);

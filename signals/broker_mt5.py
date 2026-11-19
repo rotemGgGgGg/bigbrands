@@ -330,6 +330,34 @@ class Mt5Broker:
 
     # -- the account, as the guard needs to see it --------------------------
 
+    def live_positions(self) -> list[dict]:
+        """What is open right now, for the desk's live view: every position
+        and pending order on the account, the bot's and any taken by hand,
+        with its floating result. Read only; nothing here changes a trade."""
+        mt5 = self.mt5
+        info = mt5.symbol_info(self.symbol)
+        size = info.trade_contract_size or 100.0
+        off = self._server_offset()
+        desk_id = {int(k): v.get("trade") for k, v in self.tracked.items()}
+        orig = {int(k): v.get("stop") for k, v in self.tracked.items()}
+        out = []
+        for p in mt5.positions_get() or []:
+            buy = p.type == mt5.POSITION_TYPE_BUY
+            out.append({"trade": desk_id.get(p.ticket), "ticket": p.ticket, "symbol": p.symbol,
+                        "side": "buy" if buy else "sell", "lots": p.volume, "oz": round(p.volume * size, 2),
+                        "entry": p.price_open, "price": p.price_current, "sl": p.sl or None,
+                        "sl0": orig.get(p.ticket) or p.sl or None, "tp": p.tp or None,
+                        "pnl": round(p.profit + p.swap, 2), "opened": int(p.time) - off,
+                        "bot": p.magic == MAGIC, "pending": False})
+        for o in mt5.orders_get() or []:
+            buy = o.type in (mt5.ORDER_TYPE_BUY_STOP, mt5.ORDER_TYPE_BUY_LIMIT)
+            out.append({"trade": desk_id.get(o.ticket), "ticket": o.ticket, "symbol": o.symbol,
+                        "side": "buy" if buy else "sell", "lots": o.volume_current,
+                        "oz": round(o.volume_current * size, 2), "entry": o.price_open,
+                        "price": o.price_current, "sl": o.sl or None, "sl0": o.sl or None, "tp": o.tp or None,
+                        "pnl": 0.0, "opened": int(o.time_setup) - off, "bot": o.magic == MAGIC, "pending": True})
+        return out[:20]
+
     def state(self):
         """Losses today and overall, open risk and position count.
 

@@ -170,7 +170,9 @@ async function ingest(req, env, ctx) {
 
   if (ev.type === "heartbeat") {
     const payload = { mode: ev.mode || "paper", source: ev.source || null,
-                      account: ev.account || null, rules: ev.rules || null };
+                      account: ev.account || null, rules: ev.rules || null,
+                      // what is open right now, for the live view
+                      positions: Array.isArray(ev.positions) ? ev.positions.slice(0, 20) : [] };
     await env.DB.prepare(
       "INSERT INTO meta (k, v, ts) VALUES ('bot', ?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, ts=excluded.ts",
     ).bind(JSON.stringify(payload), ts).run();

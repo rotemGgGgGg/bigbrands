@@ -328,6 +328,11 @@ def listen(env: dict, broker, limits: Limits, live: bool) -> None:
                     "login": str(acc.login), "server": acc.server, "demo": broker.demo,
                     "name": getattr(acc, "name", ""), "firm": env.get("ACCOUNT_LABEL", ""),
                 }
+                if hasattr(broker, "live_positions"):
+                    try:
+                        snap["positions"] = broker.live_positions()
+                    except Exception as e:
+                        print(f"[live positions failed: {e}]", flush=True)
                 # Losses that reach a limit stop copying even with no new
                 # signal to run into it, floating losses included.
                 day = time.strftime("%Y-%m-%d", time.gmtime())
