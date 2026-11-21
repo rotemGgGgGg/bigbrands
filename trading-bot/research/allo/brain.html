@@ -66,13 +66,15 @@ svg{display:block;width:100%;height:620px;touch-action:none}
 <div class="wrap">
   <header>
     <h1>מוח המחקר: άλλο research · Ormi</h1>
-    <p class="sub">כל הנקודות על האתר, הסקריפט Ormi, המאמר "Profitable Is Not an Edge" והמחקר שלנו, ואיך הן מתחברות. לחץ על נקודה כדי לפרק אותה.</p>
+    <p class="sub">כל הנקודות על האתר, הסקריפט Ormi, שני המאמרים ("Profitable Is Not an Edge", "Positive EV Without an Edge") והמחקר שלנו, ואיך הן מתחברות. לחץ על נקודה כדי לפרק אותה.</p>
   </header>
 
   <section class="insights" aria-label="מסקנות">
     <div class="ins"><span class="tag t-bad">החור הכי גדול</span><b>Ormi לא מפרסם את מבחן הרנדום של עצמו</b><span>המאמר שלהם דורש מכל אסטרטגיה לנצח 1,000 גרסאות אקראיות. על Ormi, האלגו שלהם, אין p-value. החוקים מוסתרים.</span></div>
     <div class="ins"><span class="tag t-ok">השיטה נכונה</span><b>המבחן שלהם = הפלסבו שלנו</b><span>הזזת רמות, ערבוב ימים, כיוון אקראי. אותה שיטה הרגה אצלנו את רוב מה שבדקנו, ואצלם 7 מתוך 7 מחקרים.</span></div>
     <div class="ins"><span class="tag t-ok">עברו את המבחן שלהם</span><b>Gotobi ו-RDM שלנו עוברים</b><span>RDM מול 1,000 גרסאות אקראיות: p≤0.004 בשתי התקופות. Gotobi מול ימים אקראיים: p&lt;0.001.</span></div>
+    <div class="ins"><span class="tag t-warn">מאמר 2</span><b>בפרופ גם מטבע מרוויח: ‎+$211 על כל $90</b><span>טריידר בלי edge, עם ברקט רחב ועצירה אחרי זוכה אחד, מרוויח כי הפירמה סופגת את ההפסדים. לכן הרף בפרופ הוא ‎+$211, לא אפס. Ormi טוען ל-$1,280.</span></div>
+    <div class="ins"><span class="tag t-ok">התיק שלנו מול מטבע</span><b>74% תשלום מול 1% לגרסה בלי edge</b><span>אותו תיק, אותו גודל, סימן אקראי לכל יום: חציון 1%, ‏p=0.000. ההצלחה בפרופ באה מה-edge, לא מהחוזה.</span></div>
     <div class="ins"><span class="tag t-warn">המודל העסקי</span><b>מאמר חינם → אוטופסיות → קורס $350</b><span>Ormi רץ רק בדמו. ההחלטות על האוטופסיות נשלחות במייל בלבד, ובפרופ חצי מההערכות נכשלות.</span></div>
   </section>
 
@@ -92,7 +94,7 @@ svg{display:block;width:100%;height:620px;touch-action:none}
     <aside class="panel" id="panel" aria-live="polite"></aside>
   </div>
 
-  <p class="foot">מקורות: alloresearch.app (/, /algo, /autopsies, /journey, /pricing, /faq), המאמר "Profitable Is Not an Edge" (άλλο research, אוקטובר 2026), ותיקיית trading-bot/research שלנו (Gotobi, RDM, mathengine, onrange, sweep, timeprice). מבחני הרנדום על RDM ועל TOM הורצו על נתוני NQ ‏2012–2026. מה שכתוב על Ormi הוא מה שהאתר טוען. לא אימתנו אותו.</p>
+  <p class="foot">מקורות: alloresearch.app (/, /algo, /autopsies, /journey, /pricing, /faq), המאמרים "Profitable Is Not an Edge" (אוקטובר 2026) ו-"Positive EV Without an Edge" (ספטמבר 2026) של άλλο research, ותיקיית trading-bot/research שלנו (Gotobi, RDM, mathengine, onrange, sweep, timeprice). מבחני הרנדום על RDM ועל TOM הורצו על נתוני NQ ‏2012–2026. מה שכתוב על Ormi הוא מה שהאתר טוען. לא אימתנו אותו.</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -141,6 +143,14 @@ const N=[
  {id:"q_rules",k:"q",t:"החוקים מוסתרים",d:"אי אפשר לשחזר את Ormi. לפי המאפיינים (NQ, תוך-יומי, מומנטום, 41.5% הצלחה, RR של 1.75, ‏370 עסקאות בשנה) הוא כנראה breakout או trend עם סטופ צמוד, ולא RDM (שלנו: 52%, RR של 1.25, ‏113 עסקאות).",f:[["שחזור","לא אפשרי"]]},
  {id:"q_ls",k:"q",t:"למה השורטים התהפכו?",d:"מחוץ לדגימה 73% מהרווח הגיע משורטים, אחרי שבתוכה הלונגים שלטו. בשוק עולה זה חשוד: או שינוי משטר, או תלות בכמה אירועים.",f:[]},
  {id:"q_verdict",k:"q",t:"ההחלטות על האוטופסיות נשלחות במייל",d:"בכל כרטיס אוטופסיה כתוב 'VERDICT' ריק. התוצאה נשלחת רק במייל, וזה משפך שיווקי. המספרים הגבוהים (PF ‏9.75, ‏88%) מופיעים ראשונים.",f:[]},
+ {id:"bench",k:"paper",t:"הרף הנכון = מזל, לא אפס",d:"החוט שמחבר את שני המאמרים. בבקטסט, תשווה לגרסה אקראית של עצמך. בפרופ, תשווה לטריידר בלי edge, שמרוויח ‎+$211 לכל $90. מי שמשווה לאפס מבלבל בין מזל, סחף השוק וכללי החוזה לבין edge.",f:[["בקטסט","1,000 גרסאות אקראיות"],["פרופ","+$211 / $90"]]},
+ {id:"p2",k:"paper",t:"Positive EV Without an Edge",d:"סימולציה של חשבון הערכה 50K עם 50,000 חשבונות לכל הגדרה. כל עסקה היא הטלת מטבע הוגנת, עם עלויות אמיתיות ותנודתיות NQ מ-2014–2023. ההגדרה הטובה: 1 NQ, ברקט 160 טיק, ועצירה אחרי הזוכה הראשון ביום. התוצאה: ‎+$211 לכל $90, בלי edge בכלל.",f:[["תאריך","ספטמבר 2026"],["EV","+$211 (SE 5.3)"],["עוברים","33.8%"],["מקבלים תשלום","~10% מהרכישות"],["t","≈40 (סף 4.90)"]]},
+ {id:"p2_mech",k:"paper",t:"למה מטבע מרוויח: אופציה",d:"ההפסד שלך מוגבל לעמלה, ואת כל ההפסד בחשבון הממומן סופגת הפירמה. Proposition 1: ‏EV = 0.9·π·(50,000 − E[יתרה סופית + עלויות]) − עמלה. מה שאתה מרוויח הוא בדיוק כמה החשבון הממומן מסתיים מתחת להתחלה. זו העברה מהפירמה, לא מסחר.",f:[["מבנה","אופציה קמורה"],["מקור הערך","החוזה, לא העסקאות"]]},
+ {id:"p2_rules",k:"paper",t:"האותיות הקטנות קובעות הכול",d:"בלי עצירה יומית, כלל העקביות (יום ≤ $1,500) הופך את התוצאה ל-‎−$68. בדיקת דרואדאון תוך-יומית במקום בסוף יום: מ-‎+$168 ל-‎+$34. רצפה שלא ננעלת: ‎+$21. ברקט צר של 40 טיק: ‎−$63, כי העלויות הן 6% מהסיכון.",f:[["בלי עצירה יומית","−$68"],["דרואדאון תוך-יומי","+$34"],["רצפה לא ננעלת","+$21"],["ברקט 40 טיק","−$63"]]},
+ {id:"p2_recs",k:"paper",t:"המלצות לפרופ",d:"לקרוא את כלל הדרואדאון בדיוק. לעצור את היום בחצי מהתקרה היומית. ברקטים רחבים ומעט עסקאות. להתייחס לכל רכישה כהגרלה, כי 9 מתוך 10 מפסידות. ולמדוד כל אסטרטגיה מול ‎+$211, לא מול אפס.",f:[["ברקט","160 טיק"],["תקרה יומית","$750"],["הפסד עמלה","9/10 רכישות"]]},
+ {id:"o_propnull",k:"ours",t:"הפרופ שלנו מול טריידר בלי edge",d:"לקחנו את תיק Gotobi + RDM והפכנו את הסימן של כל יום באקראי, 200 פעמים: אותו גודל ואותה תנודתיות, בלי edge. אחוז התשלום האמיתי 74%, מול חציון 1% לגרסה בלי edge (p=0.000). ב-5% תנודתיות: 72% מול 6%. ב-8%: ‏43% מול 12%.",f:[["3% vol","74% מול 1%"],["5% vol","72% מול 6%"],["8% vol","43% מול 12%"]]},
+ {id:"q_ormiprop",k:"q",t:"כמה מהפרופ של Ormi הוא החוזה?",d:"Ormi טוען ש'נשאר' $1,280 לכל $90, ועובר 50% מההערכות. לפי המאמר שלהם עצמם, מטבע עם ברקט רחב ועצירה יומית מקבל ‎+$211 ועובר 33.8%. Ormi גם משתמש בעצירת רווח יומית של $1,500 בהערכה, אותו טריק. אז הערך האמיתי של Ormi הוא ההפרש, כ-$1,070, לא כל הסכום.",f:[["Ormi","$1,280 · עובר 50%"],["מטבע","$211 · עובר 33.8%"]]},
+ {id:"q_oursim",k:"q",t:"הסימולטור שלנו נדיב מדי?",d:"הסימולציה שלנו בודקת את העקביות מול סך הרווח (יום ≤ 50% מהרווח). לפי המאמר, אם החשבון האמיתי מגביל כל יום ל-$1,500, בלי עצירה יומית זה הופך לשלילי. צריך להוסיף לסימולטור את הכללים המדויקים של Lucid, ועצירה אחרי $750.",f:[["קריאה שלנו","סך רווח 50%"],["לבדוק","יום ≤ $1,500"]]},
  {id:"q_next",k:"q",t:"מה עושים עם זה",d:"1) לקחת את הצ'קליסט שלהם כסטנדרט אצלנו. 2) לא לקנות את הקורס בשביל Ormi, כי החוקים לא בפנים. 3) להריץ את Gotobi ו-RDM בדמו, כמו שהם עושים עם Ormi. 4) לשאול אותם על ה-p של Ormi.",f:[]}
 ];
 const E=[
@@ -151,6 +161,8 @@ const E=[
  ["rb","o_place"],["what","o_place"],["bestN","o_mega"],["rb","o_gotobi"],["rb","o_rdm"],["tom","o_tom"],["a_lon","o_orb"],["passing","o_orb"],
  ["six","o_gap"],["nulls","o_imom"],["o_gotobi","o_book"],["o_rdm","o_book"],["ormi","o_rdm",1],["q_rules","o_rdm"],
  ["ormi","q_ormirb",1],["rb","q_ormirb",1],["lab","q_ormirb"],["ormi","q_rules",1],["ormi_ls","q_ls",1],["allo","q_verdict",1],["a_lon","q_verdict"],
+ ["bench","rb"],["bench","p2"],["paper","bench"],["allo","p2"],["p2","p2_mech"],["p2","p2_rules"],["p2","p2_recs"],["p2_mech","o_propnull"],["bench","o_propnull"],["o_propnull","o_book"],
+ ["ormi_prop","q_ormiprop",1],["p2","q_ormiprop"],["p2_rules","q_ormiprop"],["p2_rules","q_oursim"],["o_book","q_oursim",1],["p2_recs","q_next"],["mc","p2_mech"],
  ["ormi_fill","passing"],["ormi_prop","o_book"],["check","q_next"],["o_book","q_next"],["ormi_live","q_next"],["a_tom","o_tom",1],["ormi_rr","q_rules"]
 ].map(([s,t,c])=>({source:s,target:t,contra:!!c}));
 const deg={}; E.forEach(e=>{deg[e.source]=(deg[e.source]||0)+1;deg[e.target]=(deg[e.target]||0)+1});
@@ -168,7 +180,7 @@ const node=g.append("g").selectAll("g").data(N).join("g").attr("class","node").a
   .call(d3.drag().on("start",(ev,d)=>{if(!ev.active)sim.alphaTarget(.2).restart();d.fx=d.x;d.fy=d.y}).on("drag",(ev,d)=>{d.fx=ev.x;d.fy=ev.y}).on("end",(ev,d)=>{if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
 node.append("circle").attr("r",d=>7+Math.sqrt(deg[d.id]||1)*3.2).attr("fill",col);
 node.append("text").attr("dy",d=>-(10+Math.sqrt(deg[d.id]||1)*3.2)).attr("text-anchor","middle").text(d=>d.t.length>26?d.t.slice(0,25)+"…":d.t);
-const cx={src:-.32,ormi:.3,paper:-.05,aut:-.35,ours:.15,q:.38}, cy={src:-.3,ormi:-.28,paper:.02,aut:.3,ours:.3,q:.05};
+const cx={src:-.32,ormi:.3,paper:-.08,aut:-.35,ours:.15,q:.38}, cy={src:-.3,ormi:-.28,paper:.02,aut:.3,ours:.3,q:.05};
 const sim=d3.forceSimulation(N).force("link",d3.forceLink(E).id(d=>d.id).distance(70).strength(.5))
   .force("charge",d3.forceManyBody().strength(-260)).force("collide",d3.forceCollide(30))
   .force("x",d3.forceX(d=>W()/2+cx[d.k]*W()).strength(.09)).force("y",d3.forceY(d=>Hh()/2+cy[d.k]*Hh()).strength(.09))
