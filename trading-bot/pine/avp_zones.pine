@@ -18,6 +18,11 @@ showHVN   = input.bool(true, "Show HVN zones", group = "Zones")
 showSig   = input.bool(true, "Show LVN rejection signals", group = "Signals")
 showTrade = input.bool(true, "Draw stop / target", group = "Signals")
 rrMult    = input.float(2.0, "Target (R multiple)", minval = 0.5, step = 0.5, group = "Signals")
+stopMode  = input.string("Wick", "Stop at", options = ["Wick", "Zone far edge"], group = "Signals")
+stopBuf   = input.float(2.0, "Stop buffer (points)", minval = 0, step = 0.25, group = "Signals")
+maxRisk   = input.float(60.0, "Max risk (points, 0 = off)", minval = 0, step = 5, group = "Signals")
+onePerZone = input.bool(true, "One signal per zone per side per session", group = "Signals")
+maxDraw   = input.int(6, "Keep last N trade drawings", minval = 1, maxval = 50, group = "Signals")
 showBg    = input.bool(true, "Session colours (NY time)", group = "Look")
 cLVN      = input.color(color.new(#3b6ea8, 78), "LVN fill", group = "Look")
 cHVN      = input.color(color.new(#c98a2b, 82), "HVN fill", group = "Look")
@@ -31,6 +36,10 @@ var int     cur  = 0                     // bars in the running session
 var box[]   act  = array.new_box()       // zones drawn for the running session
 var float[] zTop = array.new_float()     // active LVN tops / bottoms (signals use only LVNs)
 var float[] zBot = array.new_float()
+var bool[]  usedL = array.new_bool()     // per active LVN: long / short already signalled this session
+var bool[]  usedS = array.new_bool()
+var line[]  dLines = array.new_line()
+var label[] dLabels = array.new_label()
 
 newSess = ta.change(time("D")) != 0
 
@@ -44,6 +53,8 @@ if newSess and bar_index > 0
     array.clear(act)
     array.clear(zTop)
     array.clear(zBot)
+    array.clear(usedL)
+    array.clear(usedS)
     // roll the window of sessions
     array.push(sLen, cur)
     cur := 0
@@ -112,6 +123,8 @@ if newSess and bar_index > 0
                                 if kind == 0
                                     array.push(zTop, top)
                                     array.push(zBot, bot)
+                                    array.push(usedL, false)
+                                    array.push(usedS, false)
                             z := e + 1
                         else
                             z += 1
@@ -131,26 +144,39 @@ if showSig and array.size(zTop) > 0 and barstate.isconfirmed
     for k = 0 to array.size(zTop) - 1
         t  = array.get(zTop, k)
         bt = array.get(zBot, k)
-        if close[1] > t and low <= t and close > t
-            longSig := true
-            stopL := math.min(bt, low) - syminfo.mintick
-        if close[1] < bt and high >= bt and close < bt
-            shortSig := true
-            stopS := math.max(t, high) + syminfo.mintick
+        if not longSig and close[1] > t and low <= t and close > t and not (onePerZone and array.get(usedL, k))
+            sl = (stopMode == "Wick" ? low : math.min(bt, low)) - stopBuf
+            if maxRisk == 0 or close - sl <= maxRisk
+                longSig := true
+                stopL := sl
+                array.set(usedL, k, true)
+        if not shortSig and close[1] < bt and high >= bt and close < bt and not (onePerZone and array.get(usedS, k))
+            ss = (stopMode == "Wick" ? high : math.max(t, high)) + stopBuf
+            if maxRisk == 0 or ss - close <= maxRisk
+                shortSig := true
+                stopS := ss
+                array.set(usedS, k, true)
 
 plotshape(longSig, "LVN long", shape.triangleup, location.belowbar, color.new(#16a085, 0), size = size.small)
 plotshape(shortSig, "LVN short", shape.triangledown, location.abovebar, color.new(#e05252, 0), size = size.small)
 
-if showTrade and longSig
-    risk = close - stopL
-    line.new(bar_index, stopL, bar_index + 24, stopL, color = color.new(#e05252, 0), style = line.style_dashed)
-    line.new(bar_index, close + rrMult * risk, bar_index + 24, close + rrMult * risk, color = color.new(#16a085, 0), style = line.style_dashed)
-    label.new(bar_index + 24, close + rrMult * risk, "1:" + str.tostring(rrMult) + " · risk " + str.tostring(risk, format.mintick), style = label.style_label_left, size = size.tiny, color = color.new(#16a085, 70), textcolor = color.white)
-if showTrade and shortSig
-    risk = stopS - close
-    line.new(bar_index, stopS, bar_index + 24, stopS, color = color.new(#e05252, 0), style = line.style_dashed)
-    line.new(bar_index, close - rrMult * risk, bar_index + 24, close - rrMult * risk, color = color.new(#16a085, 0), style = line.style_dashed)
-    label.new(bar_index + 24, close - rrMult * risk, "1:" + str.tostring(rrMult) + " · risk " + str.tostring(risk, format.mintick), style = label.style_label_left, size = size.tiny, color = color.new(#e05252, 70), textcolor = color.white)
+drawTrade(entry, stop, dir) =>
+    risk = math.abs(entry - stop)
+    tgt  = entry + dir * rrMult * risk
+    l1 = line.new(bar_index, stop, bar_index + 12, stop, color = color.new(#e05252, 0), style = line.style_dashed)
+    l2 = line.new(bar_index, tgt, bar_index + 12, tgt, color = color.new(#16a085, 0), style = line.style_dashed)
+    lb = label.new(bar_index + 12, tgt, "1:" + str.tostring(rrMult) + " · risk " + str.tostring(risk, format.mintick), style = label.style_label_left, size = size.tiny, color = dir == 1 ? color.new(#16a085, 70) : color.new(#e05252, 70), textcolor = color.white)
+    [l1, l2, lb]
+
+if showTrade and (longSig or shortSig)
+    [l1, l2, lb] = drawTrade(close, longSig ? stopL : stopS, longSig ? 1 : -1)
+    array.push(dLines, l1)
+    array.push(dLines, l2)
+    array.push(dLabels, lb)
+    while array.size(dLabels) > maxDraw
+        label.delete(array.shift(dLabels))
+        line.delete(array.shift(dLines))
+        line.delete(array.shift(dLines))
 
 alertcondition(longSig, "AVP LVN long", "AVP Zones: LVN rejection long on {{ticker}} at {{close}}")
 alertcondition(shortSig, "AVP LVN short", "AVP Zones: LVN rejection short on {{ticker}} at {{close}}")
