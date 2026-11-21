@@ -1,0 +1,4 @@
+RDM IS 2012-19: real     9150 bp | null A (random direction, same days): p=0.000, median -1184 | null B (random days, go with today): p=0.003, median 5025
+RDM OOS 2020-26: real     8609 bp | null A (random direction, same days): p=0.001, median -967 | null B (random days, go with today): p=0.004, median 3534
+TOM on NQ 2012-2019: real 2698 bp | random 4-day window/month: p=0.490, median 2655 bp
+TOM on NQ 2020-2026: real 10873 bp | random 4-day window/month: p=0.050, median 6851 bp

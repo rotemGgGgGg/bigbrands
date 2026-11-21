@@ -1,0 +1,194 @@
+<title>מוח המחקר · άλλο</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a lab notebook — graph canvas on one side, case-file panel on the other; summary strip above. */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --fg:#17201d; --muted:#5d6b66; --line:#d5dcd9; --ink:#0f5c4c;
+  --c-src:#6b4fbb; --c-ormi:#c2410c; --c-paper:#0f766e; --c-aut:#a16207; --c-ours:#1d4ed8; --c-q:#be123c;
+  --ok:#15803d; --bad:#b91c1c; --warn:#b45309;
+  --f-body:"Heebo",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101614; --panel:#17201d; --fg:#e6ece9; --muted:#9aa8a3; --line:#2b3632; --ink:#5eead4;
+  --c-src:#a78bfa; --c-ormi:#fb923c; --c-paper:#2dd4bf; --c-aut:#facc15; --c-ours:#60a5fa; --c-q:#fb7185;
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101614; --panel:#17201d; --fg:#e6ece9; --muted:#9aa8a3; --line:#2b3632; --ink:#5eead4;
+  --c-src:#a78bfa; --c-ormi:#fb923c; --c-paper:#2dd4bf; --c-aut:#facc15; --c-ours:#60a5fa; --c-q:#fb7185;
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);direction:rtl}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.95rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.ins{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.ins b{font-size:.98rem}
+.ins span{color:var(--muted);font-size:.88rem;line-height:1.5}
+.tag{display:inline-block;font-size:.72rem;letter-spacing:.04em;padding:2px 8px;border-radius:99px;border:1px solid currentColor;font-weight:600;width:max-content}
+.t-ok{color:var(--ok)} .t-bad{color:var(--bad)} .t-warn{color:var(--warn)}
+.main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:1fr}}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:12px;position:relative;overflow:hidden;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-bottom:1px solid var(--line);align-items:center}
+.chip{font:inherit;font-size:.8rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="false"]{opacity:.4}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip:focus-visible,.nb:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#q{font:inherit;font-size:.85rem;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);min-width:0;flex:1 1 140px}
+svg{display:block;width:100%;height:620px;touch-action:none}
+@media (max-width:600px){svg{height:480px}}
+.edge{stroke:var(--line);stroke-width:1.4}
+.edge.hot{stroke:var(--ink);stroke-width:2.4}
+.edge.contra{stroke-dasharray:5 4}
+.node circle{stroke:var(--panel);stroke-width:2;cursor:pointer}
+.node text{font-family:var(--f-body);font-size:11px;fill:var(--fg);pointer-events:none;paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+.node.dim{opacity:.18} .edge.dim{opacity:.12}
+.node.sel circle{stroke:var(--fg);stroke-width:3}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0;position:sticky;top:env(safe-area-inset-top,0px)}
+.panel h2{margin:0;font-size:1.25rem;text-wrap:balance}
+.kind{font-size:.75rem;letter-spacing:.06em;color:var(--muted)}
+.panel p{margin:0;line-height:1.65;font-size:.93rem}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.86rem}
+.facts dt{color:var(--muted)} .facts dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
+.links{display:flex;flex-direction:column;gap:6px}
+.nb{font:inherit;text-align:right;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--fg);display:flex;gap:8px;align-items:baseline;font-size:.86rem}
+.nb em{font-style:normal;color:var(--muted);font-size:.78rem;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:var(--muted);padding:8px 10px;border-top:1px solid var(--line)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.ln{width:22px;height:0;border-top:2px solid var(--muted);display:inline-block}
+.ln.d{border-top-style:dashed}
+.foot{color:var(--muted);font-size:.8rem;line-height:1.6}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>מוח המחקר: άλλο research · Ormi</h1>
+    <p class="sub">כל הנקודות על האתר, הסקריפט Ormi, המאמר "Profitable Is Not an Edge" והמחקר שלנו, ואיך הן מתחברות. לחץ על נקודה כדי לפרק אותה.</p>
+  </header>
+
+  <section class="insights" aria-label="מסקנות">
+    <div class="ins"><span class="tag t-bad">החור הכי גדול</span><b>Ormi לא מפרסם את מבחן הרנדום של עצמו</b><span>המאמר שלהם דורש מכל אסטרטגיה לנצח 1,000 גרסאות אקראיות. על Ormi, האלגו שלהם, אין p-value. החוקים מוסתרים.</span></div>
+    <div class="ins"><span class="tag t-ok">השיטה נכונה</span><b>המבחן שלהם = הפלסבו שלנו</b><span>הזזת רמות, ערבוב ימים, כיוון אקראי. אותה שיטה הרגה אצלנו את רוב מה שבדקנו, ואצלם 7 מתוך 7 מחקרים.</span></div>
+    <div class="ins"><span class="tag t-ok">עברו את המבחן שלהם</span><b>Gotobi ו-RDM שלנו עוברים</b><span>RDM מול 1,000 גרסאות אקראיות: p≤0.004 בשתי התקופות. Gotobi מול ימים אקראיים: p&lt;0.001.</span></div>
+    <div class="ins"><span class="tag t-warn">המודל העסקי</span><b>מאמר חינם → אוטופסיות → קורס $350</b><span>Ormi רץ רק בדמו. ההחלטות על האוטופסיות נשלחות במייל בלבד, ובפרופ חצי מההערכות נכשלות.</span></div>
+  </section>
+
+  <div class="main">
+    <section class="board" aria-label="גרף הקשרים">
+      <div class="toolbar" id="tb">
+        <input id="q" type="search" placeholder="חפש נקודה… (Ormi, TOM, RDM)" aria-label="חיפוש">
+      </div>
+      <svg id="g" role="img" aria-label="גרף של נקודות וקשרים"></svg>
+      <div class="legend">
+        <span><i class="ln"></i>קשור / תומך</span>
+        <span><i class="ln d"></i>סותר / חשוד</span>
+        <span>גודל העיגול = כמה קשרים</span>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <p class="foot">מקורות: alloresearch.app (/, /algo, /autopsies, /journey, /pricing, /faq), המאמר "Profitable Is Not an Edge" (άλλο research, אוקטובר 2026), ותיקיית trading-bot/research שלנו (Gotobi, RDM, mathengine, onrange, sweep, timeprice). מבחני הרנדום על RDM ועל TOM הורצו על נתוני NQ ‏2012–2026. מה שכתוב על Ormi הוא מה שהאתר טוען. לא אימתנו אותו.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const K={src:{n:"המקור",c:"--c-src"},ormi:{n:"Ormi (טענות)",c:"--c-ormi"},paper:{n:"המאמר",c:"--c-paper"},aut:{n:"אוטופסיות",c:"--c-aut"},ours:{n:"המחקר שלנו",c:"--c-ours"},q:{n:"שאלות פתוחות",c:"--c-q"}};
+const N=[
+ {id:"allo",k:"src",t:"άλλο research",d:"חוקר עצמאי (allobiancofiore@gmail.com) שמפרסם מחקר כמותי על אסטרטגיות. מוכר קורס, נותן מאמרים חינם, ומריץ אלגו משלו בשם Ormi.",f:[["אתר","alloresearch.app"],["מוצרים","Journey, Lab, Ormi"],["טוען","לא מוכר סיגנלים או בוט"]]},
+ {id:"journey",k:"src",t:"The Journey: קורס 12 שבועות",d:"קורס מסחר אלגוריתמי. רק שבועות 1–4 מוכנים, ושבועות 5–12 עדיין בבנייה. כולל 3 חודשים של ה-Lab.",f:[["מחיר","$129/חודש, או $350 פעם אחת"],["מ-02/2027","$159/חודש"],["החזר","14 יום"]]},
+ {id:"lab",k:"src",t:"The Lab (פריוויו)",d:"כלי בדיקה שרץ בדפדפן: עלויות בכל עסקה, נתוני בדיקה נעולים, ובדיקה מול 200 עותקים אקראיים. בפריוויו פרטי לקבוצה קטנה.",f:[["מצב","פריוויו פרטי"],["רנדום","200 עותקים"]]},
+ {id:"lookahead",k:"src",t:"מאמר: Look-Ahead Bias",d:"מאמר חינם של 30 עמודים: חיבור סיגנלים מטיים-פריים גבוה לביצוע בדקה אחת 'מייצר' רווח שלא קיים בבקטסט. זה הבסיס לאוטופסיה של ה-regression slope.",f:[["אורך","30 עמודים"],["נושא","הדלפת עתיד בין טיים-פריימים"]]},
+ {id:"ormi",k:"ormi",t:"Ormi: האלגו שלהם",d:"אסטרטגיית מומנטום תוך-יומית על NQ ('Ormi' = מומנטום ביוונית). שעון שיקגו, סגירה לפני סוף היום. החוקים לא נחשפים, ויש רק מספרים.",f:[["רווח 2020–11/2026","$272,622 (1 NQ)"],["עסקאות","2,524 (~370 בשנה)"],["אחוז הצלחה","41.5%"],["PF","1.24 (OOS ‏1.20)"],["Sharpe","1.84 (OOS ‏1.68)"],["ממוצע לעסקה","$108 ≈ 5.4 נק' NQ"],["ירידה מקסימלית","−$14,352"]]},
+ {id:"ormi_split",k:"ormi",t:"Ormi: בתוך הדגימה מול מחוצה לה",d:"החוקים נבנו על 2020–2023 ו'הוקפאו', ואז הורצו פעם אחת על 2024 עד 11/2026. מחוץ לדגימה ה-t של 2.62 עדיין חזק. כל 7 השנים רווחיות.",f:[["IS: PF / Sharpe / t","1.27 / 2.00 / 4.01"],["OOS: PF / Sharpe / t","1.20 / 1.68 / 2.62"],["חודשים רווחיים","77% / 71%"],["2025","+$23,113 (PF 1.12)"]]},
+ {id:"ormi_ls",k:"ormi",t:"Ormi: לונג מול שורט",d:"בתוך הדגימה הלונגים הביאו את רוב הרווח ($98K מול $57K). מחוץ לה זה התהפך: השורטים הביאו $86K והלונגים רק $31K. שינוי חד באיפה שהרווח נמצא.",f:[["IS לונג/שורט","$98K / $57K"],["OOS לונג/שורט","$31K / $86K"]]},
+ {id:"ormi_rr",k:"ormi",t:"המתמטיקה של Ormi",d:"41.5% הצלחה עם PF ‏1.24 נותן RR של בערך 1.75: הרבה הפסדים קטנים וזוכים גדולים. ממוצע של 5.4 נקודות לעסקה, כשהעלות היא בערך 1 טיק ועוד $5.76. מקום טוב יותר בביצוע אמיתי, כלומר מילוי גרוע יותר, אוכל חלק גדול.",f:[["RR משתמע","≈1.75"],["נקודת איזון","36% הצלחה"],["עלות / ממוצע","≈ 10% מהרווח"]]},
+ {id:"ormi_search",k:"ormi",t:"Ormi: 189 גרסאות",d:"הם מודים שבדקו 189 גרסאות של פרמטרים. הגרסה הכי טובה בתוך הדגימה (Sharpe ‏2.47) נפלה מחוץ לה ל-0.93, ולכן שמרו על המקור (1.68). זה סימן טוב שהם בודקים התאמת יתר.",f:[["גרסאות","189"],["הכי טובה IS→OOS","2.47 → 0.93"],["המקור IS→OOS","2.01 → 1.68"]]},
+ {id:"ormi_live",k:"ormi",t:"Ormi לייב = חשבון דמו",d:"רץ על NinjaTrader בחשבון דמו עם 12 MNQ, כלומר כסף מדומה. הם עצמם אומרים שצריך לפחות 6 חודשים לייב לפני כסף אמיתי.",f:[["חשבון","דמו (סימולציה)"],["גודל","12 MNQ"],["סטטוס","בבדיקה"]]},
+ {id:"ormi_prop",k:"ormi",t:"Ormi בפרופ (LucidFlex 50K)",d:"20 MNQ בהערכה ו-12 בחשבון ממומן. חצי מההערכות נכשלות, בדרך כלל בשבוע הראשון. ההגדרה נבחרה מתוך 6,720 מועמדים.",f:[["עוברים הערכה","50%"],["חשבון ממומן מגיע לתשלום","43% IS / 33% OOS"],["ימים לעבור (חציון)","6"],["נשאר לכל $90","$1,280 / $1,142"]]},
+ {id:"ormi_fill",k:"ormi",t:"מנוע הבקטסט שלהם",d:"דאטה טיק אמיתי, טארגט מתמלא רק כשהמחיר עובר דרכו ולא בנגיעה, ו-1 טיק החלקה בכל סטופ. התאים ל-NinjaTrader, 347 עסקאות זהות, כש-NinjaTrader נותן כ-10% יותר רווח כי ממלא בנגיעה. זה מקצועי.",f:[["עמלה","$5.76 סיבוב"],["החלקה","1 טיק"],["מילוי טארגט","דרך המחיר"]]},
+ {id:"paper",k:"paper",t:"Profitable Is Not an Edge",d:"הטענה המרכזית: אפס הוא הרף הלא נכון. צריך לנצח גרסה אקראית של אותה אסטרטגיה, עם אותן יציאות, עלויות, גודל וצד, כשרק 'המידע' מוחלף במזל.",f:[["תאריך","אוקטובר 2026"],["סף מעבר","p ≤ 5%"],["הרצות","1,000"]]},
+ {id:"rb",k:"paper",t:"Random baseline",d:"מפרקים אסטרטגיה ל'מידע' (מתי, לאיזה כיוון, אילו רמות) ול'מכניקה' (יציאות, עלויות, גודל). מחליפים רק את המידע במזל, 1,000 פעם. p הוא אחוז ההרצות האקראיות שהגיעו לפחות לתוצאה האמיתית.",f:[["מה מודדים","p + חציון אקראי"],["p=40%","= מזל, לא '60% edge'"]]},
+ {id:"what",k:"paper",t:"מה לערבב",d:"טענה על תזמון → ימים אקראיים באותה שעה. טענה על כיוון → צד אקראי, רק לאסטרטגיה דו-כיוונית. טענה על רמות → הזזת הרמות בשבר אקראי. טענה על המסלול → סדרות חלופיות.",f:[["תזמון","ימים אקראיים"],["כיוון","צד אקראי"],["רמות","הזזה אקראית"]]},
+ {id:"mc",k:"paper",t:"Monte Carlo ≠ מבחן edge",d:"ה'מונטה קרלו' בכלי הבקטסט מערבב את העסקאות של עצמך. הוא מניח שה-edge אמיתי ומודד רק את הסיכון סביבו. ב-TOM הוא נתן 99.98% סיכוי לרווח, והמציאות הייתה מחוץ לכל 5,000 המסלולים.",f:[["TOM: MC אמר","99.98% רווח"],["בפועל","$11,405 נמוך, 0.04%"]]},
+ {id:"bestN",k:"paper",t:"בחירה מתוך N",d:"אם בחרת את הכלל הטוב ביותר מתוך N וריאציות, השווה אותו לטוב ביותר מתוך N וריאציות אקראיות (Bailey 2017). אחרת המבחן מוטה לטובת מעבר.",f:[["מקור","Bailey et al. 2017"]]},
+ {id:"tom",k:"paper",t:"Case: Turn of the Month",d:"קנייה ב-T0−2 ומכירה אחרי סשן 2 של החודש החדש, על MES ו-MNQ. בתוך הדגימה הכול עבר. מחוץ לה עדיין היה רווח, אבל 67.4% מהחלונות האקראיים עשו לפחות אותו דבר, והחציון האקראי (‎$7.4K) הרוויח יותר.",f:[["IS 2020–23","+$46.4K · PF 3.34 · 66%"],["IS רנדום","0.1% → עבר"],["OOS 2024–26","+$3.5K · PF 1.22"],["OOS רנדום","67.4% → נכשל"]]},
+ {id:"six",k:"paper",t:"6 מחקרים שנפלו",d:"Impulse-leg breakout ‏(NQ): 32% מהאקראיים טובים ממנו. HMA+regression ‏(GBP/JPY): p=0.49. Month-end flows: סימן אקראי טוב באותה מידה. רמות 'שיווי משקל': 60–85% מהעולמות המוזזים גם עבדו. IV walls בזהב: 0 מתוך 36. Gap fade: 53%, הטלת מטבע.",f:[["נפלו","6 מתוך 6"]]},
+ {id:"passing",k:"paper",t:"מעבר לא מוכיח כלום",d:"London ORB עם PF ‏2.07: הרווח הגיע מבאג מילוי (101% מהרווח). Prior-day H/L ניצח 200 מתוך 200 גרסאות רנדום ואז הפסיד. Vol breakout עבר, אבל ה-edge מחוץ לדגימה היה חמישית. מעבר שולל מזל, לא באגים, look-ahead או דעיכה.",f:[["דוגמאות","4"]]},
+ {id:"nulls",k:"paper",t:"איך לטעות בנאל",d:"כיוון אקראי לאסטרטגיית לונג בלבד בשוק עולה, ערבוב כיוון על ספר חד-צדדי, השוואת נאל קמור לאפס, ונאל שהעלויות מטביעות. במקרה האחרון 'מנצח 98%' לא אומר כלום.",f:[["מלכודות","4"]]},
+ {id:"check",k:"paper",t:"הצ'קליסט",d:"לכתוב את הטענה לפני הבדיקה. לערבב רק אותה. לפחות 1,000 הגרלות עם seed קבוע. לקבע את הסף מראש. לבחור מתוך N מול N. להריץ על כל תקופה. ולא לראות במעבר הוכחה.",f:[["עשה","6"],["אל תעשה","6"]]},
+ {id:"a_trend",k:"aut",t:"Fast trend + regression (GBP/JPY)",d:"9,216 גרסאות. כל 5 הפיינליסטים הרוויחו בשנה שלא ראו. במאמר אותה משפחה (HMA+regression) קיבלה p=0.49, כלומר מזל.",f:[["גרסאות","9,216"],["רנדום (מאמר)","p=0.49"]]},
+ {id:"a_tom",k:"aut",t:"Turn of the month (NQ+ES)",d:"מוצג כפיתיון: 66% הצלחה ו-PF ‏3.3. המאמר מראה שמחוץ לדגימה זה מזל.",f:[["פיתיון","66% · PF 3.3"]]},
+ {id:"a_reg",k:"aut",t:"Multi-timeframe regression slope",d:"‎+$392,896 ו-Sharpe ‏2.06 על 4 שנים. זה המקרה של ה-look-ahead: חיבור לטיים-פריים גבוה מדליף עתיד.",f:[["פיתיון","$392,896 · Sharpe 2.06"]]},
+ {id:"a_ema",k:"aut",t:"NY open EMA (NQ 5m)",d:"נר 09:30 מול EMA ‏12, עם כל הסטופים והטריילים. לא מוצגים מספרים.",f:[]},
+ {id:"a_iv",k:"aut",t:"IV walls (זהב)",d:"רמות מתנודתיות משתמעת כתמיכה והתנגדות. 36 הגדרות, ואף אחת לא ניצחה קירות מעורבבים.",f:[["ניצחו","0/36"]]},
+ {id:"a_lon",k:"aut",t:"London 10AM ORB (ES+NQ)",d:"88% הצלחה, PF ‏9.75, ו'עבר פרופ ב-97% מהסימולציות'. זה המקרה של באג המילוי: עם מילוי כן, PF של 0.83–0.98.",f:[["פיתיון","88% · PF 9.75"],["עם מילוי כן","PF 0.83–0.98"]]},
+ {id:"a_xrp",k:"aut",t:"XRP mean reversion",d:"הטוב ביותר מסריקה על הרבה מטבעות וטיים-פריימים, 'עבר את הבדיקה הראשונה'. זו בדיוק בעיית הבחירה מתוך N.",f:[]},
+ {id:"o_place",k:"ours",t:"הפלסבו שלנו",d:"השתמשנו באותה שיטה: הזזת רשת זמן (Quarterly), הזזת רמות (Gann ו-onrange mirror), ערבוב ימים (factory: אמיתי 142 מול פלסבו 2), ו-1,000 קבוצות ימים אקראיות (Gotobi).",f:[["factory","142 מול 2"],["factory v2","173 מול 4"]]},
+ {id:"o_mega",k:"ours",t:"61M וריאציות → 0",d:"החיפוש הגדול שלנו: 61 מיליון וריאציות, ואף אחת לא עברה את המבחן הסופי. אותו לקח כמו 'בחירה מתוך N'.",f:[["וריאציות","61M"],["עברו","0"]]},
+ {id:"o_gotobi",k:"ours",t:"Gotobi (USDJPY/EURJPY)",d:"עובר את המבחן שלהם. מול 1,000 קבוצות של ימים רגילים אקראיים p&lt;0.001. 15/15 שנים, כולל 2012–17 שהמוכר לא הראה. זרימת כסף אמיתית בזמן קבוע.",f:[["p רנדום ימים","<0.001"],["שנים","15/15"],["הצלחה","61.7%"]]},
+ {id:"o_rdm",k:"ours",t:"RDM: Reversal-Day Momentum (NQ)",d:"ב-09:45, אם המחיר מול פתיחת 09:00 הפוך לנר של אתמול, הולכים עם היום עד 15:55. מבחן הרנדום של המאמר: כיוון אקראי באותם ימים p=0.000/0.001, ימים אקראיים עם 'לך עם היום' p=0.003/0.004. עובר בשתי התקופות.",f:[["IS: p כיוון / ימים","0.000 / 0.003"],["OOS: p כיוון / ימים","0.001 / 0.004"],["הצלחה / RR","52.3% / 1.25"],["עסקאות/שנה","113"]]},
+ {id:"o_tom",k:"ours",t:"TOM על הנתונים שלנו",d:"הרצנו את מבחן ה-TOM של המאמר על NQ: ‏2012–19 p=0.49, מזל גמור. ‏2020–26 p=0.050, על הגבול. מאשר את המאמר: TOM הוא לא edge אמין.",f:[["2012–19","p=0.49"],["2020–26","p=0.050"]]},
+ {id:"o_orb",k:"ours",t:"London / ORB / סוויפים אצלנו",d:"מודל SP (לונדון) ‎−0.03R על 14 שנים. סוויפים/CRT: 31,716 וריאציות, ממוצע ‎−0.36R. London Break & Retest מת. זה מתיישב עם האוטופסיה של London ORB.",f:[["SP model","−0.03R"],["CRT","−0.36R"]]},
+ {id:"o_gap",k:"ours",t:"Gap fade / month-end אצלנו",d:"גאפ קטן אצלנו: ‎+0.4bp, t ‏0.3, מת. תיקון סוף חודש בלונדון (FIX): Sharpe שלילי. אותו דבר כמו בטבלה שלהם.",f:[["gap fill","t 0.3"],["FIX","−0.14 Sharpe"]]},
+ {id:"o_imom",k:"ours",t:"מומנטום תוך-יומי אצלנו",d:"Gao (ראשון→אחרון חצי שעה) הפסיד ‎−1 עד ‎−2 Sharpe, כי העלויות אכלו סיגנל של 0.3bp. זו בדיוק 'נאל שהעלויות מטביעות' מהמאמר.",f:[["Sharpe","−1 עד −2"]]},
+ {id:"o_book",k:"ours",t:"התיק שלנו: Gotobi + RDM",d:"Sharpe ‏1.71 על 2016–26 (מחוץ לבחירה), 22.6% בשנה, ירידה מקסימלית ‎−18.5%, ‏10/11 שנים רווחיות. ‏73% הצלחה בפרופ בסיכון נמוך.",f:[["Sharpe","1.71"],["שנים","10/11"]]},
+ {id:"q_ormirb",k:"q",t:"האם Ormi עובר את המבחן שלהם?",d:"הם דורשים 1,000 גרסאות אקראיות מכל אחד, ובדף הבית מראים איור של '0 מתוך 200 עותקים' בלי תוצאה. על Ormi אין p-value. זו השאלה הראשונה לשאול אותם.",f:[["סטטוס","לא פורסם"]]},
+ {id:"q_rules",k:"q",t:"החוקים מוסתרים",d:"אי אפשר לשחזר את Ormi. לפי המאפיינים (NQ, תוך-יומי, מומנטום, 41.5% הצלחה, RR של 1.75, ‏370 עסקאות בשנה) הוא כנראה breakout או trend עם סטופ צמוד, ולא RDM (שלנו: 52%, RR של 1.25, ‏113 עסקאות).",f:[["שחזור","לא אפשרי"]]},
+ {id:"q_ls",k:"q",t:"למה השורטים התהפכו?",d:"מחוץ לדגימה 73% מהרווח הגיע משורטים, אחרי שבתוכה הלונגים שלטו. בשוק עולה זה חשוד: או שינוי משטר, או תלות בכמה אירועים.",f:[]},
+ {id:"q_verdict",k:"q",t:"ההחלטות על האוטופסיות נשלחות במייל",d:"בכל כרטיס אוטופסיה כתוב 'VERDICT' ריק. התוצאה נשלחת רק במייל, וזה משפך שיווקי. המספרים הגבוהים (PF ‏9.75, ‏88%) מופיעים ראשונים.",f:[]},
+ {id:"q_next",k:"q",t:"מה עושים עם זה",d:"1) לקחת את הצ'קליסט שלהם כסטנדרט אצלנו. 2) לא לקנות את הקורס בשביל Ormi, כי החוקים לא בפנים. 3) להריץ את Gotobi ו-RDM בדמו, כמו שהם עושים עם Ormi. 4) לשאול אותם על ה-p של Ormi.",f:[]}
+];
+const E=[
+ ["allo","ormi"],["allo","paper"],["allo","journey"],["allo","lab"],["allo","lookahead"],["journey","lab"],
+ ["ormi","ormi_split"],["ormi","ormi_ls"],["ormi","ormi_rr"],["ormi","ormi_search"],["ormi","ormi_live"],["ormi","ormi_prop"],["ormi","ormi_fill"],
+ ["paper","rb"],["rb","what"],["paper","mc"],["paper","bestN"],["paper","tom"],["paper","six"],["paper","passing"],["paper","nulls"],["paper","check"],
+ ["tom","mc"],["tom","a_tom"],["six","a_trend"],["six","a_iv"],["passing","a_lon"],["lookahead","a_reg"],["bestN","a_xrp"],["bestN","ormi_search"],
+ ["rb","o_place"],["what","o_place"],["bestN","o_mega"],["rb","o_gotobi"],["rb","o_rdm"],["tom","o_tom"],["a_lon","o_orb"],["passing","o_orb"],
+ ["six","o_gap"],["nulls","o_imom"],["o_gotobi","o_book"],["o_rdm","o_book"],["ormi","o_rdm",1],["q_rules","o_rdm"],
+ ["ormi","q_ormirb",1],["rb","q_ormirb",1],["lab","q_ormirb"],["ormi","q_rules",1],["ormi_ls","q_ls",1],["allo","q_verdict",1],["a_lon","q_verdict"],
+ ["ormi_fill","passing"],["ormi_prop","o_book"],["check","q_next"],["o_book","q_next"],["ormi_live","q_next"],["a_tom","o_tom",1],["ormi_rr","q_rules"]
+].map(([s,t,c])=>({source:s,target:t,contra:!!c}));
+const deg={}; E.forEach(e=>{deg[e.source]=(deg[e.source]||0)+1;deg[e.target]=(deg[e.target]||0)+1});
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const col=n=>css(K[n.k].c);
+const on=Object.fromEntries(Object.keys(K).map(k=>[k,true]));
+const tb=document.getElementById("tb");
+Object.entries(K).forEach(([k,v])=>{const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed","true");b.innerHTML=`<i style="background:var(${v.c})"></i>${v.n}`;b.onclick=()=>{on[k]=!on[k];b.setAttribute("aria-pressed",on[k]);apply()};tb.appendChild(b)});
+const svg=d3.select("#g"); const W=()=>svg.node().clientWidth, Hh=()=>svg.node().clientHeight;
+const g=svg.append("g");
+svg.call(d3.zoom().scaleExtent([.35,3]).on("zoom",ev=>g.attr("transform",ev.transform)));
+const link=g.append("g").selectAll("line").data(E).join("line").attr("class",d=>"edge"+(d.contra?" contra":""));
+const node=g.append("g").selectAll("g").data(N).join("g").attr("class","node").attr("tabindex",0).attr("role","button").attr("aria-label",d=>d.t)
+  .on("click",(ev,d)=>select(d.id)).on("keydown",(ev,d)=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();select(d.id)}})
+  .call(d3.drag().on("start",(ev,d)=>{if(!ev.active)sim.alphaTarget(.2).restart();d.fx=d.x;d.fy=d.y}).on("drag",(ev,d)=>{d.fx=ev.x;d.fy=ev.y}).on("end",(ev,d)=>{if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+node.append("circle").attr("r",d=>7+Math.sqrt(deg[d.id]||1)*3.2).attr("fill",col);
+node.append("text").attr("dy",d=>-(10+Math.sqrt(deg[d.id]||1)*3.2)).attr("text-anchor","middle").text(d=>d.t.length>26?d.t.slice(0,25)+"…":d.t);
+const cx={src:-.32,ormi:.3,paper:-.05,aut:-.35,ours:.15,q:.38}, cy={src:-.3,ormi:-.28,paper:.02,aut:.3,ours:.3,q:.05};
+const sim=d3.forceSimulation(N).force("link",d3.forceLink(E).id(d=>d.id).distance(70).strength(.5))
+  .force("charge",d3.forceManyBody().strength(-260)).force("collide",d3.forceCollide(30))
+  .force("x",d3.forceX(d=>W()/2+cx[d.k]*W()).strength(.09)).force("y",d3.forceY(d=>Hh()/2+cy[d.k]*Hh()).strength(.09))
+  .on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`)});
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+let cur="ormi";
+function nbrs(id){return E.filter(e=>e.source.id===id||e.target.id===id).map(e=>({n:e.source.id===id?e.target:e.source,c:e.contra}))}
+function apply(){
+  const q=document.getElementById("q").value.trim().toLowerCase();
+  const near=new Set([cur,...nbrs(cur).map(x=>x.n.id)]);
+  node.classed("dim",d=>!on[d.k]||(q?!(d.t+d.d).toLowerCase().includes(q):!near.has(d.id))).classed("sel",d=>d.id===cur);
+  link.classed("hot",d=>d.source.id===cur||d.target.id===cur).classed("dim",d=>!on[d.source.k]||!on[d.target.k]||(!q&&!(d.source.id===cur||d.target.id===cur)));
+}
+function select(id){
+  cur=id; const n=byId[id]; const p=document.getElementById("panel");
+  const facts=n.f.length?`<dl class="facts">${n.f.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>`:"";
+  const nb=nbrs(id).map(x=>`<button class="nb" data-id="${x.n.id}"><span style="color:${col(x.n)}">●</span><span>${x.n.t}</span><em>${x.c?"סותר / חשוד":K[x.n.k].n}</em></button>`).join("");
+  p.innerHTML=`<div class="kind" style="color:${col(n)}">${K[n.k].n.toUpperCase()}</div><h2>${n.t}</h2><p>${n.d}</p>${facts}<div class="kind">מחובר ל-${nbrs(id).length}</div><div class="links">${nb}</div>`;
+  p.querySelectorAll(".nb").forEach(b=>b.onclick=()=>select(b.dataset.id)); apply();
+}
+document.getElementById("q").addEventListener("input",apply);
+select("ormi");
+</script>
