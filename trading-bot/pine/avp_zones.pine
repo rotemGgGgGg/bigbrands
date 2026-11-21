@@ -1,0 +1,160 @@
+//@version=5
+// AVP Zones — rebuild of the "AVP Zones" indicator seen in allo research's charts.
+// A composite volume profile of the last N sessions is built at the start of every session (no repaint inside the day).
+// Low-volume nodes (LVN, blue) and high-volume nodes (HVN, orange) are drawn as zones for the new session.
+// Signal: a bar coming from above trades into the top of an LVN and closes back above it -> long triangle (mirror: short).
+// Optional stop (beyond the zone / wick) and target (R multiple) lines, session colours and alerts.
+// Note: backtested 2012-2026 on NQ (research/allo/AVP_RESULTS.md) — the signal alone had no edge. Use as a map, not a system.
+indicator("AVP Zones (rebuild)", overlay = true, max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500)
+
+// ── inputs ──
+nSess     = input.int(5, "Sessions in profile", minval = 1, maxval = 20, group = "Profile")
+nRows     = input.int(150, "Profile rows", minval = 40, maxval = 400, group = "Profile")
+lvnThr    = input.float(0.35, "LVN = below x of local peak", minval = 0.05, maxval = 0.9, step = 0.05, group = "Zones")
+hvnThr    = input.float(0.75, "HVN = above x of profile max", minval = 0.3, maxval = 1.0, step = 0.05, group = "Zones")
+minRun    = input.int(3, "Min rows per zone", minval = 1, group = "Zones")
+win       = input.int(20, "Local-peak window (rows)", minval = 5, group = "Zones")
+showHVN   = input.bool(true, "Show HVN zones", group = "Zones")
+showSig   = input.bool(true, "Show LVN rejection signals", group = "Signals")
+showTrade = input.bool(true, "Draw stop / target", group = "Signals")
+rrMult    = input.float(2.0, "Target (R multiple)", minval = 0.5, step = 0.5, group = "Signals")
+showBg    = input.bool(true, "Session colours (NY time)", group = "Look")
+cLVN      = input.color(color.new(#3b6ea8, 78), "LVN fill", group = "Look")
+cHVN      = input.color(color.new(#c98a2b, 82), "HVN fill", group = "Look")
+
+// ── state ──
+var float[] bh   = array.new_float()     // highs, lows, volumes of the bars in the last nSess sessions
+var float[] bl   = array.new_float()
+var float[] bv   = array.new_float()
+var int[]   sLen = array.new_int()       // bar count of each stored session
+var int     cur  = 0                     // bars in the running session
+var box[]   act  = array.new_box()       // zones drawn for the running session
+var float[] zTop = array.new_float()     // active LVN tops / bottoms (signals use only LVNs)
+var float[] zBot = array.new_float()
+
+newSess = ta.change(time("D")) != 0
+
+if newSess and bar_index > 0
+    // close the previous session's zones
+    if array.size(act) > 0
+        for i = 0 to array.size(act) - 1
+            bx = array.get(act, i)
+            box.set_extend(bx, extend.none)
+            box.set_right(bx, bar_index - 1)
+    array.clear(act)
+    array.clear(zTop)
+    array.clear(zBot)
+    // roll the window of sessions
+    array.push(sLen, cur)
+    cur := 0
+    while array.size(sLen) > nSess
+        k = array.shift(sLen)
+        if k > 0
+            for j = 1 to k
+                if array.size(bh) > 0
+                    array.shift(bh)
+                    array.shift(bl)
+                    array.shift(bv)
+    // build the profile once the window is full
+    if array.size(sLen) >= nSess and array.size(bh) > 10
+        lo   = array.min(bl)
+        hi   = array.max(bh)
+        rowH = (hi - lo) / nRows
+        if rowH > 0
+            prof = array.new_float(nRows, 0.0)
+            for i = 0 to array.size(bh) - 1
+                a = math.max(0, math.min(nRows - 1, int((array.get(bl, i) - lo) / rowH)))
+                b = math.max(0, math.min(nRows - 1, int((array.get(bh, i) - lo) / rowH)))
+                per = array.get(bv, i) / (b - a + 1)
+                for r = a to b
+                    array.set(prof, r, array.get(prof, r) + per)
+            // 3-row smoothing
+            sm = array.new_float(nRows, 0.0)
+            for r = 0 to nRows - 1
+                s = array.get(prof, r)
+                c = 1.0
+                if r > 0
+                    s += array.get(prof, r - 1)
+                    c += 1
+                if r < nRows - 1
+                    s += array.get(prof, r + 1)
+                    c += 1
+                array.set(sm, r, s / c)
+            pmax = array.max(sm)
+            // LVN / HVN flags
+            isL = array.new_bool(nRows, false)
+            isH = array.new_bool(nRows, false)
+            for r = 0 to nRows - 1
+                pk = 0.0
+                for q = math.max(0, r - win) to math.min(nRows - 1, r + win)
+                    pk := math.max(pk, array.get(sm, q))
+                array.set(isL, r, array.get(sm, r) < lvnThr * pk and r > 3 and r < nRows - 4)
+                array.set(isH, r, array.get(sm, r) > hvnThr * pmax)
+            // runs -> zones
+            for kind = 0 to 1
+                if kind == 0 or showHVN
+                    z = 0
+                    while z < nRows
+                        flag = kind == 0 ? array.get(isL, z) : array.get(isH, z)
+                        if flag
+                            e = z
+                            while e + 1 < nRows and (kind == 0 ? array.get(isL, e + 1) : array.get(isH, e + 1))
+                                e += 1
+                            if e - z + 1 >= minRun
+                                bot = lo + z * rowH
+                                top = lo + (e + 1) * rowH
+                                mx  = 0.0
+                                for q = z to e
+                                    mx := math.max(mx, array.get(prof, q))
+                                txt = (kind == 0 ? "LVN" : "HVN") + " · " + str.tostring(e - z + 1) + " rows · " + (kind == 0 ? "max " : "peak ") + str.tostring(mx, format.volume)
+                                bx = box.new(bar_index, top, bar_index + 1, bot, border_color = kind == 0 ? color.new(#3b6ea8, 40) : color.new(#c98a2b, 50), bgcolor = kind == 0 ? cLVN : cHVN, extend = extend.right, text = txt, text_size = size.tiny, text_halign = text.align_right, text_valign = text.align_center, text_color = kind == 0 ? color.new(#5b8fd0, 0) : color.new(#d9a24a, 0))
+                                array.push(act, bx)
+                                if kind == 0
+                                    array.push(zTop, top)
+                                    array.push(zBot, bot)
+                            z := e + 1
+                        else
+                            z += 1
+
+// store this bar for future profiles
+array.push(bh, high)
+array.push(bl, low)
+array.push(bv, nz(volume, 1.0))
+cur += 1
+
+// ── signals: rejection of an LVN ──
+longSig  = false
+shortSig = false
+stopL    = float(na)
+stopS    = float(na)
+if showSig and array.size(zTop) > 0 and barstate.isconfirmed
+    for k = 0 to array.size(zTop) - 1
+        t  = array.get(zTop, k)
+        bt = array.get(zBot, k)
+        if close[1] > t and low <= t and close > t
+            longSig := true
+            stopL := math.min(bt, low) - syminfo.mintick
+        if close[1] < bt and high >= bt and close < bt
+            shortSig := true
+            stopS := math.max(t, high) + syminfo.mintick
+
+plotshape(longSig, "LVN long", shape.triangleup, location.belowbar, color.new(#16a085, 0), size = size.small)
+plotshape(shortSig, "LVN short", shape.triangledown, location.abovebar, color.new(#e05252, 0), size = size.small)
+
+if showTrade and longSig
+    risk = close - stopL
+    line.new(bar_index, stopL, bar_index + 24, stopL, color = color.new(#e05252, 0), style = line.style_dashed)
+    line.new(bar_index, close + rrMult * risk, bar_index + 24, close + rrMult * risk, color = color.new(#16a085, 0), style = line.style_dashed)
+    label.new(bar_index + 24, close + rrMult * risk, "1:" + str.tostring(rrMult) + " · risk " + str.tostring(risk, format.mintick), style = label.style_label_left, size = size.tiny, color = color.new(#16a085, 70), textcolor = color.white)
+if showTrade and shortSig
+    risk = stopS - close
+    line.new(bar_index, stopS, bar_index + 24, stopS, color = color.new(#e05252, 0), style = line.style_dashed)
+    line.new(bar_index, close - rrMult * risk, bar_index + 24, close - rrMult * risk, color = color.new(#16a085, 0), style = line.style_dashed)
+    label.new(bar_index + 24, close - rrMult * risk, "1:" + str.tostring(rrMult) + " · risk " + str.tostring(risk, format.mintick), style = label.style_label_left, size = size.tiny, color = color.new(#e05252, 70), textcolor = color.white)
+
+alertcondition(longSig, "AVP LVN long", "AVP Zones: LVN rejection long on {{ticker}} at {{close}}")
+alertcondition(shortSig, "AVP LVN short", "AVP Zones: LVN rejection short on {{ticker}} at {{close}}")
+
+// ── session colours (New York time) ──
+inS(s) => not na(time(timeframe.period, s, "America/New_York"))
+bgcolor(showBg and inS("1800-2359") ? color.new(#22304d, 88) : showBg and inS("0000-0930") ? color.new(#3a2244, 90) : showBg and inS("0930-1600") ? color.new(#43311c, 90) : na)
