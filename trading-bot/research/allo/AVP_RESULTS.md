@@ -18,3 +18,10 @@ Defaults of pine/avp_zones.pine, 24h sessions from 18:00 NY, Pine scoreboard (2R
 - With costs (1 NQ point round trip): -0.044 to -0.082 R in every timeframe.
 - Aug-Nov 2026 only (what TradingView shows): +0.03 to +0.22 R -> reproduces the user's table; that window is the exception.
 - Random-zone baseline (5m, 2020-26): p = 0.42.  DAX / gold / TPO volume: same picture.
+
+## The AVP equation (avp_eq.py) — meta-labelling fitted on 2012-19, judged once on 2020-26 (NQ 5m, real volume, after costs)
+E[R] = -0.345 + 0.603*zone_width + 0.137*emptiness - 0.162*risk + 0.048*side + 0.021*day_move + 0.016*London + 0.013*trend + 0.003*NY + 0.0003*bar_volume
+(zone_width and risk in ATR units; side +1 long / -1 short; trend and day_move signed by side.)
+Take a signal only if E[R] > 0: 2012-19 46/yr +0.10R (fit period) -> 2020-26 50/yr +0.072R (t 1.23), 5/7 years positive,
+random same-size picks p = 0.081 (not below 5%). Top-30% cut: ~0R. All signals: -0.14 / -0.02R.
+Reading: the only strong term is zone width (wide LVNs much better), then smaller risk and longs.
