@@ -1,0 +1,19 @@
+USATECHIDXUSD 2026 251 days, errors 9
+USATECHIDXUSD 6,622,560 bars, errors 45 2743s
+duka done
+NQ real  5m n/yr   585 | no cost avg -0.014 (IS -0.035 t-1.9 / OOS +0.008 t0.4) | cost -0.082 | yrs 5/15 | Aug-Nov 2026: n 161 avg +0.067 win 29.8%
+NQ tpo   5m n/yr   861 | no cost avg +0.002 (IS -0.009 t-0.6 / OOS +0.014 t0.9) | cost -0.053 | yrs 6/15 | Aug-Nov 2026: n 229 avg +0.068 win 26.6%
+NQ real  7m n/yr   557 | no cost avg +0.021 (IS +0.007 t0.3 / OOS +0.036 t1.7) | cost -0.044 | yrs 11/15 | Aug-Nov 2026: n 147 avg +0.031 win 27.2%
+NQ tpo   7m n/yr   831 | no cost avg +0.003 (IS -0.006 t-0.4 / OOS +0.012 t0.8) | cost -0.051 | yrs 7/15 | Aug-Nov 2026: n 215 avg -0.028 win 23.3%
+NQ real 15m n/yr   454 | no cost avg -0.007 (IS -0.026 t-1.2 / OOS +0.011 t0.5) | cost -0.066 | yrs 6/15 | Aug-Nov 2026: n 134 avg +0.091 win 28.4%
+NQ tpo  15m n/yr   732 | no cost avg -0.003 (IS -0.010 t-0.7 / OOS +0.004 t0.2) | cost -0.053 | yrs 7/15 | Aug-Nov 2026: n 200 avg +0.049 win 24.5%
+NQ real 30m n/yr   376 | no cost avg -0.026 (IS -0.046 t-2.1 / OOS -0.006 t-0.2) | cost -0.080 | yrs 6/15 | Aug-Nov 2026: n 114 avg +0.076 win 24.6%
+NQ tpo  30m n/yr   625 | no cost avg -0.019 (IS -0.022 t-1.4 / OOS -0.016 t-0.9) | cost -0.064 | yrs 5/15 | Aug-Nov 2026: n 169 avg +0.022 win 21.3%
+NQ real 60m n/yr   300 | no cost avg -0.016 (IS -0.038 t-1.6 / OOS +0.005 t0.2) | cost -0.065 | yrs 7/15 | Aug-Nov 2026: n 95 avg +0.089 win 23.2%
+NQ tpo  60m n/yr   518 | no cost avg +0.002 (IS -0.003 t-0.2 / OOS +0.008 t0.4) | cost -0.039 | yrs 8/15 | Aug-Nov 2026: n 145 avg +0.146 win 24.8%
+NQ real 91m n/yr   258 | no cost avg -0.010 (IS -0.029 t-1.2 / OOS +0.009 t0.3) | cost -0.055 | yrs 6/15 | Aug-Nov 2026: n 93 avg +0.222 win 26.9%
+NQ tpo  91m n/yr   452 | no cost avg -0.007 (IS -0.007 t-0.4 / OOS -0.006 t-0.3) | cost -0.045 | yrs 9/15 | Aug-Nov 2026: n 127 avg +0.093 win 22.0%
+per year (5m real, no cost): {2012: -0.023, 2013: 0.036, 2014: -0.044, 2015: -0.05, 2016: 0.043, 2017: -0.083, 2018: -0.136, 2019: -0.009, 2020: 0.057, 2021: -0.059, 2022: -0.062, 2023: 0.034, 2024: 0.121, 2025: -0.027, 2026: -0.019}
+random-zone baseline 5m 2020-26: real +0.008 vs median +0.002 -> p=0.42
+
+[exited with code 0]

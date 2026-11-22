@@ -11,3 +11,10 @@ Grid: stop wick+buffer / zone edge x max risk 0.15% / 0.3% / none x target 1/2/3
 - 450 settings with >= 100 trades. Passing 2012-19 (t >= 2.5, >= 5/8 years): 0. Best 2012-19 t = 1.6 (zone stop, 3R, London, with the day) -> 2020-26 -0.06R.
 - Every family is negative out of sample: wick stop -0.21R (tight stops get swept), zone stop -0.01R; London -0.20R, NY -0.05R; 1:12 target -0.09R.
 - No finalist reached the random-baseline stage. Pine defaults changed to the least-bad setting (zone-edge stop, no risk cap).
+
+## Exact Pine port on 14 years (avp_port.py, port_nq_results.txt) — NQ with real (Dukascopy) volume
+Defaults of pine/avp_zones.pine, 24h sessions from 18:00 NY, Pine scoreboard (2R, flat next session open).
+- 5/7/15/30/60/91 min, real volume, 2012-2026, NO costs: avg -0.026 to +0.021 R; 2012-19 negative in 5 of 6 timeframes; positive years 5-11/15.
+- With costs (1 NQ point round trip): -0.044 to -0.082 R in every timeframe.
+- Aug-Nov 2026 only (what TradingView shows): +0.03 to +0.22 R -> reproduces the user's table; that window is the exception.
+- Random-zone baseline (5m, 2020-26): p = 0.42.  DAX / gold / TPO volume: same picture.
