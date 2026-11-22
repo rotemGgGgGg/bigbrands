@@ -1,0 +1,140 @@
+//@version=5
+// RDM 1:10 — Reversal-Day Momentum with a tight stop (research/allo/CONVEX_RESULTS.md, best row: 0.15 ATR stop, 10R target).
+// At the 09:45 New York bar: today's direction = 09:45 open vs the 09:00 open. If it is the OPPOSITE of yesterday's RTH candle
+// (09:30 open -> 16:00 close), enter in today's direction at the 09:45 open. Stop = 0.15 x ATR(14 sessions), target = 10R,
+// flat at 15:55. One trade a day. Backtest NQ 2020-26: 20% win, avg winner 5.1R, +0.34R/trade after costs; losing streaks of 30+.
+// Use on NQ1! / MNQ1! (5-minute or lower, extended hours on). Scoreboard counts every signal, with costs.
+indicator("RDM 1:10 (tight-stop reversal-day momentum)", overlay = true, max_lines_count = 500, max_labels_count = 500)
+
+stopK   = input.float(0.15, "Stop = x ATR", minval = 0.05, step = 0.05)
+rrMult  = input.float(10.0, "Target (R)", minval = 1, step = 1)
+atrLen  = input.int(14, "ATR sessions", minval = 5)
+costPts = input.float(1.0, "Cost per round trip (points)", minval = 0, step = 0.25)
+showTbl = input.bool(true, "Scoreboard")
+maxDraw = input.int(10, "Keep last N drawings", minval = 1, maxval = 100)
+
+tz = "America/New_York"
+hh = hour(time, tz)
+mm = minute(time, tz)
+tmin = hh * 60 + mm
+
+// futures session (18:00 NY) range for ATR
+newSess = ta.change(time("D")) != 0
+var float sHi = na
+var float sLo = na
+var float[] ranges = array.new_float()
+if newSess
+    if not na(sHi)
+        array.push(ranges, sHi - sLo)
+        if array.size(ranges) > atrLen
+            array.shift(ranges)
+    sHi := high
+    sLo := low
+else
+    sHi := math.max(nz(sHi, high), high)
+    sLo := math.min(nz(sLo, low), low)
+atr = array.size(ranges) >= atrLen ? array.avg(ranges) : na
+
+// yesterday's RTH candle and today's 09:00 open
+var float rthOpen = na
+var float rthClose = na
+var float yOpen = na
+var float yClose = na
+var float open9 = na
+inRTH = tmin >= 570 and tmin < 960
+if tmin == 570 or (inRTH and na(rthOpen))
+    if na(rthOpen)
+        rthOpen := open
+if inRTH
+    rthClose := close
+if tmin >= 960 and tmin < 965 and not na(rthOpen)
+    yOpen := rthOpen
+    yClose := rthClose
+    rthOpen := na
+if tmin >= 540 and tmin < 545 and (na(open9) or tmin == 540)
+    open9 := open
+if tmin < 540 and tmin >= 525
+    open9 := na
+
+// signal on the bar that opens at/after 09:45
+var int lastSigDay = 0
+today = year(time, tz) * 10000 + month(time, tz) * 100 + dayofmonth(time, tz)
+isEntryBar = tmin >= 585 and tmin < 590 and lastSigDay != today
+yd = math.sign(nz(yClose) - nz(yOpen))
+td = math.sign(open - nz(open9))
+sig = isEntryBar and not na(atr) and not na(open9) and not na(yOpen) and yd != 0 and td != 0 and yd != td
+if isEntryBar
+    lastSigDay := today
+
+var float en = na
+var float st = na
+var float tg = na
+var int   dir = 0
+var int nW = 0
+var int nL = 0
+var int nF = 0
+var float sumR = 0.0
+var float peak = 0.0
+var float dd = 0.0
+var int streak = 0
+var int worst = 0
+var line[] L = array.new_line()
+var label[] LB = array.new_label()
+
+// manage an open trade (stop first on a tie)
+if dir != 0
+    hitS = dir == 1 ? low <= st : high >= st
+    hitT = dir == 1 ? high >= tg : low <= tg
+    r = float(na)
+    if hitS
+        r := -1.0 - costPts / math.abs(en - st)
+        nL += 1
+    else if hitT
+        r := rrMult - costPts / math.abs(en - st)
+        nW += 1
+    else if tmin >= 955 and tmin < 1080
+        r := dir * (close - en) / math.abs(en - st) - costPts / math.abs(en - st)
+        nF += 1
+    if not na(r)
+        sumR += r
+        peak := math.max(peak, sumR)
+        dd := math.max(dd, peak - sumR)
+        streak := r < 0 ? streak + 1 : 0
+        worst := math.max(worst, streak)
+        dir := 0
+
+if sig and dir == 0
+    dir := int(td)
+    en := open
+    st := open - dir * stopK * atr
+    tg := open + dir * rrMult * stopK * atr
+    array.push(L, line.new(bar_index, st, bar_index + 70, st, color = color.new(#e05252, 0), style = line.style_dashed))
+    array.push(L, line.new(bar_index, tg, bar_index + 70, tg, color = color.new(#16a085, 0), style = line.style_dashed))
+    array.push(LB, label.new(bar_index, dir == 1 ? low : high, (dir == 1 ? "RDM LONG" : "RDM SHORT") + "\n1:" + str.tostring(rrMult) + " · stop " + str.tostring(math.abs(en - st), format.mintick), style = dir == 1 ? label.style_label_up : label.style_label_down, size = size.small, color = dir == 1 ? color.new(#16a085, 10) : color.new(#e05252, 10), textcolor = color.white))
+    while array.size(LB) > maxDraw
+        label.delete(array.shift(LB))
+        line.delete(array.shift(L))
+        line.delete(array.shift(L))
+
+alertcondition(sig and td > 0, "RDM long", "RDM 1:10 LONG on {{ticker}} at {{open}}")
+alertcondition(sig and td < 0, "RDM short", "RDM 1:10 SHORT on {{ticker}} at {{open}}")
+
+var table tb = table.new(position.top_right, 2, 8, bgcolor = color.new(#0b0b0b, 5), border_width = 1)
+if showTbl and barstate.islast
+    n = nW + nL + nF
+    table.cell(tb, 0, 0, "RDM 1:" + str.tostring(rrMult), text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 0, str.tostring(n) + " trades", text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 1, "Win / loss / flat", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 1, str.tostring(nW) + " / " + str.tostring(nL) + " / " + str.tostring(nF), text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 2, "Win rate", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 2, n > 0 ? str.tostring(100.0 * nW / n, "#.0") + "%" : "-", text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 3, "Total R (after cost)", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 3, str.tostring(sumR, "#.0") + "R", text_color = sumR >= 0 ? color.new(#2ecc71, 0) : color.new(#e74c3c, 0), text_size = size.small)
+    table.cell(tb, 0, 4, "Avg R / trade", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 4, n > 0 ? str.tostring(sumR / n, "#.00") : "-", text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 5, "Max drawdown", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 5, str.tostring(dd, "#.0") + "R", text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 6, "Worst losing streak", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 6, str.tostring(worst), text_color = color.white, text_size = size.small)
+    table.cell(tb, 0, 7, "Open", text_color = color.white, text_size = size.small)
+    table.cell(tb, 1, 7, dir == 0 ? "flat" : (dir == 1 ? "long" : "short"), text_color = color.white, text_size = size.small)
