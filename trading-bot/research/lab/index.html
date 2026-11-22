@@ -1,0 +1,248 @@
+<title>Edge Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: monochrome quant console. Top bar, KPI strip, leaderboard, detail inspector, graveyard, method. */
+:root{
+  --bg:#ffffff; --fg:#0a0a0a; --muted:#6b6b6b; --faint:#a3a3a3; --line:#e7e7e7; --panel:#fafafa; --ink:#0a0a0a; --inv:#ffffff;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0a0a;--fg:#f5f5f5;--muted:#8f8f8f;--faint:#5a5a5a;--line:#222;--panel:#111;--ink:#f5f5f5;--inv:#0a0a0a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a0a0a;--fg:#f5f5f5;--muted:#8f8f8f;--faint:#5a5a5a;--line:#222;--panel:#111;--ink:#f5f5f5;--inv:#0a0a0a;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:52px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+.logo i{width:18px;height:18px;background:var(--ink);display:inline-block;clip-path:polygon(0 100%,35% 40%,60% 65%,100% 0,100% 100%)}
+.top nav{display:flex;gap:18px;margin-left:12px;color:var(--muted)}
+.top nav a{color:inherit;text-decoration:none}.top nav a:hover{color:var(--fg)}
+.sp{flex:1}
+.live{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink);animation:p 2s infinite}
+@keyframes p{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+header.hero{padding-block:44px 28px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(28px,4.4vw,46px);line-height:1.05;letter-spacing:-.035em;font-weight:600;margin:10px 0 12px;text-wrap:balance;max-width:20ch}
+.sub{color:var(--muted);max-width:62ch;margin:0}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);margin-block:28px}
+.kpi{padding:18px 20px;border-right:1px solid var(--line);min-width:0}.kpi:last-child{border-right:0}
+.kpi b{display:block;font-family:var(--mono);font-size:26px;font-weight:500;letter-spacing:-.02em}
+.kpi span{color:var(--muted);font-size:12px}
+section{padding-block:28px;border-top:1px solid var(--line)}
+.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+h2{font-size:18px;letter-spacing:-.02em;font-weight:600;margin:0}
+.sh p{margin:0;color:var(--muted);font-size:13px}
+.tbl{overflow-x:auto;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:820px}
+th,td{text-align:right;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--mono);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--panel)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+td{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+td.n{font-family:var(--sans);font-weight:500;font-size:14px}
+td.n small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--panel)}
+tbody tr.sel{background:var(--ink);color:var(--inv)}tbody tr.sel small,tbody tr.sel .neg{color:var(--inv);opacity:.7}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:3px 8px;border:1px solid var(--ink);display:inline-block}
+.pill.LIVE{background:var(--ink);color:var(--inv)}
+.pill.DEAD{border-color:var(--faint);color:var(--faint);text-decoration:line-through}
+tr.sel .pill{border-color:var(--inv)}tr.sel .pill.LIVE{background:var(--inv);color:var(--ink)}
+.neg{color:var(--muted)}
+.spark{display:block}
+.insp{display:grid;grid-template-columns:300px 1fr;border:1px solid var(--line)}
+.side{padding:22px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:16px;min-width:0}
+.side h3{font-size:22px;letter-spacing:-.03em;margin:0;font-weight:600}
+.rule{font-size:13px;color:var(--muted);margin:0}
+dl{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:0;font-size:13px}
+dt{color:var(--muted)}dd{margin:0;font-family:var(--mono);text-align:right}
+.note{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin:0}
+.charts{display:grid;grid-template-columns:1fr 1fr;min-width:0}
+.cell{padding:18px 20px;border-bottom:1px solid var(--line);min-width:0}
+.cell.wide{grid-column:1/-1}
+.cell:nth-child(2){border-left:1px solid var(--line)}
+.cell:last-child{border-bottom:0}
+.cell h4{margin:0 0 2px;font-size:13px;font-weight:600}
+.cell .cap{font-size:12px;color:var(--muted);margin:0 0 10px}
+svg text{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.mcgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);margin-top:12px}
+.mcgrid div{padding:10px 12px;border-right:1px solid var(--line)}.mcgrid div:last-child{border-right:0}
+.mcgrid b{display:block;font-family:var(--mono);font-weight:500;font-size:16px}
+.mcgrid span{font-size:11px;color:var(--muted)}
+.book{display:grid;grid-template-columns:1.2fr repeat(5,1fr);border:1px solid var(--line)}
+.book>div{padding:18px;border-right:1px solid var(--line);min-width:0}.book>div:last-child{border-right:0}
+.book b{display:block;font-family:var(--mono);font-size:22px;font-weight:500}
+.book span{font-size:12px;color:var(--muted)}
+.grave{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
+.grave div{padding:16px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.grave div:nth-child(3n){border-right:0}
+.grave h5{margin:0 0 4px;font-size:14px;font-weight:500;text-decoration:line-through;text-decoration-color:var(--faint)}
+.grave p{margin:0;font-size:12px;color:var(--muted)}
+.grave .m{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:6px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}
+.steps div{padding:18px;border-right:1px solid var(--line);min-width:0}.steps div:last-child{border-right:0}
+.steps .k{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.steps h5{margin:6px 0 4px;font-size:14px}.steps p{margin:0;font-size:12px;color:var(--muted)}
+footer{padding-block:28px 48px;color:var(--faint);font-size:12px;border-top:1px solid var(--line);display:flex;gap:16px;flex-wrap:wrap}
+.log{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:12px 14px;height:112px;overflow:hidden;position:relative}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log::after{content:"";position:absolute;inset:auto 0 0;height:36px;background:linear-gradient(transparent,var(--panel))}
+@media (max-width:900px){.insp{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line)}.book{grid-template-columns:repeat(3,1fr)}.book>div:nth-child(3){border-right:0}.book>div{border-bottom:1px solid var(--line)}}
+@media (max-width:640px){.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(2){border-right:0}.kpi:nth-child(-n+2){border-bottom:1px solid var(--line)}
+ .charts{grid-template-columns:1fr}.cell:nth-child(2){border-left:0}.grave,.steps{grid-template-columns:1fr}.grave div,.steps div{border-right:0;border-bottom:1px solid var(--line)}
+ .mcgrid{grid-template-columns:1fr 1fr}.mcgrid div:nth-child(2){border-right:0}.mcgrid div:nth-child(-n+2){border-bottom:1px solid var(--line)}.top nav{display:none}.book{grid-template-columns:1fr 1fr}.book>div:nth-child(odd){border-right:1px solid var(--line)}.book>div:nth-child(even){border-right:0}}
+</style>
+
+<div class="top"><div class="wrap">
+  <div class="logo"><i></i>Edge Lab</div>
+  <nav><a href="#board">Leaderboard</a><a href="#inspect">Inspector</a><a href="#book">Book</a><a href="#grave">Graveyard</a><a href="#method">Method</a></nav>
+  <div class="sp"></div>
+  <div class="live mono"><span class="dot"></span><span id="upd">loading…</span></div>
+</div></div>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Strategy research · NQ · JPY crosses · 2012–2026</div>
+  <h1>Every idea goes in. Very few come out.</h1>
+  <p class="sub">Each strategy is chosen on 2012–19, judged once on 2020–26, priced with costs, and compared against a random version of itself. Monte Carlo resamples its trades into 5,000 possible years.</p>
+  <div class="kpis" id="kpis"></div>
+  <div class="log" id="log" aria-hidden="true"></div>
+</header>
+
+<section id="board">
+  <div class="sh"><h2>Leaderboard</h2><p>Click a row to inspect. Avg R after costs. p = share of random runs that did as well.</p></div>
+  <div class="tbl"><table><thead><tr>
+    <th>Strategy</th><th>Status</th><th>Trades/yr</th><th>Win %</th><th>Avg R</th><th>2020–26</th><th>t</th><th>Years +</th><th>MC P(yr&gt;0)</th><th>p random</th><th>Equity</th>
+  </tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+
+<section id="inspect">
+  <div class="sh"><h2>Inspector</h2><p id="insub"></p></div>
+  <div class="insp">
+    <div class="side" id="side"></div>
+    <div class="charts">
+      <div class="cell"><h4>Equity, cumulative R</h4><p class="cap">Every trade, 2012–2026. Shaded: out-of-sample.</p><div id="eq"></div></div>
+      <div class="cell"><h4>Monte Carlo, one year</h4><p class="cap">5,000 bootstrap years. Bands 5–95% and 25–75%.</p><div id="mc"></div></div>
+      <div class="cell wide"><h4>By year, R</h4><p class="cap">Solid: positive year. Outline: losing year.</p><div id="yr"></div><div class="mcgrid" id="mcs"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="book">
+  <div class="sh"><h2>The book</h2><p>Gotobi + RDM, risk-balanced, out-of-sample 2016–26.</p></div>
+  <div class="book" id="bk"></div>
+</section>
+
+<section id="grave">
+  <div class="sh"><h2>Graveyard</h2><p>Tested, priced, compared to random, and buried.</p></div>
+  <div class="grave" id="gv"></div>
+</section>
+
+<section id="method">
+  <div class="sh"><h2>Method</h2><p>The same four gates for every idea.</p></div>
+  <div class="steps">
+    <div><span class="k">Gate 1</span><h5>Choose on 2012–19</h5><p>Parameters are picked on the first eight years only.</p></div>
+    <div><span class="k">Gate 2</span><h5>Judge once on 2020–26</h5><p>One look at the later years, no re-tuning after it.</p></div>
+    <div><span class="k">Gate 3</span><h5>Beat a random twin</h5><p>Shifted clocks, shuffled days, random direction. p is the share of twins that did as well.</p></div>
+    <div><span class="k">Gate 4</span><h5>Survive Monte Carlo</h5><p>Trades resampled into 5,000 years: chance of a losing year and the 95th-percentile drawdown.</p></div>
+  </div>
+</section>
+</div>
+<footer class="wrap"><span>Edge Lab · research only, not advice</span><span id="ft"></span></footer>
+
+<script>
+const $=s=>document.querySelector(s), NS="http://www.w3.org/2000/svg";
+const f=(x,d=2)=>x==null||isNaN(x)?"—":(x>0?"+":"")+Number(x).toFixed(d);
+let D, cur;
+function svg(w,h){const s=document.createElementNS(NS,"svg");s.setAttribute("viewBox",`0 0 ${w} ${h}`);s.setAttribute("width","100%");s.style.display="block";return s}
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+function txt(p,x,y,s,anc="start"){const t=el("text",{x,y,"text-anchor":anc},p);t.textContent=s;return t}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function spark(c){const w=110,h=28,s=svg(w,h);s.setAttribute("width",w);s.classList.add("spark");
+  if(!c||!c.length)return s;const v=c.map(x=>x[1]),mn=Math.min(0,...v),mx=Math.max(0,...v),r=mx-mn||1;
+  const pts=v.map((y,i)=>`${(i/(v.length-1)*w).toFixed(1)},${(h-2-(y-mn)/r*(h-4)).toFixed(1)}`).join(" ");
+  el("line",{x1:0,x2:w,y1:h-2-(0-mn)/r*(h-4),y2:h-2-(0-mn)/r*(h-4),stroke:"currentColor","stroke-opacity":.2,"stroke-dasharray":"2 2"},s);
+  el("polyline",{points:pts,fill:"none",stroke:"currentColor","stroke-width":1.3},s);return s}
+
+function equity(c){const W=520,H=220,L=40,R=10,T=10,B=22,s=svg(W,H);
+  const v=c.map(x=>x[1]),t=c.map(x=>+new Date(x[0])),mn=Math.min(0,...v),mx=Math.max(...v,0.1),t0=t[0],t1=t[t.length-1];
+  const X=d=>L+(d-t0)/(t1-t0)*(W-L-R),Y=y=>T+(mx-y)/(mx-mn)*(H-T-B);
+  const o=+new Date("2020-01-01");if(o>t0&&o<t1)el("rect",{x:X(o),y:T,width:W-R-X(o),height:H-T-B,fill:css("--fg"),"fill-opacity":.045},s);
+  const ticks=5;for(let i=0;i<=ticks;i++){const y=mn+(mx-mn)*i/ticks;el("line",{x1:L,x2:W-R,y1:Y(y),y2:Y(y),stroke:css("--line")},s);txt(s,L-6,Y(y)+3,Math.round(y),"end")}
+  for(let yr=2012;yr<=2026;yr+=2){const d=+new Date(yr+"-01-01");if(d>=t0&&d<=t1)txt(s,X(d),H-6,yr,"middle")}
+  const p=v.map((y,i)=>`${X(t[i]).toFixed(1)},${Y(y).toFixed(1)}`).join(" ");
+  el("polygon",{points:`${X(t0)},${Y(0)} ${p} ${X(t1)},${Y(0)}`,fill:css("--fg"),"fill-opacity":.06},s);
+  el("polyline",{points:p,fill:"none",stroke:css("--fg"),"stroke-width":1.5},s);
+  el("circle",{cx:X(t1),cy:Y(v[v.length-1]),r:3,fill:css("--fg")},s);
+  txt(s,X(t1)-6,Y(v[v.length-1])-8,f(v[v.length-1],1)+"R","end").setAttribute("style","fill:"+css("--fg"));
+  return s}
+
+function fan(F){const W=520,H=220,L=40,R=10,T=10,B=22,s=svg(W,H),n=F.length;
+  const all=F.flat(),mn=Math.min(0,...all),mx=Math.max(...all,0.1);const X=i=>L+i/(n-1)*(W-L-R),Y=y=>T+(mx-y)/(mx-mn)*(H-T-B);
+  for(let i=0;i<=5;i++){const y=mn+(mx-mn)*i/5;el("line",{x1:L,x2:W-R,y1:Y(y),y2:Y(y),stroke:css("--line")},s);txt(s,L-6,Y(y)+3,Math.round(y),"end")}
+  el("line",{x1:L,x2:W-R,y1:Y(0),y2:Y(0),stroke:css("--fg"),"stroke-opacity":.35,"stroke-dasharray":"3 3"},s);
+  const band=(a,b,o)=>{const up=F.map((q,i)=>`${X(i)},${Y(q[b])}`),dn=F.map((q,i)=>`${X(i)},${Y(q[a])}`).reverse();el("polygon",{points:up.concat(dn).join(" "),fill:css("--fg"),"fill-opacity":o},s)};
+  band(0,4,.07);band(1,3,.14);
+  el("polyline",{points:F.map((q,i)=>`${X(i)},${Y(q[2])}`).join(" "),fill:"none",stroke:css("--fg"),"stroke-width":1.5},s);
+  txt(s,L,H-6,"trade 1");txt(s,W-R,H-6,"1 year","end");
+  const e=F[n-1];[[4,"95%"],[2,"median"],[0,"5%"]].forEach(([k,l])=>txt(s,W-R-4,Y(e[k])+(k==4?-5:k==0?12:-5),l+" "+f(e[k],1),"end"));
+  return s}
+
+function years(Y){const ks=Object.keys(Y),v=ks.map(k=>Y[k]),W=1000,H=150,L=40,R=10,T=14,B=22,s=svg(W,H);
+  const mn=Math.min(0,...v),mx=Math.max(0,...v,1),bw=(W-L-R)/ks.length,Yy=y=>T+(mx-y)/(mx-mn)*(H-T-B);
+  el("line",{x1:L,x2:W-R,y1:Yy(0),y2:Yy(0),stroke:css("--fg"),"stroke-opacity":.4},s);
+  ks.forEach((k,i)=>{const y=v[i],x=L+i*bw+bw*.18,w=bw*.64,top=Yy(Math.max(y,0)),h=Math.abs(Yy(y)-Yy(0));
+    el("rect",{x,y:top,width:w,height:Math.max(h,1),fill:y>0?css("--fg"):"none",stroke:css("--fg"),"stroke-width":1},s);
+    txt(s,x+w/2,H-6,"'"+k.slice(2),"middle");txt(s,x+w/2,y>=0?top-4:top+h+11,y.toFixed(0),"middle")});
+  return s}
+
+function inspect(id){cur=id;const r=D.strategies.find(x=>x.id===id);
+  document.querySelectorAll("#rows tr").forEach(t=>t.classList.toggle("sel",t.dataset.id===id));
+  $("#insub").textContent=r.name+" · "+r.market;
+  const mc=r.mc||{};
+  $("#side").innerHTML=`<div><span class="pill ${r.status}">${r.status}</span></div><h3>${r.name}</h3><p class="rule">${r.rule}</p>
+   <dl><dt>Market</dt><dd>${r.market}</dd><dt>Family</dt><dd>${r.family}</dd><dt>Trades</dt><dd>${r.n??"—"}</dd><dt>Per year</dt><dd>${r.per_yr??"—"}</dd>
+   <dt>Win rate</dt><dd>${r.win!=null?r.win+"%":"—"}</dd><dt>Target R:R</dt><dd>${r.rr?("1:"+r.rr):"—"}</dd>
+   <dt>2012–19 avg</dt><dd>${f(r.is_avg,3)} <span class="neg">t ${r.is_t??"—"}</span></dd><dt>2020–26 avg</dt><dd>${f(r.oos_avg,3)} <span class="neg">t ${r.oos_t??"—"}</span></dd>
+   <dt>Positive years</dt><dd>${r.pos_years??"—"}/${r.n_years??"—"}</dd><dt>Random-twin p</dt><dd>${r.p}</dd></dl><p class="note">${r.note}</p>`;
+  ["#eq","#mc","#yr"].forEach(s=>$(s).innerHTML="");
+  if(r.curve){$("#eq").appendChild(equity(r.curve));$("#mc").appendChild(fan(mc.fan));$("#yr").appendChild(years(r.years));
+    $("#mcs").innerHTML=`<div><b>${mc.p_year_pos}%</b><span>P(year &gt; 0)</span></div><div><b>${f(mc.median_year,1)}R</b><span>Median year</span></div><div><b>${f(mc.p5_year,1)}R</b><span>Bad year (5%)</span></div><div><b>−${mc.p95_dd}R</b><span>Drawdown (95%)</span></div>`}
+}
+
+function render(){
+  $("#upd").textContent="updated "+D.updated;$("#ft").textContent=D.strategies.length+" strategies · data "+D.updated;
+  const S=D.strategies,live=S.filter(x=>x.status==="LIVE").length;
+  $("#kpis").innerHTML=`<div class="kpi"><b>${(D.theories_tested/1e6).toFixed(2)}M</b><span>theories screened</span></div>
+   <div class="kpi"><b>${S.length}</b><span>strategies fully tested</span></div><div class="kpi"><b>${live}</b><span>survived every gate</span></div>
+   <div class="kpi"><b>${D.book.sharpe}</b><span>book Sharpe, out-of-sample</span></div>`;
+  const tb=$("#rows");tb.innerHTML="";
+  const ord={LIVE:0,WATCH:1,DEAD:2};
+  S.filter(r=>r.curve).sort((a,b)=>ord[a.status]-ord[b.status]||(b.oos_avg-a.oos_avg)).forEach(r=>{
+    const tr=document.createElement("tr");tr.dataset.id=r.id;tr.tabIndex=0;
+    const c=(x,d)=>`<span class="${x<0?"neg":""}">${f(x,d)}</span>`;
+    tr.innerHTML=`<td class="n">${r.name}<small>${r.market}</small></td><td><span class="pill ${r.status}">${r.status}</span></td><td>${r.per_yr}</td><td>${r.win}</td>
+     <td>${c(r.avg,3)}</td><td>${c(r.oos_avg,3)}</td><td>${r.oos_t}</td><td>${r.pos_years}/${r.n_years}</td><td>${r.mc.p_year_pos}%</td><td>${r.p}</td><td></td>`;
+    tr.lastChild.appendChild(spark(r.curve));tr.onclick=()=>inspect(r.id);tr.onkeydown=e=>{if(e.key==="Enter")inspect(r.id)};tb.appendChild(tr)});
+  const b=D.book;$("#bk").innerHTML=`<div><b>Gotobi + RDM</b><span>${b.window}</span></div><div><b>${b.sharpe}</b><span>Sharpe</span></div><div><b>${b.cagr}%</b><span>CAGR</span></div>
+   <div><b>${b.maxdd}%</b><span>Max drawdown</span></div><div><b>${b.pos_years}</b><span>Positive years</span></div><div><b>${b.prop_pass}%</b><span>Prop payout vs ${b.prop_zero}% at zero edge</span></div>`;
+  $("#gv").innerHTML=S.filter(r=>r.status==="DEAD").map(r=>`<div><h5>${r.name}</h5><p>${r.rule}</p><p class="m">${r.market} · ${r.oos_avg!=null?"2020–26 "+f(r.oos_avg,3)+"R · ":""}${r.note}</p></div>`).join("");
+  inspect(cur||"rdm10");
+}
+
+const LOG=["seed 2026 · bootstrap 5000 × 1y paths","gate1 IS 2012–19 · select","gate2 OOS 2020–26 · single look","placebo: shifted clocks × 1000","placebo: random direction × 1000","costs: NQ 1.0pt · JPY 0.4pip","factory: 2,480,000 theories → 142 real vs 2 placebo","factory2: 1,850,000 → 173 real vs 4 placebo","AVP port: 540 settings → 0 pass","CRT: 31,716 variants → buried","RDM 1:10 · p=0.000 · t 3.1 OOS","Gotobi · 15/15 years · p<0.001"];
+function ticker(){const l=$("#log");let i=0;const add=()=>{const d=document.createElement("div");const t=new Date().toISOString().slice(11,19);d.textContent=`[${t}] ${LOG[i++%LOG.length]}`;l.prepend(d);while(l.children.length>6)l.lastChild.remove()};
+  for(let k=0;k<5;k++)add();if(!matchMedia("(prefers-reduced-motion: reduce)").matches)setInterval(add,2400)}
+
+fetch("data.json").then(r=>r.json()).then(d=>{D=d;render();ticker()}).catch(()=>{$("#upd").textContent="data failed to load"});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>D&&inspect(cur));
+new MutationObserver(()=>D&&inspect(cur)).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+</script>
