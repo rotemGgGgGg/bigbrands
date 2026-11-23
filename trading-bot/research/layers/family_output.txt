@@ -1,0 +1,29 @@
+Unfiltered base configs (13,824 each, all trades 2012-26):
+  real   : avg R -0.050 | configs with t>=3: 0 | t<=-3: 4345 | best +1.084
+  placebo: avg R -0.069 | configs with t>=3: 0 | t<=-3: 3635 | best +0.739
+
+Real minus placebo, avg R per config, by layer:
+  tf     1H: -0.083 vs -0.063 | 4H: -0.072 vs -0.073 | D: +0.004 vs -0.070
+  touch  far: -0.043 vs -0.061 | mid: -0.053 vs -0.067 | near: -0.054 vs -0.079
+  mode   invert: -0.064 vs -0.059 | react: -0.036 vs -0.078
+  conf   bos: -0.032 vs -0.032 | displace: -0.042 vs -0.061 | engulf: -0.044 vs -0.078 | fvg15: -0.010 vs -0.025 | none: -0.081 vs -0.084 | reject: -0.033 vs -0.055 | sweep: -0.097 vs -0.134 | volume: -0.064 vs -0.081
+  entry  limit50: -0.047 vs -0.069 | market: -0.044 vs -0.061 | micro_bos: -0.048 vs -0.059 | retest: -0.062 vs -0.086
+  stop   0.10atr: -0.083 vs -0.087 | 0.25atr: -0.018 vs -0.051 | swing: -0.050 vs -0.071 | zone: -0.050 vs -0.066
+  tgt    1: -0.082 vs -0.087 | 10: -0.028 vs -0.056 | 2: -0.073 vs -0.085 | 3: -0.061 vs -0.077 | 5: -0.049 vs -0.066 | close: -0.008 vs -0.042
+
+Best 10 real unfiltered configs (whole period):
+tf touch  mode     conf     entry    stop   tgt      n     R     t    R3
+ D   mid react      bos micro_bos   swing     2  258.0 0.216 2.914 0.153
+4H   far react displace   limit50   swing    10 2188.0 0.150 2.870 0.182
+ D   mid react      bos   limit50    zone     3  166.0 0.303 2.798 0.234
+4H   far react    fvg15   limit50   swing     3 1723.0 0.088 2.769 0.084
+ D  near react    fvg15   limit50   swing     5  290.0 0.282 2.721 0.472
+ D   far react   engulf   limit50 0.10atr close  185.0 1.027 2.719 1.699
+ D   mid react   engulf   limit50 0.10atr     1  209.0 0.179 2.685 0.121
+ D   far react      bos   limit50   swing     2  183.0 0.253 2.675 0.043
+ D  near react   engulf   limit50 0.25atr close  277.0 0.432 2.670 0.857
+ D  near react   engulf   limit50 0.25atr     5  277.0 0.337 2.668 0.750
+
+FAMILY TEST - daily gaps, react mode, all 768 configs x 3 touches, no selection:
+  real   : avg R 2012-17 -0.012 | 2018-21 +0.034 | 2022-26 +0.050 | configs positive in 2022-26: 57%
+  placebo: avg R 2012-17 -0.159 | 2018-21 -0.024 | 2022-26 -0.081 | configs positive in 2022-26: 27%

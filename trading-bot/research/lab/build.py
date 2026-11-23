@@ -31,11 +31,14 @@ REG = [
  dict(id="onr", name="Overnight Quarters", market="NQ", status="DEAD", family="Time & price", rule="Overnight range split in 4, quarter levels as targets.", rr=None, p="n.s.", note="Shuffled-day placebo equal."),
  dict(id="ict", name="ICT Macros · Gann · QT", market="NQ", status="DEAD", family="Time & price", rule="Macro windows, Gann times, Quarterly Theory 90-min cycles.", rr=None, p="n.s.", note="Shifted time grids score the same."),
  dict(id="vid", name="Video Strategies", market="USDJPY · XAU · NQ", status="DEAD", family="Breakout", rule="London breakout, gold sweep, NY momentum.", rr=None, p="n.s.", note="Grid winners failed 2020–26."),
+ dict(id="layers", name="Layers 13M (FVG multi-TF)", market="NQ", status="DEAD", family="Multi-timeframe",
+      rule="D/4H/1H gap → touch → 15m confirm → 1m entry → stop → target × 960 filters = 13,271,040 strategies.", rr=None, p="n.s.",
+      note="17 survivors vs 22 for random zones; 1 of 17 positive in 2022–26. Daily gaps beat random levels by ~0.1R, still ~0 after costs."),
  dict(id="multi", name="8-Market Portfolio", market="DAX · Gold · JPN · Oil …", status="DEAD", family="Portfolio", rule="Same sleeves on non-US markets.", rr=None, p="n.s.", note="Non-US sleeves fail OOS."),
 ]
 BOOK = dict(name="Gotobi + RDM book", sharpe=1.71, cagr=22.6, maxdd=-18.5, pos_years="10/11", prop_pass=74, prop_zero=1, window="OOS 2016–26")
 for r in REG:
     if r.get("series") in S: r.update(S[r["series"]])
 json.dump(dict(updated=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), book=BOOK, strategies=REG,
-               theories_tested=2480000 + 1850000 + 31716 + 540), open("data.json", "w"))
+               theories_tested=2480000 + 1850000 + 31716 + 540 + 13271040), open("data.json", "w"))
 print("ok", len(REG))

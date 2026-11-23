@@ -1,0 +1,9 @@
+real D near: events 861, trades 575004, 8s
+real D mid: events 809, trades 548934, 8s
+real D far: events 771, trades 502182, 8s
+real 4H near: events 4969, trades 3455376, 11s
+real 4H mid: events 4839, trades 3448746, 11s
+real 4H far: events 4717, trades 3260160, 12s
+real 1H near: events 17647, trades 12159780, 18s
+real 1H mid: events 17414, trades 12320016, 19s
+real 1H far: events 17183, trades 11986320, 22s

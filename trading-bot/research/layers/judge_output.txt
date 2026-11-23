@@ -1,0 +1,31 @@
+strategies tested: real 13,271,040  placebo 13,271,040
+REAL: survivors of gates 1+2: 17 | 2022-26: positive 5.9%, avg -0.204R, t>=2 0.0%
+PLACEBO: survivors of gates 1+2: 22 | 2022-26: positive 27.3%, avg -0.095R, t>=2 0.0%
+tf 4H: 16 vs 5 | 1H: 1 vs 17
+touch mid: 8 vs 5 | far: 8 vs 15 | near: 1 vs 2
+mode invert: 15 vs 20 | react: 2 vs 2
+conf none: 8 vs 1 | fvg15: 6 vs 4 | bos: 2 vs 12 | reject: 1 vs 0
+entry market: 9 vs 9 | retest: 4 vs 2 | limit50: 4 vs 4
+stop 0.25atr: 16 vs 1 | swing: 1 vs 4
+tgt 2: 8 vs 3 | 1: 4 vs 2 | 3: 3 vs 3 | 5: 1 vs 6 | 10: 1 vs 4
+sess all: 13 vs 0 | NY AM: 2 vs 9 | Asia: 1 vs 0 | London: 1 vs 13
+
+TOP 25 real by 2012-21 combined t (2022-26 shown, never used to choose):
+tf touch   mode   conf   entry    stop  tgt  min_size  max_age   sess   trend         day  n1    R1    t1  n2    R2    t2  n3     R3     t3   t12
+4H   mid invert   none  retest 0.25atr    2      1.00       30    all against against day  65 0.613 3.566  25 0.600 2.148  30 -0.284 -1.255 4.040
+4H   mid invert   none  retest 0.25atr    2      1.00        3    all against against day  65 0.613 3.566  25 0.600 2.148  28 -0.231 -0.965 4.040
+4H   mid invert   none  retest 0.25atr    2      1.00       10    all against against day  65 0.613 3.566  25 0.600 2.148  28 -0.231 -0.965 4.040
+4H   mid invert   none  retest 0.25atr    2      1.00        1    all against against day  65 0.613 3.566  25 0.600 2.148  28 -0.231 -0.965 4.040
+4H   mid invert   none  market 0.25atr    2      1.00       30    all against against day  64 0.593 3.417  25 0.600 2.148  30 -0.284 -1.255 3.935
+4H   mid invert   none  market 0.25atr    2      1.00        3    all against against day  64 0.593 3.417  25 0.600 2.148  28 -0.231 -0.965 3.935
+4H   mid invert   none  market 0.25atr    2      1.00       10    all against against day  64 0.593 3.417  25 0.600 2.148  28 -0.231 -0.965 3.935
+4H   mid invert   none  market 0.25atr    2      1.00        1    all against against day  64 0.593 3.417  25 0.600 2.148  28 -0.231 -0.965 3.935
+1H   far  react  fvg15  market   swing    1      0.25        1 London    with against day  50 0.387 3.174  54 0.292 2.256  62 -0.024 -0.192 3.840
+4H   far invert  fvg15 limit50 0.25atr    3      1.00       30    all     all    with day 197 0.352 3.056 102 0.384 2.339 109 -0.251 -2.118 3.815
+4H   far invert    bos  market 0.25atr    1      1.00       30  NY AM against    with day  66 0.338 3.131  38 0.322 2.188  37 -0.164 -1.005 3.761
+4H   far invert    bos  market 0.25atr    1      1.00       30  NY AM against         all  66 0.338 3.131  38 0.322 2.188  38 -0.187 -1.162 3.761
+4H  near  react reject  market 0.25atr    1      0.25       30   Asia    with         all  40 0.406 3.032  85 0.233 2.221 113  0.077  0.822 3.714
+4H   far invert  fvg15 limit50 0.25atr    5      1.00       30    all    with    with day  79 0.659 3.131  42 0.589 2.070  47 -0.287 -1.560 3.677
+4H   far invert  fvg15 limit50 0.25atr    3      1.00       30    all     all    expanded 170 0.378 3.070  97 0.347 2.119  94 -0.238 -1.921 3.670
+4H   far invert  fvg15  market 0.25atr    3      1.00       10    all     all    with day 192 0.369 3.121 109 0.305 2.023 109 -0.155 -1.193 3.637
+4H   far invert  fvg15 limit50 0.25atr   10      1.00       30    all    with    with day  79 0.661 3.044  42 0.699 2.031  47 -0.287 -1.560 3.589
