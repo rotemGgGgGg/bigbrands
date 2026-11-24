@@ -39,6 +39,7 @@ REG = [
 BOOK = dict(name="Gotobi + RDM book", sharpe=1.71, cagr=22.6, maxdd=-18.5, pos_years="10/11", prop_pass=74, prop_zero=1, window="OOS 2016–26")
 for r in REG:
     if r.get("series") in S: r.update(S[r["series"]])
-json.dump(dict(updated=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), book=BOOK, strategies=REG,
+SPD = json.load(open("sp.json"))
+json.dump(dict(sp=SPD, updated=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), book=BOOK, strategies=REG,
                theories_tested=2480000 + 1850000 + 31716 + 540 + 13271040), open("data.json", "w"))
 print("ok", len(REG))

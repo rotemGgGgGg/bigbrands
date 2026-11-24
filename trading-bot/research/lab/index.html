@@ -94,6 +94,26 @@ footer{padding-block:28px 48px;color:var(--faint);font-size:12px;border-top:1px 
 .log{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:12px 14px;height:112px;overflow:hidden;position:relative}
 .log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .log::after{content:"";position:absolute;inset:auto 0 0;height:36px;background:linear-gradient(transparent,var(--panel))}
+.seg{display:inline-flex;border:1px solid var(--ink);margin-left:auto}
+.seg button{font:inherit;font-family:var(--mono);font-size:12px;padding:6px 12px;background:transparent;color:var(--fg);border:0;cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--ink);color:var(--inv)}
+.seg button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.verdict{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);padding:14px 18px;margin-bottom:16px}
+.verdict p{margin:0;max-width:80ch}
+.kpis.sk{margin-block:0 16px;grid-template-columns:repeat(6,1fr)}
+.spc{border:1px solid var(--line);margin-bottom:16px}
+.brk{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);margin-bottom:24px}
+.brk>div{padding:16px 18px;border-right:1px solid var(--line);min-width:0}.brk>div:last-child{border-right:0}
+.brk h5{margin:0 0 10px;font-size:13px}
+.bar{display:grid;grid-template-columns:70px 1fr 64px;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;margin-bottom:6px}
+.bar .tr{height:10px;position:relative;background:var(--panel)}
+.bar .tr i{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--faint)}
+.bar .tr b{position:absolute;top:1px;bottom:1px}
+.bar .tr b.p{background:var(--ink)}.bar .tr b.n{border:1px solid var(--ink);background:transparent}
+.bar span:last-child{text-align:right}
+.subh{margin:0 0 10px;font-size:13px}
+table.vt{min-width:720px}table.vt td:last-child,table.vt th:last-child{text-align:left;font-family:var(--sans);color:var(--muted)}
+@media (max-width:900px){.kpis.sk{grid-template-columns:repeat(3,1fr)}.kpis.sk .kpi:nth-child(3){border-right:0}.kpis.sk .kpi:nth-child(-n+3){border-bottom:1px solid var(--line)}.brk{grid-template-columns:1fr}.brk>div{border-right:0;border-bottom:1px solid var(--line)}}
 @media (max-width:900px){.insp{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line)}.book{grid-template-columns:repeat(3,1fr)}.book>div:nth-child(3){border-right:0}.book>div{border-bottom:1px solid var(--line)}}
 @media (max-width:640px){.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(2){border-right:0}.kpi:nth-child(-n+2){border-bottom:1px solid var(--line)}
  .charts{grid-template-columns:1fr}.cell:nth-child(2){border-left:0}.grave,.steps{grid-template-columns:1fr}.grave div,.steps div{border-right:0;border-bottom:1px solid var(--line)}
@@ -102,7 +122,7 @@ footer{padding-block:28px 48px;color:var(--faint);font-size:12px;border-top:1px 
 
 <div class="top"><div class="wrap">
   <div class="logo"><i></i>Edge Lab</div>
-  <nav><a href="#board">Leaderboard</a><a href="#inspect">Inspector</a><a href="#book">Book</a><a href="#grave">Graveyard</a><a href="#method">Method</a></nav>
+  <nav><a href="#board">Leaderboard</a><a href="#inspect">Inspector</a><a href="#spmodel">SP Model</a><a href="#book">Book</a><a href="#grave">Graveyard</a><a href="#method">Method</a></nav>
   <div class="sp"></div>
   <div class="live mono"><span class="dot"></span><span id="upd">loading…</span></div>
 </div></div>
@@ -133,6 +153,21 @@ footer{padding-block:28px 48px;color:var(--faint);font-size:12px;border-top:1px 
       <div class="cell wide"><h4>By year, R</h4><p class="cap">Solid: positive year. Outline: losing year.</p><div id="yr"></div><div class="mcgrid" id="mcs"></div></div>
     </div>
   </div>
+</section>
+
+<section id="spmodel">
+  <div class="sh"><h2>SP Model v8</h2><p>London range sweep, NY reversal. NQ 5-minute, 2012–2026, R before costs.</p>
+    <div class="seg" role="tablist" id="spseg"><button id="spA" role="tab" data-k="A">London 00:00–06:00</button><button id="spB" role="tab" data-k="B">London 02:00–09:30</button></div></div>
+  <div class="verdict"><span class="pill DEAD">DEAD</span><p id="spverdict"></p></div>
+  <div class="kpis sk" id="spk"></div>
+  <div class="charts spc">
+    <div class="cell"><h4>Equity, cumulative R</h4><p class="cap">Every trade. Shaded: 2020–26.</p><div id="speq"></div></div>
+    <div class="cell"><h4>Monte Carlo, one year</h4><p class="cap">5,000 bootstrap years from its own trades.</p><div id="spmc"></div></div>
+    <div class="cell wide"><h4>By year, R</h4><p class="cap">Solid: positive year. Outline: losing year.</p><div id="spyr"></div><div class="mcgrid" id="spmcs"></div></div>
+  </div>
+  <div class="brk" id="spbrk"></div>
+  <h4 class="subh">Attempts to fix it</h4>
+  <div class="tbl"><table class="vt"><thead><tr><th>Variant</th><th>Trades/yr</th><th>Win %</th><th>R:R</th><th>2012–19</th><th>2020–26</th><th>Note</th></tr></thead><tbody id="spvar"></tbody></table></div>
 </section>
 
 <section id="book">
@@ -236,13 +271,31 @@ function render(){
    <div><b>${b.maxdd}%</b><span>Max drawdown</span></div><div><b>${b.pos_years}</b><span>Positive years</span></div><div><b>${b.prop_pass}%</b><span>Prop payout vs ${b.prop_zero}% at zero edge</span></div>`;
   $("#gv").innerHTML=S.filter(r=>r.status==="DEAD").map(r=>`<div><h5>${r.name}</h5><p>${r.rule}</p><p class="m">${r.market} · ${r.oos_avg!=null?"2020–26 "+f(r.oos_avg,3)+"R · ":""}${r.note}</p></div>`).join("");
   inspect(cur||"rdm10");
+  if(D.sp)spRender(spk||"A");
 }
+
+let spk;
+function spRender(k){spk=k;const s=D.sp[k],o=D.sp[k==="A"?"B":"A"];
+  document.querySelectorAll("#spseg button").forEach(b=>b.setAttribute("aria-selected",b.dataset.k===k));
+  $("#spverdict").textContent=`No edge in either London window. ${s.label}: ${f(s.avg,3)}R per trade (t ${s.t}), ${s.total}R over ${s.n_years} years before costs, ${s.pos_years}/${s.n_years} positive years. The other window: ${f(o.avg,3)}R. Breakeven needs about 47–50% wins; it gets ${s.win}%.`;
+  const pp=D.sp.prop[k];
+  $("#spk").innerHTML=[[s.per_yr,"trades / year"],[s.win+"%","win rate"],[s.rr,"avg win / avg loss"],[f(s.avg,3),"avg R / trade"],["−"+s.maxdd+"R","max drawdown"],[pp.pay+"%","prop payout, "+pp.fail+"% fail"]]
+    .map(([a,b])=>`<div class="kpi"><b>${a}</b><span>${b}</span></div>`).join("");
+  ["#speq","#spmc","#spyr"].forEach(x=>$(x).innerHTML="");
+  $("#speq").appendChild(equity(s.curve));$("#spmc").appendChild(fan(s.mc.fan));$("#spyr").appendChild(years(s.years));
+  const mc=s.mc;$("#spmcs").innerHTML=`<div><b>${mc.p_year_pos}%</b><span>P(year &gt; 0)</span></div><div><b>${f(mc.median_year,1)}R</b><span>Median year</span></div><div><b>${f(mc.p5_year,1)}R</b><span>Bad year (5%)</span></div><div><b>−${mc.p95_dd}R</b><span>Drawdown (95%)</span></div>`;
+  const lim=.2,bars=(title,arr,lab)=>`<div><h5>${title}</h5>${arr.map(x=>{const v=Math.max(-lim,Math.min(lim,x.R)),w=Math.abs(v)/lim*50;
+    return `<div class="bar"><span>${lab(x.k)}</span><span class="tr"><i></i><b class="${x.R>=0?"p":"n"}" style="left:${x.R>=0?50:50-w}%;width:${Math.max(w,.5)}%"></b></span><span>${f(x.R,3)}</span></div>`}).join("")}</div>`;
+  $("#spbrk").innerHTML=bars("By scenario",s.scen,x=>"S"+x)+bars("By side",s.side,x=>x.toLowerCase())+bars("By entry hour (NY)",s.hour.filter(x=>x.n>=30),x=>x+":00");
+  $("#spvar").innerHTML=D.sp.variants.map(v=>`<tr><td class="n">${v.name}</td><td>${v.per_yr}</td><td>${v.win}</td><td>${v.rr}</td><td>${f(v.is_R,3)}</td><td>${f(v.oos_R,3)}</td><td>${v.note}</td></tr>`).join("");
+}
+document.querySelectorAll("#spseg button").forEach(b=>b.onclick=()=>spRender(b.dataset.k));
 
 const LOG=["seed 2026 · bootstrap 5000 × 1y paths","gate1 IS 2012–19 · select","gate2 OOS 2020–26 · single look","placebo: shifted clocks × 1000","placebo: random direction × 1000","costs: NQ 1.0pt · JPY 0.4pip","factory: 2,480,000 theories → 142 real vs 2 placebo","factory2: 1,850,000 → 173 real vs 4 placebo","AVP port: 540 settings → 0 pass","CRT: 31,716 variants → buried","RDM 1:10 · p=0.000 · t 3.1 OOS","Gotobi · 15/15 years · p<0.001"];
 function ticker(){const l=$("#log");let i=0;const add=()=>{const d=document.createElement("div");const t=new Date().toISOString().slice(11,19);d.textContent=`[${t}] ${LOG[i++%LOG.length]}`;l.prepend(d);while(l.children.length>6)l.lastChild.remove()};
   for(let k=0;k<5;k++)add();if(!matchMedia("(prefers-reduced-motion: reduce)").matches)setInterval(add,2400)}
 
 fetch("data.json").then(r=>r.json()).then(d=>{D=d;render();ticker()}).catch(()=>{$("#upd").textContent="data failed to load"});
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>D&&inspect(cur));
-new MutationObserver(()=>D&&inspect(cur)).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>D&&render());
+new MutationObserver(()=>D&&render()).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 </script>
