@@ -31,3 +31,12 @@ Trend-side 5-min close beyond the London level 09:30-11/12:00; entry on retest o
 - The trend filter made every variant worse (mean IS -0.15R vs -0.08R).
 - Retest entries are the worst (down to -0.27R): when price comes back to the broken London level, the break usually fails.
 - Pre-chosen pick (best IS with trend) on S&P: -0.07R, 2020-26 -0.08R. Last 2 years NQ +0.01R.
+
+## 1-minute re-resolution (resolve1m.py) - ~30% of trades open and close inside one 5-minute bar
+| | 5-min sim | 1-min, target allowed in fill minute (optimistic) | 1-min, stop only in fill minute (conservative) |
+|---|---|---|---|
+| A 00-06, last 3y | 49.9%, +0.041R | 57.4%, +0.202R | 50.5%, +0.058R (t 1.2) |
+| B 02-09:30, last 3y | 49.4%, +0.021R | 59.5%, +0.246R | 52.5%, +0.102R (t 2.1) |
+| B 02-09:30, 2020-26 | 48.9%, +0.013R | | 51.5%, +0.074R (t 2.3) |
+| B 02-09:30, 2012-19 | 44.7%, -0.069R | | 46.3%, -0.034R |
+Truth sits between the two 1-minute columns. Nowhere near 69-74% win rate with these brackets (target ~1.1R).
