@@ -48,6 +48,7 @@ export default async function strategies(main, [id]) {
   $("#rows", main).addEventListener("click", (e) => {
     const cb = e.target.closest("input.checkbox");
     if (cb) { const id = cb.dataset.id; cb.checked ? ui.picked.add(id) : ui.picked.delete(id); if (ui.picked.size > 4) { ui.picked.delete(id); cb.checked = false; } paintCompare(all); return; }
+    if (e.target.closest("td.chk")) return;
     const tr = e.target.closest("tr[data-id]"); if (tr) location.hash = `#strategies/${tr.dataset.id}`;
   });
   $("#rows", main).addEventListener("keydown", (e) => { const tr = e.target.closest("tr[data-id]"); if (tr && e.key === "Enter") location.hash = `#strategies/${tr.dataset.id}`; });
@@ -64,7 +65,7 @@ function row(s) {
   const c = (v, d = 3) => `<span class="${signCls(v)}">${fmt.r(v, d)}</span>`;
   const has = s.hasTrades;
   return `<tr class="clickable" data-id="${s.id}" tabindex="0">
-    <td class="chk" onclick="event.stopPropagation()">${has ? `<input type="checkbox" class="checkbox" data-id="${s.id}" ${ui.picked.has(s.id) ? "checked" : ""} aria-label="Compare ${esc(s.name)}">` : ""}</td>
+    <td class="chk">${has ? `<input type="checkbox" class="checkbox" data-id="${s.id}" ${ui.picked.has(s.id) ? "checked" : ""} aria-label="Compare ${esc(s.name)}">` : ""}</td>
     <td class="name l">${esc(s.name)}<small>${esc(s.market)} · ${esc(s.family)}</small></td>
     <td class="l"><span class="pill ${s.status.toLowerCase()}">${s.status.toLowerCase()}</span></td>
     <td>${has ? fmt.n(s.n) : "—"}</td><td>${has ? fmt.pct(s.winRate) : "—"}</td><td>${has ? c(s.expectancy) : "—"}</td><td>${has ? fmt.n(s.payoff, 2) : "—"}</td>

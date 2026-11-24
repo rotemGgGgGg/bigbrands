@@ -132,7 +132,29 @@ document.addEventListener("keydown", (e) => {
 
 state.on(paintAgent);
 state.on(() => loadConvNav());
-shell();
-window.addEventListener("hashchange", route);
-refreshHealth().then(() => setInterval(refreshHealth, 30000));
-route().then(() => document.body.classList.remove("booting"));
+function loginScreen() {
+  document.body.classList.add("welcome"); document.body.classList.remove("booting");
+  $("#app").innerHTML = `<div class="welcome-screen"><div class="greeting"><h1>Edge <em>Lab</em></h1><p>This workspace is protected. Sign in to continue.</p></div>
+    <form class="chatbar" id="login" style="width:min(420px,100%);opacity:1;animation:none">
+      <label class="sr-only" for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;border:0;outline:0;background:transparent;padding:18px;font-size:15px">
+      <div class="chatbar-row"><span class="caption" id="login-msg"></span><div class="right"><button class="send" type="submit" aria-label="Sign in">${icon("arrowRight", 16, 2)}</button></div></div>
+    </form></div>`;
+  $("#pw").focus();
+  $("#login").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try { await api.login($("#pw").value); location.reload(); }
+    catch (err) { $("#login-msg").textContent = err.message; $("#pw").select(); }
+  });
+}
+
+async function boot() {
+  let s; try { s = await api.session(); } catch { s = { authRequired: false, authenticated: true }; }
+  if (s.authRequired && !s.authenticated) return loginScreen();
+  shell();
+  window.addEventListener("hashchange", route);
+  window.addEventListener("edge:auth", () => loginScreen(), { once: true });
+  refreshHealth().then(() => setInterval(refreshHealth, 30000));
+  await route(); document.body.classList.remove("booting");
+}
+boot();

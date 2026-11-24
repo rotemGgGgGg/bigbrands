@@ -2,7 +2,13 @@
 // inside the research workspace, with an explicit tool allow-list per permission level and
 // `--permission-mode dontAsk`, so anything outside the allow-list is refused rather than prompted.
 // The browser never sends commands: it sends a message, the server builds the CLI call.
-import { spawn, execFile } from "node:child_process";
+import { spawn, execFile, execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
+const WIN = process.platform === "win32";
+const PY = ["Bash(python3 *)", "Bash(/usr/bin/python3 *)", "Bash(python *)", "Bash(py *)"];
+const READ_CMDS = ["Bash(ls *)", "Bash(dir *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)"];
 
 export const PERMISSIONS = {
   read: {
@@ -13,12 +19,12 @@ export const PERMISSIONS = {
   analyze: {
     label: "Analyze",
     description: "Also runs Python research scripts and read-only git commands. Python can do anything a script can, inside your machine.",
-    tools: ["Read", "Glob", "Grep", "Bash(python3 *)", "Bash(/usr/bin/python3 *)", "Bash(ls *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)"],
+    tools: ["Read", "Glob", "Grep", ...PY, ...READ_CMDS],
   },
   build: {
     label: "Build",
     description: "Also edits and creates files in the workspace, so it can write new strategy variations and tests.",
-    tools: ["Read", "Glob", "Grep", "Bash(python3 *)", "Bash(/usr/bin/python3 *)", "Bash(ls *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)", "Edit", "Write"],
+    tools: ["Read", "Glob", "Grep", ...PY, ...READ_CMDS, "Edit", "Write"],
   },
 };
 
@@ -37,16 +43,36 @@ compare against a random twin (shifted clocks, shuffled days, random direction, 
 Never invent numbers: every figure you report must come from code you ran or a file you read. If you could not run something, say so.
 When you report a test result, give a short table (trades/yr, win %, avg R, 2012-19 and 2020-26 avg R with t, positive years, random p), then end with
 one fenced json block: {"trades_per_year":..,"win_rate":..,"avg_r":..,"is_avg_r":..,"oos_avg_r":..,"oos_t":..,"positive_years":"x/y","p_random":..,"verdict":"live|watch|dead"} using null for anything not measured.
-Be concise. Lead with the result.`;
+Be concise. Lead with the result.${WIN ? " This machine runs Windows: call Python as `python`." : ""}`;
+
+/**
+ * Finds how to start the CLI without a shell. On Windows npm installs `claude.cmd`, which Node cannot spawn directly
+ * (and must not be run through a shell with our arguments), so we read the shim and start its real target.
+ */
+export function resolveClaude(bin = process.env.CLAUDE_BIN || "claude") {
+  if (!WIN) return { cmd: bin, pre: [] };
+  let candidates = [];
+  if (/[\\/]/.test(bin)) candidates = [bin];
+  else { try { candidates = execFileSync("where.exe", [bin], { encoding: "utf8", timeout: 10000 }).split(/\r?\n/).filter(Boolean); } catch { return { cmd: bin, pre: [], missing: true }; } }
+  const exe = candidates.find((c) => /\.exe$/i.test(c)); if (exe) return { cmd: exe, pre: [] };
+  for (const c of candidates.filter((x) => /\.cmd$/i.test(x))) {
+    const text = fs.readFileSync(c, "utf8"), dir = path.dirname(c);
+    const targets = [...text.matchAll(/%~?dp0%?\\([^"%\r\n]+)/gi)].map((m) => path.join(dir, m[1].trim()));
+    const t = targets.find((x) => /\.exe$/i.test(x) && fs.existsSync(x)) || targets.find((x) => /\.(c|m)?js$/i.test(x) && fs.existsSync(x));
+    if (t) return /\.exe$/i.test(t) ? { cmd: t, pre: [] } : { cmd: process.execPath, pre: [t] };
+  }
+  return { cmd: candidates[0] || bin, pre: [] };
+}
 
 export class Agent {
-  constructor({ workspace, bin = process.env.CLAUDE_BIN || "claude" }) { this.workspace = workspace; this.bin = bin; this.status = null; }
+  constructor({ workspace }) { this.workspace = workspace; this.status = null; this.launch = resolveClaude(); }
 
   /** Detects the CLI. Does not prove the account can run a model; `test()` does. */
   detect() {
     return new Promise((resolve) => {
-      execFile(this.bin, ["--version"], { timeout: 15000 }, (err, stdout) => {
-        this.status = err ? { available: false, error: err.code === "ENOENT" ? `Claude Code CLI not found ("${this.bin}"). Install it or set CLAUDE_BIN.` : err.message }
+      this.launch = resolveClaude();
+      execFile(this.launch.cmd, [...this.launch.pre, "--version"], { timeout: 20000, windowsHide: true }, (err, stdout) => {
+        this.status = err ? { available: false, error: err.code === "ENOENT" || this.launch.missing ? "Claude Code CLI not found. Install it (npm install -g @anthropic-ai/claude-code) or set CLAUDE_BIN." : err.message }
           : { available: true, version: stdout.trim() };
         resolve(this.status);
       });
@@ -57,14 +83,22 @@ export class Agent {
    * Starts one headless run. Emits normalised events through onEvent and resolves when the process ends.
    * Returns { cancel }.
    */
-  run({ prompt, sessionId, permission = "analyze", model = "", onEvent }) {
+  run({ prompt, sessionId, permission = "analyze", model = "", billing = { mode: "subscription" }, onEvent }) {
     const perm = PERMISSIONS[permission] || PERMISSIONS.read;
     const args = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
       "--permission-mode", "dontAsk", "--append-system-prompt", SYSTEM(this.workspace)];
     if (model) args.push("--model", model);
     if (sessionId) args.push("--resume", sessionId);
+    // Billing: "subscription" strips any API key so the CLI uses your Claude sign-in; "api" passes the server's key
+    // (never the browser's) and caps the spend of each run.
+    const env = { ...process.env };
+    delete env.ANTHROPIC_API_KEY; delete env.EDGE_LAB_API_KEY;
+    if (billing.mode === "api") {
+      env.ANTHROPIC_API_KEY = billing.apiKey;
+      if (billing.maxBudgetUsd) args.push("--max-budget-usd", String(billing.maxBudgetUsd));
+    }
     args.push("--allowedTools", ...perm.tools);
-    const child = spawn(this.bin, args, { cwd: this.workspace, env: process.env, stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(this.launch.cmd, [...this.launch.pre, ...args], { cwd: this.workspace, env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
     child.stdin.end(prompt);
 
     let buf = "", stderr = "", sawDelta = false, finalText = "", resultSeen = false, cancelled = false;

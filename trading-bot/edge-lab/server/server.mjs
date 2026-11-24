@@ -1,5 +1,6 @@
 // Edge Lab local server: static app + JSON API + Server-Sent Events for agent runs.
-// Binds to 127.0.0.1 only and rejects requests from other origins (no cross-site access to the local agent).
+// Default: listens on 127.0.0.1 only, no login. With EDGE_LAB_PASSWORD every API call needs a session (see README).
+// Always rejects unknown Host headers (DNS rebinding) and cross-origin writes.
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -10,20 +11,31 @@ import { simulate } from "./lib/montecarlo.mjs";
 import { portfolio } from "./lib/portfolio.mjs";
 import { Store, id } from "./lib/store.mjs";
 import { Agent, PERMISSIONS, MODELS } from "./lib/agent.mjs";
+import { Auth } from "./lib/auth.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+// Optional local secrets file (gitignored): EDGE_LAB_PASSWORD, EDGE_LAB_API_KEY, ALLOWED_HOSTS, PORT, HOST, CLAUDE_BIN, PYTHON.
+if (fs.existsSync(path.join(ROOT, ".env"))) process.loadEnvFile(path.join(ROOT, ".env"));
 const PORT = +(process.env.PORT || 3007);
-const HOST = "127.0.0.1";
+const HOST = process.env.HOST || "127.0.0.1";
+const PASSWORD = process.env.EDGE_LAB_PASSWORD || "";
+const API_KEY = process.env.EDGE_LAB_API_KEY || process.env.ANTHROPIC_API_KEY || "";
+const EXTRA_HOSTS = (process.env.ALLOWED_HOSTS || "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
+if (!["127.0.0.1", "localhost", "::1"].includes(HOST) && PASSWORD.length < 12) {
+  console.error(`Refusing to listen on ${HOST} without a password. Set EDGE_LAB_PASSWORD (12+ characters), or leave HOST unset.`);
+  process.exit(1);
+}
 const RESEARCH = path.resolve(process.env.RESEARCH_DIR || path.join(ROOT, "..", "research"));
 const LAB = path.join(RESEARCH, "lab");
 const REPO = path.resolve(RESEARCH, "..", "..");
-const PY = process.env.PYTHON || "python3";
+const PY = process.env.PYTHON || (process.platform === "win32" ? "python" : "python3");
 
 const data = new ResearchData(LAB);
 const store = new Store(process.env.EDGE_LAB_STORE || path.join(ROOT, "store"));
 const agent = new Agent({ workspace: RESEARCH });
+const auth = new Auth(store, PASSWORD);
 const jobs = new Map();                       // jobId -> { events, listeners:Set, status, cancel, conversationId, experimentId }
-const DEFAULT_SETTINGS = { permission: "analyze", model: "", userName: "Rotem" };
+const DEFAULT_SETTINGS = { permission: "analyze", model: "", userName: "Rotem", billing: "subscription", maxBudgetUsd: 2 };
 
 const settings = () => ({ ...DEFAULT_SETTINGS, ...store.read("settings", {}) });
 
@@ -38,12 +50,19 @@ async function body(req) {
 }
 
 function allowed(req) {
-  const hosts = [`localhost:${PORT}`, `127.0.0.1:${PORT}`];
-  if (!hosts.includes(req.headers.host)) return false;                       // DNS-rebinding guard
+  const host = String(req.headers.host || "").toLowerCase();
+  const hosts = [`localhost:${PORT}`, `127.0.0.1:${PORT}`, ...EXTRA_HOSTS.flatMap((h) => (h.includes(":") ? [h] : [h, `${h}:${PORT}`]))];
+  if (!hosts.includes(host)) return { ok: false, why: `Host "${host}" is not allowed. Add it with ALLOWED_HOSTS=${host.split(":")[0]} (and set EDGE_LAB_PASSWORD).` };
   const origin = req.headers.origin;
-  if (req.method !== "GET" && req.method !== "HEAD" && origin && !hosts.map((h) => `http://${h}`).includes(origin)) return false;
-  return true;
+  if (req.method !== "GET" && req.method !== "HEAD" && origin && !hosts.some((h) => origin === `http://${h}` || origin === `https://${h}`)) return { ok: false, why: "Cross-origin request blocked." };
+  return { ok: true };
 }
+
+const SECURITY_HEADERS = {
+  "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  "x-frame-options": "DENY", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "permissions-policy": "camera=(), microphone=(), geolocation=()",
+};
+const isHttps = (req) => req.headers["x-forwarded-proto"] === "https" || !!req.socket.encrypted;
 
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json", ".png": "image/png", ".ico": "image/x-icon" };
 function serveStatic(req, res, pathname) {
@@ -83,7 +102,8 @@ function startJob({ prompt, conversationId, experimentId, displayText }) {
     for (const l of job.listeners) l(e);
   };
 
-  const run = agent.run({ prompt, sessionId: conv?.sessionId, permission: s.permission, model: s.model, onEvent: push });
+  const billing = s.billing === "api" ? { mode: "api", apiKey: API_KEY, maxBudgetUsd: s.maxBudgetUsd } : { mode: "subscription" };
+  const run = agent.run({ prompt, sessionId: conv?.sessionId, permission: s.permission, model: s.model, billing, onEvent: push });
   job.cancel = run.cancel;
   store.log("agent", `Agent run started`, { conversationId, experimentId, permission: s.permission });
   return { jobId, userMsg, assistantMsg: asst };
@@ -138,9 +158,22 @@ function gitHistory() {
 const routes = [];
 const route = (method, pattern, fn) => routes.push({ method, re: new RegExp(`^${pattern.replace(/:(\w+)/g, "(?<$1>[^/]+)")}$`), fn });
 
+route("GET", "/api/session", (req, res) => send(res, 200, { authRequired: auth.enabled, authenticated: !!auth.session(req) }));
+route("POST", "/api/login", async (req, res) => {
+  const b = await body(req), r = auth.login(req, res, String(b.password || ""), isHttps(req));
+  if (!r.ok) return fail(res, r.code, r.error);
+  store.log("security", "Signed in", { agent: String(req.headers["user-agent"] || "").slice(0, 80) }); send(res, 200, { ok: true });
+});
+route("POST", "/api/logout", (req, res) => { auth.logout(req, res); send(res, 200, { ok: true }); });
+route("POST", "/api/logout-all", (req, res) => { auth.logoutAll(); auth.logout(req, res); store.log("security", "Signed out everywhere"); send(res, 200, { ok: true }); });
+
 route("GET", "/api/health", async (req, res) => {
   const st = agent.status || (await agent.detect());
-  send(res, 200, { agent: st, workspace: RESEARCH, settings: settings(), permissions: PERMISSIONS, models: MODELS, files: data.fileInfo(), runningJobs: [...jobs.values()].filter((j) => j.status === "running").length });
+  send(res, 200, {
+    agent: st, workspace: RESEARCH, settings: settings(), permissions: PERMISSIONS, models: MODELS, files: data.fileInfo(), runningJobs: [...jobs.values()].filter((j) => j.status === "running").length,
+    security: { passwordProtected: auth.enabled, host: HOST, allowedHosts: EXTRA_HOSTS, sessions: Object.keys(store.read("sessions", {})).length },
+    billing: { apiKeyConfigured: !!API_KEY },
+  });
 });
 route("POST", "/api/agent/detect", async (req, res) => send(res, 200, await agent.detect()));
 
@@ -289,8 +322,11 @@ route("PUT", "/api/settings", async (req, res) => {
   const b = await body(req), cur = settings();
   if (b.permission && !PERMISSIONS[b.permission]) return fail(res, 400, "Unknown permission level");
   if ("model" in b && !MODELS.some((m) => m.id === b.model)) return fail(res, 400, "Unknown model");
-  const next = { ...cur, ...(b.permission && { permission: b.permission }), ...("model" in b && { model: b.model }) };
-  store.write("settings", next); store.log("settings", `Agent settings changed`, { permission: next.permission, model: next.model || "default" });
+  if (b.billing && !["subscription", "api"].includes(b.billing)) return fail(res, 400, "Unknown billing mode");
+  if (b.billing === "api" && !API_KEY) return fail(res, 400, "No API key on the server. Start it with EDGE_LAB_API_KEY set (see README); the key never goes through the browser.");
+  const budget = "maxBudgetUsd" in b ? Math.min(Math.max(+b.maxBudgetUsd || 0, 0.1), 50) : cur.maxBudgetUsd;
+  const next = { ...cur, ...(b.permission && { permission: b.permission }), ...("model" in b && { model: b.model }), ...(b.billing && { billing: b.billing }), maxBudgetUsd: budget };
+  store.write("settings", next); store.log("settings", `Agent settings changed`, { permission: next.permission, model: next.model || "default", billing: next.billing });
   send(res, 200, next);
 });
 
@@ -305,9 +341,12 @@ route("POST", "/api/data/rebuild", (req, res) => {
 // ---------------------------------------------------------------- server
 const server = http.createServer(async (req, res) => {
   try {
-    if (!allowed(req)) return fail(res, 403, "Request blocked: Edge Lab only accepts requests from its own page.");
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
+    const gate = allowed(req);
+    if (!gate.ok) return fail(res, 403, gate.why);
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname.startsWith("/api/")) {
+      if (!["/api/session", "/api/login"].includes(url.pathname) && !auth.session(req)) return fail(res, 401, "Sign in required.");
       for (const r of routes) {
         const m = r.method === req.method && url.pathname.match(r.re);
         if (m) return await r.fn(req, res, m.groups || {}, url);
@@ -324,7 +363,9 @@ const server = http.createServer(async (req, res) => {
 server.on("error", (e) => { console.error(e.code === "EADDRINUSE" ? `Port ${PORT} is in use. Start with PORT=3008 npm start.` : e.message); process.exit(1); });
 server.listen(PORT, HOST, async () => {
   const st = await agent.detect();
-  console.log(`Edge Lab  →  http://localhost:${PORT}`);
+  console.log(`Edge Lab  →  http://localhost:${PORT}${HOST !== "127.0.0.1" ? `  (listening on ${HOST})` : ""}`);
+  console.log(`Access    →  ${auth.enabled ? "password required" : "this computer only, no login"}${EXTRA_HOSTS.length ? ` · extra hosts: ${EXTRA_HOSTS.join(", ")}` : ""}`);
+  console.log(`Billing   →  ${settings().billing === "api" ? (API_KEY ? "Claude API key (per-run cap)" : "API selected but no key set") : "your Claude subscription (Claude Code sign-in)"}`);
   console.log(`Workspace →  ${RESEARCH}`);
   console.log(`Agent     →  ${st.available ? `Claude Code ${st.version}` : st.error}`);
 });

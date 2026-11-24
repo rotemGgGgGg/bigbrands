@@ -9,8 +9,44 @@ cd trading-bot/edge-lab
 npm start            # → http://localhost:3007   (PORT=3008 npm start if 3007 is taken)
 npm test             # engine tests (Monte Carlo, metrics, portfolio)
 ```
-Needs Node 20+. No dependencies to install. The agent needs the Claude Code CLI on the same machine, signed in
-(`claude` once in a terminal). If it lives elsewhere: `CLAUDE_BIN=/path/to/claude npm start`.
+Needs Node 20.12+. No dependencies to install. The agent needs the Claude Code CLI on the same machine, signed in
+(`claude`, then `/login`). Settings go in an optional `.env` file next to this README (copy `.env.example`; gitignored).
+
+### Windows (PowerShell 5 has no `&&`: one command per line)
+```powershell
+cd C:\Users\User\bigbrands
+git pull
+cd trading-bot\edge-lab
+npm start
+```
+The server finds `claude.cmd` by itself and calls Python as `python`. Keep the window open while you use the app.
+
+## Billing: subscription or API key
+- **Claude subscription** (default): the agent uses the account Claude Code is signed in with. Sign in with your
+  Claude account (`claude` → `/login` → Claude account), not an API key. Any `ANTHROPIC_API_KEY` in the environment is
+  removed for these runs, so nothing is billed per token by accident.
+- **Claude API key**: put `EDGE_LAB_API_KEY=sk-ant-…` in `.env`, restart, then Settings → Billing → Claude API key.
+  Each run gets `--max-budget-usd` (default $2, editable). The key is only read by the server and passed to the CLI;
+  it never reaches the browser.
+
+## Security model
+- Default: listens on `127.0.0.1` only, no login — only your own computer can open it.
+- `EDGE_LAB_PASSWORD` (12+ characters) turns on sign-in for every API call: HttpOnly + SameSite=Strict session cookie,
+  30-day sessions, "sign out every device", 5 failed attempts per 15 minutes per address.
+- The server refuses to listen on anything but localhost (`HOST=0.0.0.0`) without a password.
+- Unknown `Host` headers are rejected (DNS rebinding); cross-origin writes are rejected; strict Content-Security-Policy,
+  no framing, no referrer.
+- The agent only gets the tools of the chosen permission level (`--permission-mode dontAsk`), works inside
+  `trading-bot/research`, and has no web access.
+
+## Access from your phone (private, not public)
+Do **not** put Edge Lab on a public address: the agent runs Python on your computer. Use Tailscale (free), which makes
+a private network between your own devices:
+1. Install Tailscale on the computer and the phone, sign in to the same account on both.
+2. In `.env`: `EDGE_LAB_PASSWORD=…` and `ALLOWED_HOSTS=<your-pc>.<tailnet>.ts.net` (shown in the Tailscale app).
+3. Start Edge Lab (`npm start`), then in another window: `tailscale serve --bg 3007`.
+4. On the phone: `https://<your-pc>.<tailnet>.ts.net` → sign in with the password.
+If a page says `Host "…" is not allowed`, put exactly that name in `ALLOWED_HOSTS` and restart.
 
 ## Phase 1 — audit of the previous Edge Lab (research/lab)
 | Piece | Where | What it held |

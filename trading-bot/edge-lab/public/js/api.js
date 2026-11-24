@@ -3,11 +3,16 @@ async function req(method, url, body) {
   const res = await fetch(url, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
   let data = null;
   try { data = await res.json(); } catch { /* empty body */ }
+  if (res.status === 401 && !url.startsWith("/api/login")) window.dispatchEvent(new CustomEvent("edge:auth"));
   if (!res.ok) throw Object.assign(new Error(data?.error || `Request failed (${res.status})`), { status: res.status });
   return data;
 }
 
 export const api = {
+  session: () => req("GET", "/api/session"),
+  login: (password) => req("POST", "/api/login", { password }),
+  logout: () => req("POST", "/api/logout"),
+  logoutAll: () => req("POST", "/api/logout-all"),
   health: () => req("GET", "/api/health"),
   detect: () => req("POST", "/api/agent/detect"),
   overview: () => req("GET", "/api/overview"),

@@ -57,7 +57,7 @@ export function agentLabel() {
   if (!h.agent.available) return "Agent offline · open Settings";
   const perm = h.permissions?.[h.settings.permission]?.label || h.settings.permission;
   const model = h.models?.find((m) => m.id === h.settings.model)?.label || "default model";
-  return `Claude Code · ${model} · ${perm}`;
+  return `Claude Code · ${model} · ${perm} · ${h.settings.billing === "api" ? "API key" : "subscription"}`;
 }
 
 /** Sends a message (new conversation when conversationId is null). Returns { conversationId, jobId }. */
