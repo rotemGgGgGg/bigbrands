@@ -1,0 +1,12 @@
+{
+  "name": "edge-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal quant research workspace: strategies, Monte Carlo, portfolio lab, experiments and a Claude Code research agent.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/server.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

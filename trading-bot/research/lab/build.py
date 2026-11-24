@@ -22,6 +22,8 @@ REG = [
       rule="Divide-by-4 time quarters, liquidity sweep entries.", rr=None, p="n.s.", note="Shifted-grid placebo matched it.", series="pluto"),
  dict(id="sp", name="SP Model v8", market="NQ", status="DEAD", family="ICT / sessions",
       rule="London range sweep → NY reversal. 00–06 and 02:00–09:30 windows.", rr=None, p="n.s.", note="−0.03R per trade both windows.", series="sp"),
+ dict(id="sp_B", name="SP Model v8 · London 02:00", market="NQ", status="DEAD", family="ICT / sessions",
+      rule="SP v8 with the London range 02:00-09:30.", rr=None, p="n.s.", note="-0.03R per trade; 1-minute re-check +0.07R in 2020-26, 2012-19 negative."),
  dict(id="avp", name="AVP Zones", market="NQ", status="DEAD", family="Volume profile",
       rule="Composite 5-session profile, LVN rejection, 2R. Exact Pine port, real volume.", rr=2.0, p="0.42",
       note="540-setting grid: 0 pass. Aug–Nov 2026 positive window reproduced, 14 years negative.", series="avp"),
@@ -36,9 +38,28 @@ REG = [
       note="17 survivors vs 22 for random zones; 1 of 17 positive in 2022–26. Daily gaps beat random levels by ~0.1R, still ~0 after costs."),
  dict(id="multi", name="8-Market Portfolio", market="DAX · Gold · JPN · Oil …", status="DEAD", family="Portfolio", rule="Same sleeves on non-US markets.", rr=None, p="n.s.", note="Non-US sleeves fail OOS."),
 ]
+SPEC = {
+ "gotobi": dict(entry="Long USDJPY, EURJPY and GBPJPY at 03:00 Tokyo on gotobi days (5th, 10th, 15th, 20th, 25th, last day; moved to the previous Japanese bank day).",
+                exit="Close the long at 09:55 Tokyo and go short until 10:30 Tokyo.", params={"pairs": "USDJPY, EURJPY, GBPJPY", "size": "1 lot each", "calendar": "Japanese bank days"}),
+ "rdm": dict(entry="At 09:45 New York: if (09:45 open - 09:00 open) has the opposite sign of yesterday's RTH candle (09:30 open to 16:00 close), enter in today's direction.",
+             exit="Flat at 15:55 New York.", params={"skip": "FOMC days", "trades": "max 1 per day"}),
+ "rdm10": dict(entry="RDM signal at 09:45 New York, entry at the 09:45 open.", exit="Stop 0.15 x ATR(14 sessions); target 10R; flat 15:55. Stop first when both touch in one bar.",
+               params={"stop": "0.15 ATR", "target": "10R", "ATR": "14 futures sessions", "cost": "1 NQ point round trip"}),
+ "rdmtrail": dict(entry="RDM signal at 09:45 New York.", exit="Stop 0.25 x ATR; break-even at +2R, then trail 2R behind the best price; flat 15:55.",
+                  params={"stop": "0.25 ATR", "trail": "2R after +2R", "cost": "1 NQ point"}),
+ "avpeq": dict(entry="AVP LVN rejection (close back out of a low-volume node of the 5-session composite profile), taken only if the ridge equation predicts E[R] > 0.",
+               exit="Stop beyond the zone's far edge (2 points), target 2R, flat at the next session open.", params={"features": "9", "fit": "ridge, lambda 50, 2012-19 only", "cost": "1 NQ point"}),
+ "sp": dict(entry="London range (00:00-06:00) swept, then a New York reversal setup (S1/S2/S3); limit entry at fib 0.5 or 0.588 chosen by the value-area position.",
+            exit="Stop at fib 0.702 / 0.816, target at fib 0.267 / 0.36; flat 14:00.", params={"London": "00:00-06:00", "window": "09:30-14:00", "bars": "5-minute"}),
+ "sp_B": dict(entry="Same rules as SP Model v8 with the London range 02:00-09:30.", exit="Stop at fib 0.702 / 0.816, target at fib 0.267 / 0.36; flat 14:00.",
+              params={"London": "02:00-09:30", "window": "09:30-14:00", "bars": "5-minute"}),
+ "avp": dict(entry="Close back above an LVN top after a wick into it (mirror for shorts); one signal per zone per side per session.",
+             exit="Stop beyond the zone's far edge (2 points), target 2R, flat at the next session open.", params={"profile": "5 sessions, 150 rows", "LVN": "< 35% of local peak", "cost": "1 NQ point"}),
+}
 BOOK = dict(name="Gotobi + RDM book", sharpe=1.71, cagr=22.6, maxdd=-18.5, pos_years="10/11", prop_pass=74, prop_zero=1, window="OOS 2016–26")
 for r in REG:
     if r.get("series") in S: r.update(S[r["series"]])
+    r.update(SPEC.get(r["id"], {}))
 SPD = json.load(open("sp.json"))
 json.dump(dict(sp=SPD, updated=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), book=BOOK, strategies=REG,
                theories_tested=2480000 + 1850000 + 31716 + 540 + 13271040), open("data.json", "w"))
