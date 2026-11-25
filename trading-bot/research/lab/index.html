@@ -122,7 +122,7 @@ table.vt{min-width:720px}table.vt td:last-child,table.vt th:last-child{text-alig
 
 <div class="top"><div class="wrap">
   <div class="logo"><i></i>Edge Lab</div>
-  <nav><a href="#board">Leaderboard</a><a href="#inspect">Inspector</a><a href="#spmodel">SP Model</a><a href="#book">Book</a><a href="#grave">Graveyard</a><a href="#method">Method</a></nav>
+  <nav><a href="#board">Leaderboard</a><a href="#inspect">Inspector</a><a href="#spmodel">SP Model</a><a href="#book">Book</a><a href="#grave">Graveyard</a><a href="#method">Method</a><a href="#learn">Learn</a></nav>
   <div class="sp"></div>
   <div class="live mono"><span class="dot"></span><span id="upd">loading…</span></div>
 </div></div>
@@ -189,7 +189,17 @@ table.vt{min-width:720px}table.vt td:last-child,table.vt th:last-child{text-alig
     <div><span class="k">Gate 4</span><h5>Survive Monte Carlo</h5><p>Trades resampled into 5,000 years: chance of a losing year and the 95th-percentile drawdown.</p></div>
   </div>
 </section>
+
+<section id="learn" style="--lx-top:68px">
+  <div class="sh"><h2>Learn</h2><p>The math behind every number on this page, with examples from these strategies.</p></div>
+  <div id="learn-root"><p class="sub">Loading lessons…</p></div>
+</section>
 </div>
+<script type="module">
+import { mountLearn, normalise } from "./learn.js";
+fetch("data.json").then((r) => r.json()).then((d) => mountLearn(document.getElementById("learn-root"), normalise(d.strategies)))
+  .catch(() => { document.getElementById("learn-root").innerHTML = '<p class="sub">Lessons could not load.</p>'; });
+</script>
 <footer class="wrap"><span>Edge Lab · research only, not advice</span><span id="ft"></span></footer>
 
 <script>

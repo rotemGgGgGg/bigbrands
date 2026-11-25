@@ -14,11 +14,12 @@ import experiments from "./views/experiments.js";
 import history from "./views/history.js";
 import graveyard from "./views/graveyard.js";
 import settings from "./views/settings.js";
+import learn from "./views/learn.js";
 
-const VIEWS = { welcome, research, overview, strategies, montecarlo, portfolio, experiments, history, graveyard, settings };
+const VIEWS = { welcome, research, overview, strategies, montecarlo, portfolio, experiments, history, graveyard, settings, learn };
 const NAV = [
   ["overview", "Overview", "overview"], ["strategies", "Strategies", "strategies"], ["experiments", "Experiments", "flask"],
-  ["portfolio", "Portfolio Lab", "layers"], ["montecarlo", "Monte Carlo", "dice"], ["history", "Research History", "history"], ["graveyard", "Graveyard", "grave"],
+  ["portfolio", "Portfolio Lab", "layers"], ["montecarlo", "Monte Carlo", "dice"], ["history", "Research History", "history"], ["graveyard", "Graveyard", "grave"], ["learn", "Learn", "book"],
 ];
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } } };
 

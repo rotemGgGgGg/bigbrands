@@ -2,7 +2,7 @@
 // (research/lab/trades.json), and derives every metric the app shows from the actual trades.
 import fs from "node:fs";
 import path from "node:path";
-import { mean, tstat, maxDrawdown, cumsum, downsample } from "./stats.mjs";
+import { mean, std, tstat, maxDrawdown, cumsum, downsample } from "./stats.mjs";
 
 export class ResearchData {
   constructor(labDir) {
@@ -59,7 +59,7 @@ export class ResearchData {
     return {
       ...base, units: tr.units, n: r.length, perYear: r.length / spanYears, first: t[0], last: t[t.length - 1],
       winRate: (100 * wins.length) / r.length, avgWin: mean(wins), avgLoss: mean(losses), payoff: wins.length && losses.length ? mean(wins) / -mean(losses) : null,
-      expectancy: mean(r), t: tstat(r), totalR: curve[curve.length - 1], maxDD: maxDrawdown(curve), worstStreak,
+      expectancy: mean(r), sd: std(r), t: tstat(r), totalR: curve[curve.length - 1], maxDD: maxDrawdown(curve), worstStreak,
       best: Math.max(...r), worst: Math.min(...r),
       isAvg: isR.length ? mean(isR) : null, isT: tstat(isR), oosAvg: oosR.length ? mean(oosR) : null, oosT: tstat(oosR), isN: isR.length, oosN: oosR.length,
       years, yearsN, posYears: Object.values(years).filter((v) => v > 0).length, nYears: Object.keys(years).length,

@@ -36,6 +36,7 @@ const P = {
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   compare: '<path d="M8 3v18M16 3v18M3 8h5M16 16h5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4Z"/>',
+  book: '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M19 19v2H6"/><path d="M9 7h6M9 11h4"/>',
   database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
 };
 export const icon = (name, size = 16, sw = 1.6) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ""}</svg>`;

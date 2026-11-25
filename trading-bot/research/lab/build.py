@@ -57,8 +57,18 @@ SPEC = {
              exit="Stop beyond the zone's far edge (2 points), target 2R, flat at the next session open.", params={"profile": "5 sessions, 150 rows", "LVN": "< 35% of local peak", "cost": "1 NQ point"}),
 }
 BOOK = dict(name="Gotobi + RDM book", sharpe=1.71, cagr=22.6, maxdd=-18.5, pos_years="10/11", prop_pass=74, prop_zero=1, window="OOS 2016–26")
+import os, math as _m
+TR = json.load(open("trades.json")) if os.path.exists("trades.json") else {}
+def trade_stats(x):
+    w=[v for v in x if v>0]; l=[v for v in x if v<0]; n=len(x); mu=sum(x)/n; sd=(sum((v-mu)**2 for v in x)/(n-1))**0.5
+    st=cur=0
+    for v in x: cur=cur+1 if v<0 else 0; st=max(st,cur)
+    return dict(avg_win=round(sum(w)/len(w),3) if w else None, avg_loss=round(sum(l)/len(l),3) if l else None, sd=round(sd,3),
+                t_all=round(mu/sd*n**0.5,2) if sd else None, worst_streak=st, n_trades=n)
 for r in REG:
     if r.get("series") in S: r.update(S[r["series"]])
+    if r["id"] in TR: r.update(trade_stats(TR[r["id"]]["r"]))
+    elif r.get("series") in TR: r.update(trade_stats(TR[r["series"]]["r"]))
     r.update(SPEC.get(r["id"], {}))
 SPD = json.load(open("sp.json"))
 json.dump(dict(sp=SPD, updated=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), book=BOOK, strategies=REG,
