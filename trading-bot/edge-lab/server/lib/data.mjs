@@ -40,6 +40,7 @@ export class ResearchData {
     const base = {
       id: s.id, name: s.name, market: s.market, status: s.status, family: s.family, rule: s.rule, note: s.note,
       entry: s.entry || null, exit: s.exit || null, params: s.params || null, rr: s.rr ?? null, pRandom: s.p ?? null, hasTrades: !!tr,
+      mc: s.mc ? { p_year_pos: s.mc.p_year_pos, median_year: s.mc.median_year, p5_year: s.mc.p5_year, p95_dd: s.mc.p95_dd } : null,
     };
     if (!tr) return base;
     const r = tr.r, t = tr.t, years = {}, yearsN = {};
