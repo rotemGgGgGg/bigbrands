@@ -8,7 +8,7 @@ async function req(method, url, body) {
   return data;
 }
 
-export const api = {
+const httpApi = {
   session: () => req("GET", "/api/session"),
   login: (password) => req("POST", "/api/login", { password }),
   logout: () => req("POST", "/api/logout"),
@@ -37,6 +37,11 @@ export const api = {
   saveSettings: (body) => req("PUT", "/api/settings", body),
   rebuild: () => req("POST", "/api/data/rebuild"),
 };
+
+// Static build (no Node server): every call goes to the in-browser implementation instead.
+const STATIC = document.documentElement.dataset.static === "1";
+const staticMod = STATIC ? import("./api-static.js") : null;
+export const api = STATIC ? new Proxy({}, { get: (_, k) => (k === "then" ? undefined : async (...a) => (await staticMod).api[k](...a)) }) : httpApi;
 
 /** Follows an agent run. onEvent receives each normalised event; resolves at the end. */
 export function stream(jobId, onEvent) {
