@@ -1,5 +1,5 @@
 // Settings: agent connection, permission level, model, data sources.
-import { api } from "../api.js";
+import { api, bridge, testBridge } from "../api.js";
 import { $, $$, esc, fmt, skeleton, toast } from "../util.js";
 import { icon } from "../icons.js";
 import { state } from "../state.js";
@@ -12,6 +12,12 @@ export default async function settings(main, _p, { refreshHealth }) {
   <div class="page" style="max-width:860px">
     <div class="page-head fade-in"><div><h1>Settings</h1><p>How the research agent connects and what it may do.</p></div></div>
 
+    ${h.bridge ? `<div class="card fade-in d1" style="margin-bottom:16px"><div class="card-head"><span class="card-title">Connect your computer</span><span class="card-sub">${h.bridge.connected ? "connected" : "not connected"}</span></div>
+      <div class="card-body"><p class="caption" style="margin:0 0 12px">The agent runs on your computer, on your Claude subscription. Start Edge Lab there (Start Edge Lab.bat), copy the pairing code from its Settings → Access, and paste it here. Nothing is sent anywhere else.</p>
+        <div class="grid g-2"><label class="field"><span>Edge Lab address on your computer</span><input class="input mono" id="br-url" value="${esc(bridge.get()?.url || "http://localhost:3007")}"></label>
+        <label class="field"><span>Pairing code</span><input class="input mono" id="br-code" type="password" value="${esc(bridge.get()?.code || "")}" placeholder="paste the code"></label></div>
+        <div class="row" style="margin-top:12px"><button class="btn sm primary" id="br-save">Connect</button>${bridge.get() ? '<button class="btn sm ghost danger" id="br-off">Disconnect</button>' : ""}<span class="caption" id="br-msg">${h.bridge.connected ? "Connected to " + esc(h.bridge.url) : esc(h.bridge.error || "")}</span></div>
+      </div></div>` : ""}
     <div class="card fade-in d1"><div class="card-head"><span class="card-title">Agent connection</span><div class="right"><button class="btn sm" id="recheck">${icon("refresh", 13)} Re-check</button></div></div>
       <div class="card-body"><div class="row" style="gap:12px;margin-bottom:14px"><span class="status-dot ${a.available ? "ok" : "off"}" style="margin:0"></span>
         <div><div>${a.available ? `Claude Code ${esc(a.version)}` : "Not connected"}</div><div class="caption">${a.available ? "The local server runs the Claude Code CLI in headless mode inside your research folder." : esc(a.error || "")}</div></div></div>
@@ -49,6 +55,12 @@ export default async function settings(main, _p, { refreshHealth }) {
     <div class="card fade-in d4"><div class="card-body"><div class="list">${h.files.map((f) => `<div class="list-item"><span class="li-icon">${icon("database", 13)}</span><div class="li-main"><div class="li-title mono" style="font-size:12px">${esc(f.path)}</div><div class="li-sub">${f.exists ? `modified ${fmt.date(f.modified)} ${fmt.time(f.modified)}` : "missing"}</div></div></div>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="rebuild">${icon("refresh", 13)} Rebuild registry</button><span class="caption">Runs <code>python3 build.py</code> in research/lab. Trade series come from <code>export_trades.py</code>.</span></div></div></div>
   </div>`;
+  $("#br-save", main) && ($("#br-save", main).onclick = async () => {
+    bridge.set({ url: $("#br-url", main).value.trim(), code: $("#br-code", main).value.trim() });
+    const r = await testBridge(true); $("#br-msg", main).textContent = r.ok ? "Connected" : r.error;
+    if (r.ok) { toast("Connected to your computer"); await refreshHealth(); settings(main, _p, { refreshHealth }); }
+  });
+  $("#br-off", main) && ($("#br-off", main).onclick = async () => { bridge.set(null); await refreshHealth(); settings(main, _p, { refreshHealth }); });
   $("#recheck", main).onclick = async () => { await api.detect(); await refreshHealth(); toast("Agent status refreshed"); settings(main, _p, { refreshHealth }); };
   $$("input[name=perm]", main).forEach((r) => r.addEventListener("change", async () => { await api.saveSettings({ permission: r.value }); await refreshHealth(); toast(`Permission level: ${h.permissions[r.value].label}`); }));
   $("#model", main).addEventListener("change", async (e) => { await api.saveSettings({ model: e.target.value }); await refreshHealth(); toast("Model updated"); });

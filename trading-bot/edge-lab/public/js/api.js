@@ -1,9 +1,29 @@
-// Thin client for the local Edge Lab server.
-async function req(method, url, body) {
-  const res = await fetch(url, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
+// Client for the Edge Lab server.
+// Three modes:
+//  · local app (served by the Node server): same-origin calls, cookie auth.
+//  · static build + bridge: the page is hosted elsewhere (e.g. Lovable) and talks to the Edge Lab server on your
+//    computer at the saved address, with the pairing code. The agent runs there, on your Claude Code sign-in.
+//  · static build alone: everything computed in the browser from the data files; no agent.
+const STATIC = document.documentElement.dataset.static === "1";
+const BRIDGE_KEY = "edge.bridge";
+
+export const bridge = {
+  get() { try { return JSON.parse(localStorage.getItem(BRIDGE_KEY) || "null"); } catch { return null; } },
+  set(v) { try { v ? localStorage.setItem(BRIDGE_KEY, JSON.stringify(v)) : localStorage.removeItem(BRIDGE_KEY); } catch { /* storage blocked */ } bridgeUp = null; },
+};
+let bridgeUp = null;                 // cached reachability: { ok, at }
+
+function target() {
+  if (!STATIC) return { base: "", headers: {} };
+  const b = bridge.get();
+  return b?.url && b?.code ? { base: b.url.replace(/\/$/, ""), headers: { authorization: `Bearer ${b.code}` }, code: b.code } : null;
+}
+
+async function req(method, url, body, t = target()) {
+  const res = await fetch(t.base + url, { method, headers: { ...t.headers, ...(body ? { "content-type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
   let data = null;
   try { data = await res.json(); } catch { /* empty body */ }
-  if (res.status === 401 && !url.startsWith("/api/login")) window.dispatchEvent(new CustomEvent("edge:auth"));
+  if (res.status === 401 && !STATIC && !url.startsWith("/api/login")) window.dispatchEvent(new CustomEvent("edge:auth"));
   if (!res.ok) throw Object.assign(new Error(data?.error || `Request failed (${res.status})`), { status: res.status });
   return data;
 }
@@ -39,15 +59,35 @@ const httpApi = {
   rebuild: () => req("POST", "/api/data/rebuild"),
 };
 
-// Static build (no Node server): every call goes to the in-browser implementation instead.
-const STATIC = document.documentElement.dataset.static === "1";
+/** Checks the saved bridge (cached 20 s). Returns { ok, error }. */
+export async function testBridge(force = false) {
+  const t = STATIC && target();
+  if (!t) return { ok: false, error: "Not connected" };
+  if (!force && bridgeUp && Date.now() - bridgeUp.at < 20000) return bridgeUp;
+  try { const h = await req("GET", "/api/health", null, t); bridgeUp = { ok: true, at: Date.now(), health: h }; }
+  catch (e) { bridgeUp = { ok: false, at: Date.now(), error: e.status === 401 ? "Wrong pairing code." : "Your computer is not reachable. Start Edge Lab on it (Start Edge Lab.bat) and check the address." }; }
+  return bridgeUp;
+}
+
 const staticMod = STATIC ? import("./api-static.js") : null;
-export const api = STATIC ? new Proxy({}, { get: (_, k) => (k === "then" ? undefined : async (...a) => (await staticMod).api[k](...a)) }) : httpApi;
+const NO_BRIDGE = new Set(["session", "login", "logout", "logoutAll"]);
+export const api = !STATIC ? httpApi : new Proxy({}, {
+  get: (_, k) => (k === "then" ? undefined : async (...a) => {
+    if (!NO_BRIDGE.has(k) && target() && (await testBridge()).ok) {
+      const out = await httpApi[k](...a);
+      return k === "health" ? { ...out, bridge: { connected: true, url: target().base } } : out;
+    }
+    const out = await (await staticMod).api[k](...a);
+    return k === "health" ? { ...out, bridge: { connected: false, url: target()?.base || null, error: bridgeUp?.error || null } } : out;
+  }),
+});
 
 /** Follows an agent run. onEvent receives each normalised event; resolves at the end. */
 export function stream(jobId, onEvent) {
+  const t = target() || { base: "" };
+  const q = t.code ? `?token=${encodeURIComponent(t.code)}` : "";
   return new Promise((resolve) => {
-    const es = new EventSource(`/api/jobs/${encodeURIComponent(jobId)}/stream`);
+    const es = new EventSource(`${t.base}/api/jobs/${encodeURIComponent(jobId)}/stream${q}`);
     let ended = false;
     es.onmessage = (m) => {
       const e = JSON.parse(m.data); onEvent(e);

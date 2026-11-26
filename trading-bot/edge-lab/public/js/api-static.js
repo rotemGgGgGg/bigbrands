@@ -5,7 +5,7 @@ import { enrich, summary } from "./engine/enrich.mjs";
 import { simulate } from "./engine/montecarlo.mjs";
 import { portfolio as runPortfolio } from "./engine/portfolio.mjs";
 
-const AGENT_MSG = "The research agent runs only in the local Edge Lab app, because it needs Claude Code and the research data on your computer. Everything else works here.";
+const AGENT_MSG = "The research agent runs on your computer. Start Edge Lab there and connect it in Settings → Connect your computer. Everything else works here.";
 let cache = null;
 
 async function load() {
