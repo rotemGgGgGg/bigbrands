@@ -3,6 +3,7 @@
 // Always rejects unknown Host headers (DNS rebinding) and cross-origin writes.
 import http from "node:http";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -21,6 +22,9 @@ const HOST = process.env.HOST || "127.0.0.1";
 const PASSWORD = process.env.EDGE_LAB_PASSWORD || "";
 const API_KEY = process.env.EDGE_LAB_API_KEY || process.env.ANTHROPIC_API_KEY || "";
 const EXTRA_HOSTS = (process.env.ALLOWED_HOSTS || "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
+// Bridge: lets a web front end you host elsewhere (e.g. your Lovable app) talk to this server on your computer,
+// so the agent keeps running on your own Claude Code sign-in. Only the listed origins, and only with the pairing code.
+const BRIDGE_ORIGINS = (process.env.EDGE_LAB_BRIDGE_ORIGINS || "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
 if (!["127.0.0.1", "localhost", "::1"].includes(HOST) && PASSWORD.length < 12) {
   console.error(`Refusing to listen on ${HOST} without a password. Set EDGE_LAB_PASSWORD (12+ characters), or leave HOST unset.`);
   process.exit(1);
@@ -38,6 +42,18 @@ const jobs = new Map();                       // jobId -> { events, listeners:Se
 const DEFAULT_SETTINGS = { permission: "analyze", model: "", userName: "Rotem", billing: "subscription", maxBudgetUsd: 2 };
 
 const settings = () => ({ ...DEFAULT_SETTINGS, ...store.read("settings", {}) });
+const pairCode = () => {
+  let b = store.read("bridge", null);
+  if (!b?.code) b = store.write("bridge", { code: crypto.randomBytes(18).toString("base64url"), created: new Date().toISOString() });
+  return b.code;
+};
+function bridgeRequest(req, url) {
+  const origin = req.headers.origin;
+  if (!origin || !BRIDGE_ORIGINS.includes(origin)) return null;
+  const given = (req.headers.authorization || "").replace(/^Bearer\s+/i, "") || url.searchParams.get("token") || "";
+  const a = Buffer.from(given), b = Buffer.from(pairCode());
+  return { origin, ok: a.length === b.length && crypto.timingSafeEqual(a, b) };
+}
 
 // ---------------------------------------------------------------- helpers
 const send = (res, code, body) => { res.writeHead(code, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }); res.end(JSON.stringify(body)); };
@@ -165,13 +181,18 @@ route("POST", "/api/login", async (req, res) => {
   store.log("security", "Signed in", { agent: String(req.headers["user-agent"] || "").slice(0, 80) }); send(res, 200, { ok: true });
 });
 route("POST", "/api/logout", (req, res) => { auth.logout(req, res); send(res, 200, { ok: true }); });
+route("POST", "/api/bridge/regenerate", (req, res) => {
+  if (bridgeRequest(req, new URL(req.url, "http://x"))) return fail(res, 403, "Regenerate the pairing code from Edge Lab on your computer.");
+  store.write("bridge", null); store.log("security", "Pairing code regenerated"); send(res, 200, { code: pairCode() });
+});
 route("POST", "/api/logout-all", (req, res) => { auth.logoutAll(); auth.logout(req, res); store.log("security", "Signed out everywhere"); send(res, 200, { ok: true }); });
 
 route("GET", "/api/health", async (req, res) => {
   const st = agent.status || (await agent.detect());
   send(res, 200, {
     agent: st, workspace: RESEARCH, settings: settings(), permissions: PERMISSIONS, models: MODELS, files: data.fileInfo(), runningJobs: [...jobs.values()].filter((j) => j.status === "running").length,
-    security: { passwordProtected: auth.enabled, host: HOST, allowedHosts: EXTRA_HOSTS, sessions: Object.keys(store.read("sessions", {})).length },
+    security: { passwordProtected: auth.enabled, host: HOST, allowedHosts: EXTRA_HOSTS, sessions: Object.keys(store.read("sessions", {})).length,
+      bridgeOrigins: BRIDGE_ORIGINS, pairCode: BRIDGE_ORIGINS.length && !bridgeRequest(req, new URL(req.url, "http://x")) ? pairCode() : null },
     billing: { apiKeyConfigured: !!API_KEY },
   });
 });
@@ -342,11 +363,22 @@ route("POST", "/api/data/rebuild", (req, res) => {
 const server = http.createServer(async (req, res) => {
   try {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
-    const gate = allowed(req);
-    if (!gate.ok) return fail(res, 403, gate.why);
     const url = new URL(req.url, `http://${req.headers.host}`);
+    const bridge = url.pathname.startsWith("/api/") ? bridgeRequest(req, url) : null;
+    if (bridge) {
+      res.setHeader("access-control-allow-origin", bridge.origin); res.setHeader("vary", "Origin");
+      if (req.method === "OPTIONS") {
+        res.writeHead(204, { "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE", "access-control-allow-headers": "content-type, authorization",
+          "access-control-allow-private-network": "true", "access-control-max-age": "600" });
+        return res.end();
+      }
+      if (!bridge.ok) return fail(res, 401, "Pairing code missing or wrong. Copy it from Edge Lab → Settings on your computer.");
+    } else {
+      const gate = allowed(req);
+      if (!gate.ok) return fail(res, 403, gate.why);
+    }
     if (url.pathname.startsWith("/api/")) {
-      if (!["/api/session", "/api/login"].includes(url.pathname) && !auth.session(req)) return fail(res, 401, "Sign in required.");
+      if (!bridge && !["/api/session", "/api/login"].includes(url.pathname) && !auth.session(req)) return fail(res, 401, "Sign in required.");
       for (const r of routes) {
         const m = r.method === req.method && url.pathname.match(r.re);
         if (m) return await r.fn(req, res, m.groups || {}, url);
@@ -365,6 +397,7 @@ server.listen(PORT, HOST, async () => {
   const st = await agent.detect();
   console.log(`Edge Lab  →  http://localhost:${PORT}${HOST !== "127.0.0.1" ? `  (listening on ${HOST})` : ""}`);
   console.log(`Access    →  ${auth.enabled ? "password required" : "this computer only, no login"}${EXTRA_HOSTS.length ? ` · extra hosts: ${EXTRA_HOSTS.join(", ")}` : ""}`);
+  if (BRIDGE_ORIGINS.length) console.log(`Bridge    →  ${BRIDGE_ORIGINS.join(", ")} · pairing code: ${pairCode()}`);
   console.log(`Billing   →  ${settings().billing === "api" ? (API_KEY ? "Claude API key (per-run cap)" : "API selected but no key set") : "your Claude subscription (Claude Code sign-in)"}`);
   console.log(`Workspace →  ${RESEARCH}`);
   console.log(`Agent     →  ${st.available ? `Claude Code ${st.version}` : st.error}`);

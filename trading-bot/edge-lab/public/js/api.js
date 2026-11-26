@@ -13,6 +13,7 @@ const httpApi = {
   login: (password) => req("POST", "/api/login", { password }),
   logout: () => req("POST", "/api/logout"),
   logoutAll: () => req("POST", "/api/logout-all"),
+  regenerateBridge: () => req("POST", "/api/bridge/regenerate"),
   health: () => req("GET", "/api/health"),
   detect: () => req("POST", "/api/agent/detect"),
   overview: () => req("GET", "/api/overview"),

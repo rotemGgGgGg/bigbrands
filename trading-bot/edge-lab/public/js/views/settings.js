@@ -38,7 +38,9 @@ export default async function settings(main, _p, { refreshHealth }) {
       <dt>Who can open it</dt><dd>${h.security.passwordProtected ? "anyone with the password" : "this computer only (no login)"}</dd>
       <dt>Listening on</dt><dd>${esc(h.security.host)}</dd>
       <dt>Extra allowed hosts</dt><dd>${esc(h.security.allowedHosts.join(", ") || "none")}</dd>
-      ${h.security.passwordProtected ? `<dt>Signed-in devices</dt><dd>${h.security.sessions}</dd>` : ""}</dl>
+      ${h.security.passwordProtected ? `<dt>Signed-in devices</dt><dd>${h.security.sessions}</dd>` : ""}
+      <dt>Bridge (web front end)</dt><dd>${esc(h.security.bridgeOrigins?.join(", ") || "off")}</dd></dl>
+      ${h.security.pairCode ? `<div class="field" style="margin-top:14px"><span>Pairing code for your web front end</span><div class="row"><input class="input mono" id="pair" readonly value="${esc(h.security.pairCode)}" style="max-width:360px" aria-label="Pairing code"><button class="btn sm" id="pair-copy">Copy</button><button class="btn sm ghost danger" id="pair-new">New code</button></div><small>Paste it into the Lovable app's Agent settings. A new code disconnects the old one.</small></div>` : ""}
       ${h.security.passwordProtected ? `<div class="row" style="margin-top:12px"><button class="btn sm" id="logout">Sign out</button><button class="btn sm ghost danger" id="logout-all">Sign out every device</button></div>`
         : `<p class="caption" style="margin:12px 0 0">To open it from your phone, see "Access from your phone" in the README: Tailscale plus a password, never a public address.</p>`}
     </div></div>
@@ -54,5 +56,7 @@ export default async function settings(main, _p, { refreshHealth }) {
   $("#budget", main)?.addEventListener("change", async (e) => { try { await api.saveSettings({ maxBudgetUsd: +e.target.value }); toast(`Spend cap: $${(+e.target.value).toFixed(2)} per run`); } catch (err) { toast(err.message, "err"); } });
   $("#logout", main) && ($("#logout", main).onclick = async () => { await api.logout(); location.reload(); });
   $("#logout-all", main) && ($("#logout-all", main).onclick = async () => { await api.logoutAll(); location.reload(); });
+  $("#pair-copy", main) && ($("#pair-copy", main).onclick = async () => { const v = $("#pair", main).value; try { await navigator.clipboard.writeText(v); toast("Pairing code copied"); } catch { $("#pair", main).select(); } });
+  $("#pair-new", main) && ($("#pair-new", main).onclick = async () => { await api.regenerateBridge(); toast("New pairing code"); settings(main, _p, { refreshHealth }); });
   $("#rebuild", main).onclick = async (e) => { e.currentTarget.disabled = true; try { const r = await api.rebuild(); toast(`Registry rebuilt (${r.output})`); } catch (err) { toast(err.message, "err"); } finally { e.currentTarget.disabled = false; } };
 }

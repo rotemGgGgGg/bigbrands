@@ -39,6 +39,12 @@ The server finds `claude.cmd` by itself and calls Python as `python`. Keep the w
 - The agent only gets the tools of the chosen permission level (`--permission-mode dontAsk`), works inside
   `trading-bot/research`, and has no web access.
 
+## Bridge: a web front end (e.g. Lovable) using this computer's agent
+Set `EDGE_LAB_BRIDGE_ORIGINS=https://your-app.lovable.app` in `.env` and restart. Only that origin may call the API,
+and only with the pairing code (shown at startup and in Settings → Access; "New code" revokes the old one).
+The agent still runs here, on your Claude Code sign-in; the web app never holds a key. Chrome's private-network
+preflight is answered for the listed origins only. `LOVABLE_PROMPT.md` describes the front end and the API contract.
+
 ## Access from your phone (private, not public)
 Do **not** put Edge Lab on a public address: the agent runs Python on your computer. Use Tailscale (free), which makes
 a private network between your own devices:
