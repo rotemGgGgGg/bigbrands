@@ -26,8 +26,8 @@ export const PERMISSIONS = {
   },
   build: {
     label: "Build",
-    description: "Also edits and creates files in the workspace, so it can write new strategy variations and tests.",
-    tools: ["Read", "Glob", "Grep", ...PY, ...READ_CMDS, "Edit", "Write"],
+    description: "Also edits and creates files and runs any shell command in the workspace (on Windows the PowerShell tool only obeys a whole-tool rule, so Build allows the whole shell).",
+    tools: ["Read", "Glob", "Grep", ...PY, ...READ_CMDS, "Edit", "Write", ...(process.platform === "win32" ? ["PowerShell", "Bash"] : [])],
   },
 };
 
@@ -165,7 +165,7 @@ export class Agent {
           emit({
             type: "result", ok: !o.is_error, text: o.result ?? finalText, costUsd: o.total_cost_usd, durationMs: o.duration_ms, turns: o.num_turns,
             sessionId: o.session_id, error: o.is_error ? (o.api_error || o.terminal_reason || o.result || "The agent stopped with an error.") : null,
-            denied: (o.permission_denials || []).map((d) => d.tool_name),
+            denied: (o.permission_denials || []).map((d) => d.tool_name + (d.tool_input?.command ? `: ${String(d.tool_input.command).slice(0, 120)}` : "")),
             usage: summariseUsage(o),
           });
           break;
