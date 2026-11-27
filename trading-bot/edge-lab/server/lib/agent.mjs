@@ -7,8 +7,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 const WIN = process.platform === "win32";
-const PY = ["Bash(python3 *)", "Bash(/usr/bin/python3 *)", "Bash(python *)", "Bash(py *)"];
-const READ_CMDS = ["Bash(cd *)", "Bash(ls *)", "Bash(dir *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)"];
+// On Windows Claude Code runs shell commands through its PowerShell tool, so every rule exists for both shells.
+const both = (cmds) => cmds.flatMap((c) => [`Bash(${c})`, `PowerShell(${c})`]);
+const PY = both(["python3 *", "/usr/bin/python3 *", "python *", "py *"]);
+const READ_CMDS = [...both(["cd *", "ls *", "dir *", "cat *", "head *", "tail *", "git log *", "git diff *", "git status *"]),
+  ...["Set-Location *", "Get-ChildItem *", "Get-Content *", "Select-Object *", "Select-String *", "Measure-Object *", "Test-Path *"].map((c) => `PowerShell(${c})`)];
 
 export const PERMISSIONS = {
   read: {
