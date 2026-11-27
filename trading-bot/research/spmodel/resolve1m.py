@@ -3,9 +3,10 @@ The 5-minute simulation decides stop-vs-target inside one 5-minute bar by Tradin
 extreme -> other extreme); ~30% of trades open and close inside one 5-minute bar, so that guess decides a lot.
 Here: fill = first 1-minute bar (from the entry bar on) that trades through the fill price; in that minute only the STOP
 counts (a target touched in the fill minute may have happened before the fill); later minutes: stop first if both; flat 14:00."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, numpy as np, pandas as pd
 sys.path.insert(0, "multi"); import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 m = mdata.histdata("NSXUSD"); m = m[~m.index.duplicated()].sort_index(); idx = m.index; H, L, C = m.h.values, m.l.values, m.c.values
 
 

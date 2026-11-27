@@ -9,6 +9,7 @@ Components (all costs = 2.25 NQ pt × price/17000 per round trip, stop-first, no
        SL {0.75,1,1.5}×move × exit {11:00,13:00,15:55}.
   OPX  Opex-Friday short: 54 = SL {0.3,0.4,0.5}σ × TP {1.5,2,3}×SL × entry {09:30,09:45,10:00} × exit {12:00,15:55}.
 Selection statistics use 2010-19 only (train); 2020-23 = validate, 2024-26 = test."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, sys, itertools, time, pickle
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [os.path.join(HERE, "..", "nowick"), os.path.join(HERE, "..", "gapfb"), os.path.join(HERE, ".."), os.path.join(HERE, "..", "longhist")]
@@ -17,7 +18,7 @@ from numba import njit
 from multiprocessing import Pool
 STRESS = os.environ.get("STRESS", "0") == "1"          # strict fills (1 tick through) + 2x costs everywhere
 CX, THRU = (2.0, 0.25) if STRESS else (1.0, 0.0)
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/god" + ("_stress/" if STRESS else "/")
+SP = DATA + "god" + ("_stress/" if STRESS else "/")
 os.makedirs(SP, exist_ok=True)
 TOPK = {"NW": 25, "GFB": 10, "PF": 6, "OPX": 4}
 

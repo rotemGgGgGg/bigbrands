@@ -1,5 +1,6 @@
 """Public strategies of trading educators/influencers, implemented as published (parameters NOT tuned).
 Where a source leaves something open, the choice is written next to it as 'impl:'. Every function returns rows (i, pts, risk)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 from lib import *
 from collections import defaultdict
 
@@ -668,7 +669,7 @@ def casper_ob():
                 if f and stp - f[1] > 1: r = stp - f[1]; cands[i].append((f[0], -1, stp, f[1] - 2 * r, f[1], False))
     return run_seq(cands)
 
-S_PATH = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S_PATH = DATA
 ROSTER = [
     ("Toby Crabel", "ORB stretch", crabel_stretch, "intraday"), ("Toby Crabel", "NR7 + 30m ORB", crabel_nr7, "intraday"),
     ("Larry Williams", "Volatility breakout 0.6×range", williams_volbreak, "intraday"), ("Larry Williams", "OOPS", williams_oops, "intraday"),

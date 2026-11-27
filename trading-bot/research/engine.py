@@ -7,11 +7,12 @@ Costs (per MNQ round trip): commission $1.50 + 1 tick slippage per side ($1.00) 
 Stress test: 2 ticks per side extra → 2.25 points.
 """
 from __future__ import annotations
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 
 import numpy as np
 import pandas as pd
 
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 PT_USD = 2.0
 COST_PTS = 1.25
 STRESS_PTS = 2.25

@@ -7,10 +7,11 @@
       skip if price stretched too far from the day's open; exit when RSI fades back through a level, stop optional, flat by close.
 Every variant is reported in R (risk units) or bp, net of costs. Grid judged on 2012-19 only; 2020-26 is out of sample.
 The video's own period (2021-2026) is reported separately so its claim can be compared."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, pickle
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import numpy as np, pandas as pd, mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/vidstrats/"; os.makedirs(SP, exist_ok=True)
+SP = DATA + "vidstrats/"; os.makedirs(SP, exist_ok=True)
 
 
 def frame(sym, tz):

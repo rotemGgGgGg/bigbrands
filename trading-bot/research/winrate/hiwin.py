@@ -1,12 +1,13 @@
 """Hunt for ≥90 % win-rate variants: every validated directional edge × tiny target × wide stop × entry style × day filter.
 Selection on 2020–23 (IS) only; 2024–26 (OOS) reported. Costs 1.25 pt + 1 pt stress (2.25 pt). Stop wins ties.
 Market entries: next-minute open. Limit entries: filled only if price trades THROUGH by 1 tick (conservative)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys; sys.path.insert(0, "..")
 import numpy as np, pandas as pd, itertools
 from signals import D, N, day_sig, valid, sig_na_first, sig_na_fvg, sig_afternoon, sig_rebound, sig_gap, IS_END
 from engine import walk
 COST, TICK = 2.25, 0.25
-F = pd.read_pickle("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/hunt_feat.pkl")[0]
+F = pd.read_pickle(DATA + "hunt_feat.pkl")[0]
 volr = F.vol_ratio.values; r5 = F.ret5.values
 def run(sigs, a, b, entry, last=384):
     rows = []

@@ -1,6 +1,7 @@
 """Funnel for the 9:23 Fib ladder grid: select on 2012-2019, validate 2020-2023, holdout 2024-2026 once."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import math, numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/fib923/"
+SP = DATA + "fib923/"
 R = pd.read_pickle(SP + "grid.pkl")
 for nm, ys in (("tr", range(2012, 2020)), ("va", range(2020, 2024)), ("ho", range(2024, 2027))):
     R[f"pts_{nm}"] = sum(R[f"y{y}"] for y in ys); R[f"n_{nm}"] = sum(R[f"n{y}"] for y in ys)

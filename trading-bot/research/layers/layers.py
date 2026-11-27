@@ -14,8 +14,9 @@ Every strategy = HTF zone -> touch -> 15-minute confirmation -> 1-minute entry -
 Base configs 3*3*2*8*4*4*6 = 13,824; x 960 filters = 13,271,040 strategies.
 GATES: 2012-17 n>=40, t>=3  ->  2018-21 n>=20, t>=2  ->  2022-26 looked at once.
 PLACEBO: the whole factory again with every zone moved 1-3 zone widths up or down at random (same sizes, same times)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, sys, time, math, numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"; DK = SP + "duka/"
+SP = DATA; DK = SP + "duka/"
 OUT = SP + "layers/"; os.makedirs(OUT, exist_ok=True)
 COST = 1.0
 TFS = ["D", "4H", "1H"]; TOUCH = ["near", "mid", "far"]; MODE = ["react", "invert"]

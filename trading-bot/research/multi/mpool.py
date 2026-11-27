@@ -1,10 +1,11 @@
 """Run all 186 coded strategies (127 classic papers + 59 pre-2002 rules) on one market. Each market gets its own costs (bp of price)
 and tick; P&L is stored as net RETURN (fraction of price) per day so markets can be mixed. Output: scratchpad/mpool/<SYM>.pkl"""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, time
 H = os.path.dirname(os.path.abspath(__file__)); sys.path[:0] = [H, os.path.join(H, "../papers"), os.path.join(H, "../oldweb")]
 import numpy as np, pandas as pd
 import engine as E, mdata
-OUT = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mpool/"
+OUT = DATA + "mpool/"
 
 
 def run(sym):

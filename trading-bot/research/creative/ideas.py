@@ -12,12 +12,13 @@ Judged: choose on 2012-19, check 2020-26 and the last 2 years.
  H9  ONE-SIDED OPEN      : >=20 new highs and <=2 new lows in the first 30 min (or mirror) -> trend day, hold 10:00-15:55
  H10 MOC IMBALANCE       : 15:00-15:50 move sign -> trade 15:50-15:59 with / against it
  H11 NARROW IB           : 09:30-10:30 range < 0.35 ATR -> first break of it after 10:30, stop at IB middle, hold to 15:55"""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../spmodel")); sys.path.insert(0, os.path.join(H, "../multi"))
 sys.path.insert(0, os.path.join(H, "../vidstrats"))
 from lbr import days
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"; BP = 1.3
+SP = DATA; BP = 1.3
 G = days("NSXUSD"); DAYS = sorted(G)
 RNG_RTH = pd.Series({d: G[d][1][570:960].max() - G[d][2][570:960].min() for d in DAYS}); ATR = RNG_RTH.rolling(14).mean().shift(1)
 CLOSE = pd.Series({d: G[d][3][959] for d in DAYS}); PREV = CLOSE.shift(1)

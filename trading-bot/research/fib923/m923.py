@@ -8,13 +8,14 @@ Time exit at EXIT. Long and short sides are independent (both can trade the same
 Strict fills: limits/targets need 1 tick through, a stop+target tie = stop, a leg-2 fill and target in the same minute = leg 2
 first then the target is only checked from the next minute; costs 2.25 pt x price/17000 per contract round trip.
 Grid ~650k variants. Selection 2012-2019 only, validation 2020-2023, holdout 2024-2026-10 once."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, time, itertools, pickle, math
 import numpy as np, pandas as pd
 from multiprocessing import Pool
 import data9
 A = data9.load(); O, H, L, C = A["o"], A["h"], A["l"], A["c"]; N = len(A["days"]); MM = np.arange(420)
 YR = A["days"].year.values; YI = YR - 2012; NY = YI.max() + 1; TICK = 0.25; COST = 2.25 * O[:, 30] / 17000
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/fib923/"
+SP = DATA + "fib923/"
 ANCH = (15, 20, 23, 25, 28)                       # 09:15 09:20 09:23 09:25 09:28 candles
 E1S = (-1.0, -1.5, -2.0, -2.5, -3.0); E2S = (-3.0, -3.5, -4.0, -5.0, -6.0, None)
 TGS = (-1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 3.0)       # 3.0 = the opposite side's -2 level

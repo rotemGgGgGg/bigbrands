@@ -10,11 +10,12 @@ Conditions (all known at their time stamp, used only when that time <= entry):
 Entries 09:30 / 09:45 / 10:00 / 10:30 / 11:00 / 13:30; exits +30 min, +60 min, 12:00, 14:00, 15:55. Cost 1.3 bp.
 Gates: discovery 2012-17 (n>=60, |t|>=3) -> validation 2018-21 (same sign, t>=2) -> final 2022-26 reported once.
 Placebo: identical pipeline with every condition's day labels shuffled (what luck alone produces)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, time, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../spmodel")); sys.path.insert(0, os.path.join(H, "../multi"))
 from lbr import days
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"; BP = 1.3
+SP = DATA; BP = 1.3
 G = days("NSXUSD"); D = sorted(G)[1:]; PREVD = dict(zip(sorted(G)[1:], sorted(G)[:-1])); ND = len(D)
 Y = np.array([d.year for d in D])
 EN = [570, 585, 600, 630, 660, 810]; EX = lambda e: [e + 30, e + 60, 720, 840, 955]

@@ -1,7 +1,8 @@
 """Every filter combination × every exit config, per timeframe. TRAIN = first 60 % of the period, TEST = last 40 %.
 Candidate = TRAIN n ≥ 30, TRAIN win ≥ 70 %, TRAIN expectancy > 0, planned R:R ≥ 2 reported separately. Logs counts honestly."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, pickle, itertools, sys
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 tf = sys.argv[1]
 EV, sims, t0, t1 = pickle.load(open(S + f"cfvg_{tf}.pkl", "rb"))
 keys = list(sims); E = np.vstack([sims[k] for k in keys])            # (configs, events)

@@ -3,6 +3,7 @@
 Based on iter 23 (NSXUSD 2012–2025). Entry grid every 5 min 09:45–15:00, both sides,
 ~20 price-only features (signed by side), labels = 2R-before-1R with stop k·σ. Fitness = MIN over (2012–19, 2020–23) of the Wilson
 lower bound of the first-trade-per-day win rate (n ≥ 40 in each). 2024–25 is the untouched test. Logged to evo14.csv.gz."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, json, gzip, csv; sys.path.insert(0, "."); sys.path.insert(0, ".."); sys.path.insert(0, "../quant_loop")
 import numpy as np, pandas as pd
 from load import frame, RTH
@@ -18,7 +19,7 @@ class WIN:
         for k, v in arr.items(): setattr(self, k, np.array(v))
 from engine import walk
 PAIR = sys.argv[2]; W0, W1, CF = {"XAUUSD": (500, 810, 0.0003), "WTIUSD": (540, 870, 0.0009)}[PAIR]
-CACHE = f"/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/evo_{PAIR}.pkl"
+CACHE = f"{DATA}evo_{PAIR}.pkl"
 def wilson(k, n, z=1.96):
     if n == 0: return 0.0
     p = k / n; d = 1 + z * z / n; m = p + z * z / (2 * n); s = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)); return (m - s) / d

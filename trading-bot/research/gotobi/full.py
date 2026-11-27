@@ -5,11 +5,12 @@
   Pairs: USDJPY, EURJPY, GBPJPY. Vendor shows 2018-01-01 .. 2026-11-06: 605 Gotobi days, +$83,888, PF 1.71, worst DD -$9,893.
 Tests here: replicate on Dukascopy 1-min; 2012-2017 = data the vendor did not show (true out-of-sample for their parameters);
 each leg and pair separately; a parameter neighbourhood (chosen on 2012-19, judged on 2020-26)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi")); sys.path.insert(0, H)
 import mdata
 from gotobi import trade_days, is_bd, jp_holidays
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 COST = {"USDJPY": 1.0, "EURJPY": 1.2, "GBPJPY": 1.4}            # bp round trip per leg (spread + commission, raw account)
 W0 = 18 * 60                                                      # window: 18:00 UTC previous day .. 02:00 UTC (480 min)
 

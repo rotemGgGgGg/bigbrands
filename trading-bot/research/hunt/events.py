@@ -2,6 +2,7 @@
 Levels: prior close (gap fill), PDH, PDL, ONH, ONL, opening range (5/15/30/60) high/low, VWAP±k·sigma, open ± k·sigma.
 Entry: at the level (limit, filled only if price trades through by 1 tick) or at the next bar open after a close beyond.
 Exit grid: target/stop in multiples of daily sigma, flat 15:55. Selection on 2020–23 only."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, sys
 from feat import load
 F, D = load()
@@ -69,7 +70,7 @@ if __name__ == "__main__":
                                          IS=2 * pi.mean(), OOS=2 * po.mean(), winIS=(pi > 0).mean(), winOOS=(po > 0).mean(),
                                          tIS=pi.mean() / pi.std() * np.sqrt(len(pi)), tOOS=po.mean() / po.std() * np.sqrt(len(po))))
         print(name, mode, len(rows), file=sys.stderr, flush=True)
-    R = pd.DataFrame(rows); R.to_pickle("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/hunt_R2.pkl")
+    R = pd.DataFrame(rows); R.to_pickle(DATA + "hunt_R2.pkl")
     print("tests", len(R))
     for th in (2, 2.5, 3):
         s = R[R.tIS > th]; print(th, len(s), "OOS>0", round((s.OOS > 0).mean(), 3), "base", round((R.OOS > 0).mean(), 3))

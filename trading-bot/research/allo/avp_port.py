@@ -6,10 +6,11 @@ side per session, stop = zone far edge or the bar's extreme minus 2 points, targ
 Scoreboard identical to the Pine table (no costs), plus a with-costs column (1 NQ point per round trip; DAX 1, gold 0.3).
 Volume modes: 'real' (Dukascopy tick volume), 'tpo' (1 per bar), and HistData NSXUSD (no volume -> tpo).
 Random baseline: zones shifted by 1-3 zone widths in a random direction (100 runs)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 COST = {"USATECHIDXUSD": 1.0, "NSXUSD": 1.0, "DEUIDXEUR": 1.0, "XAUUSD": 0.3}
 
 

@@ -11,10 +11,11 @@ True open (TO) = open of quarter 2. 'Aligning time with price' rules, entry at t
   AMD+TO: AMD and price on the 'right' side of TO (long only below TO, short only above)
 Exits: end of Q3, or end of Q4. Placebo for the time grid: the same rules on grids shifted by 1/8..7/8 of a block
 (if time alignment is the secret, the real grid must beat every shifted grid). Choose on 2012-19, judge 2020-26."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"; BP = 1.3
+SP = DATA; BP = 1.3
 
 
 def grid():

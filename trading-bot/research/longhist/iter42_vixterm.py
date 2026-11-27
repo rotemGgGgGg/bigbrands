@@ -1,11 +1,12 @@
 """Iter 42 (queue 44) — VIX term structure (CBOE VIX9D / VIX / VIX3M daily closes, free CSVs; previous day's value only):
 VIX9D/VIX top/bottom decile or jump/drop ≥ 0.08, VIX/VIX3M ≥ 1 (backwardation) or ≤ 0.85 (deep contango) → next-day NQ, same trade
 grid as iter 30/32 (entry 09:30/10:00/13:30/15:00 × long/short/follow/fade × stop k·σ, target 2×, exit close). Three periods."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys; sys.path[:0] = [".", "..", "../influencers"]
 import numpy as np, pandas as pd, itertools
 exec(open("iter26_web.py").read().split("res = []")[0])
 
-CB = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/cboe/"
+CB = DATA + "cboe/"
 rd = lambda n: pd.read_csv(CB + n + ".csv", parse_dates=["DATE"]).set_index("DATE").CLOSE
 TS = pd.concat(dict(v9=rd("VIX9D"), v=rd("VIX"), v3=rd("VIX3M")), axis=1, sort=True).dropna()
 r9 = TS.v9 / TS.v; r3 = TS.v / TS.v3

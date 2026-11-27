@@ -9,11 +9,12 @@ Filters: opening-range candle with/against the trade, gap with/against, opening 
 Fills  : limits need 1 tick through, stop entries fill at the worse of level/open, stop wins a stop+target tie, a stop already
          beyond the fill exits at the fill. Costs 2.25 pt x price/17000 per round trip.
 Funnel : select on 2012-2019 only, 2020-2023 validation, 2024-2026-10 holdout looked at once, coin flips + 2x costs on finalists."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, time, itertools, pickle, math
 import numpy as np, pandas as pd
 from multiprocessing import Pool
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "papers")); import pdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/open15/"
+SP = DATA + "open15/"
 KS = (1, 2, 3, 5, 10, 15); ANCH = ("or", "pd", "pm", "gap")
 LEVELS = (-1.618, -1.0, -0.618, -0.272, 0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618, 2.0, 2.618)
 STOPS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, np.inf); TGTS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0)

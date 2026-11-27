@@ -6,6 +6,7 @@
   SIDE    long or short
   CONTEXT a regime known at 04:00: previous-day direction, overnight drift to 04:00, previous-day volatility
 Every theory is then tested with 60 exit plans (stop x target x time) in stage 2."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import itertools
 
 # anchors: (name, kind, a, b) with minute indexes from 04:00 (09:30 = 330). kind 'bar' = candle(s) from a to b inclusive.
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     G = groups(); n = len(G) * len(CONTEXT)
     print(f"anchors {len(ANCHORS)} x levels {len(LEVELS)} x triggers {len(TRIGGERS)} x windows {len(WINDOWS)} x sides 2 = {len(G):,} entry rules")
     print(f"x contexts {len(CONTEXT)} = {n:,} theories; x exit plans {len(STOPS) * len(TGTS) * len(HOLD)} = {n * 60:,} variants")
-    out = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mega_theories.csv.gz"
+    out = DATA + "mega_theories.csv.gz"
     with gzip.open(out, "wt", newline="") as f:
         w = csv.writer(f); w.writerow(["theory_id", "description"]); k = 0
         for g in G:

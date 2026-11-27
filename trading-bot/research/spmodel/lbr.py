@@ -9,10 +9,11 @@ Rules (NY time):
   target  : 2R, or hold to 15:55 ('eod')
   one trade per day; a break on the wrong side first does not block the trade side.
 Data: HistData 1-minute (NQ = NSXUSD, S&P = SPXUSD). Cost 1.3 bp per trade. Choose on 2012-19; check 2020-26, S&P, last 2 years."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"; BP = 1.3
+SP = DATA; BP = 1.3
 
 
 def days(sym):

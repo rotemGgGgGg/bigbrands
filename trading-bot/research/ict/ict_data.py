@@ -5,11 +5,12 @@ Level types (low side = sell-side liquidity, high side = buy-side):
   3 overnight 18:00-09:29                        4 09:00-09:59 hour (Silver Bullet range)
   5 opening range 09:30-09:34   6 09:30-09:44   7 09:30-09:59
 'first breach' is the first minute AFTER the level is complete whose low (high) trades through it — the sweep event."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, sys, pickle
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gapfb"))
 from sess24 import build, t2m
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/ict/"
+SP = DATA + "ict/"
 os.makedirs(SP, exist_ok=True)
 NL = 8
 SEG = [None, (0, 360), (480, 660), (0, t2m("09:30")), (t2m("09:00"), t2m("10:00")),
@@ -58,7 +59,7 @@ def volume():
     p = SP + "vol.pkl"
     if os.path.exists(p): return pickle.load(open(p, "rb"))
     D = load(); days = D["days"]; V = np.zeros((len(days), 1380), np.float32); pos = {d: i for i, d in enumerate(days)}
-    base = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+    base = DATA
     for fn in ("full1m.pkl", "nq16.pkl"):                      # NQ written last so it wins where both exist
         f = pd.read_pickle(base + fn); f = f[f.index.notna()]
         m = (f.index.hour * 60 + f.index.minute).values; s18 = (m - 1080) % 1440

@@ -1,7 +1,8 @@
 """SMT family tests on Yahoo 1h NQ/ES/YM (May 2024 → Oct 2026). Event study: forward NQ move in the signal's
 direction after the divergence is first visible (bar close), horizons 1h/3h/to cycle end. Cost not included (points)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 nq, es, ym = (pd.read_pickle(S + f"yf_{k}_1h.pkl") for k in ("NQ", "ES", "YM"))
 idx = nq.index.intersection(es.index).intersection(ym.index)
 nq, es, ym = nq.loc[idx], es.loc[idx], ym.loc[idx]

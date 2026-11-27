@@ -1,8 +1,9 @@
 """Stage 3 helper - cut each mined post down to its rule-like sentences (action + timing hook + number in the same sentence,
 or a statistic like 'x% of the time' / 'since 19xx'), so thousands of posts can be read as short snippets."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import json, re, glob, sys, hashlib
 import mine
-SP = mine.__file__ and "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/oldweb/"
+SP = mine.__file__ and DATA + "oldweb/"
 STAT = re.compile(r"\d+(?:\.\d+)?\s*%\s*of the time|\d+ out of (?:the last )?\d+|since 19\d\d|win(?:ning)? (?:rate|percentage)|"
                   r"profit factor|勝率|\d+勝\d+敗|\d+回中\d+回|trefferquote", re.I)
 SPLIT = re.compile(r"(?<=[.!?。！？])\s+|\n\s*\n")

@@ -2,10 +2,11 @@
 Each component is either off or one of its top-K train variants (NW 25, GFB 10, PF 6, OPX 4) at risk weight {0.5, 1, 2} R:
 (25·3+1)(10·3+1)(6·3+1)(4·3+1) − 1 = 581,931 portfolios. Components trade independently (separate positions).
 Selection rule fixed in advance: highest TRAIN (2010-19) daily Sharpe whose VALIDATE (2020-23) Sharpe is > 0. TEST (2024-26) once."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, pickle, itertools, time
 import numpy as np, pandas as pd
 from numba import njit, prange
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/god" + ("_stress/" if os.environ.get("STRESS", "0") == "1" else "/")
+SP = DATA + "god" + ("_stress/" if os.environ.get("STRESS", "0") == "1" else "/")
 W = (0.5, 1.0, 2.0)
 COMP = ("NW", "GFB", "PF", "OPX")
 

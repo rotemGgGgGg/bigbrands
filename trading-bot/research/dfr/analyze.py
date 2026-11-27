@@ -1,7 +1,8 @@
 """Every DFR configuration (window × level × upper/lower × fade/break × stop × target × range filter), TRAIN = 2020–2023,
 TEST = 2024–2026. Null control: how often does a config look good in TRAIN by chance → check TEST hit rate."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 T = pd.read_pickle(S + "dfr_trades.pkl"); T["y"] = pd.to_datetime(T.date).dt.year; T["tr"] = T.y < 2024
 T["R"] = T.pts / T.risk
 keys = ["window", "level", "edge", "play", "stop_R", "target"]

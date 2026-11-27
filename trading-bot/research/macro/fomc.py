@@ -1,6 +1,7 @@
 """FOMC statement days (2:00 pm ET decision day = last day of scheduled meetings), from federalreserve.gov pages saved in the scratchpad."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import re, pandas as pd
-D = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/macro/"
+D = DATA + "macro/"
 MO = {m: i + 1 for i, m in enumerate("January February March April May June July August September October November December".split())}
 MS = {m[:3]: v for m, v in MO.items()}
 def dates():

@@ -5,9 +5,10 @@
  up to 2 trades a day ("Trade # 1 of 2", "# 2 of 2"); after a trade closes both sides are live again.
 Unknown and tested as variants: gap threshold, entry cut-off, time exit. Costs 2.25 pt per round trip (scaled by price/17000
 for older data). Fills: stop entry at max(level, bar open); in the entry bar only the stop is checked; stop first on ties."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, itertools; sys.path[:0] = ["..", "../longhist"]
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 def prep(f):
     f = f[f.index.notna()][["open", "high", "low", "close"]].copy()
     pc = f.close.shift(); tr = pd.concat([f.high - f.low, (f.high - pc).abs(), (f.low - pc).abs()], axis=1).max(axis=1)

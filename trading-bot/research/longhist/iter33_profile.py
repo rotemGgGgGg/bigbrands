@@ -11,11 +11,12 @@ D Taylor 3-day cycle: day 0 = most recent day that closed at a 10-day low (buy d
   On buy days: first undercut of the prior day low then a close back above it (before 12:00) → long, stop under the session low
   (≥ 0.1σ), target 2×. On short-sell days (mod 3 == 2): the mirror at the prior day high.
 Exits at the 15:59 close. Cost 2.25 pt scaled to price. One trade per day per rule."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys; sys.path[:0] = [".", ".."]
 import numpy as np, pandas as pd, itertools
 from load import frame
 from engine import walk
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/full1m.pkl"
+SP = DATA + "full1m.pkl"
 def days_from(f):
     f = f[f.index.notna()]; m = f.index.hour * 60 + f.index.minute
     # session key: bars from 18:00 belong to the next day's session

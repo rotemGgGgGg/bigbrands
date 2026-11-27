@@ -1,9 +1,10 @@
 """Clock-aligned NQ bars with volume from the user's Databento NQ 1-minute file (front month by volume), 2010-06 → 2026-07.
 24 h stream (trading day 18:00 → 16:59 NY). Each bar carries: trading-day id, NY minute of day of its start, roll flag
 (front-month symbol changed on this bar → indicators/positions must not bridge it)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 OUT = SP + "s50_bars/"
 
 

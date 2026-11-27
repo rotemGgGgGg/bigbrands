@@ -3,9 +3,10 @@
 Anchor T: the 'gap' is the move over the P minutes before T, expressed as z = move / mean|move| of the previous 20 sessions.
 OR = first m minutes from T; stop entry at OR high/low within 60 minutes; direction with / against / both relative to the
 pre-move; stop 2×ATR + 5×ATR trail; exit H minutes after T (capped at 16:55). One trade per day per rule."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, pickle, itertools; sys.path[:0] = ["..", "../longhist"]
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 CACHE = SP + "sess24.pkl"
 def build():
     if os.path.exists(CACHE): return pickle.load(open(CACHE, "rb"))

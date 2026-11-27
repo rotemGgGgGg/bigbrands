@@ -2,8 +2,9 @@
 SMT: NQ makes a new N-bar high (low) while ES or YM does NOT → fade on NQ at the next bar open; stop = NQ extreme + tick;
 target 2–3 R. PSP: on that bar NQ and the other index close in opposite colours. TRAIN = first 60 % of the period, TEST = last 40 %.
 Exits on the same timeframe bars (stop first if both touched)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, itertools
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 COST = 2.25; rows = []
 for tf in ("1h", "5m"):
     d = {s: pd.read_pickle(S + f"yf_{s}_{tf}.pkl")[["open", "high", "low", "close"]] for s in ("NQ", "ES", "YM")}

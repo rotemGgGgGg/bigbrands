@@ -2,9 +2,10 @@
 (The user's Databento NQ file was lost with the container reset; the CFD is the cash Nasdaq-100 — no contract rolls, no volume.)
 Builds per trading day: RTH 1-minute grid 09:30-15:59 (390 bars, forward-filled), pre-market 1-minute bars (04:00-09:29) and
 daily RTH OHLC. Run with /usr/bin/python3 (numpy + pandas)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, glob, zipfile, io, pickle
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 HD = SP + "histdata/"; CACHE = SP + "papers_data.pkl"
 
 

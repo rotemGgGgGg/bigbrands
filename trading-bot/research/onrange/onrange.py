@@ -2,9 +2,10 @@
 Claim: open in the half near the low -> RTH takes the ON low 75.6%; near the high -> takes the ON high 81%.
 Tests: (1) replicate hit rates by zone; (2) EDGE check: hit rate of ON level vs a mirror level at the same distance on the
 other side of the open (if equal, the 'edge' is just distance); (3) tradeable versions, net of cost, select 2012-19, OOS 2020-26."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, pickle
 sys.path.insert(0, "../multi"); import numpy as np, pandas as pd, mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/onrange/"; os.makedirs(SP, exist_ok=True)
+SP = DATA + "onrange/"; os.makedirs(SP, exist_ok=True)
 
 def build(sym):
     f = SP + sym + ".pkl"

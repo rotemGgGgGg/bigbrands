@@ -6,6 +6,7 @@ Data: Dukascopy 1-min bid 2012-2026 (their data: IC Markets 2018-Jul 2026). 2012
 Sections: A exact replication; B statistics (placebo 1000 random day-sets, bootstrap CI, decay by year);
 C variation grid chosen on 2012-19 and judged on 2020-26; D math overlays (day weights, run-into-fix conditioning,
 mean-variance pair weights, vol targeting, trend filter, catastrophe stop); E sizing (Kelly, drawdown, $ per year)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, H)
 from full import load
@@ -179,4 +180,4 @@ if __name__ == "__main__":
     print(f"  per gotobi day: mean ${mu:.0f}, sd ${sd:.0f}; per-day Sharpe {mu/sd:.3f}; ~71 days/yr -> annual Sharpe {mu/sd*math.sqrt(71):.2f}")
     print(f"  worst day ${x.min():,.0f} ({x.idxmin().date()}); 1-in-100 day ${np.percentile(x, 1):,.0f}; $/yr ~ ${mu*71:,.0f} (= {mu*71/1000:.1f}% on 100K)")
     print(f"  full-Kelly fraction of $ variance: {f*1e5:.1f}x 1-lot-sets per $100K (use 1/4 Kelly -> {f*1e5/4:.1f}x)")
-    BK.to_pickle("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/gotobi_book_usd.pkl")
+    BK.to_pickle(DATA + "gotobi_book_usd.pkl")

@@ -2,8 +2,9 @@
 index description mentions markets; (b) open-access (not lending-library) books on archive.org dated 1880-1975 about
 speculation, stock/commodity trading, price cycles and forecasting; (c) Japanese market books (相場 / 米相場 / 酒田 / 罫線).
 Plain text is saved under scratchpad/oldweb/old/; nothing is executed."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, re, json, subprocess, urllib.parse, time
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/oldweb/old/"
+SP = DATA + "oldweb/old/"
 KEY = re.compile(r"stock|market|invest|trad|commod|futur|wall ?st|money|financ|dow|gold|silver|forecast|cycle|astro|gann|elliott|"
                  r"chart|price|specul|option|bond|econom|rich|wealth", re.I)
 

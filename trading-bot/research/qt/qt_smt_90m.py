@@ -1,8 +1,9 @@
 """90-minute-quarter SSMT on Yahoo 5m NQ/ES/YM (Aug → Oct 2026, ~50 sessions/day-sets). Session cycle = 4×90m
 from 18:00 NY. Event study + a simple trade: enter at the close of the bar where the divergence appears, stop beyond
 the sweeping asset's extreme so far, target 2R, exit at quarter end. NQ points; cost 1.25 pt."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 A = {k: pd.read_pickle(S + f"yf_{k}_5m.pkl") for k in ("NQ", "ES", "YM")}
 idx = A["NQ"].index.intersection(A["ES"].index).intersection(A["YM"].index)
 A = {k: v.loc[idx] for k, v in A.items()}

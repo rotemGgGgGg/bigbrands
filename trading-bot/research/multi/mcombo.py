@@ -4,10 +4,11 @@ on 2012-19) and >= 5 of its 2012-19 years with positive alpha (market must have 
 portfolio = ALL eligible, equal risk (same daily stdev on trading days), beta-hedged per market. Out-of-sample = 2020-2026-10.
 Placebo: the same number of strategy x market series drawn at random from the whole pool (300 draws).
 Reported in % of account at 10% annual volatility; prop simulation on a $50K account."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, glob, math
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../combo15"))
 import numpy as np, pandas as pd
-MP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mpool/"
+MP = DATA + "mpool/"
 RNG = np.random.default_rng(20)
 def sh(x): return x.mean() / x.std() * math.sqrt(252) if x.std() > 0 else 0.0
 

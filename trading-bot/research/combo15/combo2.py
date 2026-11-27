@@ -4,11 +4,12 @@ Eligible: alpha t >= 1.0 and >= 5/8 years of positive alpha on 2012-19, >= 80 tr
 Portfolio (one pre-set rule, no search): rank eligible by alpha t, walk down the list and keep a strategy if its daily P&L correlation
 with every one already kept is < 0.3, stop at 15. Equal risk per strategy. Reported raw and beta-hedged (short NQ for the beta).
 Compared with 2,000 random 15-strategy portfolios from the same eligible list (selection-luck check)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../papers"))
 import numpy as np, pandas as pd
 import pdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/combo15/"
+SP = DATA + "combo15/"
 P = pd.read_pickle(SP + "pool.pkl"); Y = P.index.year; D = pdata.load()
 BH = pd.Series(D["dc"], index=P.index).diff().fillna(0)
 S, V, F = (Y <= 2019), (Y >= 2020) & (Y <= 2022), (Y >= 2023); RNG = np.random.default_rng(152)

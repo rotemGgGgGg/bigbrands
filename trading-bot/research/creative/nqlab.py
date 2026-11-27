@@ -9,10 +9,11 @@ F6 EARLY EXTREME : day's RTH low (high) printed 09:30-10:00 and price above (bel
 F7 TURNAROUND TUE: Monday down -> Tuesday up (classic), and the mirror.
 F8 SMALL GAP FILL: gap 0.1-0.4 ATR -> fade at 09:30 to yesterday's close, stop 1 gap beyond, flat 12:00.
 Every series in bp per trade net of 1.3 bp. Gate: 2012-19 t>=2.5 and 2020-26 same sign t>=1.5. Survivors -> NQ book with RDM."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../spmodel"))
 from lbr import days
-BP = 1.3; G = days("NSXUSD"); DL = sorted(G); SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+BP = 1.3; G = days("NSXUSD"); DL = sorted(G); SP = DATA
 RNG = pd.Series({d: G[d][1][570:960].max() - G[d][2][570:960].min() for d in DL}); ATR = RNG.rolling(14).mean().shift(1)
 def r(d, e, x, s): o, h, l, c = G[d]; return s * (c[x - 1] / o[e] - 1) * 1e4 - BP
 def tt(x): return x.mean() / x.std() * math.sqrt(len(x)) if len(x) > 2 and x.std() > 0 else 0.0

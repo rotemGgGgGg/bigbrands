@@ -1,9 +1,10 @@
 """HistData.com free 1-minute CFD bars (NSXUSD = Nasdaq-100, SPXUSD = S&P 500, UDXUSD = dollar index), 2012–2025.
 Timestamps verified to be New York wall-clock time (daily halt resumes 18:00 NY in both seasons; aligned with Databento MNQ, see check below). No volume (CFD).
 Builds (a) the 24h frame and (b) an RTH grid (09:30–15:59, 390 minutes) compatible with the MNQ research code."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, glob, zipfile, io, pickle, sys
 import numpy as np, pandas as pd
-HD = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/histdata/"
+HD = DATA + "histdata/"
 def frame(pair):
     out = os.path.join(HD, f"{pair}_full.pkl")
     if os.path.exists(out): return pd.read_pickle(out)

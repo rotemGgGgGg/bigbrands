@@ -1,6 +1,7 @@
 """Stage 1 — directional edge discovery. Each test: at decision minute T (bar open), condition on one or two
 features (IS-quintile buckets), trade the side that IS says, hold to a fixed exit. Net of 1.25 pt costs.
 Selection uses 2020–2023 only; 2024–2026 is reported, never used to pick."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, itertools, sys
 from feat import load
 F, D = load()
@@ -97,7 +98,7 @@ def run(T_list=(0, 5, 15, 30, 60, 90, 120, 180, 240, 300, 330), exits=("close", 
 
 if __name__ == "__main__":
     R = run()
-    R.to_pickle("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/hunt_R1.pkl")
+    R.to_pickle(DATA + "hunt_R1.pkl")
     print("tests:", len(R))
     good = R[(R.tIS > 3.5) & (R.tOOS > 2)].sort_values("tOOS", ascending=False)
     print("IS t>3.5 & OOS t>2:", len(good))

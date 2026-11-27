@@ -5,6 +5,7 @@ Pre-registered funnel (fixed before looking at results):
   F2 validate 2018-20: ≥ 60 trades, R > 0, t ≥ 2
   F3 test 2021-23: R > 0 (confirmation only)
   ranking: min(train t, validate t). Finalists = best 5 distinct families (window, confirmation, entry, side)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, json, glob, sqlite3
 import numpy as np, pandas as pd
 from scipy.stats import skew, kurtosis
@@ -13,7 +14,7 @@ from ict_space import WINDOWS
 
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results"); os.makedirs(RES, exist_ok=True)
 D = data.load(); DAYS = D["days"]; H = int(np.searchsorted(DAYS.values, np.datetime64("2024-01-01")))
-XL = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+XL = DATA
 
 
 def load_all():

@@ -1,9 +1,10 @@
 """Turn a Dukascopy UTC 1-minute file into the same day dict the NQ engine uses (papers/pdata.py): a 390-minute main-session grid
 in the market's own local time, the 4 hours before it as 'pre-market', and daily session OHLC. Costs and tick per market."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, pickle
 import numpy as np, pandas as pd
-DK = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/duka/"
-CACHE = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mdata/"
+DK = DATA + "duka/"
+CACHE = DATA + "mdata/"
 # name: (timezone, session start, round-trip cost in basis points of price, tick)
 MK = {
     "USATECHIDXUSD": ("America/New_York", "09:30", 1.3, 0.25), "USA500IDXUSD": ("America/New_York", "09:30", 1.3, 0.25),
@@ -19,17 +20,25 @@ MK = {
 
 
 MK["SPXUSD"] = ("America/New_York", "09:30", 1.3, 0.25); MK["NSXUSD"] = ("America/New_York", "09:30", 1.3, 0.25)
-HD = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/histdata/"
+HD = DATA + "histdata/"
 
 
 def histdata(sym):
     import glob, zipfile, io
     parts = []
-    for zf in sorted(glob.glob(HD + sym + "_*.zip")):
+    for zf in sorted(glob.glob(HD + "*" + sym + "*.zip")):
         with zipfile.ZipFile(zf) as f:
             n = [x for x in f.namelist() if x.endswith(".csv")][0]
             d = pd.read_csv(io.BytesIO(f.read(n)), sep=";", header=None, names=["t", "o", "h", "l", "c", "v"])
         d.index = pd.to_datetime(d.t, format="%Y%m%d %H%M%S"); parts.append(d[["o", "h", "l", "c"]])
+    if not parts:
+        alt = {"NSXUSD": "USATECHIDXUSD", "SPXUSD": "USA500IDXUSD"}[sym]
+        if os.path.exists(DK + alt + ".npz"):                                # fallback: Dukascopy CFD of the same index
+            print(f"[mdata] no {HD}{sym}_*.zip, using Dukascopy {alt} instead (prices differ slightly)", flush=True)
+            z = np.load(DK + alt + ".npz"); t = pd.to_datetime(z["t"] * 60, unit="s", utc=True).tz_convert("America/New_York").tz_localize(None)
+            return pd.DataFrame({k: z[k] for k in "ohlc"}, index=t).sort_index()
+        raise FileNotFoundError(f"No 1-minute data for {sym}: put the HistData *{sym}*.zip files in {HD} "
+                                f"(or download Dukascopy {alt} with: python multi/duka.py {alt}). See research/DATA.md.")
     return pd.concat(parts).sort_index()
 
 

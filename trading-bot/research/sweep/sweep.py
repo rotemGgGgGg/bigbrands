@@ -8,11 +8,12 @@ Filters: sweep depth >= 0 / 10% of A's range; A's range >= its 20-bar average ('
 B closes 02:00-12:00 New York, London+NY) or any time.
 Timeframes 15m, 30m, 1h, 4h, 1D (bars anchored at 17:00 New York). 9 markets, 2012-2026, 1-minute path for exits
 (stop wins a same-minute tie). Results in R net of the market's round-trip cost. Choose on 2012-19, judge on 2020-26."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, pickle
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi")); sys.path.insert(0, os.path.join(H, "../vidstrats"))
 import numpy as np, pandas as pd, mdata
 from vs import frame
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/sweep/"; os.makedirs(SP, exist_ok=True)
+SP = DATA + "sweep/"; os.makedirs(SP, exist_ok=True)
 MKT = {"NQ": "NSXUSD", "SPX": "SPXUSD", "GOLD": "XAUUSD", "USDJPY": "USDJPY", "EURUSD": "EURUSD", "EURJPY": "EURJPY",
        "GBPJPY": "GBPJPY", "DAX": "DEUIDXEUR", "OIL": "LIGHTCMDUSD"}
 COST = {"NQ": 1.3, "SPX": 1.3, "GOLD": 1.6, "USDJPY": 1.0, "EURUSD": 0.8, "EURJPY": 1.2, "GBPJPY": 1.4, "DAX": 1.3, "OIL": 4.0}

@@ -10,12 +10,13 @@ Mechanics (long; short mirrored):
   exits   : 1–15 m bars trade inside the market's main session only and are flat at session end; 1 h / 4 h bars use the 24 h
             stream and exit after 120 / 30 bars.  One trade at a time per variant.
 Costs per round trip = max(frac × price, minimum) per market (COST below)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, sys, pickle, itertools, time
 import numpy as np, pandas as pd
 from numba import njit
 from multiprocessing import Pool
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "longhist"))
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 BARS = SP + "nowick_bars/"
 SESS = {"NQ": (570, 960), "NSXUSD": (570, 960), "SPXUSD": (570, 960), "GRXEUR": (180, 690), "XAUUSD": (500, 810),
         "XAGUSD": (500, 810), "WTIUSD": (540, 870), "BCOUSD": (540, 870), "USDJPY": None, "UDXUSD": None, "JPXJPY": None}

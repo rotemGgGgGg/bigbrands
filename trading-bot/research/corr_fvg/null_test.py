@@ -1,8 +1,9 @@
 """Multiple-testing control: rerun the exact mining with the event attributes (correlation, quarter, session, bias, size,
 displacement, direction-independent) SHUFFLED across events, outcomes untouched. If the shuffled data produce as many
 'test-pass' candidates as the real data, the real candidates are selection noise. Also prints unfiltered base rates."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, pickle, subprocess, sys, os
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 for tf in ("15m", "1h", "4h", "5m"):
     EV, sims, t0, t1 = pickle.load(open(S + f"cfvg_{tf}.pkl", "rb"))
     cut = t0 + (t1 - t0) * 0.6; TR = (EV.ts < cut).values

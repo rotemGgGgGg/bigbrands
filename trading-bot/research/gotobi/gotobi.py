@@ -3,10 +3,11 @@ Rules as published: on Gotobi days (5,10,15,20,25,30/last day of Feb; weekend or
 SELL USDJPY at 09:55 Tokyo (00:55 UTC), exit 10:20 Tokyo or stop 0.15%. Costs: 1.0 bp round trip (about 1.5 pips).
 Checks: Gotobi vs non-Gotobi control, the other 'digit' placebos (days ending 1/6, 2/7, 3/8, 4/9), per year, the vendor's
 window Sep 2016-Aug 2026, a parameter neighbourhood, the pre-fix long leg, and a combination with our existing portfolio."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 COST = 1.0
 
 

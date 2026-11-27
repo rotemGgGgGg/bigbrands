@@ -1,8 +1,9 @@
 """Per-trade R series for every strategy on the Edge Lab page (same sources as series.json), for the app's
 Monte Carlo and portfolio engines. Writes trades.json: {id: {"t": [ISO date...], "r": [R...], "units": str}}."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, json, numpy as np, pandas as pd
 sys.path.insert(0, "../creative"); sys.path.insert(0, "../macro"); sys.path.insert(0, "../allo"); sys.path.insert(0, "../spmodel")
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 import rdm, fomc, convex as X, avp_port as P, avp_eq as AE
 S, U = {}, {}
 fo = set(fomc.dates())

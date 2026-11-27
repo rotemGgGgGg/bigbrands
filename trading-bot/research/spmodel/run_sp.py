@@ -3,11 +3,12 @@ resampled to 5-minute bars. Volume: the CFD has none, so each 1-minute bar count
 - an approximation of the futures volume profile the trader uses.
 Configs: A = London 00:00-06:00 NY (the model as specified); B = London 02:00-09:30 NY (the user's indicator window).
 Reports R per trade, win rate, RR, per year, 2012-19 vs 2020-26, by scenario, and a Lucid-style 50K prop simulation."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, collections, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(H, "../multi")); sys.path.insert(0, os.path.join(H, "../../backtest"))
 import mdata, sp_v8 as v
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 
 
 def bars5():

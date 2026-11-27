@@ -6,6 +6,7 @@
                     stop under the rejection bar's wick; exits 5R / 10R / 20R / runner.
 Runner = trail: stop to break-even at +2R, then 2R behind the best price; flat 15:55.
 Judged: choose on 2012-19, check 2020-26. Reported: win rate, average winner in R, avg R, longest losing streak, years."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, H)
 import avp_port as P
@@ -101,4 +102,4 @@ if __name__ == "__main__":
         s = run(fam, stopk, mode); r = stats(s); r.update(family=fam, stop=stopk, exit=mode); rows.append(r); print(fam, stopk, mode, "done", flush=True)
     R = pd.DataFrame(rows)[["family", "stop", "exit", "n_yr", "win", "avg_win_R", "IS", "IS_t", "OOS", "OOS_t", "last2y", "lose_streak", "pos_yrs"]]
     pd.set_option("display.width", 220); print(R.round(3).to_string(index=False))
-    R.to_csv("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/convex.csv", index=False)
+    R.to_csv(DATA + "convex.csv", index=False)

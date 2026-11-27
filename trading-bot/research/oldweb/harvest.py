@@ -2,9 +2,10 @@
 not reachable from this environment). Each group's mbox is downloaded, mined (mine.py) and deleted, so disk stays small.
 Groups: English investing / technical analysis / futures / neural-net / chaos groups, Japanese (fj.*, japan.*), Taiwanese
 (tw.*), German (de.etc.finanz.*) and UK finance groups."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, subprocess, sys, time, json
 import mine
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/oldweb/"
+SP = DATA + "oldweb/"
 GROUPS = {
     "usenet-misc": ["misc.invest.futures", "misc.invest.technical", "misc.invest.index-futures", "misc.invest.options",
                     "misc.invest.stocks", "misc.invest.commodities", "misc.invest.forex", "misc.invest.misc", "misc.invest",

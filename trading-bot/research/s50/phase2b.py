@@ -1,11 +1,12 @@
 """Phase 2b — portfolio search over daily R series: Phase-1 survivors (top 5 per strategy) + the four earlier components
 (top train variants of No-Wick / GapFB / Pre-Fade / Opex from research/god). Beam search (width 20, up to 6 members),
 weights {0.5, 1, 2}, objective = TRAIN (2010-19) daily Sharpe. Validate / test Sharpe reported for the final beam."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import pickle, time
 import numpy as np, pandas as pd
 from phase1 import SP
 
-GOD = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/god/daily.pkl"
+GOD = DATA + "god/daily.pkl"
 W = (0.5, 1.0, 2.0)
 
 

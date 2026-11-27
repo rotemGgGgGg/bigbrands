@@ -1,9 +1,10 @@
 """Gotobi sleeve added to the existing portfolio (OLD = all-eligible multi-market, LB = USDJPY London breakout). Equal risk on 2012-19."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, math, pickle, numpy as np, pandas as pd
 sys.path.insert(0, "../vidstrats"); sys.path.insert(0, "../combo15")
 from vs import summarize, SP as VSP
 import combo3 as K
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 sh = lambda x: x.mean() / x.std() * math.sqrt(252) if x.std() > 0 else 0
 res = pickle.load(open(VSP + "LB_res.pkl", "rb")); T = summarize("LB", res, ""); el = T[(T.IS_t >= 1) & (T.IS_pos_yrs >= 5)].params.tolist()
 D = pd.DataFrame({"OLD": pd.read_pickle(SP + "mcombo.pkl")["port"], "LB": pd.DataFrame({k: res[eval(k)] for k in el}).fillna(0).mean(1),

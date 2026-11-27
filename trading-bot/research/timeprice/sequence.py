@@ -10,6 +10,7 @@ only if its 2012-19 t-stat beats the Bonferroni line for the number of states (A
 |t|>2.5 version. Out of sample 2020-26: enter at the quarter open, exit at the quarter close.
 Placebo: the whole procedure on time grids shifted by 1/8..7/8 of a quarter (does the real clock matter?).
 Also the same at day level (6h quarters, previous day's range) as a second scale."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, H)
 from quarters import T0, O, Hh, Lw, C, OK, N, ANCH, BP
@@ -68,4 +69,4 @@ if __name__ == "__main__":
     real = T[T["shift"] == 0]; print("\n===== REAL CLOCK\n", real.round(2).to_string(index=False))
     pl = T[T["shift"] > 0].groupby(["level", "model"]).OOS_t.agg(["median", "max"]).round(2)
     print("\n===== shifted-clock placebo, OOS t (median / max over 7 shifts)\n", pl.to_string())
-    T.to_csv("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/sequence.csv", index=False)
+    T.to_csv(DATA + "sequence.csv", index=False)

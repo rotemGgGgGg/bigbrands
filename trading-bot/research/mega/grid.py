@@ -1,7 +1,8 @@
 """04:00-15:59 NY 1-minute grid (720 bars; 09:30 = index 330) per trading day, HistData NSXUSD (Nasdaq-100 CFD, same index as NQ).
 Forward-filled inside the day; days need >= 300 RTH bars."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, glob, zipfile, io, pickle, numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 T0 = 240; NB = 720; RTH = 330
 
 

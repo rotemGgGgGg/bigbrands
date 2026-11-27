@@ -1,9 +1,10 @@
 """ON-range zone as a FILTER on the existing eligible strategies (mcombo eligible list), per market.
 For each strategy: on 2012-19 pick which zones to keep (zone kept if its 2012-19 mean P&L > 0), then compare OOS 2020-26
 filtered vs unfiltered, single strategies and the whole all-eligible portfolio."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, math, numpy as np, pandas as pd
 from onrange import analyse, SP
-MP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mpool/"
+MP = DATA + "mpool/"
 def sh(x): return x.mean() / x.std() * math.sqrt(252) if x.std() > 0 else 0
 el = pd.read_pickle(MP + "../mcombo.pkl")["el"]
 allU, allF, allZ = [], [], []

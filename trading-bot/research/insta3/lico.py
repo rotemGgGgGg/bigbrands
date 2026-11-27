@@ -11,6 +11,7 @@ Mechanical version tested here:
   entry   : next bar open; stop = sweep extreme ∓ 1 tick; target = 'dol' (nearest opposite valid level ≥ 1R away),
             'origin' (extreme of the move from 09:30 into the sweep), or fixed 2R / 3R; time exit 15:59. One trade per day.
 Costs max(2.25 pt × price/17000, 0.75 pt) per round trip, stop-first when stop and target share a bar, no look-ahead."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, itertools; sys.path[:0] = ["../gapfb", "..", "../longhist"]
 import numpy as np, pandas as pd
 from sess24 import build, t2m
@@ -119,4 +120,4 @@ if __name__ == "__main__":
     G = pd.DataFrame(rows); G.to_csv("lico_grid.csv", index=False)
     pd.set_option("display.width", 250); print(G.round(3).to_string(index=False))
     allT = {v: pd.concat([keep[("A", v)], keep[("B", v)]]) for v in itertools.product(*GRID.values())}
-    pd.to_pickle(allT, "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/lico_trades.pkl")
+    pd.to_pickle(allT, DATA + "lico_trades.pkl")

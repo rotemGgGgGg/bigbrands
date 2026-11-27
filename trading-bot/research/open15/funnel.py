@@ -1,6 +1,7 @@
 """Funnel over the 12.4M-variant search. Train 2012-2019 only for selection; validation 2020-2023; holdout 2024-2026 once."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import pickle, math, numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/open15/"
+SP = DATA + "open15/"
 S = pickle.load(open(SP + "search.pkl", "rb")); R = pd.DataFrame(S["rows"]); NV = S["nvalid"]
 yrs = range(2012, 2027); tr, va, ho = range(2012, 2020), range(2020, 2024), range(2024, 2027)
 for nm, ys in (("tr", tr), ("va", va), ("ho", ho)):

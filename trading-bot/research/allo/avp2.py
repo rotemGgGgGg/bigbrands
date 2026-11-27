@@ -3,6 +3,7 @@ Grid (540): stop = wick+buffer | zone far edge; max risk 0.15% / 0.3% / none; ta
 window = London 03:00-09:30 | NY 09:35-15:30 | both; trend = none | 50-day | day (price vs 00:00 open); max 1 or 3 trades a day;
 one signal per zone per side per day. Gates: choose on 2012-19 (t >= 2.5, >= 5/8 positive years) -> 2020-26 (same sign,
 t >= 1.5) -> shifted-zone random baseline (100 runs, p <= 5%) on the 2020-26 result. Cost 1.3 bp. NQ (HistData) 00:00-16:00."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, H); sys.path.insert(0, os.path.join(H, "../multi"))
 import avp, mdata
@@ -50,7 +51,7 @@ def tst(x): return x.mean() / x.std() * math.sqrt(len(x)) if len(x) > 2 and x.st
 
 
 if __name__ == "__main__":
-    rows = []; SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+    rows = []; SP = DATA
     grid = list(itertools.product(("wick", "zone"), (0.0015, 0.003, None), (1, 2, 3, 5, 12), WIN, ("none", "50d", "day"), (1, 3)))
     for k, (stp, rk, tg, w, tr, mx) in enumerate(grid):
         s = run(stp, rk, tg, w, tr, mx)

@@ -7,10 +7,11 @@ H2 MACROS (ICT): 20-30 minute windows 08:50, 09:50, 10:50, 11:50, 13:10, 15:15. 
 H3 GANN SQUARE OF 9: levels (sqrt(prev close) + j*0.25)^2 (45-degree steps). First RTH touch of a level -> fade it,
    stop 0.25 step, target 0.5 / 1 step, flat 16:00. Placebo: the same with the level grid shifted by random fractions.
 Every rule: choose on 2012-19, judge 2020-26."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, itertools, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 BP = 1.3; RNG = np.random.default_rng(3)
 
 

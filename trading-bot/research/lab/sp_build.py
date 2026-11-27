@@ -1,6 +1,7 @@
 """SP Model v8 deep-dive data for the Edge Lab page: both London windows, by scenario, side, hour, year, Monte Carlo."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import json, math, numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 rng = np.random.default_rng(2026); out = {}
 t = lambda x: float(x.mean() / x.std() * math.sqrt(len(x))) if len(x) > 2 and x.std() > 0 else 0.0
 for k, lab in (("A", "London 00:00–06:00"), ("B", "London 02:00–09:30")):

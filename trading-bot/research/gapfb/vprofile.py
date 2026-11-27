@@ -1,9 +1,10 @@
 """Iter 79 (queue 80) — prior-day RTH volume profile (real volume; bins = 0.02 % of price) vs the 09:30 open on GapFB-C days:
 loc = open relative to yesterday's value area (70 %) in the gap direction: 'beyond VA', 'inside VA'; and |open − POC| in ATR-day units.
 Bucketed GapFB-C R per period."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys; sys.path[:0] = ["..", "../longhist"]
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 def prof(f):
     m = f.index.hour * 60 + f.index.minute; r = f[(m >= 570) & (m < 960)]; out = {}
     for d, g in r.groupby(r.index.normalize().tz_localize(None)):

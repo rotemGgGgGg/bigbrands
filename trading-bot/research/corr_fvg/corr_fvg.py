@@ -4,8 +4,9 @@ LuxAlgo FVG (threshold 0): bull if low > high[2] and close[1] > high[2]; bear if
 Trade on NQ: limit at the gap's near edge (bull: top = low[t]), stop beyond the far edge (+10 % of gap), target = rr × risk.
 Cancel if a bar CLOSES through the far edge before the fill, or after `expire` bars. Same-bar touch of entry & stop = loss;
 target is not counted on the fill bar (conservative). Costs 1.25 pt + 1 pt stress per round trip."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, sys
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 COST = 2.25
 def load(tf):
     d = {s: pd.read_pickle(S + f"yf_{s}_{tf}.pkl")[["open", "high", "low", "close"]] for s in ("NQ", "ES", "YM")}

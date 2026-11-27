@@ -3,11 +3,12 @@ for every strategy we have ever coded, on NSXUSD 1-minute 2012 - 2026-10:
   127 classic published strategies (papers/), 59 pre-2002 internet rules (oldweb/), and natively rebuilt survivors / practitioner
   edges (GapFB-C, pre-open fade, afternoon momentum, rebound after a -1% day, opex-Friday short, Turnaround Tuesday).
 Multi-day trades are booked on their entry day. Output: scratchpad/combo15/pool.pkl (DataFrame days x strategies) + meta.csv."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, pickle, time
 H = os.path.dirname(os.path.abspath(__file__)); sys.path[:0] = [os.path.join(H, "../papers"), os.path.join(H, "../oldweb"), os.path.join(H, "../mega")]
 import numpy as np, pandas as pd
 import pdata, engine as E
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/combo15/"
+SP = DATA + "combo15/"
 D = pdata.load(); DAYS = D["days"].normalize(); N = len(DAYS); RET = E.day_returns(D)
 
 

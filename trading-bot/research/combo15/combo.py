@@ -5,9 +5,10 @@ SELECT (2012-2019 only): a strategy is eligible if it has >= 80 trading days, t 
 VALIDATE (2020-2022) and FINAL (2023-2026-10, looked at once): Sharpe, $ per year, max drawdown, years positive.
 Selection-luck check: the same numbers for 2,000 random 15-strategy portfolios drawn from the eligible pool and for
 'all eligible, equal risk'. The greedy portfolio is only worth anything if it beats the random ones out of sample."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/combo15/"
+SP = DATA + "combo15/"
 P = pd.read_pickle(SP + "pool.pkl"); Y = P.index.year
 S, V, F = (Y <= 2019), (Y >= 2020) & (Y <= 2022), (Y >= 2023)
 RNG = np.random.default_rng(15)

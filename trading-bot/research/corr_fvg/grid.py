@@ -2,8 +2,9 @@
 quarterly-theory quarter, session/killzone, HTF bias, size, displacement, NWOG/NDOG). Step 2: simulate every
 entry × stop × R:R per event (conservative fills, 2.25 pt costs). Step 3: every filter combination = boolean masks → stats on
 TRAIN (first 60 % of time) and TEST (last 40 %). One trade at a time is enforced when reporting finalists."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, itertools, pickle, sys, os
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 COST = 2.25
 def load(tf):
     base = "5m" if tf in ("5m", "15m") else "1h"

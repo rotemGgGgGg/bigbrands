@@ -1,8 +1,9 @@
 """Placebo for the ON-zone filter: same IS zone-selection procedure, but zone labels shuffled across days (keeps zone sizes).
 If shuffled labels also lift the portfolio, the 0.90 -> 1.25 is just 'skip some days' noise, not the ON range."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import math, numpy as np, pandas as pd
 from onrange import SP
-MP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/mpool/"
+MP = DATA + "mpool/"
 sh = lambda x: x.mean() / x.std() * math.sqrt(252) if x.std() > 0 else 0
 el = pd.read_pickle(MP + "../mcombo.pkl")["el"]; SY = ["NSXUSD","SPXUSD","DEUIDXEUR","XAUUSD","USDJPY","JPNIDXJPY","EURUSD","LIGHTCMDUSD"]
 data = []

@@ -13,10 +13,11 @@ Sleeves (each produces a daily return series, net of costs):
 Combination (walk-forward, no look-ahead): every sleeve vol-scaled to 10% by trailing 60-day vol; each January the weights
 are re-set by risk parity over sleeves whose trailing (expanding) Sharpe is > 0 with at least 3 years of history;
 portfolio vol-targeted to 10%; leverage capped at 3x. Everything before 2016 is warm-up; 2016-2026 is fully out of sample."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi")); sys.path.insert(0, os.path.join(H, "../combo15"))
 import mdata
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 IDX = ["NSXUSD", "SPXUSD", "DEUIDXEUR", "JPNIDXJPY"]; ALL = IDX + ["XAUUSD", "USDJPY", "EURUSD", "LIGHTCMDUSD"]
 DATA = {s: mdata.load(s) for s in ALL}
 def ser(D, x): return pd.Series(x, index=D["days"])

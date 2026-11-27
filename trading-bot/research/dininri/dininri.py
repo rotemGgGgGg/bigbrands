@@ -16,6 +16,7 @@ Rules as coded (spec section in brackets):
              bias level (spec) / fixed 5R / 10R / no target; flat 15:55.  Stop-first inside a minute; no target on the fill minute.
   limits[11] max N counted trades a day (BE closes don't count); one position at a time.
 Costs per contract round trip: $0.35×2 commission = 0.35 pt, + 1 tick slippage on every stop / end-of-day market exit."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, itertools, time
 sys.path[:0] = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gapfb")]
 import numpy as np, pandas as pd
@@ -170,5 +171,5 @@ if __name__ == "__main__":
         for rows in P.imap_unordered(job, chunks):
             out += rows; print(len(out), f"{time.time() - t0:.0f}s", flush=True)
     G = pd.DataFrame(out)
-    G.to_csv("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/dininri_grid.csv.gz", index=False)
+    G.to_csv(DATA + "dininri_grid.csv.gz", index=False)
     print("done", len(G))

@@ -9,12 +9,13 @@ Spike = range of 08:30-08:31 bars / median 1-min range 08:00-08:29 (FX average).
 Strategies (per event x market): momentum / fade of the first k minutes after release, exits at several times; pre-event drift.
 Costs = market bp round trip, doubled for entries within 5 minutes of a release (news spreads).
 Selection uses 2012-19 only; 2020-26 is out of sample."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, pickle, itertools
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(H, "../multi")); sys.path.insert(0, os.path.join(H, "../vidstrats"))
 import numpy as np, pandas as pd, mdata
 from vs import frame
 import fomc
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/macro/"
+SP = DATA + "macro/"
 MKS = {"NQ": "NSXUSD", "SPX": "SPXUSD", "GOLD": "XAUUSD", "USDJPY": "USDJPY", "EURUSD": "EURUSD"}
 T0 = 7 * 60                      # grid starts 07:00 NY, 600 minutes to 17:00
 

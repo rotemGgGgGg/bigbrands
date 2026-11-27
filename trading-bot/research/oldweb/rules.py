@@ -2,6 +2,7 @@
 1990s S&P/T-bond/SPI converted to the same % of price). Source = newsgroup, year, the poster's sentence (shortened).
 Each fn(D) returns ('d', hold, mode) for the daily engine, ('i', spec) for the intraday engine, or ('t', trades) for
 rules that need a per-day loop (trailing stops, re-entries)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "papers"))
@@ -374,7 +375,7 @@ def f(D):
 
 
 # ---------------------------------------------------------------- batch 6: non-price "weird" data claimed in the old literature / Usenet
-EXT = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/oldweb/ext/"
+EXT = DATA + "oldweb/ext/"
 
 def moon_age(days):
     """days since new moon (0 = new, ~14.77 = full), mean synodic month from the 2000-01-06 18:14 UTC new moon (+/- ~0.6 day)."""

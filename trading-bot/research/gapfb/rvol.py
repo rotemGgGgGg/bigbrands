@@ -1,9 +1,10 @@
 """Iter 78 (queue 79) — volume filters for GapFB-C (real NQ 2010–19 user file, MNQ 2020–26; volume of the traded contract):
 RVOL15 = volume 09:30–09:44 / mean of the same window over the previous 20 sessions; PRE = volume 08:00–09:29 / its 20-day mean.
 Bucketed R of GapFB-C trades per period (features_C.csv trades)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys; sys.path[:0] = ["..", "../longhist"]
 import numpy as np, pandas as pd
-SP = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+SP = DATA
 def vols(f):
     m = f.index.hour * 60 + f.index.minute; d = f.index.normalize().tz_localize(None)
     v15 = f.volume[(m >= 570) & (m < 585)].groupby(d[(m >= 570) & (m < 585)]).sum()

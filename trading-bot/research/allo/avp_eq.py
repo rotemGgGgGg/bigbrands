@@ -12,6 +12,7 @@ Every signal of the exact Pine port (NQ, real Dukascopy volume, 5-minute) gets 9
 Label = R per trade after costs (1 NQ point round trip). Equation fitted by ridge regression on 2012-19 ONLY (standardised x).
 Rule: take the signal when E[R] > 0 (and a stricter 'top 30% of 2012-19 predictions' cut). Judged once on 2020-26.
 Random check: the same equation with its coefficients' signs/feature mapping shuffled (permute predictions within 2020-26, 1,000x)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import sys, os, math, numpy as np, pandas as pd
 H = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, H)
 import avp_port as P
@@ -97,4 +98,4 @@ if __name__ == "__main__":
         print(f"\nRULE take if {lab}: 2012-19 {len(si)/8:.0f}/yr avg {si.mean():+.3f}R (t {tst(si):.2f}) | 2020-26 {len(so)/6.85:.0f}/yr avg {so.mean():+.3f}R (t {tst(so):.2f}), "
               f"win {100*(O.R[pO>co]>=1.999).mean():.1f}%, positive years {int((yy>0).sum())}/{len(yy)} | random same-size picks: p={np.mean(nul >= so.mean()):.3f}")
         print("  2020-26 by year R:", yy.round(1).to_dict())
-    D.to_pickle("/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/avp_eq_data.pkl")
+    D.to_pickle(DATA + "avp_eq_data.pkl")

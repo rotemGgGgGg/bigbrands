@@ -1,7 +1,8 @@
 """The indicator's core claim, with NO other filters: does a gap whose ES/YM twin is still ALIVE at entry beat a plain NQ gap?
 Compares alive-correlated vs all, per timeframe × entry × stop × R:R, TRAIN (first 60 %) and TEST (last 40 %)."""
+import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import numpy as np, pandas as pd, pickle, itertools
-S = "/tmp/claude-0/-home-user-bigbrands/e3584704-f927-5cd0-bdfb-3c26d638e529/scratchpad/"
+S = DATA
 rows = []
 for tf in ("5m", "15m", "1h", "4h"):
     EV, sims, t0, t1 = pickle.load(open(S + f"cfvg_{tf}.pkl", "rb")); cut = t0 + (t1 - t0) * 0.6; TR = (EV.ts < cut).values; nd = ~EV.ndog.values
