@@ -46,7 +46,7 @@ compare against a random twin (shifted clocks, shuffled days, random direction, 
 Never invent numbers: every figure you report must come from code you ran or a file you read. If you could not run something, say so.
 When you report a test result, give a short table (trades/yr, win %, avg R, 2012-19 and 2020-26 avg R with t, positive years, random p), then end with
 one fenced json block: {"trades_per_year":..,"win_rate":..,"avg_r":..,"is_avg_r":..,"oos_avg_r":..,"oos_t":..,"positive_years":"x/y","p_random":..,"verdict":"live|watch|dead"} using null for anything not measured.
-Be concise. Lead with the result.${WIN ? " This machine runs Windows: call Python as `python`; your working directory is already the research folder, so run scripts with a relative path (python timelinks/theory.py), not cd research." : ""}
+Be concise. Lead with the result.${WIN ? " This machine runs Windows; your shell is Git Bash. Call Python as `python`; your working directory is already the research folder, so run scripts with a relative forward-slash path (python timelinks/theory.py), one command per call, no cd." : ""}
 Raw market data (1-minute bars) may be missing on this machine: many scripts point to a data folder from an earlier cloud session. Before a long run, check the inputs exist; if they do not, say exactly which files are missing instead of guessing.`;
 
 /** Extra instructions for chat modes. */
@@ -59,6 +59,19 @@ export const MODES = {
  * Finds how to start the CLI without a shell. On Windows npm installs `claude.cmd`, which Node cannot spawn directly
  * (and must not be run through a shell with our arguments), so we read the shim and start its real target.
  */
+/** bash.exe from Git for Windows, or null (non-Windows, or Git not found). Override with EDGE_LAB_GIT_BASH. */
+export function findGitBash() {
+  if (process.platform !== "win32") return null;
+  const tries = [process.env.EDGE_LAB_GIT_BASH, process.env.CLAUDE_CODE_GIT_BASH_PATH,
+    "C:\\Program Files\\Git\\bin\\bash.exe", "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Programs", "Git", "bin", "bash.exe")];
+  try {
+    for (const g of execFileSync("where", ["git"], { encoding: "utf8", windowsHide: true }).split(/\r?\n/).filter(Boolean))
+      tries.push(path.join(path.dirname(g), "..", "bin", "bash.exe"));
+  } catch { /* git not on PATH */ }
+  return tries.find((p) => p && fs.existsSync(p)) || null;
+}
+
 export function resolveClaude(bin = process.env.CLAUDE_BIN || "claude") {
   if (!WIN) return { cmd: bin, pre: [] };
   let candidates = [];
@@ -103,6 +116,10 @@ export class Agent {
     // (never the browser's) and caps the spend of each run.
     const env = { ...process.env };
     delete env.ANTHROPIC_API_KEY; delete env.EDGE_LAB_API_KEY;
+    // Windows: Claude Code's PowerShell tool refuses commands in this non-interactive mode even under matching rules,
+    // so switch the agent to Git Bash (ships with Git for Windows), where the python/cd rules behave.
+    const gitBash = findGitBash();
+    if (gitBash) { env.CLAUDE_CODE_USE_POWERSHELL_TOOL = "0"; env.CLAUDE_CODE_GIT_BASH_PATH = gitBash; }
     if (billing.mode === "api") {
       env.ANTHROPIC_API_KEY = billing.apiKey;
       if (billing.maxBudgetUsd) args.push("--max-budget-usd", String(billing.maxBudgetUsd));
