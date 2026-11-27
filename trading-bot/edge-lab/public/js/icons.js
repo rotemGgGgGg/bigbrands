@@ -36,6 +36,9 @@ const P = {
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   compare: '<path d="M8 3v18M16 3v18M3 8h5M16 16h5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4Z"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l3 3.2v2H6v-2l3-3.2Z"/>',
+  gauge: '<path d="M12 14 16 9"/><path d="M3.3 18a10 10 0 1 1 17.4 0"/>',
   book: '<path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M19 19v2H6"/><path d="M9 7h6M9 11h4"/>',
   database: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
 };

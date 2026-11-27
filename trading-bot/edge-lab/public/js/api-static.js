@@ -76,7 +76,7 @@ export const api = {
   },
   async portfolio(b) { return runPortfolio(dataApi(await load()), b.weights || {}, b); },
 
-  conversations: async () => [], conversation: async () => fail("Conversations live in the local Edge Lab app."), deleteConversation: async () => ({ ok: true }),
+  conversations: async () => [], conversation: async () => fail("Conversations live in the local Edge Lab app."), deleteConversation: async () => ({ ok: true }), updateConversation: async () => fail("Conversations live in the local Edge Lab app."), usage: async () => ({ limits: null, today: { runs: 0, costUsd: 0 } }),
   chat: async () => fail(AGENT_MSG), cancel: async () => ({ ok: true }),
 
   experiments: async () => ls.get("edge.experiments", []),

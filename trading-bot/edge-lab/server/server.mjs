@@ -11,7 +11,7 @@ import { ResearchData, summary } from "./lib/data.mjs";
 import { simulate } from "./lib/montecarlo.mjs";
 import { portfolio } from "./lib/portfolio.mjs";
 import { Store, id } from "./lib/store.mjs";
-import { Agent, PERMISSIONS, MODELS } from "./lib/agent.mjs";
+import { Agent, PERMISSIONS, MODELS, MODES } from "./lib/agent.mjs";
 import { Auth } from "./lib/auth.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -39,9 +39,11 @@ const store = new Store(process.env.EDGE_LAB_STORE || path.join(ROOT, "store"));
 const agent = new Agent({ workspace: RESEARCH });
 const auth = new Auth(store, PASSWORD);
 const jobs = new Map();                       // jobId -> { events, listeners:Set, status, cancel, conversationId, experimentId }
-const DEFAULT_SETTINGS = { permission: "analyze", model: "", userName: "Rotem", billing: "subscription", maxBudgetUsd: 2 };
+const DEFAULT_SETTINGS = { permission: "analyze", model: "sonnet", userName: "Rotem", billing: "subscription", maxBudgetUsd: 2 };
 
 const settings = () => ({ ...DEFAULT_SETTINGS, ...store.read("settings", {}) });
+// One-time move off the CLI default model (Fable on some plans needs paid credits) to Sonnet.
+{ const cur = store.read("settings", {}); if (cur.model === "" && !cur.modelMigrated) store.write("settings", { ...cur, model: "sonnet", modelMigrated: true }); }
 const pairCode = () => {
   let b = store.read("bridge", null);
   if (!b?.code) b = store.write("bridge", { code: crypto.randomBytes(18).toString("base64url"), created: new Date().toISOString() });
@@ -59,8 +61,8 @@ function bridgeRequest(req, url) {
 const send = (res, code, body) => { res.writeHead(code, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }); res.end(JSON.stringify(body)); };
 const fail = (res, code, message) => send(res, code, { error: message });
 
-async function body(req) {
-  let raw = ""; for await (const c of req) { raw += c; if (raw.length > 1.5e6) throw Object.assign(new Error("Request too large"), { code: 413 }); }
+async function body(req, max = 1.5e6) {
+  let raw = ""; for await (const c of req) { raw += c; if (raw.length > max) throw Object.assign(new Error("Request too large"), { code: 413 }); }
   if (!raw) return {};
   try { return JSON.parse(raw); } catch { throw Object.assign(new Error("Body must be JSON"), { code: 400 }); }
 }
@@ -91,37 +93,60 @@ function serveStatic(req, res, pathname) {
 }
 
 // ---------------------------------------------------------------- agent jobs
-function startJob({ prompt, conversationId, experimentId, displayText }) {
+const LOOP_RULE = "Loop mode: you are working through this task in iterations without the user. Each iteration, make real progress (run, check, fix), then end with two lines: what you did and what is next. When the whole task is done, finish your reply with a line that says exactly LOOP_DONE.";
+
+function startJob({ prompt, conversationId, experimentId, displayText, images = [], modes = [], loop = null }) {
   const s = settings();
-  const conv = store.read("conversations", []).find((c) => c.id === conversationId);
   const jobId = id("job");
-  const job = { id: jobId, events: [], listeners: new Set(), status: "running", conversationId, experimentId, startedAt: Date.now(), text: "", activity: [] };
+  const job = { id: jobId, events: [], listeners: new Set(), status: "running", conversationId, experimentId, startedAt: Date.now(), text: "", activity: [], cost: 0, iteration: 1, loop };
   jobs.set(jobId, job);
 
-  const userMsg = { id: id("msg"), role: "user", text: displayText ?? prompt, at: new Date().toISOString() };
+  const userMsg = { id: id("msg"), role: "user", text: displayText ?? prompt, images, modes, loop, at: new Date().toISOString() };
   const asst = { id: id("msg"), role: "assistant", text: "", status: "running", jobId, activity: [], at: new Date().toISOString() };
   store.update("conversations", [], (all) => {
     const c = all.find((x) => x.id === conversationId);
     c.messages.push(userMsg, asst); c.updatedAt = new Date().toISOString(); return all;
   });
 
-  const push = (e) => {
-    job.events.push(e);
-    if (e.type === "delta") job.text += e.text;
-    if (e.type === "tool") job.activity.push({ id: e.id, summary: e.summary, phase: e.phase, name: e.name, command: e.command, ok: null });
-    if (e.type === "tool_result") { const a = job.activity.find((x) => x.id === e.id); if (a) a.ok = e.ok; }
-    if (e.type === "init" && e.sessionId) store.update("conversations", [], (all) => { const c = all.find((x) => x.id === conversationId); if (c) c.sessionId = e.sessionId; return all; });
-    if (e.type === "result") { job.result = e; if (!job.text && e.text && e.ok) job.text = e.text; }
-    if (e.type === "error") job.error = e.message;
-    if (e.type === "cancelled") job.cancelledFlag = true;
-    if (e.type === "end") finishJob(job, asst.id);
-    for (const l of job.listeners) l(e);
+  const emit = (e) => { job.events.push(e); for (const l of job.listeners) l(e); };
+  const extraSystem = [...modes.map((m) => MODES[m]).filter(Boolean), loop ? LOOP_RULE : ""].filter(Boolean).join("\n");
+  const billing = s.billing === "api" ? { mode: "api", apiKey: API_KEY, maxBudgetUsd: s.maxBudgetUsd } : { mode: "subscription" };
+
+  const runOnce = (text) => {
+    let iterText = "";
+    const conv = store.read("conversations", []).find((c) => c.id === conversationId);
+    const run = agent.run({ prompt: text, sessionId: conv?.sessionId, permission: s.permission, model: s.model, billing, extraSystem, onEvent: (e) => {
+      if (e.type === "delta") { job.text += e.text; iterText += e.text; }
+      if (e.type === "tool") job.activity.push({ id: e.id, summary: e.summary, phase: e.phase, name: e.name, command: e.command, ok: null });
+      if (e.type === "tool_result") { const a = job.activity.find((x) => x.id === e.id); if (a) a.ok = e.ok; }
+      if (e.type === "init" && e.sessionId) store.update("conversations", [], (all) => { const c = all.find((x) => x.id === conversationId); if (c) c.sessionId = e.sessionId; return all; });
+      if (e.type === "limits") store.write("limits", { info: e.info, at: new Date().toISOString() });
+      if (e.type === "result") {
+        job.cost += e.costUsd || 0; e = { ...e, costUsd: job.cost }; job.result = e;
+        if (!iterText && e.text && e.ok) { job.text += e.text; iterText = e.text; }
+        if (e.usage) store.update("conversations", [], (all) => { const c = all.find((x) => x.id === conversationId); if (c) c.lastUsage = e.usage; return all; });
+      }
+      if (e.type === "error") job.error = e.message;
+      if (e.type === "cancelled") job.cancelledFlag = true;
+      if (e.type === "end") {
+        const more = job.loop && !job.cancelledFlag && !job.error && job.result?.ok !== false && job.iteration < job.loop && !/LOOP_DONE/.test(iterText);
+        if (more) {
+          job.iteration++;
+          const sep = `\n\n---\n**Loop · iteration ${job.iteration}/${job.loop}**\n\n`;
+          job.text += sep; emit({ type: "delta", text: sep }); emit({ type: "phase", phase: "working", label: `Loop · iteration ${job.iteration}/${job.loop}` });
+          job.cancel = runOnce(`Continue the task. This is iteration ${job.iteration} of at most ${job.loop}. Pick up where you stopped; finish with LOOP_DONE when the whole task is done.`);
+          return;
+        }
+        job.text = job.text.replace(/\n?LOOP_DONE\s*$/m, "");
+        finishJob(job, asst.id);
+      }
+      emit(e);
+    } });
+    return run.cancel;
   };
 
-  const billing = s.billing === "api" ? { mode: "api", apiKey: API_KEY, maxBudgetUsd: s.maxBudgetUsd } : { mode: "subscription" };
-  const run = agent.run({ prompt, sessionId: conv?.sessionId, permission: s.permission, model: s.model, billing, onEvent: push });
-  job.cancel = run.cancel;
-  store.log("agent", `Agent run started`, { conversationId, experimentId, permission: s.permission });
+  job.cancel = runOnce(prompt);
+  store.log("agent", loop ? `Agent loop started (${loop} iterations max)` : "Agent run started", { conversationId, experimentId, permission: s.permission, modes });
   return { jobId, userMsg, assistantMsg: asst };
 }
 
@@ -131,7 +156,7 @@ function finishJob(job, msgId) {
   store.update("conversations", [], (all) => {
     const c = all.find((x) => x.id === job.conversationId); if (!c) return all;
     const m = c.messages.find((x) => x.id === msgId); if (!m) return all;
-    Object.assign(m, { text: job.text || (r.ok ? r.text || "" : ""), status: job.status, error: job.error || r.error || null, activity: job.activity, costUsd: r.costUsd ?? null, durationMs: r.durationMs ?? Date.now() - job.startedAt, denied: r.denied || [] });
+    Object.assign(m, { text: job.text || (r.ok ? r.text || "" : ""), status: job.status, error: job.error || r.error || null, activity: job.activity, costUsd: job.cost || null, durationMs: Date.now() - job.startedAt, denied: r.denied || [], usage: r.usage || null, iterations: job.loop ? job.iteration : null });
     c.updatedAt = new Date().toISOString(); return all;
   });
   if (job.experimentId) {
@@ -154,8 +179,44 @@ function parseMetrics(text) {
   return null;
 }
 
+/** Slash commands at the start of a message: /rotem, /usage, /loop [N] (any order), "/rotem off", "/usage off". */
+function parseCommands(text) {
+  const on = new Set(), off = new Set(); let loop = null, t = text.trim(), m;
+  for (;;) {
+    if ((m = t.match(/^\/(rotem|usage)(\s+off)?(?=\s|$)\s*/i))) { (m[2] ? off : on).add(m[1].toLowerCase()); t = t.slice(m[0].length); continue; }
+    if ((m = t.match(/^\/loop(?:\s+(\d+))?(?=\s|$)\s*/i))) { loop = Math.min(Math.max(+(m[1] || 5), 1), 10); t = t.slice(m[0].length); continue; }
+    break;
+  }
+  return { on, off, loop, text: t };
+}
+
+/** The pinned "Main" conversation always exists. */
+function ensureMain() {
+  const all = store.read("conversations", []);
+  if (all.some((c) => c.main)) return;
+  const c = { id: id("conv"), title: "Main", main: true, pinned: true, modes: ["rotem"], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), sessionId: null, messages: [] };
+  store.write("conversations", [c, ...all]);
+}
+
+const UPLOADS = path.join(RESEARCH, ".edge-uploads");
+function saveImages(list) {
+  const out = [];
+  for (const im of (Array.isArray(list) ? list : []).slice(0, 4)) {
+    const mt = String(im.type || ""), ext = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" }[mt];
+    if (!ext) throw Object.assign(new Error("Images must be PNG, JPEG, WebP or GIF."), { code: 400 });
+    const buf = Buffer.from(String(im.data || "").replace(/^data:[^,]+,/, ""), "base64");
+    if (!buf.length || buf.length > 6e6) throw Object.assign(new Error("Each image must be under 6 MB."), { code: 400 });
+    fs.mkdirSync(UPLOADS, { recursive: true });
+    if (!fs.existsSync(path.join(UPLOADS, ".gitignore"))) fs.writeFileSync(path.join(UPLOADS, ".gitignore"), "*\n");
+    const file = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${ext}`;
+    fs.writeFileSync(path.join(UPLOADS, file), buf);
+    out.push({ name: String(im.name || file).slice(0, 80), file });
+  }
+  return out;
+}
+
 function newConversation(title) {
-  const c = { id: id("conv"), title: (title || "New research").slice(0, 80), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), sessionId: null, messages: [] };
+  const c = { id: id("conv"), title: (title || "New research").slice(0, 80), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), sessionId: null, modes: [], messages: [] };
   store.update("conversations", [], (all) => [c, ...all]);
   return c;
 }
@@ -233,7 +294,34 @@ route("POST", "/api/montecarlo", async (req, res) => {
 
 route("POST", "/api/portfolio", async (req, res) => { const b = await body(req); send(res, 200, portfolio(data, b.weights || {}, b)); });
 
-route("GET", "/api/conversations", (req, res) => send(res, 200, store.read("conversations", []).map(({ messages, ...c }) => ({ ...c, count: messages.length, preview: messages.find((m) => m.role === "user")?.text?.slice(0, 120) || "" }))));
+route("GET", "/api/conversations", (req, res) => {
+  ensureMain();
+  const list = store.read("conversations", []).map(({ messages, ...c }) => ({ ...c, count: messages.length, preview: messages.find((m) => m.role === "user")?.text?.slice(0, 120) || "" }));
+  list.sort((a, b) => (b.main ? 1 : 0) - (a.main ? 1 : 0) || (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt.localeCompare(a.updatedAt));
+  send(res, 200, list);
+});
+route("PATCH", "/api/conversations/:id", async (req, res, p) => {
+  const b = await body(req); let out;
+  store.update("conversations", [], (all) => {
+    const c = all.find((x) => x.id === p.id); if (!c) return all;
+    if (typeof b.title === "string" && b.title.trim()) c.title = b.title.trim().slice(0, 80);
+    if (typeof b.pinned === "boolean" && !c.main) c.pinned = b.pinned;
+    if (Array.isArray(b.modes)) c.modes = b.modes.filter((m) => MODES[m]);
+    out = c; return all;
+  });
+  return out ? send(res, 200, { ...out, messages: undefined }) : fail(res, 404, "Conversation not found");
+});
+route("GET", "/api/usage", (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const runs = store.read("events", []).filter((e) => e.type === "agent" && e.at.startsWith(today) && /^Agent (run|loop) (done|error|cancelled)/.test(e.title));
+  send(res, 200, { limits: store.read("limits", null), today: { runs: runs.length, costUsd: runs.reduce((a, e) => a + (e.costUsd || 0), 0) } });
+});
+route("GET", "/api/uploads/:file", (req, res, p) => {
+  if (!/^[\w.-]+\.(png|jpg|webp|gif)$/.test(p.file)) return fail(res, 400, "Bad file name");
+  const f = path.join(UPLOADS, p.file); if (!fs.existsSync(f)) return fail(res, 404, "Not found");
+  res.writeHead(200, { "content-type": { png: "image/png", jpg: "image/jpeg", webp: "image/webp", gif: "image/gif" }[p.file.split(".").pop()], "cache-control": "private, max-age=86400" });
+  fs.createReadStream(f).pipe(res);
+});
 route("GET", "/api/conversations/:id", (req, res, p) => {
   const c = store.read("conversations", []).find((x) => x.id === p.id);
   return c ? send(res, 200, c) : fail(res, 404, "Conversation not found");
@@ -241,20 +329,32 @@ route("GET", "/api/conversations/:id", (req, res, p) => {
 route("DELETE", "/api/conversations/:id", (req, res, p) => { store.update("conversations", [], (a) => a.filter((c) => c.id !== p.id)); send(res, 200, { ok: true }); });
 
 route("POST", "/api/chat", async (req, res) => {
-  const b = await body(req);
-  const text = String(b.message || "").trim();
-  if (!text) return fail(res, 400, "Message is empty");
-  if (text.length > 20000) return fail(res, 400, "Message is too long (20,000 characters max)");
+  const b = await body(req, 32e6);
+  const raw = String(b.message || "").trim();
+  if (!raw && !b.images?.length) return fail(res, 400, "Message is empty");
+  if (raw.length > 20000) return fail(res, 400, "Message is too long (20,000 characters max)");
+  const cmd = parseCommands(raw);
+  let conv = b.conversationId ? store.read("conversations", []).find((c) => c.id === b.conversationId) : null;
+  if (b.conversationId && !conv) return fail(res, 404, "Conversation not found");
+  // Mode switches are sticky per conversation.
+  const nextModes = new Set(conv?.modes || []); cmd.on.forEach((m) => nextModes.add(m)); cmd.off.forEach((m) => nextModes.delete(m));
+  if (!cmd.text && !b.images?.length) {
+    if (conv) store.update("conversations", [], (all) => { const c = all.find((x) => x.id === conv.id); c.modes = [...nextModes]; return all; });
+    return send(res, 200, { conversationId: conv?.id || null, modes: [...nextModes], commandOnly: true });
+  }
   const st = agent.status || (await agent.detect());
   if (!st.available) return fail(res, 503, st.error || "Claude Code CLI is not available");
-  if ([...jobs.values()].some((j) => j.status === "running" && j.conversationId === b.conversationId)) return fail(res, 409, "This conversation already has a run in progress");
-  const conv = b.conversationId ? store.read("conversations", []).find((c) => c.id === b.conversationId) : newConversation(text);
-  if (!conv) return fail(res, 404, "Conversation not found");
+  if (conv && [...jobs.values()].some((j) => j.status === "running" && j.conversationId === conv.id)) return fail(res, 409, "This conversation already has a run in progress");
+  const images = saveImages(b.images);
+  if (!conv) conv = newConversation(cmd.text || "Image");
+  store.update("conversations", [], (all) => { const c = all.find((x) => x.id === conv.id); c.modes = [...nextModes]; return all; });
   const context = b.context ? `\n\n[Context from the Edge Lab screen: ${String(b.context).slice(0, 2000)}]` : "";
   const att = b.attachment && typeof b.attachment.content === "string" ? { name: String(b.attachment.name || "file").slice(0, 120), content: b.attachment.content.slice(0, 200000) } : null;
   const attached = att ? `\n\n[Attached file: ${att.name}]\n\`\`\`\n${att.content}\n\`\`\`` : "";
-  const job = startJob({ prompt: text + attached + context, displayText: att ? `${text}\n\n📎 ${att.name}` : text, conversationId: conv.id });
-  send(res, 200, { conversationId: conv.id, ...job });
+  const pics = images.length ? `\n\n[Attached image${images.length > 1 ? "s" : ""}: look at ${images.length > 1 ? "each" : "it"} with the Read tool: ${images.map((i) => path.join(UPLOADS, i.file)).join(", ")}]` : "";
+  const text = cmd.text || "Look at the attached image.";
+  const job = startJob({ prompt: text + attached + pics + context, displayText: att ? `${text}\n\n📎 ${att.name}` : text, conversationId: conv.id, images, modes: [...nextModes], loop: cmd.loop });
+  send(res, 200, { conversationId: conv.id, modes: [...nextModes], ...job });
 });
 
 route("GET", "/api/jobs/:id/stream", (req, res, p) => {

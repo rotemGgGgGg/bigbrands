@@ -44,6 +44,8 @@ const httpApi = {
   portfolio: (body) => req("POST", "/api/portfolio", body),
   conversations: () => req("GET", "/api/conversations"),
   conversation: (id) => req("GET", `/api/conversations/${encodeURIComponent(id)}`),
+  updateConversation: (id, body) => req("PATCH", `/api/conversations/${encodeURIComponent(id)}`, body),
+  usage: () => req("GET", "/api/usage"),
   deleteConversation: (id) => req("DELETE", `/api/conversations/${encodeURIComponent(id)}`),
   chat: (body) => req("POST", "/api/chat", body),
   cancel: (jobId) => req("POST", `/api/jobs/${encodeURIComponent(jobId)}/cancel`),
@@ -95,4 +97,10 @@ export function stream(jobId, onEvent) {
     };
     es.onerror = () => { es.close(); if (!ended) { onEvent({ type: "detached" }); resolve(); } };
   });
+}
+
+/** URL of an uploaded chat image (works through the bridge too). */
+export function uploadUrl(file) {
+  const t = target() || { base: "" };
+  return `${t.base}/api/uploads/${encodeURIComponent(file)}${t.code ? `?token=${encodeURIComponent(t.code)}` : ""}`;
 }

@@ -8,7 +8,7 @@ import path from "node:path";
 
 const WIN = process.platform === "win32";
 const PY = ["Bash(python3 *)", "Bash(/usr/bin/python3 *)", "Bash(python *)", "Bash(py *)"];
-const READ_CMDS = ["Bash(ls *)", "Bash(dir *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)"];
+const READ_CMDS = ["Bash(cd *)", "Bash(ls *)", "Bash(dir *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(git log *)", "Bash(git diff *)", "Bash(git status *)"];
 
 export const PERMISSIONS = {
   read: {
@@ -29,7 +29,7 @@ export const PERMISSIONS = {
 };
 
 export const MODELS = [
-  { id: "", label: "Claude Code default" },
+  { id: "", label: "Claude Code default", note: "Fable on some plans: needs credits" },
   { id: "opus", label: "Opus" },
   { id: "sonnet", label: "Sonnet" },
   { id: "haiku", label: "Haiku" },
@@ -43,7 +43,14 @@ compare against a random twin (shifted clocks, shuffled days, random direction, 
 Never invent numbers: every figure you report must come from code you ran or a file you read. If you could not run something, say so.
 When you report a test result, give a short table (trades/yr, win %, avg R, 2012-19 and 2020-26 avg R with t, positive years, random p), then end with
 one fenced json block: {"trades_per_year":..,"win_rate":..,"avg_r":..,"is_avg_r":..,"oos_avg_r":..,"oos_t":..,"positive_years":"x/y","p_random":..,"verdict":"live|watch|dead"} using null for anything not measured.
-Be concise. Lead with the result.${WIN ? " This machine runs Windows: call Python as `python`." : ""}`;
+Be concise. Lead with the result.${WIN ? " This machine runs Windows: call Python as `python`; your working directory is already the research folder, so run scripts with a relative path (python timelinks/theory.py), not cd research." : ""}
+Raw market data (1-minute bars) may be missing on this machine: many scripts point to a data folder from an earlier cloud session. Before a long run, check the inputs exist; if they do not, say exactly which files are missing instead of guessing.`;
+
+/** Extra instructions for chat modes. */
+export const MODES = {
+  rotem: "Answer the way Rotem likes: short, straight to the point, no warm-up, explain clearly in simple words, Hebrew unless the question is in English. Lead with the result or the uncomfortable truth; use a small table when there are numbers.",
+  usage: "Usage-saver mode: minimise tokens and tool calls. Read only the lines you need (grep, head, small ranges), never dump large files or long outputs, reuse what you already know from this conversation, batch work into one script run instead of many, skip exploration that is not needed for the answer, and keep the reply short.",
+};
 
 /**
  * Finds how to start the CLI without a shell. On Windows npm installs `claude.cmd`, which Node cannot spawn directly
@@ -83,10 +90,10 @@ export class Agent {
    * Starts one headless run. Emits normalised events through onEvent and resolves when the process ends.
    * Returns { cancel }.
    */
-  run({ prompt, sessionId, permission = "analyze", model = "", billing = { mode: "subscription" }, onEvent }) {
+  run({ prompt, sessionId, permission = "analyze", model = "", billing = { mode: "subscription" }, extraSystem = "", onEvent }) {
     const perm = PERMISSIONS[permission] || PERMISSIONS.read;
     const args = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-      "--permission-mode", "dontAsk", "--append-system-prompt", SYSTEM(this.workspace)];
+      "--permission-mode", "dontAsk", "--append-system-prompt", SYSTEM(this.workspace) + (extraSystem ? `\n${extraSystem}` : "")];
     if (model) args.push("--model", model);
     if (sessionId) args.push("--resume", sessionId);
     // Billing: "subscription" strips any API key so the CLI uses your Claude sign-in; "api" passes the server's key
@@ -147,12 +154,16 @@ export class Agent {
             }
           }
           break;
+        case "rate_limit_event":
+          if (o.rate_limit_info) emit({ type: "limits", info: o.rate_limit_info });
+          break;
         case "result":
           resultSeen = true;
           emit({
             type: "result", ok: !o.is_error, text: o.result ?? finalText, costUsd: o.total_cost_usd, durationMs: o.duration_ms, turns: o.num_turns,
             sessionId: o.session_id, error: o.is_error ? (o.api_error || o.terminal_reason || o.result || "The agent stopped with an error.") : null,
             denied: (o.permission_denials || []).map((d) => d.tool_name),
+            usage: summariseUsage(o),
           });
           break;
       }
@@ -198,4 +209,11 @@ function describeTool(name, input = {}) {
     return { name, summary: input.description || (running ? "Run a Python research script" : "Run a command"), command: cmd.slice(0, 400), phase: running ? "running" : "working", phaseLabel: running ? "Running research" : "Running a command" };
   }
   return { name, summary: name, phase: "working", phaseLabel: "Working" };
+}
+
+/** Tokens of the last turn and the model's context window, from the CLI result. */
+function summariseUsage(o) {
+  const u = o.usage || {}, mu = Object.entries(o.modelUsage || {})[0];
+  const context = (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+  return { model: mu?.[0] || null, contextTokens: context, outputTokens: u.output_tokens || 0, contextWindow: mu?.[1]?.contextWindow || null };
 }

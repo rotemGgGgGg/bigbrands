@@ -3,7 +3,7 @@ import { api } from "./api.js";
 import { $, $$, esc, toast } from "./util.js";
 import { icon, logo } from "./icons.js";
 import { state } from "./state.js";
-import { chatbar, Thread, agentDot, agentLabel } from "./chat.js";
+import { chatbar, Thread, agentDot, agentLabel, editTitle } from "./chat.js";
 import welcome from "./views/welcome.js";
 import research from "./views/research.js";
 import overview from "./views/overview.js";
@@ -33,6 +33,7 @@ function shell() {
         <div class="brand"><span class="brand-mark">${logo(14)}</span><span class="brand-name">Edge Lab</span>
           <button class="icon-btn" id="collapse" title="Collapse sidebar ([)" aria-label="Collapse sidebar">${icon("sidebar", 16)}</button></div>
         <nav class="nav">
+          <div id="nav-main"></div>
           <a class="nav-item new" href="#research/new">${icon("plus", 15)}<span class="nav-label">New Research</span><span class="kbd nav-label">⌘K</span></a>
           ${NAV.map(([r, label, ic]) => `<a class="nav-item" data-route="${r}" href="#${r}">${icon(ic, 16)}<span class="nav-label">${label}</span></a>`).join("")}
           <div class="nav-section">Conversations</div>
@@ -50,7 +51,7 @@ function shell() {
     <button class="icon-btn mobile-menu" id="mobile-menu" aria-label="Open navigation">${icon("menu", 18)}</button>
     <div class="dock" id="dock"></div>
     <aside class="panel" id="panel" aria-label="Research agent">
-      <div class="panel-head"><span class="agent-mark" style="width:22px;height:22px">${logo(11)}</span><b id="panel-title">Research agent</b>
+      <div class="panel-head"><span class="agent-mark" style="width:22px;height:22px">${logo(11)}</span><b id="panel-title" title="Click to rename">Research agent</b>
         <div class="right">
           <button class="icon-btn" id="panel-new" title="New conversation" aria-label="New conversation">${icon("plus", 15)}</button>
           <button class="icon-btn" id="panel-full" title="Open full conversation" aria-label="Open full conversation">${icon("expand", 15)}</button>
@@ -67,6 +68,7 @@ function shell() {
   $("#dock").append(dock.el);
 
   panelThread = new Thread($("#panel-body"), { compact: true, onConversation: (c) => { store.set("edge.panel.conv", c.id); $("#panel-title").textContent = c.title; loadConvNav(); } });
+  $("#panel-title").onclick = () => panelThread.conv && editTitle($("#panel-title"), panelThread.conv, () => loadConvNav());
   $("#panel-close").onclick = closePanel;
   $("#panel-new").onclick = () => { store.set("edge.panel.conv", null); $("#panel-title").textContent = "Research agent"; panelThread.load(null); panelThread.bar.focus(); };
   $("#panel-full").onclick = () => { const id = panelThread.conv?.id; closePanel(); location.hash = id ? `#research/${id}` : "#research/new"; };
@@ -90,7 +92,10 @@ async function loadConvNav() {
   try {
     const convs = await api.conversations();
     const cur = location.hash.startsWith("#research/") ? location.hash.split("/")[1] : null;
-    $("#nav-convs").innerHTML = convs.slice(0, 8).map((c) => `<a class="nav-item ${c.id === cur ? "active" : ""}" href="#research/${c.id}" title="${esc(c.title)}">${icon(state.busyConvs.has(c.id) ? "cpu" : "chat", 15)}<span class="nav-label" style="overflow:hidden;text-overflow:ellipsis">${esc(c.title)}</span></a>`).join("")
+    const main = convs.find((c) => c.main), rest = convs.filter((c) => !c.main).slice(0, 8);
+    const item = (c) => `<a class="nav-item ${c.id === cur ? "active" : ""} ${c.pinned ? "pinned" : ""}" href="#research/${c.id}" title="${esc(c.title)}">${icon(state.busyConvs.has(c.id) ? "cpu" : c.pinned ? "pin" : "chat", 15)}<span class="nav-label" style="overflow:hidden;text-overflow:ellipsis">${esc(c.title)}</span></a>`;
+    $("#nav-main").innerHTML = main ? `<a class="nav-item main-chat ${main.id === cur ? "active" : ""}" href="#research/${main.id}" title="Main chat: the important things">${icon(state.busyConvs.has(main.id) ? "cpu" : "pin", 15)}<span class="nav-label">${esc(main.title)}</span><span class="nav-label main-tag">MAIN</span></a>` : "";
+    $("#nav-convs").innerHTML = rest.map(item).join("")
       || `<div class="caption nav-label" style="padding:4px 10px">No conversations yet</div>`;
   } catch { /* server restarting */ }
 }

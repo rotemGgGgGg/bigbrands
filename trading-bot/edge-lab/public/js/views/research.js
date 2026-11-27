@@ -7,11 +7,11 @@ import { state } from "../state.js";
 
 export default async function research(main, [id]) {
   main.innerHTML = `<div class="research"><div class="conv-list" id="convs"></div><div id="thread" style="min-height:0;height:100%"></div></div>`;
-  const thread = new Thread($("#thread", main), { onConversation: (c) => { history.replaceState(null, "", `#research/${c.id}`); paintList(c.id); } });
+  const thread = new Thread($("#thread", main), { onConversation: (c) => { history.replaceState(null, "", `#research/${c.id}`); paintList(c.id); state.emit(); } });
   async function paintList(cur) {
     let convs = []; try { convs = await api.conversations(); } catch { /* ignore */ }
     $("#convs", main).innerHTML = `<a class="btn sm" href="#research/new" style="margin:0 6px 10px">${icon("plus", 13)} New research</a><h3>Recent</h3>` +
-      (convs.map((c) => `<a class="conv-item ${c.id === cur ? "active" : ""}" href="#research/${c.id}"><b>${state.busyConvs.has(c.id) ? "● " : ""}${esc(c.title)}</b><small>${fmt.ago(c.updatedAt)} · ${c.count} messages</small></a>`).join("") || `<div class="caption" style="padding:0 10px">Nothing yet.</div>`);
+      (convs.map((c) => `<a class="conv-item ${c.id === cur ? "active" : ""} ${c.main ? "is-main" : c.pinned ? "pinned" : ""}" href="#research/${c.id}"><b>${c.main || c.pinned ? icon("pin", 11) + " " : ""}${state.busyConvs.has(c.id) ? "● " : ""}${esc(c.title)}</b><small>${c.main ? "Main chat · important things · " : ""}${fmt.ago(c.updatedAt)} · ${c.count} messages</small></a>`).join("") || `<div class="caption" style="padding:0 10px">Nothing yet.</div>`);
   }
   if (id && id !== "new") await thread.load(id);
   else {
