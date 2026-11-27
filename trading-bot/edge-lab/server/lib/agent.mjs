@@ -47,7 +47,7 @@ Never invent numbers: every figure you report must come from code you ran or a f
 When you report a test result, give a short table (trades/yr, win %, avg R, 2012-19 and 2020-26 avg R with t, positive years, random p), then end with
 one fenced json block: {"trades_per_year":..,"win_rate":..,"avg_r":..,"is_avg_r":..,"oos_avg_r":..,"oos_t":..,"positive_years":"x/y","p_random":..,"verdict":"live|watch|dead"} using null for anything not measured.
 Be concise. Lead with the result.${WIN ? " This machine runs Windows; your shell is Git Bash. Call Python as `python`; your working directory is already the research folder, so run scripts with a relative forward-slash path (python timelinks/theory.py), one command per call, no cd." : ""}
-Raw market data (1-minute bars) may be missing on this machine: many scripts point to a data folder from an earlier cloud session. Before a long run, check the inputs exist; if they do not, say exactly which files are missing instead of guessing.`;
+Raw market data (1-minute bars) lives in the EDGE_DATA folder (default ~/edge-data), not in git; DATA.md explains how to get it (HistData zips in edge-data/histdata/, or python multi/duka.py USATECHIDXUSD). Before a long run, check the inputs exist; if they do not, say exactly which files are missing instead of guessing.`;
 
 /** Extra instructions for chat modes. */
 export const MODES = {
