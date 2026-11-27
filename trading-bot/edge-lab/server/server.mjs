@@ -5,7 +5,8 @@ import http from "node:http";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { ResearchData, summary } from "./lib/data.mjs";
 import { simulate } from "./lib/montecarlo.mjs";
@@ -109,7 +110,8 @@ function startJob({ prompt, conversationId, experimentId, displayText, images = 
   });
 
   const emit = (e) => { job.events.push(e); for (const l of job.listeners) l(e); };
-  const extraSystem = [...modes.map((m) => MODES[m]).filter(Boolean), loop ? LOOP_RULE : ""].filter(Boolean).join("\n");
+  const dataNote = dataJob.state === "downloading" ? "Market data is still downloading in the background (log: edge-lab/data-download.log). Scripts that need 1-minute bars will fail until it finishes; say so and show the last log lines instead of retrying." : "";
+  const extraSystem = [...modes.map((m) => MODES[m]).filter(Boolean), loop ? LOOP_RULE : "", dataNote].filter(Boolean).join("\n");
   const billing = s.billing === "api" ? { mode: "api", apiKey: API_KEY, maxBudgetUsd: s.maxBudgetUsd } : { mode: "subscription" };
 
   const runOnce = (text) => {
@@ -492,6 +494,29 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Raw 1-minute data: downloaded automatically in the background the first time (see research/DATA.md).
+const EDGE_DATA = path.resolve(process.env.EDGE_DATA || path.join(os.homedir(), "edge-data"));
+const dataJob = { state: "unknown", log: path.join(ROOT, "data-download.log") };
+function dataReady() {
+  const hd = path.join(EDGE_DATA, "histdata");
+  const hasHist = fs.existsSync(hd) && fs.readdirSync(hd).some((f) => /NSXUSD.*\.zip$/i.test(f));
+  return hasHist || fs.existsSync(path.join(EDGE_DATA, "duka", "USATECHIDXUSD.npz"));
+}
+function ensureData() {
+  if (dataReady()) { dataJob.state = "ready"; return; }
+  if (process.env.EDGE_LAB_NO_DATA_DOWNLOAD) { dataJob.state = "missing"; return; }
+  dataJob.state = "downloading";
+  const out = fs.openSync(dataJob.log, "a");
+  const child = spawn(PY, ["multi/duka.py", "USATECHIDXUSD"], { cwd: RESEARCH, env: { ...process.env, EDGE_DATA }, stdio: ["ignore", out, out], windowsHide: true });
+  child.on("error", (e) => { dataJob.state = "failed"; dataJob.error = e.message; });
+  child.on("exit", (code) => { dataJob.state = dataReady() ? "ready" : "failed"; dataJob.error = code ? `exit ${code}, see ${dataJob.log}` : null; store.log("data", `Market data download ${dataJob.state}`, { code }); });
+  store.log("data", "Market data download started (NQ 1-minute, 2012-2026)", { folder: EDGE_DATA });
+}
+route("GET", "/api/data/status", (req, res) => {
+  let tail = ""; try { tail = fs.readFileSync(dataJob.log, "utf8").split(/\r?\n/).filter(Boolean).slice(-3).join("\n"); } catch { /* no log yet */ }
+  send(res, 200, { ...dataJob, folder: EDGE_DATA, tail });
+});
+
 server.on("error", (e) => { console.error(e.code === "EADDRINUSE" ? `Port ${PORT} is in use. Start with PORT=3008 npm start.` : e.message); process.exit(1); });
 server.listen(PORT, HOST, async () => {
   const st = await agent.detect();
@@ -501,4 +526,6 @@ server.listen(PORT, HOST, async () => {
   console.log(`Billing   →  ${settings().billing === "api" ? (API_KEY ? "Claude API key (per-run cap)" : "API selected but no key set") : "your Claude subscription (Claude Code sign-in)"}`);
   console.log(`Workspace →  ${RESEARCH}`);
   console.log(`Agent     →  ${st.available ? `Claude Code ${st.version}` : st.error}`);
+  ensureData();
+  console.log(`Data      →  ${EDGE_DATA} · ${dataJob.state === "downloading" ? `downloading in the background (log: ${dataJob.log})` : dataJob.state}`);
 });
