@@ -1,4 +1,4 @@
-"""Free 1-minute BID candles from Dukascopy's public datafeed (daily LZMA .bi5 files, UTC), 2012 - 2026-10.
+"""Free 1-minute BID candles from Dukascopy's public datafeed (daily LZMA .bi5 files, UTC), 2012 to yesterday.
 Saved per instrument as $EDGE_DATA/duka/<SYM>.npz (default ~/edge-data): t (UTC epoch minutes), o, h, l, c (price), v. No packages; resumable."""
 import os as _os; DATA = _os.path.join(_os.path.expanduser(_os.environ.get("EDGE_DATA", "~/edge-data")), "")  # raw data + caches (set EDGE_DATA to move it)
 import os, sys, lzma, struct, subprocess, time, datetime as dt
@@ -41,15 +41,16 @@ def day(sym, d):
     return "ERR"
 
 
-def get(sym, y0=2012, y1=2026, threads=2):
+def get(sym, y0=2012, y1=None, threads=2):
     """year by year into OUT/<sym>_<year>.npy (resumable), then merged into OUT/<sym>.npz."""
+    y1 = y1 or dt.date.today().year
     f = OUT + sym + ".npz"
     if os.path.exists(f): return sym, "cached"
     errs = 0
     for y in range(y0, y1 + 1):
         fy = OUT + f"{sym}_{y}.npy"
-        if os.path.exists(fy): continue
-        end = dt.date(y, 12, 31) if y < 2026 else dt.date(2026, 10, 31)
+        if os.path.exists(fy) and y < y1: continue                          # the current year is fetched again (it grows)
+        end = min(dt.date(y, 12, 31), dt.date.today() - dt.timedelta(1))
         ds = [dt.date(y, 1, 1) + dt.timedelta(n) for n in range((end - dt.date(y, 1, 1)).days + 1)]; ds = [d for d in ds if d.weekday() != 5]
         with ThreadPoolExecutor(threads) as ex: res = list(ex.map(lambda d: day(sym, d), ds))
         e = sum(1 for r in res if isinstance(r, str)); errs += e; rows = [r for r in res if r is not None and not isinstance(r, str)]
