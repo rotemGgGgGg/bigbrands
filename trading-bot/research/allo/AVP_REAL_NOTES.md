@@ -49,3 +49,12 @@ First signal of the day 7 W / 14; flips 2 W / 5. Signals happen any time in RTH 
 (our readings of the flat/flip exits are approximate). Signals fire any time 09:30-15:45 NY; time exit at 16:00 matters.
 Next: rebuild this rule (high-volume zones from a composite profile, close-outside-zone signal, far-edge stop, 2R,
 flip, flat 16:00) and test 2012-2026 with our gates.
+
+## Zone prices read from screenshots (pixel -> price, calibrated)
+Calibration (Nov 27 shot): user's hover on the drawn lines gave 27008 / 27058; my axis-label reading was ~5 pt low on
+both edges (constant offset), so each screenshot is calibrated on a boxed price label. Zone = exactly 50 pt here.
+Zone sets switch at 23:00 UTC = 18:00 NY (Globex session open): one set per trading day.
+| session | zones (bottom-top, NQZ6) |
+|---|---|
+| Nov 26 (left part of the shot; only 2 visible) | 26362-26407, 26101-26148 |
+| Nov 27 | 27008-27058, 26750-26798, 26490-26538 (all red = above / around price) |
