@@ -58,3 +58,18 @@ Zone sets switch at 23:00 UTC = 18:00 NY (Globex session open): one set per trad
 |---|---|
 | Nov 26 (left part of the shot; only 2 visible) | 26362-26407, 26101-26148 |
 | Nov 27 | 27008-27058, 26750-26798, 26490-26538 (all red = above / around price) |
+
+## Zone ladder, Nov 19 - Nov 27 (from one zoomed-out shot, zones_from_shot.py, centres in NQZ6 points)
+| session | above (R) | middle | below (G) | blue | step S | width |
+|---|---|---|---|---|---|---|
+| Nov 19 | 27808 27599 27383 | 27174 (blue) | 26979 26763 26554 | = middle | ~210 | ~45-55 |
+| Nov 23 | 26857 26506 26155 | (25805, not drawn) | 25454 25103 24753 | 25286 | ~351 | ~80 |
+| Nov 24 | 27821 27410 27012 | (26597, not drawn) | 26182 25791 25380 | 26844 | ~405 | ~80-95 |
+| Nov 25 | 27612 27180 26756 | (~26331) | 25906 25468 25043 | 26263 | ~428 | ~80-95 |
+| Nov 26 | 26385 26115 25873 | (25610, not drawn) | 25347 25077 24821 | 25994 | ~262 | ~54 |
+| Nov 27 | 27033 26776 26507 | (26250, not drawn) | 25994 25738 25468 | - | ~262 | ~54 |
+Findings: every session is a 7-slot ladder M + k*S (k = -3..3) with EQUAL spacing; the middle slot is often not drawn;
+zone width ~0.2*S; S changes day to day (210 -> 351 -> 405 -> 428 -> 262), so it tracks volatility.
+Hypothesis A (strongest): anchored VWAP with standard-deviation bands (M = VWAP from an anchor, S = sigma);
+"AVP" may stand for anchored VWAP/volume profile. Hypothesis B: M = prior close/settle or POC, S = k*ATR(n).
+Test both once 1-minute data with volume covering Nov 2026 is available.
