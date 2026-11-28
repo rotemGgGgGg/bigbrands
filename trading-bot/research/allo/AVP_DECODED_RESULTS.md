@@ -23,3 +23,11 @@ beyond +0.014R (t 0.45).
 No edge. The decoded rule is a rejection at yesterday's close; it behaves like random zones (p = 0.51) and has been
 negative for the last three years. His chart table (+7.49R on 24 trades) is one short window; the next window showed
 -3.03R on 6 trades. Do not renew (access ends Dec 5, 2026).
+
+## Everything (avp_bt2.py): 288 settings = zones {blue, past 3 closes, VWAP ladder, all} x H {35,45} x target {2R,3R,next zone}
+## x window {RTH, NY AM, NY PM, London, Asia, All} x flip {off,on}
+- Out-of-sample (2020-26) positive with t >= 2: **0 of 288** (chance alone would give ~7).
+- In-sample pick (blue, 45, 3R, RTH, flip): 2011-19 +0.021R (t 1.09) -> 2020-26 -0.003R (t -0.11); placebo p = 0.23.
+- Best out-of-sample even when cherry-picked: blue, 45, 2R, NY PM: +0.042R, t 1.48 (in-sample +0.019R) -> not significant.
+- The VWAP-ladder and "all zones" sets are no better than the blue zone alone.
+Final: no version of the decoded indicator has an edge on NQ 2011-2026.
