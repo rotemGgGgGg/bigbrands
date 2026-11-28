@@ -3,7 +3,7 @@ Used to rebuild "options heatmap" levels (heavy strikes, 0DTE put/call walls) an
 
 Key from the environment variable DATABENTO_API_KEY (set it in your own terminal; never paste it into a chat).
 
-    python multi/databento_qqq_oi.py 2024 2026         # prints the price only, downloads nothing
+    python multi/databento_qqq_oi.py 2026-08 2026-11   # prints the price only (per month), downloads nothing
     python multi/databento_qqq_oi.py 2024 2026 --yes   # downloads month by month (resumable)
     add --volume to use daily traded volume per contract (ohlcv-1d) instead of open interest: much cheaper
 
@@ -37,8 +37,8 @@ def call(endpoint, params, timeout=900):
     sys.exit("Databento did not answer after 5 tries.")
 
 
-def months(y0, y1):
-    d = dt.date(y0, 1, 1); end = min(dt.date(y1 + 1, 1, 1), dt.date.today())
+def months(d0, d1):
+    d = d0; end = min(d1, dt.date.today())
     while d < end:
         n = dt.date(d.year + (d.month == 12), d.month % 12 + 1, 1)
         yield d, min(n, end); d = n
@@ -72,15 +72,22 @@ def month(a, b):
     print(f"{a:%Y-%m}: {len(a_):,} open-interest rows", flush=True)
 
 
+def parse(x, end=False):
+    """2024 -> Jan 1 (or Jan 1 of the next year when end=True); 2026-08 -> Aug 1; 2026-08-15 -> that day."""
+    p = [int(v) for v in x.split("-")]
+    if len(p) == 1: return dt.date(p[0] + (1 if end else 0), 1, 1)
+    if len(p) == 2: d = dt.date(p[0], p[1], 1); return dt.date(d.year + (d.month == 12), d.month % 12 + 1, 1) if end else d
+    return dt.date(*p)
+
+
 if __name__ == "__main__":
-    y0, y1 = int(sys.argv[1]), int(sys.argv[2]); os.makedirs(OUT, exist_ok=True)
+    d0, d1 = parse(sys.argv[1]), parse(sys.argv[2], end=True); os.makedirs(OUT, exist_ok=True)
     if "--yes" not in sys.argv:
         total = 0.0
-        for y in range(y0, y1 + 1):
-            span = dict(start=f"{y}-01-01", end=min(dt.date(y + 1, 1, 1), dt.date.today()).isoformat())
-            c = float(call("metadata.get_cost", {**BASE, **span, "schema": SCHEMA}, timeout=180))
-            total += c; print(f"{y}: ${c:.2f}", flush=True)
+        for a, b in months(d0, d1):
+            c = float(call("metadata.get_cost", {**BASE, "start": a.isoformat(), "end": b.isoformat(), "schema": SCHEMA}, timeout=180))
+            total += c; print(f"{a:%Y-%m}: ${c:.2f}", flush=True)
         print(f"TOTAL: ${total:.2f}  (charged to your Databento credits). Run again with --yes to download.")
         sys.exit(0)
-    for a, b in months(y0, y1): month(a, b)
+    for a, b in months(d0, d1): month(a, b)
     print("done ->", OUT)
