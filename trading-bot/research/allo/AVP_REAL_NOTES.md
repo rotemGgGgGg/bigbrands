@@ -24,8 +24,11 @@ Chart axis is UTC. NY open = 13:30 UTC in Oct (EDT), 14:30 UTC from Nov 2 (EST).
 | 2026-11-02 | 18:00 (13:00) | long | close above zone | L (flipped 13:30 NY) |
 | 2026-11-02 | 18:30 (13:30) | short (flip) | close back below zone | W |
 | 2026-11-03 | 14:30 (09:30) | long | open bar closes above zone | ~0, flat at 16:00 NY |
+| 2026-10-20 | 14:20 (10:20) | long | strong rally closes above zone | L (flipped ~11:40 NY) |
+| 2026-10-20 | ~15:40 (11:40) | short (flip) | close back into/below zone | L (stopped quickly, box short) |
+Note: Oct 21 first short was at 13:40 UTC (09:40 NY), Oct 23 long at 13:40 UTC (big bar from below the zone closing above it).
 
-Tally of 19 read so far: ~9 W (+2R each), ~7 L (about -1R; flips exit near the far edge), ~3 flat at 16:00.
+Tally of the first 19 read: ~9 W (+2R each), ~7 L (about -1R; flips exit near the far edge), ~3 flat at 16:00.
 First signal of the day 7 W / 14; flips 2 W / 5. Signals happen any time in RTH (one at 13:00 NY), most in the first hour.
 
 ## Rule as it looks (hypothesis to test)
