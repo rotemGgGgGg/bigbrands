@@ -8,6 +8,9 @@ import os, numpy as np, pandas as pd
 
 DATA = os.path.join(os.path.expanduser(os.environ.get("EDGE_DATA", "~/edge-data")), "")
 # Observed ladders (zones_from_shot.py / legend readings): session date -> (middle M, step S)
+# Blue zone centre per session (the only zone that produced trades)
+BLUE = {"2026-11-19": 27174, "2026-11-20": 26506, "2026-11-23": 25286, "2026-11-24": 26844, "2026-11-25": 26263,
+        "2026-11-26": 25994}
 OBS = {"2026-11-19": (27174, 210), "2026-11-23": (25805, 351), "2026-11-24": (26597, 405),
        "2026-11-25": (26331, 428), "2026-11-26": (25610, 262), "2026-11-27": (26250, 262)}
 
@@ -26,6 +29,15 @@ def vw(g):
     m = (tp * v).sum() / v.sum(); return m, np.sqrt((v * (tp - m) ** 2).sum() / v.sum())
 
 
+def poc(g, row=1.0):
+    """Price with the most volume (volume spread evenly over each bar's high-low), rows of `row` points."""
+    if not len(g): return np.nan
+    lo = np.floor(g.l.min() / row) * row; n = int((g.h.max() - lo) / row) + 1; prof = np.zeros(n)
+    for h, l, v in zip(g.h.values, g.l.values, g.v.values):
+        a, b = int((l - lo) / row), int((h - lo) / row); prof[a:b + 1] += v / (b - a + 1)
+    return lo + (prof.argmax() + 0.5) * row
+
+
 def stats(df):
     rows = {}
     for d, g in df.groupby("sess"):
@@ -35,7 +47,8 @@ def stats(df):
         vf, sf = vw(full16); vr, sr = vw(rth); va, sa = vw(g)
         rows[d] = dict(vwap16=vf, sig16=sf, vwapRTH=vr, sigRTH=sr, vwap17=va, sig17=sa,
                        hi=g.h.max(), lo=g.l.min(), rthHi=rth.h.max() if len(rth) else np.nan,
-                       rthLo=rth.l.min() if len(rth) else np.nan, close=g.c.iloc[-1])
+                       rthLo=rth.l.min() if len(rth) else np.nan, close=g.c.iloc[-1],
+                       poc=poc(g), poc16=poc(full16), pocRTH=poc(rth), pocRTH5=poc(rth, 5.0))
     s = pd.DataFrame(rows).T.sort_index()
     s["range"] = s.hi - s.lo; s["rthRange"] = s.rthHi - s.rthLo
     s["atr5"] = s.range.rolling(5).mean(); s["atr14"] = s.range.rolling(14).mean()
@@ -59,3 +72,9 @@ if __name__ == "__main__":
     print("\nratio S/candidate: mean and spread (the right candidate has a constant ratio, low spread)")
     for c in cand:
         r = np.array(ratios[c], float); print(f"  {c:12} mean {np.nanmean(r):.3f}  cv {np.nanstd(r) / np.nanmean(r):.3f}")
+
+    print("\nblue zone vs previous-session candidates (difference in points)")
+    for d, b in BLUE.items():
+        p = prev.loc[pd.Timestamp(d)]
+        print(f"{d} blue {b:6.0f} | " + "  ".join(f"{k} {p[k]:7.0f} ({b - p[k]:+5.0f})" for k in
+              ("poc", "poc16", "pocRTH", "pocRTH5", "vwap16", "vwapRTH", "close")))
