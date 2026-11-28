@@ -5,6 +5,7 @@ Key from the environment variable DATABENTO_API_KEY (set it in your own terminal
 
     python multi/databento_qqq_oi.py 2024 2026         # prints the price only, downloads nothing
     python multi/databento_qqq_oi.py 2024 2026 --yes   # downloads month by month (resumable)
+    add --volume to use daily traded volume per contract (ohlcv-1d) instead of open interest: much cheaper
 
 Output: $EDGE_DATA/opra/QQQ_OI_<YYYY-MM>.npz with arrays: day (YYYYMMDD), exp (YYYYMMDD), strike, cp (+1 call, -1 put), oi.
 """
@@ -15,6 +16,7 @@ DATA = os.path.join(os.path.expanduser(os.environ.get("EDGE_DATA", "~/edge-data"
 OUT = DATA + "opra/"
 API = "https://hist.databento.com/v0/"
 BASE = dict(dataset="OPRA.PILLAR", symbols="QQQ.OPT", stype_in="parent")
+SCHEMA = "ohlcv-1d" if "--volume" in sys.argv else "statistics"           # --volume: daily traded volume per contract
 CTX = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE") or None)
 
 
@@ -55,16 +57,16 @@ def ymd(ns):
 
 
 def month(a, b):
-    f = OUT + f"QQQ_OI_{a:%Y-%m}.npz"
+    f = OUT + (f"QQQ_VOL_{a:%Y-%m}.npz" if SCHEMA == "ohlcv-1d" else f"QQQ_OI_{a:%Y-%m}.npz")
     if os.path.exists(f) and b <= dt.date.today().replace(day=1): return
     span = dict(start=a.isoformat(), end=b.isoformat())
-    raw = call("timeseries.get_range", {**BASE, **span, "schema": "statistics", "encoding": "csv", "pretty_px": "true",
+    raw = call("timeseries.get_range", {**BASE, **span, "schema": SCHEMA, "encoding": "csv", "pretty_px": "true",
                                          "pretty_ts": "false", "map_symbols": "true", "compression": "none"})
     rows = []
     for r in csv.DictReader(io.StringIO(raw.decode())):
-        if r.get("stat_type") != "9": continue                                   # 9 = open interest
+        if SCHEMA == "statistics" and r.get("stat_type") != "9": continue      # 9 = open interest
         o = osi(r.get("symbol", ""))
-        if o: rows.append((ymd(r["ts_event"]), *o, float(r["quantity"])))
+        if o: rows.append((ymd(r["ts_event"]), *o, float(r["quantity"] if SCHEMA == "statistics" else r["volume"])))
     a_ = np.array(rows, float).reshape(-1, 5)
     np.savez_compressed(f, day=a_[:, 0].astype(int), exp=a_[:, 1].astype(int), strike=a_[:, 2], cp=a_[:, 3].astype(int), oi=a_[:, 4])
     print(f"{a:%Y-%m}: {len(a_):,} open-interest rows", flush=True)
@@ -76,7 +78,7 @@ if __name__ == "__main__":
         total = 0.0
         for y in range(y0, y1 + 1):
             span = dict(start=f"{y}-01-01", end=min(dt.date(y + 1, 1, 1), dt.date.today()).isoformat())
-            c = float(call("metadata.get_cost", {**BASE, **span, "schema": "statistics"}, timeout=180))
+            c = float(call("metadata.get_cost", {**BASE, **span, "schema": SCHEMA}, timeout=180))
             total += c; print(f"{y}: ${c:.2f}", flush=True)
         print(f"TOTAL: ${total:.2f}  (charged to your Databento credits). Run again with --yes to download.")
         sys.exit(0)
