@@ -73,3 +73,15 @@ zone width ~0.2*S; S changes day to day (210 -> 351 -> 405 -> 428 -> 262), so it
 Hypothesis A (strongest): anchored VWAP with standard-deviation bands (M = VWAP from an anchor, S = sigma);
 "AVP" may stand for anchored VWAP/volume profile. Hypothesis B: M = prior close/settle or POC, S = k*ATR(n).
 Test both once 1-minute data with volume covering Nov 2026 is available.
+
+## BREAKTHROUGH: the ladder's middle = the previous session's VWAP (OpenMarket VWAP, anchor Session, source Typical)
+Read at the last bar of each Globex session (17:00 NY) vs the next session's zone ladder:
+| session end | VWAP (end) | sigma (band spacing) | next day's middle M | next day's step S | S / sigma |
+|---|---|---|---|---|---|
+| Nov 20 | 25819 | ~418 | 25805 (Nov 23) | 351 | 0.84 |
+| Nov 23 | 26605 | ~401 | 26597 (Nov 24) | 405 | 1.01 |
+| Nov 24 | 26330 | ~214 | 26331 (Nov 25) | 428 | 2.00 |
+| Nov 25 | 25603 | ~362 | 25610 (Nov 26) | 262 | 0.72 |
+M matches the prior session's closing VWAP within 1-14 pt on 4/4 days. The step S is NOT the same session's sigma
+(ratios 0.72-2.0). Next: read exact legend values (VWAP and band 1) at 16:00 NY (RTH close) and at other times, and
+test S = RTH-only sigma, multi-session sigma, ATR or prior range once 1-minute data with volume is available.
