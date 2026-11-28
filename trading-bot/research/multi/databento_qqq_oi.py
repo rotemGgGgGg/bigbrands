@@ -42,6 +42,14 @@ def months(y0, y1):
         yield d, min(n, end); d = n
 
 
+def osi(sym):
+    """OCC symbol 'QQQ   261120C00710000' -> (expiry YYYYMMDD, strike, +1 call / -1 put)."""
+    s = sym.replace(" ", "")
+    if len(s) < 15: return None
+    try: return int("20" + s[-15:-9]), int(s[-8:]) / 1000.0, 1 if s[-9] == "C" else -1
+    except ValueError: return None
+
+
 def ymd(ns):
     return int(dt.datetime.fromtimestamp(int(ns) / 1e9, dt.timezone.utc).strftime("%Y%m%d"))
 
@@ -50,22 +58,16 @@ def month(a, b):
     f = OUT + f"QQQ_OI_{a:%Y-%m}.npz"
     if os.path.exists(f) and b <= dt.date.today().replace(day=1): return
     span = dict(start=a.isoformat(), end=b.isoformat())
-    defs = {}
-    raw = call("timeseries.get_range", {**BASE, **span, "schema": "definition", "encoding": "csv", "pretty_px": "true",
-                                         "pretty_ts": "false", "map_symbols": "false", "compression": "none"})
-    for r in csv.DictReader(io.StringIO(raw.decode())):
-        try: defs[r["instrument_id"]] = (ymd(r["expiration"]), float(r["strike_price"]), 1 if r["instrument_class"] == "C" else -1)
-        except (ValueError, KeyError): pass
     raw = call("timeseries.get_range", {**BASE, **span, "schema": "statistics", "encoding": "csv", "pretty_px": "true",
-                                         "pretty_ts": "false", "map_symbols": "false", "compression": "none"})
+                                         "pretty_ts": "false", "map_symbols": "true", "compression": "none"})
     rows = []
     for r in csv.DictReader(io.StringIO(raw.decode())):
-        if r.get("stat_type") != "9" or r["instrument_id"] not in defs: continue      # 9 = open interest
-        e, k, cp = defs[r["instrument_id"]]
-        rows.append((ymd(r["ts_event"]), e, k, cp, float(r["quantity"])))
+        if r.get("stat_type") != "9": continue                                   # 9 = open interest
+        o = osi(r.get("symbol", ""))
+        if o: rows.append((ymd(r["ts_event"]), *o, float(r["quantity"])))
     a_ = np.array(rows, float).reshape(-1, 5)
     np.savez_compressed(f, day=a_[:, 0].astype(int), exp=a_[:, 1].astype(int), strike=a_[:, 2], cp=a_[:, 3].astype(int), oi=a_[:, 4])
-    print(f"{a:%Y-%m}: {len(a_):,} open-interest rows, {len(defs):,} contracts", flush=True)
+    print(f"{a:%Y-%m}: {len(a_):,} open-interest rows", flush=True)
 
 
 if __name__ == "__main__":
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         total = 0.0
         for y in range(y0, y1 + 1):
             span = dict(start=f"{y}-01-01", end=min(dt.date(y + 1, 1, 1), dt.date.today()).isoformat())
-            c = sum(float(call("metadata.get_cost", {**BASE, **span, "schema": s}, timeout=180)) for s in ("definition", "statistics"))
+            c = float(call("metadata.get_cost", {**BASE, **span, "schema": "statistics"}, timeout=180))
             total += c; print(f"{y}: ${c:.2f}", flush=True)
         print(f"TOTAL: ${total:.2f}  (charged to your Databento credits). Run again with --yes to download.")
         sys.exit(0)
