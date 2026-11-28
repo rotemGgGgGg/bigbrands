@@ -126,3 +126,17 @@ blue = high-volume node + rejection signal. Rebuild blue as composite-profile HV
   several days -> blue zones are multi-day levels (they match our Nov 25 blue ~26263 and Nov 26 blue ~25994).
   So blue = persistent volume levels kept while their "probability" stays high; the daily VWAP ladder is separate.
 - Zones are identical on 5m / 1h / 4h; the timeframe only changes how fast a counter-close confirms.
+
+## SOLVED: blue zone = previous session's close (Databento NQ.v.0, avp_fit.py, Nov 28)
+| session | blue centre (screens) | previous session close (17:00) | diff |
+|---|---|---|---|
+| Nov 19 | 27174 | 27175 | -1 |
+| Nov 20 | 26506 | 26506 | 0 |
+| Nov 23 | 25286 | 25291 | -5 |
+| Nov 24 | 26844 | 26845 | -1 |
+| Nov 25 | 26263 | 26266 | -3 |
+| Nov 26 | 25994 | 26000 | -6 |
+6/6 within 6 pt. POC and VWAP candidates miss by up to 1,178 pt. "Past days' zones" keeps older closes on the chart,
+which is why the video shows several blue zones at once. Zone height ~54-81 pt (to fit: fixed or volatility-based).
+Ladder step S (RZ/SZ): best candidate = mean of the last 3 sessions' VWAP sigma (S/sigma_avg3 = 1.10, cv 0.14);
+not exact yet, low priority (those zones are "lower probability" and their signals are off by default).
