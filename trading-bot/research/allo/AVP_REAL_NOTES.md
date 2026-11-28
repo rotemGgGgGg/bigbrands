@@ -1,0 +1,32 @@
+# AVP Zones (the paid indicator): rules read from the user's screenshots, NQ1! 5m on OpenMarket
+
+Chart axis is UTC. NY open = 13:30 UTC in Oct (EDT), 14:30 UTC from Nov 2 (EST). Indicator table: 24 trades, 46% win, +7.49R.
+
+## Trade log so far (from screenshots; result read off the chart, W/L approximate)
+| date | signal UTC (NY) | side | how | result |
+|---|---|---|---|---|
+| 2026-10-21 | 13:30 (09:30) | short | open bar closes below zone | flipped long ~15:00 |
+| 2026-10-21 | ~15:00 (11:00) | long (flip) | close back above zone | W (2R) |
+| 2026-10-23 | 13:30 (09:30) | long | open bar closes above zone | W |
+| 2026-10-26 | 13:30 (09:30) | long | wick into zone, close above | W |
+| 2026-11-04 | 14:35 (09:35) | long | huge bar closes far above zone (risk ~270pt) | ~-0.5R, flat at 16:00 NY |
+| 2026-11-10 | 15:10 (10:10) | short | spike into zone, close back below | W |
+| 2026-11-12 | 15:55 (10:55) | long | close above zone | L (flipped 13:50 NY) |
+| 2026-11-12 | 18:50 (13:50) | short (flip) | close back below zone | ~0, flat at 16:00 NY |
+| 2026-11-13 | 14:30 (09:30) | short | open bar closes below zone | W |
+| 2026-11-18 | 14:40 (09:40) | short | close below zone | flipped |
+| 2026-11-18 | 14:55 (09:55) | long (flip) | close above zone | L |
+| 2026-11-19 | 15:35 (10:35) | short | breakdown close below zone | flipped |
+| 2026-11-19 | 15:55 (10:55) | long (flip) | close above zone | L |
+| 2026-11-20 | 15:00 (10:00) | short | rejection from zone bottom | W |
+
+## Rule as it looks (hypothesis to test)
+- Zones: bands ~30-60 NQ points; red = above price (RZ), green = below (SZ), blue = the zone being traded.
+  Price often consolidates for hours inside them -> they look like HIGH-volume nodes, not the low-volume (LVN)
+  zones of our reconstruction (avp*.py). Table: anchor 31150 (= the high), 2597 profile rows -> ~2pt rows down to
+  ~25950, i.e. one composite profile over all loaded history.
+- Signal: a 5m RTH bar that trades into a zone and CLOSES outside it -> trade toward the side it closed on
+  (both rejections and breakouts). One trade per zone.
+- Entry: close of the signal bar. Stop: far edge of the zone. Target: ~2R (green box = 2x red box in every case measured).
+- Flip: a later close back through the zone reverses the position. Flat at 16:00 NY.
+- Most signals in the first ~90 minutes of RTH.
