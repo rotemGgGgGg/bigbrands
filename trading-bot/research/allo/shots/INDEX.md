@@ -12,3 +12,5 @@
 | allo_77.webp | NQ1! 5m: indicators 4H EQ, Vol, GexSuite EOD Levels, IV Walls, AVP Zones; long from blue "LVN - 24 rows - max 4.559K" |
 NOTE for later: his zones carry HVN/LVN + row-count labels (volume profile). Re-check against "blue = previous close"
 (18/18 days) when analysing - possibly a different version, or the LVN sits at the prior close.
+| allo_78.webp | NQ1! 5m Oct 29 09:35: GexSuite EOD Levels + AVP Zones: G-2/G-3/G-5, lambda levels, "Gamma Flip [++]", "Gamma Flip 0DTE", "Put Wall 0DTE [+]", QQQ 718/716.5/713.5/713/712.5 strike lines with [+]..[+++]; blue AVP zone "LVN - 24 rows" sitting on the 0DTE put wall/gamma flip |
+| allo_80.webp | NQ1! Oct 29 18:15 -> Oct 30 12:00: short from blue "LVN - 24 rows - max 1.672K", stop 115 pt, target 529 pt, R:R 4.6, closed +529 |
