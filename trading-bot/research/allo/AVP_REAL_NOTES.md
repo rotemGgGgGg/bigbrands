@@ -114,3 +114,15 @@ Blue zone (not on the ladder): Nov 23 25286, Nov 24 26844, Nov 25 26263, Nov 26 
   QQQ/NDX options heatmaps; signals are "a fixed mechanism ... for guidance".
 Implication for the plan: the step-S question only matters for the low-probability ladder. The test that matters is
 blue = high-volume node + rejection signal. Rebuild blue as composite-profile HVNs ranked by past reaction rate.
+
+## Screenshots from the video (settings of avp-zones-2)
+- Tooltip, "Void counter-close if zone breaks": ON = a counter-close only counts if no candle traded beyond the far side
+  of the zone since the touch; the zone re-arms after a candle closes outside it. (Default OFF.)
+- Video defaults: Signals ON, Past days' zones ON, Exits ON, Signals while in a trade OFF, Long/short boxes OFF,
+  One trade per zone ON, Flip trades OFF, Void counter-close OFF, Target = Next zone, Enable RZ OFF, Enable SZ OFF.
+- Trading hours (when signals may fire; zones do not change): All hours, RTH 09:30-16:00, NY AM 09:30-12:00,
+  NY PM 12:00-16:00, London 03:00-09:30, Asia 18:00-03:00, Custom.
+- Video chart, Nov 24-26 (NQZ6): two blue zones at ~26225-26295 and ~25975-26045 (~70 pt wide), both drawn across
+  several days -> blue zones are multi-day levels (they match our Nov 25 blue ~26263 and Nov 26 blue ~25994).
+  So blue = persistent volume levels kept while their "probability" stays high; the daily VWAP ladder is separate.
+- Zones are identical on 5m / 1h / 4h; the timeframe only changes how fast a counter-close confirms.
