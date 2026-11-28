@@ -85,3 +85,14 @@ Read at the last bar of each Globex session (17:00 NY) vs the next session's zon
 M matches the prior session's closing VWAP within 1-14 pt on 4/4 days. The step S is NOT the same session's sigma
 (ratios 0.72-2.0). Next: read exact legend values (VWAP and band 1) at 16:00 NY (RTH close) and at other times, and
 test S = RTH-only sigma, multi-session sigma, ATR or prior range once 1-minute data with volume is available.
+
+## Exact VWAP legend values at 16:00 NY (session-anchored VWAP, Typical) vs next day's ladder
+| day (16:00) | VWAP | sigma | next ladder middle M | next step S | S / sigma |
+|---|---|---|---|---|---|
+| Nov 23 | 26600.58 | 404.27 | 26597 (Nov 24) | ~405 | 1.00 (all 6 levels within 1-14 pt) |
+| Nov 24 | 26330.97 | 215.27 | 26331 (Nov 25) | ~428 | 1.99 (levels = VWAP +/- 2,4,6 sigma, all within 12 pt) |
+| Nov 25 | 25599.31 | 358.85 | 25610 (Nov 26) | ~262 | 0.73 |
+Middle M = prior day's session VWAP: confirmed (within 1-11 pt). Step S: equals k*sigma with k = 1, 2, 0.73 -> the
+multiplier is not fixed, so S is computed some other way (candidates: RTH-only sigma, sigma of the volume profile
+rows, multi-day sigma, ATR, a floor/cap or rounding rule). Needs 1-minute data with volume to fit.
+Blue zone (not on the ladder): Nov 23 25286, Nov 24 26844, Nov 25 26263, Nov 26 25994 -> candidate: prior-day POC.
