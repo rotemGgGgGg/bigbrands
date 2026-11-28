@@ -96,3 +96,21 @@ Middle M = prior day's session VWAP: confirmed (within 1-11 pt). Step S: equals 
 multiplier is not fixed, so S is computed some other way (candidates: RTH-only sigma, sigma of the volume profile
 rows, multi-day sigma, ATR, a floor/cap or rounding rule). Needs 1-minute data with volume to fit.
 Blue zone (not on the ladder): Nov 23 25286, Nov 24 26844, Nov 25 26263, Nov 26 25994 -> candidate: prior-day POC.
+
+## From the seller's own video "How to use AVP indi" (transcript, Nov 28 2026; indicator id @alloresearch/avp-zones-2)
+- Blue zones = the core. "Based on APs" (anchored profiles); "marks volume zones that are historically seen as great
+  reaction zones, plots them again and every day recalculates the probability". He will not say how they are marked.
+  -> blue = volume-profile nodes picked by their historical reaction rate (consistent with the stats table:
+  anchor / profile rows = one composite profile over the loaded history). Few signals per day.
+- Red/green (RZ/SZ) = "lower probability" zones, used as intraday support/resistance. These are the VWAP-sigma ladder
+  we decoded (middle = previous session VWAP). Their signals are OFF by default.
+- Signal: price on one side of the zone (below -> look for shorts). A candle pops INTO the zone, then an OPPOSING candle
+  closes back out on the original side -> signal at that close. Stop: far end of the zone + a few ticks.
+  Target: resting liquidity or a fixed R (the scoreboard uses 2R).
+- Flip trades: if the stop is hit (price goes through the zone) the opposite trade is signalled.
+- Void counter-close if zone breaks: when ON, a candle that goes through the whole zone and then comes back is NOT a signal.
+- One trade per zone (default ON). Signals within a trade: optional.
+- Use the 5-minute chart; RTH hours are best. Zones do not depend on the timeframe. He trades it with discretion and
+  QQQ/NDX options heatmaps; signals are "a fixed mechanism ... for guidance".
+Implication for the plan: the step-S question only matters for the low-probability ladder. The test that matters is
+blue = high-volume node + rejection signal. Rebuild blue as composite-profile HVNs ranked by past reaction rate.
