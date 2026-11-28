@@ -26,6 +26,8 @@ Chart axis is UTC. NY open = 13:30 UTC in Oct (EDT), 14:30 UTC from Nov 2 (EST).
 | 2026-11-03 | 14:30 (09:30) | long | open bar closes above zone | ~0, flat at 16:00 NY |
 | 2026-10-20 | 14:20 (10:20) | long | strong rally closes above zone | L (flipped ~11:40 NY) |
 | 2026-10-20 | ~15:40 (11:40) | short (flip) | close back into/below zone | L (stopped quickly, box short) |
+| 2026-10-15 | 19:45 (15:45) | long | close above zone 15 min before the close | ~-0.5R, flat at 16:00 NY |
+| 2026-10-09 | 14:25 (10:25) | long | flush into zone, close back above | ~+0.7R, flat at 16:00 NY |
 Note: Oct 21 first short was at 13:40 UTC (09:40 NY), Oct 23 long at 13:40 UTC (big bar from below the zone closing above it).
 
 Tally of the first 19 read: ~9 W (+2R each), ~7 L (about -1R; flips exit near the far edge), ~3 flat at 16:00.
@@ -41,3 +43,9 @@ First signal of the day 7 W / 14; flips 2 W / 5. Signals happen any time in RTH 
 - Entry: close of the signal bar. Stop: far edge of the zone. Target: ~2R (green box = 2x red box in every case measured).
 - Flip: a later close back through the zone reverses the position. Flat at 16:00 NY.
 - Most signals in the first ~90 minutes of RTH.
+
+## Summary of 23 trades read (of 24)
+~10 W at +2R, ~8 L at about -1R, ~5 flat at 16:00 NY (-0.5R to +0.75R). Roughly +12R before costs; the table says +7.49R
+(our readings of the flat/flip exits are approximate). Signals fire any time 09:30-15:45 NY; time exit at 16:00 matters.
+Next: rebuild this rule (high-volume zones from a composite profile, close-outside-zone signal, far-edge stop, 2R,
+flip, flat 16:00) and test 2012-2026 with our gates.
